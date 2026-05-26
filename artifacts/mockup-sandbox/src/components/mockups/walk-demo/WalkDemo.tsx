@@ -27,8 +27,9 @@ type Phase = "walk" | "d1" | "d2" | "pick" | "d3" | "d4" | "d5"
            | "maya_post1" | "maya_post2" | "maya_post3"
            | "jay_d1"  | "jay_d2"  | "jay_d3"  | "jay_d4"  | "jay_d5"  | "jay_done"
            | "jess_d1" | "jess_d2" | "jess_d3"
-           | "ellio_d1" | "ellio_d2" | "ellio_d3" | "ellio_done";
-type Scene = "overworld" | "lab" | "maya" | "jay" | "home" | "ellio";
+           | "ellio_d1" | "ellio_d2" | "ellio_d3" | "ellio_done"
+           | "lia_d1"  | "lia_d2"  | "lia_d3"  | "lia_d4"  | "lia_d5"  | "lia_done";
+type Scene = "overworld" | "lab" | "maya" | "jay" | "home" | "ellio" | "lia";
 type Rect  = [number, number, number, number]; // x1 y1 x2 y2 world-px
 
 // ── Collision zones ─────────────────────────────────────────────────────────
@@ -59,6 +60,35 @@ const OW_BLOCKED: Rect[] = [
 
   // ── LIA'S HOME (bottom right) ──────────────────────────────────────────────
   [807, 565,  942,  780],
+];
+
+// ── Lia's Home ─────────────────────────────────────────────────────────────
+const LH = { w: 800, h: 800 };
+const LIA_POS = { x: 385, y: 355 }; // Lia near the center rug
+const OW_LIA_DOOR: Rect  = [832, 547, 930, 580]; // just above Lia's OW blocked body (y<565)
+const LIA_HOME_EXIT: Rect = [310, 722, 490, 790]; // bottom-center door
+const LH_BLOCKED: Rect[] = [
+  // ── WALLS ──────────────────────────────────────────────────────────────────
+  [0,    0,   800,  80],  // top wall
+  [0,    0,    65, 800],  // left wall
+  [735,  0,   800, 800],  // right wall
+  [0,   715,  310, 800],  // bottom-left (door gap 310–490)
+  [490, 715,  800, 800],  // bottom-right
+  // ── FURNITURE — top-left (fireplace + kitchen shelves + pots) ────────────
+  [65,   80,  310, 315],  // fireplace surround + wall shelves + hanging pans
+  // ── FURNITURE — top-center (window alcove + back-door frame) ─────────────
+  [305,  80,  480, 180],  // window recess + curtains + back-door surround
+  // ── FURNITURE — top-right (bed + nightstand + foot chest) ────────────────
+  [480,  80,  735, 315],  // bed + nightstand + foot chest + wall décor
+  // ── FURNITURE — mid-left (bookshelf unit + barrels + jars) ──────────────
+  [65,  310,  245, 515],  // bookshelf stack + barrels + books
+  // ── FURNITURE — mid-right (potion station + hanging herbs) ───────────────
+  [530, 310,  735, 575],  // potion shelves + hanging herbs + lantern
+  // ── FURNITURE — bottom-left (study desk + blue crystal lamp) ─────────────
+  [65,  510,  270, 690],  // study desk + open book + blue crystal + lanterns
+  // ── FURNITURE — bottom-right (corner storage + pots) ─────────────────────
+  [590, 570,  735, 715],  // corner storage + pots + maps
+  [65,  685,  200, 715],  // bottom-left floor plants + items
 ];
 
 // Route-1 exit trigger aligned with the top-left gap
@@ -271,6 +301,12 @@ export function WalkDemo() {
   const [mayaInitDone,   setMayaInitDone]   = useState(false); // after first convo (d4)
   const [mayaDone,       setMayaDone]       = useState(false); // after post-shell convo (post3)
   const [ellioDone,      setEllioDone]      = useState(false);
+  const [nearLia,          setNearLia]          = useState(false);
+  const [liaInteractPos,   setLiaInteractPos]   = useState({ sx: 0, sy: 0 });
+  const [liaDone,          setLiaDone]          = useState(false);
+  const [hasHearthberries, setHasHearthberries] = useState(false);
+  const [hasSatchel,       setHasSatchel]       = useState(false);
+  const [liaItemsNotif,    setLiaItemsNotif]    = useState(false);
 
   const canvasRef          = useRef<HTMLCanvasElement>(null);
   const profCanvasRef      = useRef<HTMLCanvasElement>(null);
@@ -283,6 +319,8 @@ export function WalkDemo() {
   const jessPortraitRef    = useRef<HTMLCanvasElement>(null);
   const ellioCanvasRef     = useRef<HTMLCanvasElement>(null);
   const ellioPortraitRef   = useRef<HTMLCanvasElement>(null);
+  const liaCanvasRef       = useRef<HTMLCanvasElement>(null);
+  const liaPortraitRef     = useRef<HTMLCanvasElement>(null);
   const shadowRef  = useRef<HTMLDivElement>(null);
   const worldRef   = useRef<HTMLDivElement>(null);
   const vpRef      = useRef<HTMLDivElement>(null);
@@ -315,6 +353,11 @@ export function WalkDemo() {
       "/__mockup/images/ellio-home-interior.png",
       "/__mockup/images/ellio-sprite.png",
       "/__mockup/images/resonance-stone.png",
+      "/__mockup/images/lia.png",
+      "/__mockup/images/lia-home.png",
+      "/__mockup/images/cindrax.png",
+      "/__mockup/images/hearthberry.png",
+      "/__mockup/images/keepers-satchel.png",
       "/__mockup/images/weathered-shell.png",
       ...STARTERS.map(s => s.img),
     ].forEach(loadImg);
@@ -445,6 +488,30 @@ export function WalkDemo() {
     tryDraw();
   }, [phase]);
 
+  // Draw Lia world sprite inside Lia's home
+  useEffect(() => {
+    if (scene !== "lia") return;
+    const src = "/__mockup/images/lia.png";
+    const tryDraw = () => {
+      const c = liaCanvasRef.current;
+      if (!c) return;
+      if (!drawSprite(c, src, false, 72)) setTimeout(tryDraw, 150);
+    };
+    tryDraw();
+  }, [scene]);
+
+  // Draw Lia portrait in dialog box
+  useEffect(() => {
+    if (!phase.startsWith("lia_")) return;
+    const src = "/__mockup/images/lia.png";
+    const tryDraw = () => {
+      const c = liaPortraitRef.current;
+      if (!c) return;
+      if (!drawSprite(c, src, false)) setTimeout(tryDraw, 150);
+    };
+    tryDraw();
+  }, [phase]);
+
   // Redraw player canvas
   const redraw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -489,8 +556,8 @@ export function WalkDemo() {
       if (!fadingRef.current && phaseRef.current === "walk") {
         const h       = heldRef.current;
         const sc      = sceneRef.current;
-        const world   = sc === "overworld" ? OW : sc === "lab" ? LB : sc === "maya" ? MY : sc === "jay" ? JY : sc === "ellio" ? EH : PH;
-        const zones   = sc === "overworld" ? OW_BLOCKED : sc === "lab" ? LAB_BLOCKED : sc === "maya" ? MAYA_BLOCKED : sc === "jay" ? JAY_BLOCKED : sc === "ellio" ? EH_BLOCKED : PH_BLOCKED;
+        const world   = sc === "overworld" ? OW : sc === "lab" ? LB : sc === "maya" ? MY : sc === "jay" ? JY : sc === "ellio" ? EH : sc === "lia" ? LH : PH;
+        const zones   = sc === "overworld" ? OW_BLOCKED : sc === "lab" ? LAB_BLOCKED : sc === "maya" ? MAYA_BLOCKED : sc === "jay" ? JAY_BLOCKED : sc === "ellio" ? EH_BLOCKED : sc === "lia" ? LH_BLOCKED : PH_BLOCKED;
 
         let newAnim = "idle";
         let newFlip = flipRef.current;
@@ -528,6 +595,10 @@ export function WalkDemo() {
           transitionTo("ellio", 405, 660);      // enter Ellio's home
         } else if (sc === "ellio" && inRect(worldPos.current.x, worldPos.current.y, ELLIO_HOME_EXIT)) {
           transitionTo("overworld", 272, 540);  // exit north of Ellio trigger (y<553) and above blocked body (y<565)
+        } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_LIA_DOOR)) {
+          transitionTo("lia", 400, 660);        // enter Lia's home
+        } else if (sc === "lia" && inRect(worldPos.current.x, worldPos.current.y, LIA_HOME_EXIT)) {
+          transitionTo("overworld", 875, 535);  // exit north of Lia OW door trigger (y<547)
         }
 
         // Flip / anim change
@@ -613,6 +684,15 @@ export function WalkDemo() {
           setNearShell(near);
           if (near) setShellInteractPos({ sx: screenX, sy: screenY });
         }
+        // Near-Lia check (Lia's home)
+        if (sc === "lia") {
+          const d = dist(px, py, LIA_POS.x, LIA_POS.y);
+          const near = d < 120;
+          const screenX = (px - cam.current.x) * ZOOM;
+          const screenY = (py - cam.current.y - topOff - 28) * ZOOM;
+          setNearLia(near);
+          if (near) setLiaInteractPos({ sx: screenX, sy: screenY });
+        }
       }
       raf = requestAnimationFrame(loop);
     };
@@ -631,6 +711,8 @@ export function WalkDemo() {
       jess_d1: "jess_d2", jess_d2: "jess_d3", jess_d3: "walk",
       ellio_d1: "ellio_d2", ellio_d2: "ellio_d3", ellio_d3: "walk",
       ellio_done: "walk",
+      lia_d1: "lia_d2", lia_d2: "lia_d3", lia_d3: "lia_d4", lia_d4: "lia_d5", lia_d5: "walk",
+      lia_done: "walk",
     };
     const next = map[from];
     if (next) setPhase(next);
