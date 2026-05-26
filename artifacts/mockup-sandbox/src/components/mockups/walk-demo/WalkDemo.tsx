@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 
 // ── World sizes (pixels) ────────────────────────────────────────────────────
-const OW = { w: 860, h: 900 }; // overworld (extra 60 px right lets camera scroll further)
+const OW = { w: 800, h: 900 }; // overworld
 const LB = { w: 700, h: 700 }; // lab
 const SPEED     = 3.5;
 const ZOOM      = 0.82; // zoom-out factor — values <1 show more of the world
@@ -33,10 +33,10 @@ const OW_BLOCKED: Rect[] = [
   // ── OUTER BORDERS ──────────────────────────────────────────────────────────
   // Top trees block y=0-85 to keep player out of visual foliage (gap x=50-165 for Route 1)
   [0,   0,   50,  85 ],
-  [165, 0,   860, 85 ],
+  [165, 0,   800, 85 ],
   [0,   85,  50,  900],   // left border column
-  [750, 85,  860, 900],   // right border column (extended to match wider world)
-  [0,   870, 860, 900],   // southern boundary
+  [750, 85,  800, 900],   // right border column
+  [0,   870, 800, 900],   // southern boundary
 
   // ── PROFESSOR LAB ──────────────────────────────────────────────────────────
   [205, 85,  570, 310],   // dome body; right edge x=570 (was 545) so player can't clip into fence
@@ -365,7 +365,6 @@ export function WalkDemo() {
           position: "absolute",
           width:  scene === "overworld" ? OW.w : LB.w,
           height: scene === "overworld" ? OW.h : LB.h,
-          backgroundColor: scene === "overworld" ? "#1a3208" : undefined,
           willChange: "transform",
           transformOrigin: "0 0",
           transform: `scale(${ZOOM}) translate(${-cam.current.x}px,${-cam.current.y}px)`,
@@ -377,9 +376,7 @@ export function WalkDemo() {
               ? "/__mockup/images/overworld-map.png"
               : "/__mockup/images/prof-lab-interior.png"}
             alt="map"
-            style={scene === "overworld"
-              ? { position:"absolute", left:0, top:0, width:800, height:900, display:"block" }
-              : { position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover" }}
+            style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover" }}
           />
 
           {/* Prof Irwyn */}
