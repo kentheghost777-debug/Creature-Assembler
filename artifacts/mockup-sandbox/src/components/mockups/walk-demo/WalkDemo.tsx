@@ -65,7 +65,7 @@ const OW_BLOCKED: Rect[] = [
 // ── Lia's Home ─────────────────────────────────────────────────────────────
 const LH = { w: 800, h: 800 };
 const LIA_POS = { x: 385, y: 355 }; // Lia near the center rug
-const OW_LIA_DOOR: Rect  = [832, 547, 930, 580]; // just above Lia's OW blocked body (y<565)
+const OW_LIA_DOOR: Rect  = [846, 545, 910, 566]; // tight zone above Lia's house body (y=565+, glow center x≈878)
 const LIA_HOME_EXIT: Rect = [310, 722, 490, 790]; // bottom-center door
 const LH_BLOCKED: Rect[] = [
   // ── WALLS ──────────────────────────────────────────────────────────────────
@@ -93,7 +93,7 @@ const LH_BLOCKED: Rect[] = [
 
 // Route-1 exit trigger aligned with the top-left gap
 const OW_ROUTE1_EXIT: Rect = [212, 0, 327, 15];
-const OW_PROF_DOOR: Rect = [457, 340, 667, 400]; // step into lab
+const OW_PROF_DOOR: Rect = [498, 328, 580, 378]; // tight zone around lab door (glow center x≈538)
 
 const LAB_BLOCKED: Rect[] = [
   [0,   0,   700, 22 ],  // top
@@ -110,7 +110,7 @@ const LAB_EXIT: Rect = [262, 645, 438, 692]; // exit lab
 // ── Maya's Home ───────────────────────────────────────────────────────────────
 const MY = { w: 800, h: 800 };
 const MAYA_POS = { x: 870, y: 427 }; // Maya standing at her doorstep
-const OW_MAYA_DOOR: Rect  = [818, 383, 952, 432]; // wide + tall zone — easy to enter from any approach
+const OW_MAYA_DOOR: Rect  = [845, 383, 912, 440]; // tight zone at Maya's door (glow center x≈878)
 const MAYA_HOME_EXIT: Rect = [310, 722, 490, 790]; // exit trigger at interior door
 const MAYA_SHELL: Rect     = [385, 400, 455, 460]; // pickup zone — center of the living-room rug
 const MAYA_BLOCKED: Rect[] = [
@@ -140,7 +140,7 @@ const MAYA_BLOCKED: Rect[] = [
 // ── Jay's Home ────────────────────────────────────────────────────────────────
 const JY = { w: 800, h: 800 };
 const JAY_POS = { x: 370, y: 310 }; // Jay standing in the center of his room
-const OW_JAY_DOOR: Rect  = [185, 365, 330, 422]; // wider + taller zone so entrance is easy to hit
+const OW_JAY_DOOR: Rect  = [240, 400, 308, 448]; // tight zone at Jay's door (house body ends y=400)
 const JAY_HOME_EXIT: Rect = [310, 725, 490, 790]; // interior door at bottom
 const JAY_BLOCKED: Rect[] = [
   // ── WALLS ──────────────────────────────────────────────────────────────────
@@ -169,7 +169,7 @@ const JAY_BLOCKED: Rect[] = [
 // ── Ellio's Home ─────────────────────────────────────────────────────────────
 const EH = { w: 800, h: 800 };
 const ELLIO_POS = { x: 400, y: 350 };
-const OW_ELLIO_DOOR: Rect  = [220, 553, 325, 585];
+const OW_ELLIO_DOOR: Rect  = [238, 545, 308, 566]; // tight zone above Ellio's house body (y=565+)
 const ELLIO_HOME_EXIT: Rect = [305, 725, 505, 790];
 const EH_BLOCKED: Rect[] = [
   [0, 0, 800, 60], [0, 0, 60, 800], [740, 0, 800, 800],
@@ -184,7 +184,7 @@ const EH_BLOCKED: Rect[] = [
 // ── Player's Home ────────────────────────────────────────────────────────────
 const PH = { w: 800, h: 800 };
 const JESS_POS = { x: 395, y: 370 }; // Jess standing in the open center of the home
-const OW_PLAYER_HOME_DOOR: Rect = [345, 477, 760, 503]; // very wide — walk SOUTH to enter
+const OW_PLAYER_HOME_DOOR: Rect = [532, 476, 602, 510]; // tight zone at player home door (glow center x≈566)
 const PLAYER_HOME_EXIT: Rect = [305, 725, 505, 790]; // bottom-center door
 const PH_BLOCKED: Rect[] = [
   // ── WALLS ──────────────────────────────────────────────────────────────────
@@ -584,23 +584,23 @@ export function WalkDemo() {
         } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_JAY_DOOR)) {
           transitionTo("jay", 400, 660);
         } else if (sc === "lab" && inRect(worldPos.current.x, worldPos.current.y, LAB_EXIT)) {
-          transitionTo("overworld", 562, 445);  // lab exit → centred in new OW
+          transitionTo("overworld", 538, 405);  // right outside lab door (glow x≈538, south of trigger)
         } else if (sc === "maya" && inRect(worldPos.current.x, worldPos.current.y, MAYA_HOME_EXIT)) {
-          transitionTo("overworld", 867, 460);  // just south of Maya's door (y=460 > 408 safe)
+          transitionTo("overworld", 878, 458);  // right outside Maya's door
         } else if (sc === "jay" && inRect(worldPos.current.x, worldPos.current.y, JAY_HOME_EXIT)) {
-          transitionTo("overworld", 272, 460);  // just south of Jay's door
+          transitionTo("overworld", 272, 462);  // right outside Jay's door
         } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_PLAYER_HOME_DOOR)) {
-          transitionTo("home", 405, 660);       // enter player's home
+          transitionTo("home", 400, 670);       // enter player's home — just inside door
         } else if (sc === "home" && inRect(worldPos.current.x, worldPos.current.y, PLAYER_HOME_EXIT)) {
-          transitionTo("overworld", 562, 460);  // exit north of home trigger (y<477) and north of blocked body (y<505)
+          transitionTo("overworld", 566, 462);  // right outside player home door (glow x≈566, north of trigger)
         } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_ELLIO_DOOR)) {
-          transitionTo("ellio", 405, 660);      // enter Ellio's home
+          transitionTo("ellio", 400, 670);      // enter Ellio's home — just inside door
         } else if (sc === "ellio" && inRect(worldPos.current.x, worldPos.current.y, ELLIO_HOME_EXIT)) {
-          transitionTo("overworld", 272, 540);  // exit north of Ellio trigger (y<553) and above blocked body (y<565)
+          transitionTo("overworld", 272, 532);  // right outside Ellio's door (north of trigger)
         } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_LIA_DOOR)) {
-          transitionTo("lia", 400, 660);        // enter Lia's home
+          transitionTo("lia", 400, 670);        // enter Lia's home — just inside door
         } else if (sc === "lia" && inRect(worldPos.current.x, worldPos.current.y, LIA_HOME_EXIT)) {
-          transitionTo("overworld", 875, 535);  // exit north of Lia OW door trigger (y<547)
+          transitionTo("overworld", 878, 532);  // right outside Lia's door (north of trigger)
         }
 
         // Flip / anim change
@@ -897,6 +897,14 @@ export function WalkDemo() {
                 position:"absolute", left:544, top:498,
                 width:44, height:10, borderRadius:"50%",
                 background:"radial-gradient(ellipse,rgba(255,160,90,0.55)0%,transparent 80%)",
+                animation:"pulse 1.4s ease-in-out infinite",
+                pointerEvents:"none",
+              }}/>
+              {/* Ellio's home door glow */}
+              <div style={{
+                position:"absolute", left:248, top:548,
+                width:40, height:10, borderRadius:"50%",
+                background:"radial-gradient(ellipse,rgba(140,220,255,0.55)0%,transparent 80%)",
                 animation:"pulse 1.4s ease-in-out infinite",
                 pointerEvents:"none",
               }}/>
