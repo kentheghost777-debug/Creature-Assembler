@@ -221,7 +221,7 @@ const PROF = { x: 350, y: 268 }; // feet position in lab world
 
 // ── Main component ──────────────────────────────────────────────────────────
 export function WalkDemo() {
-  const [scene,       setScene]       = useState<Scene>("overworld");
+  const [scene,       setScene]       = useState<Scene>("home");
   const [phase,       setPhase]       = useState<Phase>("walk");
   const [fading,      setFading]      = useState(false);
   const [held,        setHeld]        = useState<string | null>(null);
@@ -258,7 +258,7 @@ export function WalkDemo() {
   const worldRef   = useRef<HTMLDivElement>(null);
   const vpRef      = useRef<HTMLDivElement>(null);
 
-  const sceneRef   = useRef<Scene>("overworld");
+  const sceneRef   = useRef<Scene>("home");
   const phaseRef   = useRef<Phase>("walk");
   const fadingRef  = useRef(false);
   const heldRef    = useRef<string | null>(null);
@@ -267,7 +267,7 @@ export function WalkDemo() {
   const frameRef   = useRef(0);
   const lastSrc    = useRef("");
   const lastFlip   = useRef(false);
-  const worldPos   = useRef({ x: 562, y: 430 }); // overworld start (centred in new 1124-wide world)
+  const worldPos   = useRef({ x: 405, y: 580 }); // start inside player's home, open floor area
   const cam        = useRef({ x: 0, y: 0 });
 
   // Preload everything
@@ -600,13 +600,13 @@ export function WalkDemo() {
   // ── Dialog lines (d3 is dynamic) ─────────────────────────────────────────
   const LINES: Record<Phase, string> = {
     walk: "",
-    d1: "Ah — there you are! Welcome to Primeria Lab. I am Professor Irwyn. I have spent my life studying Tayanari — the remarkable bond-creatures that share this world with us.",
-    d2: "Every Keeper begins with a single companion. The bond deepens through trust, exploration, and challenge. Today, that journey starts for you. Choose your first Tayanari.",
+    d1: "Ah — right on time. I knew today would be the day. I've had your partner selection ready since last week, if I'm honest. No more waiting — it is finally time. Choose your first Tayanari.",
+    d2: "The bond between a Keeper and their Tayanari deepens through trust, exploration, and challenge. Treat them well and they will never let you down. Now — who is it going to be?",
     pick: "",
     d3: starter ? `${starter.name}! A wonderful choice. I can already sense a connection forming. Treat them well — they will never let you down.` : "",
     d4: "Head north past the village gate through Route 1 to the Wild Area. Wild Tayanari roam freely there. It is the best place for a new Keeper to earn their first bonds.",
     d5: "But be careful — wild Tayanari are spirited and won't hesitate to test you. Keep your partner healthy and your wits sharp. I'll meet you in the Wild Area. Safe travels, Keeper.",
-    maya_d1: "Oh! You must be the new Keeper everyone's talking about. I'm Maya. I barely leave the village myself — the wild Tayanari out there terrify me. You must be so incredibly brave to set out like this.",
+    maya_d1: "There you are — I was hoping you'd stop by before you left. I've had something set aside for you for a while. My father's collection. I think today is finally the day I hand it over.",
     maya_d2: "My father... he was a legendary Keeper. He spent his whole life exploring, bonding with Tayanari no one else could ever reach. He passed last winter. I still miss him every single day.",
     maya_d3: "Before he left us, he entrusted me with his collection of Weathered Realm Shells — rare items that Keepers use in the wild. He told me: 'Give these to someone worthy, Maya. You'll know them when you see them.'",
     maya_d4: "I've been holding onto them, wondering who that person could be. But looking at you... I think he would be so proud. Please — go inside and take them. Make us both proud out there.",
@@ -615,9 +615,9 @@ export function WalkDemo() {
     jay_d3: "But I'm glad it's you out there with me. Nobody else I'd want watching my back. Stay sharp. And don't even think about falling behind — I won't be slowing down. Not for anyone.",
     jay_d4: "I don't go into anything blind. While everyone else was sparring in the yard I was reading — Realm theory, bonding science, rune taxonomy. There are rune types out there most Keepers have never even laid eyes on. Common, rare, mythic. Every single one of them has a name on my list. I'm collecting them all.",
     jay_d5: "Here's what they don't teach you early enough — socket a rune into a shell that holds a Tayanari and the bond amplifies. Offensive surge, healing pulse, barrier field. The right rune changes a battle in seconds. This one's yours. An Obsidian Healing Rune. Call it a head start. Don't waste it.",
-    jess_d1: "You're really going, aren't you. I've known this day was coming ever since I caught you sneaking off before sunrise to watch the wild Tayanari out in the meadow. You were nine years old. You've been ready since then.",
-    jess_d2: "I'm not going to beg you to stay. That's not what love is. Love is packing your favourite bread in the outer pocket of your pack so you find it when you need it most. I did that last night while you were sleeping.",
-    jess_d3: "Come home with stories worth telling. And come home. That's all I ask. I love you. Now go — before I change my mind and chain you to that kitchen table.",
+    jess_d1: "Professor Irwyn sent word — he's ready for you whenever you are. But before you head to the lab, please stop and say a proper goodbye to everyone. Maya's been up since dawn. Jay has something for you too, though he'll act like it's nothing.",
+    jess_d2: "This whole village has watched you grow up. They love you. Half of them were probably at their windows last night just knowing today was the day. Don't you dare sneak out without seeing them first.",
+    jess_d3: "I packed your favourite bread in the outer pocket — you'll find it when you need it most. I love you. Now go. Come home with stories worth telling. And just... come home.",
     maya_post1: "You found them! Those Weathered Realm Shells have been waiting for someone like you. Here's something my father taught me — Tayanari are drawn to beautiful shells. Place one on the ground and a wild one may stop to investigate.",
     maya_post2: "It's never guaranteed. A calm Tayanari might wander in out of curiosity. Even a rampaging one can blunder straight into a shell and bond with it. The shell becomes its home — if it chooses to accept.",
     maya_post3: "And my father used to say: 'A shell is just a home, but a rune makes it a welcome.' There are many types of shells, each with their own energy — and so many runes to socket inside them. You've already found one, I hear.",
