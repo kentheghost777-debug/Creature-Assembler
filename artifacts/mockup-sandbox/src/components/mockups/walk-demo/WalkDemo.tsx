@@ -88,15 +88,21 @@ const MAYA_BLOCKED: Rect[] = [
   [725,  0,   800, 800],  // right wall
   [0,   715,  310, 800],  // bottom-left (door gap x=310–490)
   [490, 715,  800, 800],  // bottom-right
-  // ── FURNITURE — top band ───────────────────────────────────────────────────
-  [75,   90,  315, 255],  // herb shelves (left) + fireplace + hanging wall
-  [295,  90,  455, 225],  // window dresser + potted plant (top-center)
-  [430,  90,  540, 230],  // tall bookshelf (right of window)
-  [510,  90,  725, 365],  // bed + foot chest + side lantern (right)
-  [650, 265,  725, 445],  // right-wall lantern table (mid-right)
-  // ── FURNITURE — bottom ─────────────────────────────────────────────────────
-  [75,  390,  235, 595],  // writing/craft desk + stool
-  [405, 475,  690, 582],  // hanging-rack alcove (bottom-right)
+  // ── FURNITURE — top-left (herb shelves + fireplace) ───────────────────────
+  [75,   90,  185, 375],  // herb shelf stack + jars (left column)
+  [180,  90,  360, 285],  // stone fireplace + hanging decor above it
+  // ── FURNITURE — top-center/right ──────────────────────────────────────────
+  [340,  90,  475, 270],  // window dresser + potted plant below sill
+  [465,  90,  605, 260],  // bookshelf cluster (top-right of center)
+  [595,  90,  725, 390],  // bed + nightstand + foot chest
+  // ── FURNITURE — mid-right ─────────────────────────────────────────────────
+  [670, 375,  725, 465],  // right-wall lantern side-table + plant
+  // ── FURNITURE — bottom-left (craft desk) ──────────────────────────────────
+  [75,  460,  265, 610],  // writing desk + stool + books + plants around it
+  [75,  600,  190, 715],  // bottom-left corner plants
+  // ── FURNITURE — bottom-right (alcove bench) ───────────────────────────────
+  [450, 560,  710, 650],  // hanging-rack alcove + bench shelf
+  [685, 455,  725, 715],  // right-wall potted plants (mid to bottom)
 ];
 
 // ── Jay's Home ────────────────────────────────────────────────────────────────
@@ -111,21 +117,26 @@ const JAY_BLOCKED: Rect[] = [
   [735,  0,   800, 800],  // right wall
   [0,   715,  310, 800],  // bottom-left (door gap x=310–490)
   [490, 715,  800, 800],  // bottom-right
-  // ── FURNITURE — top band ───────────────────────────────────────────────────
-  [65,   80,  235, 275],  // bookshelf cluster + crate (top-left)
-  [215,  80,  460, 300],  // reading desk + open books + lantern + stool (top-center)
-  [440,  80,  735, 385],  // bed + red bedside rug + nightstand + chests (top-right)
-  // ── FURNITURE — left wall mid ──────────────────────────────────────────────
-  [65,  270,  160, 400],  // left-wall lantern table + small plant
-  // ── FURNITURE — bottom ─────────────────────────────────────────────────────
-  [65,  390,  300, 630],  // sofa + red rug + coffee table + scattered items
-  [65,  615,  190, 715],  // bottom-left potted plants
-  [420, 385,  735, 715],  // training rack + hanging gear + storage shelves + baskets
+  // ── FURNITURE — top-left (bookshelf + cabinet) ─────────────────────────────
+  [65,   80,  220, 255],  // bookshelf + cabinet cluster
+  [65,  255,  120, 325],  // left-wall plant
+  [65,  325,  140, 395],  // left-wall lantern table
+  // ── FURNITURE — top-center (reading desk + stool) ──────────────────────────
+  [225,  80,  405, 240],  // reading desk + lantern + books
+  [265, 240,  370, 340],  // stool below desk
+  // ── FURNITURE — top-right (bed + rug + chest) ──────────────────────────────
+  [455,  80,  735, 390],  // bed + nightstand + foot chest + red rug
+  // ── FURNITURE — bottom-left (sofa area) ────────────────────────────────────
+  [65,  415,  205, 525],  // sofa
+  [110, 480,  245, 580],  // coffee table
+  [65,  610,  210, 715],  // bottom-left plants + corner items
+  // ── FURNITURE — bottom-right (training / storage) ──────────────────────────
+  [455, 390,  735, 715],  // hanging gear + clothing rack + shelves + baskets
 ];
 
 // ── Player's Home ────────────────────────────────────────────────────────────
 const PH = { w: 800, h: 800 };
-const JESS_POS = { x: 265, y: 400 }; // Jess standing near the dining table
+const JESS_POS = { x: 395, y: 370 }; // Jess standing in the open center of the home
 const OW_PLAYER_HOME_DOOR: Rect = [490, 492, 635, 508]; // north face of home — walk SOUTH to enter
 const PLAYER_HOME_EXIT: Rect = [305, 725, 505, 790]; // bottom-center door
 const PH_BLOCKED: Rect[] = [
@@ -135,12 +146,25 @@ const PH_BLOCKED: Rect[] = [
   [725,  0,   800, 800],  // right wall
   [0,   715,  305, 800],  // bottom-left (door gap 305–505)
   [505, 715,  800, 800],  // bottom-right
-  // ── FURNITURE ──────────────────────────────────────────────────────────────
-  [75,   80,  325, 235],  // kitchen / hearth / shelves (top-left)
-  [100, 250,  340, 415],  // dining table + chairs
-  [490,  80,  725, 300],  // bed + chest + nightstand (top-right)
-  [75,  430,  295, 645],  // sofa + coffee table + reading area (bottom-left)
-  [495, 415,  725, 650],  // craft / workshop shelves (bottom-right)
+  // ── FURNITURE — top-left (kitchen + hearth) ────────────────────────────────
+  [75,   80,  340, 200],  // kitchen counter + wall shelves + pots
+  [75,  195,  220, 285],  // stone fireplace/hearth base
+  // ── FURNITURE — top-center (wardrobe + window) ─────────────────────────────
+  [330,  80,  475, 220],  // wardrobe/cabinet + window curtains
+  [455, 210,  490, 255],  // bucket near wardrobe
+  // ── FURNITURE — top-right (bed area) ───────────────────────────────────────
+  [490,  80,  725, 295],  // bed + nightstand + wall hooks
+  [490, 290,  665, 390],  // foot chest + green rug below bed
+  // ── FURNITURE — center-left (dining table) ─────────────────────────────────
+  [85,  255,  335, 425],  // dining table + four chairs + green rug
+  // ── FURNITURE — bottom-left (shelf divider + sofa) ─────────────────────────
+  [90,  450,  320, 518],  // shelf/bench room divider
+  [75,  513,  210, 605],  // sofa
+  [80,  605,  190, 715],  // bottom-left plants + corner items
+  // ── FURNITURE — bottom-right (workshop) ────────────────────────────────────
+  [490, 415,  630, 555],  // workshop wall shelves + potions rack
+  [525, 550,  700, 638],  // workshop desk + open book + lantern
+  [650, 548,  725, 715],  // barrel + chest + corner plants
 ];
 
 // ── Sprite / image utilities ─────────────────────────────────────────────────
