@@ -325,7 +325,7 @@ export function WalkDemo() {
     const tryDraw = () => {
       const c = profCanvasRef.current;
       if (!c) return;
-      if (!drawSprite(c, src, false)) setTimeout(tryDraw, 150);
+      if (!drawSprite(c, src, false, 72)) setTimeout(tryDraw, 150);
     };
     tryDraw();
   }, [scene]);
@@ -517,7 +517,7 @@ export function WalkDemo() {
         } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_PLAYER_HOME_DOOR)) {
           transitionTo("home", 405, 660);       // enter player's home
         } else if (sc === "home" && inRect(worldPos.current.x, worldPos.current.y, PLAYER_HOME_EXIT)) {
-          transitionTo("overworld", 562, 470);  // exit north of home collision (safe walkable path)
+          transitionTo("overworld", 552, 525);  // exit in front of player home, well south of lab
         } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_ELLIO_DOOR)) {
           transitionTo("ellio", 405, 660);      // enter Ellio's home
         } else if (sc === "ellio" && inRect(worldPos.current.x, worldPos.current.y, ELLIO_HOME_EXIT)) {
@@ -545,7 +545,8 @@ export function WalkDemo() {
         const wd     = worldRef.current;
         const canvas = canvasRef.current;
         const shadow = shadowRef.current;
-        const topOff = Math.round(SPRITE_PX * ANCHOR);
+        const spriteH = (canvas?.height && canvas.height > 0) ? canvas.height : SPRITE_PX;
+        const topOff = Math.round(spriteH * ANCHOR);
         if (wd)     wd.style.transform = `scale(${ZOOM}) translate(${-cam.current.x}px,${-cam.current.y}px)`;
         if (canvas) { canvas.style.left = `${px - SPRITE_PX/2}px`; canvas.style.top = `${py - topOff}px`; }
         if (shadow) { shadow.style.left = `${px - 18}px`;          shadow.style.top  = `${py + 2}px`; }
@@ -730,11 +731,10 @@ export function WalkDemo() {
               ref={profCanvasRef}
               style={{
                 position: "absolute",
-                width: 80, height: 80,
                 imageRendering: "auto",
                 pointerEvents: "none",
-                left: PROF.x - 40,
-                top:  PROF.y - 80,
+                left: PROF.x - 36,
+                top:  PROF.y - 54,
               }}
             />
           )}
@@ -873,17 +873,17 @@ export function WalkDemo() {
             left: px - 18, top: py + 2,
           }}/>
 
-          {/* Player sprite */}
+          {/* Player sprite — no CSS height; canvas buffer height controls display so portrait sprites aren't squashed */}
           <canvas ref={canvasRef} style={{
             position:"absolute",
-            width:SPRITE_PX, height:SPRITE_PX,
+            width:SPRITE_PX,
             imageRendering:"auto", pointerEvents:"none",
             left: px - SPRITE_PX/2, top: py - topOff,
           }}/>
         </div>
 
         {/* ── INTERACT BUTTON — Prof ────────────────────────────────────── */}
-        {scene === "lab" && nearProf && phase === "walk" && (
+        {scene === "lab" && nearProf && phase === "walk" && !starter && (
           <button
             onClick={() => setPhase(starter ? "d5" : "d1")}
             style={{
