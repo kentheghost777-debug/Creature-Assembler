@@ -25,7 +25,7 @@ type StarterId = typeof STARTERS[number]["id"];
 type Phase = "walk" | "d1" | "d2" | "pick" | "d3" | "d4" | "d5"
            | "maya_d1" | "maya_d2" | "maya_d3" | "maya_d4"
            | "maya_post1" | "maya_post2" | "maya_post3"
-           | "jay_d1"  | "jay_d2"  | "jay_d3"  | "jay_done"
+           | "jay_d1"  | "jay_d2"  | "jay_d3"  | "jay_d4"  | "jay_d5"  | "jay_done"
            | "jess_d1" | "jess_d2" | "jess_d3";
 type Scene = "overworld" | "lab" | "maya" | "jay" | "home";
 type Rect  = [number, number, number, number]; // x1 y1 x2 y2 world-px
@@ -556,7 +556,7 @@ export function WalkDemo() {
       d1: "d2", d2: "pick", d3: "d4", d4: "d5", d5: "walk",
       maya_d1: "maya_d2", maya_d2: "maya_d3", maya_d3: "maya_d4", maya_d4: "walk",
       maya_post1: "maya_post2", maya_post2: "maya_post3", maya_post3: "walk",
-      jay_d1: "jay_d2", jay_d2: "jay_d3", jay_d3: "walk",
+      jay_d1: "jay_d2", jay_d2: "jay_d3", jay_d3: "jay_d4", jay_d4: "jay_d5", jay_d5: "walk",
       jay_done: "walk",
       jess_d1: "jess_d2", jess_d2: "jess_d3", jess_d3: "walk",
     };
@@ -613,6 +613,8 @@ export function WalkDemo() {
     jay_d1: "After everything we've been through — the fences we climbed, mornings we slipped out before sunrise just to see what was past those trees... you really doing this? For real, today?",
     jay_d2: "I've been training harder than you know. Every morning before you were even awake. I'm not stepping out of this village to finish second. That's not who I am and you know it.",
     jay_d3: "But I'm glad it's you out there with me. Nobody else I'd want watching my back. Stay sharp. And don't even think about falling behind — I won't be slowing down. Not for anyone.",
+    jay_d4: "I don't go into anything blind. While everyone else was sparring in the yard I was reading — Realm theory, bonding science, rune taxonomy. There are rune types out there most Keepers have never even laid eyes on. Common, rare, mythic. Every single one of them has a name on my list. I'm collecting them all.",
+    jay_d5: "Here's what they don't teach you early enough — socket a rune into a shell that holds a Tayanari and the bond amplifies. Offensive surge, healing pulse, barrier field. The right rune changes a battle in seconds. This one's yours. An Obsidian Healing Rune. Call it a head start. Don't waste it.",
     jess_d1: "You're really going, aren't you. I've known this day was coming ever since I caught you sneaking off before sunrise to watch the wild Tayanari out in the meadow. You were nine years old. You've been ready since then.",
     jess_d2: "I'm not going to beg you to stay. That's not what love is. Love is packing your favourite bread in the outer pocket of your pack so you find it when you need it most. I did that last night while you were sleeping.",
     jess_d3: "Come home with stories worth telling. And come home. That's all I ask. I love you. Now go — before I change my mind and chain you to that kitchen table.",
@@ -982,7 +984,7 @@ export function WalkDemo() {
         )}
 
         {/* ── JAY DIALOG BOX ───────────────────────────────────────────── */}
-        {(phase === "jay_d1" || phase === "jay_d2" || phase === "jay_d3" || phase === "jay_done") && (
+        {(phase === "jay_d1" || phase === "jay_d2" || phase === "jay_d3" || phase === "jay_d4" || phase === "jay_d5" || phase === "jay_done") && (
           <div style={{
             position:"absolute", bottom:0, left:0, right:0,
             background:"linear-gradient(to top,rgba(4,8,18,0.97),rgba(6,10,24,0.93))",
@@ -1005,7 +1007,7 @@ export function WalkDemo() {
             <div style={{ display:"flex", justifyContent:"flex-end" }}>
               <button
                 onClick={() => {
-                  if (phase === "jay_d3") {
+                  if (phase === "jay_d5") {
                     setPhase("walk");
                     setHasHealingRune(true);
                     setRuneNotif(true);
@@ -1021,7 +1023,7 @@ export function WalkDemo() {
                   borderRadius:8, fontSize:13, fontWeight:700,
                   cursor:"pointer",
                 }}
-              >{phase === "jay_d3" ? "OK" : "Next ▶"}</button>
+              >{phase === "jay_d5" ? "OK" : "Next ▶"}</button>
             </div>
           </div>
         )}
