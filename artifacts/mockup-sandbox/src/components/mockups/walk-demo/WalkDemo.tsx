@@ -649,7 +649,7 @@ export function WalkDemo() {
         } else if (sc === "overworld" && dy >= 0 && inRect(worldPos.current.x, worldPos.current.y, OW_PLAYER_HOME_DOOR)) {
           transitionTo("home", 400, 670);       // enter player's home — only when moving south into gate
         } else if (sc === "home" && inRect(worldPos.current.x, worldPos.current.y, PLAYER_HOME_EXIT)) {
-          transitionTo("overworld", 567, 570);  // inside player home yard, clear of trigger and building
+          transitionTo("overworld", 567, 528);  // north of player home fence (y=537), matching Ellio/Lia pattern
         } else if (sc === "overworld" && dy >= 0 && inRect(worldPos.current.x, worldPos.current.y, OW_ELLIO_DOOR)) {
           transitionTo("ellio", 400, 670);      // enter Ellio's home — only when moving south into gate
         } else if (sc === "ellio" && inRect(worldPos.current.x, worldPos.current.y, ELLIO_HOME_EXIT)) {
