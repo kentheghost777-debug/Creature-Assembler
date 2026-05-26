@@ -94,7 +94,7 @@ const OW_BLOCKED: Rect[] = [
 // ── Lia's Home ─────────────────────────────────────────────────────────────
 const LH = { w: 800, h: 800 };
 const LIA_POS = { x: 385, y: 355 }; // Lia near the center rug
-const OW_LIA_DOOR: Rect  = [840, 780, 910, 808]; // ON visible front door — south face of building (south road approach)
+const OW_LIA_DOOR: Rect  = [890, 780, 950, 810]; // ON visible front door — right side of Lia's south face (mailbox is on the LEFT)
 const LIA_HOME_EXIT: Rect = [310, 722, 490, 790]; // bottom-center door
 const LH_BLOCKED: Rect[] = [
   // ── WALLS ──────────────────────────────────────────────────────────────────
@@ -218,7 +218,7 @@ const JAY_BLOCKED: Rect[] = [
 // ── Ellio's Home ─────────────────────────────────────────────────────────────
 const EH = { w: 800, h: 800 };
 const ELLIO_POS = { x: 400, y: 350 };
-const OW_ELLIO_DOOR: Rect  = [230, 780, 310, 808]; // ON visible front door — south face of building (south road approach)
+const OW_ELLIO_DOOR: Rect  = [155, 780, 215, 810]; // ON visible front door — left side of Ellio's south face (mailbox is on the RIGHT)
 const ELLIO_HOME_EXIT: Rect = [305, 725, 505, 790];
 const EH_BLOCKED: Rect[] = [
   [0, 0, 800, 60], [0, 0, 60, 800], [740, 0, 800, 800],
@@ -233,7 +233,7 @@ const EH_BLOCKED: Rect[] = [
 // ── Player's Home ────────────────────────────────────────────────────────────
 const PH = { w: 800, h: 800 };
 const JESS_POS = { x: 395, y: 370 }; // Jess standing in the open center of the home
-const OW_PLAYER_HOME_DOOR: Rect = [505, 820, 625, 850]; // ON visible front door — south face of building (south road approach)
+const OW_PLAYER_HOME_DOOR: Rect = [545, 820, 605, 850]; // ON visible front door — narrowed to door art only (mailbox sits to the WEST outside this band); also requires "up" key to enter (anti walk-by)
 const PLAYER_HOME_EXIT: Rect = [305, 725, 505, 790]; // bottom-center door
 const PH_BLOCKED: Rect[] = [
   // ── WALLS ──────────────────────────────────────────────────────────────────
@@ -646,10 +646,10 @@ export function WalkDemo() {
           transitionTo("overworld", 878, 468);  // south of Maya fence (y=452)
         } else if (sc === "jay" && inRect(worldPos.current.x, worldPos.current.y, JAY_HOME_EXIT)) {
           transitionTo("overworld", 272, 468);  // south of Jay fence (y=452)
-        } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_PLAYER_HOME_DOOR)) {
-          transitionTo("home", 400, 670);       // enter Player Home — trigger sits ON visible front door (south face)
+        } else if (sc === "overworld" && h === "up" && inRect(worldPos.current.x, worldPos.current.y, OW_PLAYER_HOME_DOOR)) {
+          transitionTo("home", 400, 670);       // enter Player Home — trigger sits ON visible front door (south face); require UP key so east-west walk-by on the south road doesn't enter
         } else if (sc === "home" && inRect(worldPos.current.x, worldPos.current.y, PLAYER_HOME_EXIT)) {
-          transitionTo("overworld", 565, 856);  // exit onto south road, S of door (door y=820–850)
+          transitionTo("overworld", 575, 858);  // exit onto south road, S of door (door y=820–850); avoid landing inside trigger
         } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_ELLIO_DOOR)) {
           transitionTo("ellio", 400, 670);      // enter Ellio's Home — trigger on visible front door
         } else if (sc === "ellio" && inRect(worldPos.current.x, worldPos.current.y, ELLIO_HOME_EXIT)) {
