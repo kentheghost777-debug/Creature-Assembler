@@ -28,22 +28,20 @@ type Rect  = [number, number, number, number]; // x1 y1 x2 y2 world-px
 // ── Collision zones ─────────────────────────────────────────────────────────
 // Only block solid structures. Leave wide paths (~90 px) on both sides.
 const OW_BLOCKED: Rect[] = [
-  // Hard map edges — top strip split to leave the central Route-1 path open
+  // Hard map edges — central corridor x=275-525 left open for Route-1 path
   [0,   0,   275, 58 ],  // top-left trees
   [525, 0,   800, 58 ],  // top-right trees
   [0,   852, 800, 900],  // bottom strip
   [0,   0,   58,  900],  // left tree column
   [742, 0,   800, 900],  // right tree column
-  // Prof Lab — dome body only (not fences/garden)
-  [210, 58,  590, 295],
-  // Small fence posts either side of lab gate (leave 200–590 as walkable approach)
-  [150, 295, 212, 370],  // left post
-  [588, 295, 650, 370],  // right post
+  // Lab dome — left side only so the central corridor (x=275-525) stays open
+  [58,  58,  275, 340],
+  // Right-side structures (tech tower, bulletin board)
+  [525, 58,  742, 340],
   // Player Home — dome body only
   [210, 482, 590, 692],
-  // Small fence posts either side of home gate
-  [150, 692, 212, 778],  // left post
-  [588, 692, 650, 778],  // right post
+  [150, 692, 212, 778],  // home gate left post
+  [588, 692, 650, 778],  // home gate right post
 ];
 // Future Route-1 exit trigger (top of central path)
 const OW_ROUTE1_EXIT: Rect = [275, 0, 525, 12];
