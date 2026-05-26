@@ -26,8 +26,9 @@ type Phase = "walk" | "d1" | "d2" | "pick" | "d3" | "d4" | "d5"
            | "maya_d1" | "maya_d2" | "maya_d3" | "maya_d4"
            | "maya_post1" | "maya_post2" | "maya_post3"
            | "jay_d1"  | "jay_d2"  | "jay_d3"  | "jay_d4"  | "jay_d5"  | "jay_done"
-           | "jess_d1" | "jess_d2" | "jess_d3";
-type Scene = "overworld" | "lab" | "maya" | "jay" | "home";
+           | "jess_d1" | "jess_d2" | "jess_d3"
+           | "ellio_d1" | "ellio_d2" | "ellio_d3" | "ellio_done";
+type Scene = "overworld" | "lab" | "maya" | "jay" | "home" | "ellio";
 type Rect  = [number, number, number, number]; // x1 y1 x2 y2 world-px
 
 // ── Collision zones ─────────────────────────────────────────────────────────
@@ -135,6 +136,21 @@ const JAY_BLOCKED: Rect[] = [
   [455, 390,  735, 715],  // hanging gear + clothing rack + shelves + baskets
 ];
 
+// ── Ellio's Home ─────────────────────────────────────────────────────────────
+const EH = { w: 800, h: 800 };
+const ELLIO_POS = { x: 400, y: 350 };
+const OW_ELLIO_DOOR: Rect  = [220, 553, 325, 585];
+const ELLIO_HOME_EXIT: Rect = [305, 725, 505, 790];
+const EH_BLOCKED: Rect[] = [
+  [0, 0, 800, 60], [0, 0, 60, 800], [740, 0, 800, 800],
+  [0, 735, 305, 800], [505, 735, 800, 800],
+  [0, 0, 800, 185],
+  [60, 185, 210, 370], [60, 185, 800, 255],
+  [490, 185, 800, 700],
+  [60, 415, 205, 525], [110, 480, 245, 580],
+  [60, 610, 210, 715],
+];
+
 // ── Player's Home ────────────────────────────────────────────────────────────
 const PH = { w: 800, h: 800 };
 const JESS_POS = { x: 395, y: 370 }; // Jess standing in the open center of the home
@@ -239,11 +255,16 @@ export function WalkDemo() {
   const [mayaInteractPos,  setMayaInteractPos]  = useState({ sx: 0, sy: 0 });
   const [jayInteractPos,   setJayInteractPos]   = useState({ sx: 0, sy: 0 });
   const [shellInteractPos, setShellInteractPos] = useState({ sx: 0, sy: 0 });
-  const [nearJess,            setNearJess]            = useState(false);
-  const [jessInteractPos,     setJessInteractPos]     = useState({ sx: 0, sy: 0 });
-  const [hasHealingRune,      setHasHealingRune]      = useState(false);
-  const [healingRuneEquipped, setHealingRuneEquipped] = useState(false);
-  const [runeNotif,           setRuneNotif]           = useState(false);
+  const [nearJess,               setNearJess]               = useState(false);
+  const [jessInteractPos,        setJessInteractPos]        = useState({ sx: 0, sy: 0 });
+  const [hasHealingRune,         setHasHealingRune]         = useState(false);
+  const [healingRuneEquipped,    setHealingRuneEquipped]    = useState(false);
+  const [runeNotif,              setRuneNotif]              = useState(false);
+  const [nearEllio,              setNearEllio]              = useState(false);
+  const [ellioInteractPos,       setEllioInteractPos]       = useState({ sx: 0, sy: 0 });
+  const [hasResonanceStone,      setHasResonanceStone]      = useState(false);
+  const [resonanceStoneEquipped, setResonanceStoneEquipped] = useState(false);
+  const [resonanceNotif,         setResonanceNotif]         = useState(false);
 
   const canvasRef          = useRef<HTMLCanvasElement>(null);
   const profCanvasRef      = useRef<HTMLCanvasElement>(null);
@@ -254,6 +275,8 @@ export function WalkDemo() {
   const jayPortraitRef     = useRef<HTMLCanvasElement>(null);
   const jessCanvasRef      = useRef<HTMLCanvasElement>(null);
   const jessPortraitRef    = useRef<HTMLCanvasElement>(null);
+  const ellioCanvasRef     = useRef<HTMLCanvasElement>(null);
+  const ellioPortraitRef   = useRef<HTMLCanvasElement>(null);
   const shadowRef  = useRef<HTMLDivElement>(null);
   const worldRef   = useRef<HTMLDivElement>(null);
   const vpRef      = useRef<HTMLDivElement>(null);
@@ -283,6 +306,9 @@ export function WalkDemo() {
       "/__mockup/images/jay-sprite.png",
       "/__mockup/images/player-home-interior.png",
       "/__mockup/images/jess-sprite.png",
+      "/__mockup/images/ellio-home-interior.png",
+      "/__mockup/images/ellio-sprite.png",
+      "/__mockup/images/resonance-stone.png",
       "/__mockup/images/weathered-shell.png",
       ...STARTERS.map(s => s.img),
     ].forEach(loadImg);
@@ -365,6 +391,30 @@ export function WalkDemo() {
     tryDraw();
   }, [phase]);
 
+  // Draw Ellio world sprite inside Ellio's home
+  useEffect(() => {
+    if (scene !== "ellio") return;
+    const src = "/__mockup/images/ellio-sprite.png";
+    const tryDraw = () => {
+      const c = ellioCanvasRef.current;
+      if (!c) return;
+      if (!drawSprite(c, src, false, 68)) setTimeout(tryDraw, 150);
+    };
+    tryDraw();
+  }, [scene]);
+
+  // Draw Ellio portrait in dialog box
+  useEffect(() => {
+    if (!phase.startsWith("ellio_")) return;
+    const src = "/__mockup/images/ellio-sprite.png";
+    const tryDraw = () => {
+      const c = ellioPortraitRef.current;
+      if (!c) return;
+      if (!drawSprite(c, src, false)) setTimeout(tryDraw, 150);
+    };
+    tryDraw();
+  }, [phase]);
+
   // Draw Jess world sprite inside player home
   useEffect(() => {
     if (scene !== "home") return;
@@ -433,8 +483,8 @@ export function WalkDemo() {
       if (!fadingRef.current && phaseRef.current === "walk") {
         const h       = heldRef.current;
         const sc      = sceneRef.current;
-        const world   = sc === "overworld" ? OW : sc === "lab" ? LB : sc === "maya" ? MY : sc === "jay" ? JY : PH;
-        const zones   = sc === "overworld" ? OW_BLOCKED : sc === "lab" ? LAB_BLOCKED : sc === "maya" ? MAYA_BLOCKED : sc === "jay" ? JAY_BLOCKED : PH_BLOCKED;
+        const world   = sc === "overworld" ? OW : sc === "lab" ? LB : sc === "maya" ? MY : sc === "jay" ? JY : sc === "ellio" ? EH : PH;
+        const zones   = sc === "overworld" ? OW_BLOCKED : sc === "lab" ? LAB_BLOCKED : sc === "maya" ? MAYA_BLOCKED : sc === "jay" ? JAY_BLOCKED : sc === "ellio" ? EH_BLOCKED : PH_BLOCKED;
 
         let newAnim = "idle";
         let newFlip = flipRef.current;
@@ -468,6 +518,10 @@ export function WalkDemo() {
           transitionTo("home", 405, 660);       // enter player's home
         } else if (sc === "home" && inRect(worldPos.current.x, worldPos.current.y, PLAYER_HOME_EXIT)) {
           transitionTo("overworld", 562, 470);  // exit north of home collision (safe walkable path)
+        } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_ELLIO_DOOR)) {
+          transitionTo("ellio", 405, 660);      // enter Ellio's home
+        } else if (sc === "ellio" && inRect(worldPos.current.x, worldPos.current.y, ELLIO_HOME_EXIT)) {
+          transitionTo("overworld", 272, 620);  // exit south of Ellio's door in OW
         }
 
         // Flip / anim change
@@ -523,6 +577,15 @@ export function WalkDemo() {
           setNearJay(near);
           if (near) setJayInteractPos({ sx: screenX, sy: screenY });
         }
+        // Near-Ellio check (Ellio's home)
+        if (sc === "ellio") {
+          const d = dist(px, py, ELLIO_POS.x, ELLIO_POS.y);
+          const near = d < 120;
+          const screenX = (px - cam.current.x) * ZOOM;
+          const screenY = (py - cam.current.y - topOff - 28) * ZOOM;
+          setNearEllio(near);
+          if (near) setEllioInteractPos({ sx: screenX, sy: screenY });
+        }
         // Near-Jess check (player home)
         if (sc === "home") {
           const d = dist(px, py, JESS_POS.x, JESS_POS.y);
@@ -559,6 +622,8 @@ export function WalkDemo() {
       jay_d1: "jay_d2", jay_d2: "jay_d3", jay_d3: "jay_d4", jay_d4: "jay_d5", jay_d5: "walk",
       jay_done: "walk",
       jess_d1: "jess_d2", jess_d2: "jess_d3", jess_d3: "walk",
+      ellio_d1: "ellio_d2", ellio_d2: "ellio_d3", ellio_d3: "walk",
+      ellio_done: "walk",
     };
     const next = map[from];
     if (next) setPhase(next);
@@ -622,6 +687,10 @@ export function WalkDemo() {
     maya_post2: "It's never guaranteed. A calm Tayanari might wander in out of curiosity. Even a rampaging one can blunder straight into a shell and bond with it. The shell becomes its home — if it chooses to accept.",
     maya_post3: "And my father used to say: 'A shell is just a home, but a rune makes it a welcome.' There are many types of shells, each with their own energy — and so many runes to socket inside them. You've already found one, I hear.",
     jay_done: "You're good. Go find some wild ones to catch — I'll be right behind you.",
+    ellio_d1: "I knew you'd stop by before you left — the whole village knew today was the day. I'm Ellio. Ask anyone in Primeria — my plan is to join the Merchants Collective. I've been studying trade routes, supply margins, market gaps. One day I'll be running caravans across every region. But right now, I've actually got something for you.",
+    ellio_d2: "A Resonance Stone. I came across it on a trade caravan last season. The merchants swore these things build a genuine bond between a Keeper and their Tayanari — something about frequencies, shared energy, resonance between spirits. I don't fully understand the mechanics. But I know it's real.",
+    ellio_d3: "Here's how they said to use it in battle: equip it to yourself — not your Tayanari. When you channel it, you can throw a small elemental move tuned to your partner's type. Raw and basic, but yours. I'm told it grows with you over time, though I don't know the full details yet. Take it. A merchant always travels light — and this one belongs with a Keeper.",
+    ellio_done: "Safe roads. Come find me when you're a legend — I'll have something worth trading.",
   };
 
   return (
@@ -633,8 +702,8 @@ export function WalkDemo() {
         {/* World container — camera-scrolled + zoomed */}
         <div ref={worldRef} style={{
           position: "absolute",
-          width:  scene === "overworld" ? OW.w : scene === "lab" ? LB.w : scene === "maya" ? MY.w : scene === "jay" ? JY.w : PH.w,
-          height: scene === "overworld" ? OW.h : scene === "lab" ? LB.h : scene === "maya" ? MY.h : scene === "jay" ? JY.h : PH.h,
+          width:  scene === "overworld" ? OW.w : scene === "lab" ? LB.w : scene === "maya" ? MY.w : scene === "jay" ? JY.w : scene === "ellio" ? EH.w : PH.w,
+          height: scene === "overworld" ? OW.h : scene === "lab" ? LB.h : scene === "maya" ? MY.h : scene === "jay" ? JY.h : scene === "ellio" ? EH.h : PH.h,
           willChange: "transform",
           transformOrigin: "0 0",
           transform: `scale(${ZOOM}) translate(${-cam.current.x}px,${-cam.current.y}px)`,
@@ -642,7 +711,7 @@ export function WalkDemo() {
           {/* Map background */}
           <img
             key={scene}
-            src={scene === "overworld"
+            src={scene === "ellio" ? "/__mockup/images/ellio-home-interior.png" : scene === "overworld"
               ? "/__mockup/images/overworld-map.png"
               : scene === "lab"
               ? "/__mockup/images/prof-lab-interior.png"
@@ -736,6 +805,24 @@ export function WalkDemo() {
           )}
 
           {/* Jess NPC sprite inside player home */}
+          {scene === "ellio" && (
+            <>
+              <canvas ref={ellioCanvasRef} style={{
+                position:"absolute",
+                imageRendering:"auto", pointerEvents:"none",
+                left: ELLIO_POS.x - 34,
+                top:  ELLIO_POS.y - 51,
+              }}/>
+              <div style={{
+                position:"absolute",
+                left: ELLIO_POS.x - 18, top: ELLIO_POS.y - 80,
+                color:"#a8d898", fontSize:8, fontWeight:800,
+                letterSpacing:1, pointerEvents:"none",
+                textShadow:"0 0 4px #000,0 0 8px #000",
+              }}>ELLIO</div>
+            </>
+          )}
+
           {scene === "home" && (
             <>
               <canvas ref={jessCanvasRef} style={{
@@ -850,6 +937,21 @@ export function WalkDemo() {
         )}
 
         {/* ── INTERACT BUTTON — Jess ────────────────────────────────────── */}
+        {scene === "ellio" && nearEllio && phase === "walk" && (
+          <button
+            onClick={() => setPhase(hasResonanceStone ? "ellio_done" : "ellio_d1")}
+            style={{
+              position:"absolute",
+              left: ellioInteractPos.sx - 18,
+              top:  ellioInteractPos.sy - 10,
+              width:36, height:36, borderRadius:"50%",
+              background:"#a8e878", border:"2px solid #fff",
+              color:"#1a2a08", fontSize:20, fontWeight:900,
+              cursor:"pointer", zIndex:10,
+              display:"flex", alignItems:"center", justifyContent:"center",
+            }}>!</button>
+        )}
+
         {scene === "home" && nearJess && phase === "walk" && (
           <button
             onClick={() => setPhase("jess_d1")}
@@ -915,6 +1017,33 @@ export function WalkDemo() {
               </div>
               <div style={{ color:"#e8dcc8", fontSize:12, marginTop:3, fontWeight:600 }}>
                 Obsidian Healing Rune ×1
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── RESONANCE STONE NOTIFICATION ─────────────────────────────── */}
+        {resonanceNotif && (
+          <div style={{
+            position:"absolute", top:"38%", left:"50%",
+            transform:"translate(-50%,-50%)",
+            background:"rgba(4,14,4,0.97)",
+            border:"1.5px solid rgba(80,180,240,0.65)",
+            borderRadius:14, padding:"14px 20px",
+            display:"flex", alignItems:"center", gap:14,
+            zIndex:60, pointerEvents:"none",
+            boxShadow:"0 4px 24px rgba(80,160,240,0.25)",
+          }}>
+            <img src="/__mockup/images/resonance-stone.png" alt="Resonance Stone" style={{
+              width:42, height:42, objectFit:"contain", flexShrink:0,
+              filter:"drop-shadow(0 0 8px rgba(80,160,240,0.7))",
+            }}/>
+            <div>
+              <div style={{ color:"#80c0f8", fontWeight:800, fontSize:13, letterSpacing:0.5 }}>
+                Item Received!
+              </div>
+              <div style={{ color:"#e8dcc8", fontSize:12, marginTop:3, fontWeight:600 }}>
+                Resonance Stone ×1
               </div>
             </div>
           </div>
@@ -1100,6 +1229,54 @@ export function WalkDemo() {
           </div>
         )}
 
+        {/* ── ELLIO DIALOG BOX ─────────────────────────────────────────── */}
+        {(phase === "ellio_d1" || phase === "ellio_d2" || phase === "ellio_d3" || phase === "ellio_done") && (
+          <div style={{
+            position:"absolute", bottom:0, left:0, right:0,
+            background:"linear-gradient(to top,rgba(4,14,4,0.97),rgba(6,18,6,0.93))",
+            borderTop:"2px solid rgba(120,200,80,0.55)",
+            padding:"10px 14px 14px",
+            zIndex:20,
+          }}>
+            <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+              <canvas ref={ellioPortraitRef}
+                style={{ width:44, height:44, borderRadius:8,
+                  background:"#040e04", border:"1px solid rgba(120,200,80,0.4)" }}
+              />
+              <span style={{ color:"#a8e070", fontWeight:700, fontSize:13, letterSpacing:1 }}>
+                ELLIO
+              </span>
+              <span style={{ color:"#6a9048", fontSize:9, fontWeight:600, letterSpacing:0.8, marginLeft:2 }}>
+                · Aspiring Merchant
+              </span>
+            </div>
+            <p style={{ color:"#e8dcc8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>
+              {LINES[phase]}
+            </p>
+            <div style={{ display:"flex", justifyContent:"flex-end" }}>
+              <button
+                onClick={() => {
+                  if (phase === "ellio_d3") {
+                    setPhase("walk");
+                    setHasResonanceStone(true);
+                    setResonanceNotif(true);
+                    setTimeout(() => setResonanceNotif(false), 3200);
+                  } else {
+                    advanceDialog(phase);
+                  }
+                }}
+                style={{
+                  background:"rgba(120,200,80,0.12)",
+                  border:"1px solid rgba(120,200,80,0.45)",
+                  color:"#a8e070", padding:"6px 20px",
+                  borderRadius:8, fontSize:13, fontWeight:700,
+                  cursor:"pointer",
+                }}
+              >{phase === "ellio_d3" ? "OK" : "Next ▶"}</button>
+            </div>
+          </div>
+        )}
+
         {/* ── STARTER PICKER ───────────────────────────────────────────── */}
         {phase === "pick" && (
           <div style={{
@@ -1278,7 +1455,7 @@ export function WalkDemo() {
                             paddingBottom:2,
                           }}>{starter.type.toUpperCase()}</div>
                           <div style={{ color:"#826040", fontSize:11, marginTop:5 }}>
-                            Level&nbsp;1&emsp;·&emsp;HP 40 / 40
+                            Level&nbsp;1&emsp;·&emsp;HP 50 / 50
                           </div>
                           <div style={{ color:"#6a50a0", fontSize:9, fontWeight:800, marginTop:4, letterSpacing:0.5 }}>
                             ◈ Obsidian Realm Shell{healingRuneEquipped ? "  ·  ✦ Healing Rune" : ""}
@@ -1297,6 +1474,60 @@ export function WalkDemo() {
                         color:"#b09468", fontSize:12, fontStyle:"italic",
                       }}>— No companion yet. Speak with the Professor. —</div>
                     )}
+
+                    {/* ── Player (Keeper) equipment row ── */}
+                    <div style={{
+                      display:"flex", alignItems:"center", gap:13,
+                      padding:"10px 2px 13px",
+                      borderBottom:"1px dashed rgba(100,64,20,0.28)",
+                    }}>
+                      <div style={{
+                        width:56, height:56, borderRadius:8, flexShrink:0,
+                        background:"rgba(40,60,20,0.10)",
+                        border:"1px solid rgba(80,140,40,0.22)",
+                        display:"flex", alignItems:"center", justifyContent:"center",
+                        fontSize:26,
+                      }}>🧭</div>
+                      <div style={{ flex:1 }}>
+                        <div style={{ color:"#2a1206", fontWeight:800, fontSize:14, letterSpacing:0.3 }}>
+                          You (Keeper)
+                        </div>
+                        <div style={{ color:"#826040", fontSize:10, marginTop:4 }}>
+                          Player equipment
+                        </div>
+                        {resonanceStoneEquipped && starter ? (
+                          <div style={{ display:"flex", alignItems:"center", gap:6, marginTop:5 }}>
+                            <img src="/__mockup/images/resonance-stone.png" alt="Stone"
+                              style={{ width:16, height:16, objectFit:"contain" }}/>
+                            <div style={{ color:"#60a0e0", fontSize:10, fontWeight:700 }}>
+                              Resonance Stone · {starter.type} move · 10–20 dmg
+                            </div>
+                          </div>
+                        ) : hasResonanceStone ? (
+                          <div style={{ color:"#a07848", fontSize:10, marginTop:5, fontStyle:"italic" }}>
+                            Resonance Stone — not equipped
+                          </div>
+                        ) : (
+                          <div style={{ color:"#c0a070", fontSize:10, marginTop:5, fontStyle:"italic" }}>
+                            No equipment
+                          </div>
+                        )}
+                      </div>
+                      {hasResonanceStone && (
+                        <button
+                          onClick={() => setResonanceStoneEquipped(v => !v)}
+                          style={{
+                            padding:"5px 11px", borderRadius:8, flexShrink:0,
+                            background: resonanceStoneEquipped
+                              ? "rgba(180,60,60,0.10)" : "rgba(40,80,160,0.10)",
+                            border: resonanceStoneEquipped
+                              ? "1px solid rgba(180,60,60,0.40)" : "1px solid rgba(80,140,200,0.40)",
+                            color: resonanceStoneEquipped ? "#c04040" : "#5090c0",
+                            fontSize:10, fontWeight:800, cursor:"pointer",
+                          }}
+                        >{resonanceStoneEquipped ? "Unequip" : "Equip"}</button>
+                      )}
+                    </div>
 
                     {[2,3,4,5,6].map(n => (
                       <div key={n} style={{
@@ -1458,7 +1689,7 @@ export function WalkDemo() {
                 {/* ── BAG PAGE ────────────────────────────────────── */}
                 {journalTab === "bag" && (
                   <div style={{ display:"flex", flexDirection:"column" }}>
-                    {!shellsCollected && !hasHealingRune && (
+                    {!shellsCollected && !hasHealingRune && !hasResonanceStone && (
                       <div style={{
                         textAlign:"center", padding:"26px 0",
                         color:"#b09468", fontSize:12, fontStyle:"italic",
@@ -1497,6 +1728,40 @@ export function WalkDemo() {
                           border:"1px solid rgba(100,64,20,0.22)",
                           flexShrink:0,
                         }}>×24</div>
+                      </div>
+                    )}
+
+                    {/* Resonance Stone — only shown when not equipped */}
+                    {hasResonanceStone && !resonanceStoneEquipped && (
+                      <div style={{
+                        display:"flex", alignItems:"center", gap:13,
+                        padding:"10px 2px 13px",
+                        borderBottom:"1px dashed rgba(100,64,20,0.28)",
+                      }}>
+                        <img src="/__mockup/images/resonance-stone.png" alt="Resonance Stone" style={{
+                          width:48, height:48, objectFit:"contain", flexShrink:0,
+                          filter:"drop-shadow(0 0 6px rgba(80,160,240,0.5))",
+                        }}/>
+                        <div style={{ flex:1 }}>
+                          <div style={{ color:"#2a1206", fontWeight:800, fontSize:14 }}>
+                            Resonance Stone
+                          </div>
+                          <div style={{ color:"#826040", fontSize:11, marginTop:4, lineHeight:1.5 }}>
+                            Builds bond between Keeper and Tayanari. Equip to use elemental moves in battle.
+                          </div>
+                          {starter && (
+                            <div style={{ color:"#4a80c0", fontSize:10, fontWeight:700, marginTop:4 }}>
+                              Attuned to {starter.type} · 10–20 dmg · scales with bond
+                            </div>
+                          )}
+                        </div>
+                        <div style={{
+                          color:"#4a6a9a", fontSize:12, fontWeight:900,
+                          background:"rgba(60,100,160,0.10)",
+                          padding:"4px 12px", borderRadius:20,
+                          border:"1px solid rgba(80,130,200,0.22)",
+                          flexShrink:0,
+                        }}>×1</div>
                       </div>
                     )}
 
@@ -1563,7 +1828,7 @@ export function WalkDemo() {
           border:"1px solid rgba(240,208,96,0.3)", pointerEvents:"none",
           textTransform:"uppercase", zIndex:5,
         }}>
-          {scene === "overworld" ? "Primeria Village" : scene === "lab" ? "Prof. Irwyn's Lab" : scene === "maya" ? "Maya's Home" : scene === "jay" ? "Jay's Home" : "Your Home"}
+          {scene === "overworld" ? "Primeria Village" : scene === "lab" ? "Prof. Irwyn's Lab" : scene === "maya" ? "Maya's Home" : scene === "jay" ? "Jay's Home" : scene === "ellio" ? "Ellio's Home" : "Your Home"}
         </div>
 
         {/* Fade overlay */}
