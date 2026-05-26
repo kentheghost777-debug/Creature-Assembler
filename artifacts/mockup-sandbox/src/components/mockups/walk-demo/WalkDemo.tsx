@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 const OW = { w: 800, h: 900 }; // overworld
 const LB = { w: 700, h: 700 }; // lab
 const SPEED     = 3.5;
-const SPRITE_PX = 76;
+const SPRITE_PX = 96;   // bigger on mobile
 const ANCHOR    = 0.75; // fraction of sprite above anchor point
 
 // ── Tayanari starter data ───────────────────────────────────────────────────
@@ -88,12 +88,29 @@ function drawSprite(canvas: HTMLCanvasElement, src: string, flipX: boolean): boo
   ctx.drawImage(img, 0, 0);
   if (flipX) ctx.setTransform(1, 0, 0, 1, 0, 0);
   try {
-    const id = ctx.getImageData(0, 0, W, H);
-    const px = id.data;
-    for (let i = 0; i < px.length; i += 4)
-      if (px[i] < 16 && px[i+1] < 16 && px[i+2] < 16) px[i+3] = 0;
+    const id  = ctx.getImageData(0, 0, W, H);
+    const d   = id.data;
+    // BFS flood-fill from every edge pixel — only background black gets erased,
+    // interior dark armor/shadow pixels are never touched.
+    const isBlack = (i: number) => d[i] < 30 && d[i+1] < 30 && d[i+2] < 30;
+    const vis = new Uint8Array(W * H);
+    const q: number[] = [];
+    const seed = (idx: number) => {
+      if (!vis[idx] && isBlack(idx * 4)) { vis[idx] = 1; q.push(idx); }
+    };
+    for (let x = 0; x < W; x++) { seed(x); seed((H-1)*W + x); }
+    for (let y = 1; y < H-1; y++) { seed(y*W); seed(y*W + W-1); }
+    while (q.length) {
+      const i = q.pop()!;
+      d[i*4+3] = 0;
+      const x = i%W, y = (i/W)|0;
+      if (x > 0)   seed(i-1);
+      if (x < W-1) seed(i+1);
+      if (y > 0)   seed(i-W);
+      if (y < H-1) seed(i+W);
+    }
     ctx.putImageData(id, 0, 0);
-  } catch { /* leave with black bg */ }
+  } catch { /* leave with black bg if CORS blocked */ }
   return true;
 }
 
