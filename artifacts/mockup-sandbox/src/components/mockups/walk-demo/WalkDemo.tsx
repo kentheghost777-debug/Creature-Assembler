@@ -128,26 +128,20 @@ const OW_PROF_DOOR: Rect = [498, 328, 580, 378]; // tight zone around lab door (
 // South gate (blue) connects back to town; north continues deeper (future)
 const R1_SOUTH_GATE: Rect = [418, 750, 582, 780]; // bottom-center exit → overworld
 const R1_BLOCKED: Rect[] = [
-  // ── OUTER FOREST BORDER ──────────────────────────────────────────────────
-  [0,    0,  1024,   68],  // top forest (full width)
-  [0,    0,    62,  780],  // left forest
-  [962,  0,  1024,  780],  // right forest
-  [0,   745,  418,  780],  // bottom forest — left of south gate
-  [582,  745, 1024,  780],  // bottom forest — right of south gate
-  // ── RIVER / POND (left-center) ────────────────────────────────────────────
-  [62,  270,  162,  360],  // upper stream channel
-  [62,  355,  252,  598],  // main pond body
-  [62,  592,  178,  655],  // lower bank / stream exit
-  // ── STONE WALLS & ROCK CLUSTERS (top section) ─────────────────────────────
-  [62,   68,  200,  172],  // top-left stone wall / fence cluster
-  [280,  68,  418,  148],  // upper-center fence + raised steps left
-  [582,  68,  752,  158],  // upper-center-right fence + stepped path
-  [750,  68,  962,  192],  // upper-right: tall obelisk + tree cluster
-  // ── RIGHT-SIDE ROCKS & OBELISK ────────────────────────────────────────────
-  [800,  190,  962,  388],  // right-mid rock cluster + second obelisk
-  [812,  388,  962,  530],  // right-lower rocks + hanging lantern post
-  // ── LOWER-LEFT TERRAIN ────────────────────────────────────────────────────
-  [62,   645,  218,  748],  // lower-left rock / fern cluster above gate
+  // ── OUTER FOREST BORDER (thin strips only) ───────────────────────────────
+  [0,    0,  1024,   50],  // top forest strip
+  [0,    0,    52,  780],  // left forest strip
+  [972,  0,  1024,  780],  // right forest strip
+  [0,   750,  418,  780],  // bottom — left of south gate
+  [582, 750,  1024, 780],  // bottom — right of south gate
+  // ── POND / STREAM (water body only — bridge at x≈140–200 is walkable) ────
+  [52,  330,  138,  580],  // pond water body
+  // ── TOP STONE FENCE LINE (blocks passage into top forest) ────────────────
+  [52,   50,  285,  108],  // top-left fence/wall line
+  [680,  50,  972,  145],  // top-right rock wall + obelisk base
+  // ── RIGHT OBELISK PILLARS (narrow columns) ────────────────────────────────
+  [900,  145,  972,  320],  // tall right obelisk
+  [888,  430,  972,  530],  // lower-right rock cluster
 ];
 
 const LAB_BLOCKED: Rect[] = [
@@ -239,7 +233,7 @@ const EH_BLOCKED: Rect[] = [
 // ── Player's Home ────────────────────────────────────────────────────────────
 const PH = { w: 800, h: 800 };
 const JESS_POS = { x: 395, y: 370 }; // Jess standing in the open center of the home
-const OW_PLAYER_HOME_DOOR: Rect = [532, 455, 602, 512]; // north fence gate (y=455–465) + yard to building north edge
+const OW_PLAYER_HOME_DOOR: Rect = [532, 455, 602, 470]; // tight zone: just the north fence gate row
 const PLAYER_HOME_EXIT: Rect = [305, 725, 505, 790]; // bottom-center door
 const PH_BLOCKED: Rect[] = [
   // ── WALLS ──────────────────────────────────────────────────────────────────
@@ -651,7 +645,7 @@ export function WalkDemo() {
         } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_PLAYER_HOME_DOOR)) {
           transitionTo("home", 400, 670);       // enter player's home — just inside door
         } else if (sc === "home" && inRect(worldPos.current.x, worldPos.current.y, PLAYER_HOME_EXIT)) {
-          transitionTo("overworld", 566, 445);  // north of Player fence (y=455)
+          transitionTo("overworld", 567, 482);  // inside player home yard, south of gate trigger
         } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_ELLIO_DOOR)) {
           transitionTo("ellio", 400, 670);      // enter Ellio's home — just inside door
         } else if (sc === "ellio" && inRect(worldPos.current.x, worldPos.current.y, ELLIO_HOME_EXIT)) {
