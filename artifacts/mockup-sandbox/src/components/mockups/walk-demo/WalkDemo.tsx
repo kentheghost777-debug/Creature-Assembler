@@ -24,8 +24,9 @@ type StarterId = typeof STARTERS[number]["id"];
 // ── Dialog phases ───────────────────────────────────────────────────────────
 type Phase = "walk" | "d1" | "d2" | "pick" | "d3" | "d4" | "d5"
            | "maya_d1" | "maya_d2" | "maya_d3" | "maya_d4"
-           | "jay_d1"  | "jay_d2"  | "jay_d3";
-type Scene = "overworld" | "lab" | "maya" | "jay";
+           | "jay_d1"  | "jay_d2"  | "jay_d3"
+           | "jess_d1" | "jess_d2" | "jess_d3";
+type Scene = "overworld" | "lab" | "maya" | "jay" | "home";
 type Rect  = [number, number, number, number]; // x1 y1 x2 y2 world-px
 
 // ── Collision zones ─────────────────────────────────────────────────────────
@@ -122,6 +123,26 @@ const JAY_BLOCKED: Rect[] = [
   [420, 385,  735, 715],  // training rack + hanging gear + storage shelves + baskets
 ];
 
+// ── Player's Home ────────────────────────────────────────────────────────────
+const PH = { w: 800, h: 800 };
+const JESS_POS = { x: 265, y: 400 }; // Jess standing near the dining table
+const OW_PLAYER_HOME_DOOR: Rect = [490, 492, 635, 508]; // north face of home — walk SOUTH to enter
+const PLAYER_HOME_EXIT: Rect = [305, 725, 505, 790]; // bottom-center door
+const PH_BLOCKED: Rect[] = [
+  // ── WALLS ──────────────────────────────────────────────────────────────────
+  [0,    0,   800,  80],  // top wall
+  [0,    0,    75, 800],  // left wall
+  [725,  0,   800, 800],  // right wall
+  [0,   715,  305, 800],  // bottom-left (door gap 305–505)
+  [505, 715,  800, 800],  // bottom-right
+  // ── FURNITURE ──────────────────────────────────────────────────────────────
+  [75,   80,  325, 235],  // kitchen / hearth / shelves (top-left)
+  [100, 250,  340, 415],  // dining table + chairs
+  [490,  80,  725, 300],  // bed + chest + nightstand (top-right)
+  [75,  430,  295, 645],  // sofa + coffee table + reading area (bottom-left)
+  [495, 415,  725, 650],  // craft / workshop shelves (bottom-right)
+];
+
 // ── Sprite / image utilities ─────────────────────────────────────────────────
 const imgCache: Record<string, HTMLImageElement> = {};
 function loadImg(src: string) {
@@ -193,6 +214,8 @@ export function WalkDemo() {
   const [mayaInteractPos,  setMayaInteractPos]  = useState({ sx: 0, sy: 0 });
   const [jayInteractPos,   setJayInteractPos]   = useState({ sx: 0, sy: 0 });
   const [shellInteractPos, setShellInteractPos] = useState({ sx: 0, sy: 0 });
+  const [nearJess,         setNearJess]         = useState(false);
+  const [jessInteractPos,  setJessInteractPos]  = useState({ sx: 0, sy: 0 });
 
   const canvasRef          = useRef<HTMLCanvasElement>(null);
   const profCanvasRef      = useRef<HTMLCanvasElement>(null);
@@ -201,6 +224,8 @@ export function WalkDemo() {
   const mayaPortraitRef    = useRef<HTMLCanvasElement>(null);
   const jayCanvasRef       = useRef<HTMLCanvasElement>(null);
   const jayPortraitRef     = useRef<HTMLCanvasElement>(null);
+  const jessCanvasRef      = useRef<HTMLCanvasElement>(null);
+  const jessPortraitRef    = useRef<HTMLCanvasElement>(null);
   const shadowRef  = useRef<HTMLDivElement>(null);
   const worldRef   = useRef<HTMLDivElement>(null);
   const vpRef      = useRef<HTMLDivElement>(null);
@@ -228,6 +253,8 @@ export function WalkDemo() {
       "/__mockup/images/maya-sprite.png",
       "/__mockup/images/jay-home-interior.png",
       "/__mockup/images/jay-sprite.png",
+      "/__mockup/images/player-home-interior.png",
+      "/__mockup/images/jess-sprite.png",
       "/__mockup/images/weathered-shell.png",
       ...STARTERS.map(s => s.img),
     ].forEach(loadImg);
@@ -310,6 +337,30 @@ export function WalkDemo() {
     tryDraw();
   }, [phase]);
 
+  // Draw Jess world sprite inside player home
+  useEffect(() => {
+    if (scene !== "home") return;
+    const src = "/__mockup/images/jess-sprite.png";
+    const tryDraw = () => {
+      const c = jessCanvasRef.current;
+      if (!c) return;
+      if (!drawSprite(c, src, false, 68)) setTimeout(tryDraw, 150);
+    };
+    tryDraw();
+  }, [scene]);
+
+  // Draw Jess portrait in dialog box
+  useEffect(() => {
+    if (!phase.startsWith("jess_")) return;
+    const src = "/__mockup/images/jess-sprite.png";
+    const tryDraw = () => {
+      const c = jessPortraitRef.current;
+      if (!c) return;
+      if (!drawSprite(c, src, false)) setTimeout(tryDraw, 150);
+    };
+    tryDraw();
+  }, [phase]);
+
   // Redraw player canvas
   const redraw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -354,8 +405,8 @@ export function WalkDemo() {
       if (!fadingRef.current && phaseRef.current === "walk") {
         const h       = heldRef.current;
         const sc      = sceneRef.current;
-        const world   = sc === "overworld" ? OW : sc === "lab" ? LB : sc === "maya" ? MY : JY;
-        const zones   = sc === "overworld" ? OW_BLOCKED : sc === "lab" ? LAB_BLOCKED : sc === "maya" ? MAYA_BLOCKED : JAY_BLOCKED;
+        const world   = sc === "overworld" ? OW : sc === "lab" ? LB : sc === "maya" ? MY : sc === "jay" ? JY : PH;
+        const zones   = sc === "overworld" ? OW_BLOCKED : sc === "lab" ? LAB_BLOCKED : sc === "maya" ? MAYA_BLOCKED : sc === "jay" ? JAY_BLOCKED : PH_BLOCKED;
 
         let newAnim = "idle";
         let newFlip = flipRef.current;
@@ -384,7 +435,11 @@ export function WalkDemo() {
         } else if (sc === "maya" && inRect(worldPos.current.x, worldPos.current.y, MAYA_HOME_EXIT)) {
           transitionTo("overworld", 867, 460);  // just south of Maya's door (y=460 > 408 safe)
         } else if (sc === "jay" && inRect(worldPos.current.x, worldPos.current.y, JAY_HOME_EXIT)) {
-          transitionTo("overworld", 272, 460);  // just south of Jay's door (y=460 > 408 safe)
+          transitionTo("overworld", 272, 460);  // just south of Jay's door
+        } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_PLAYER_HOME_DOOR)) {
+          transitionTo("home", 405, 660);       // enter player's home
+        } else if (sc === "home" && inRect(worldPos.current.x, worldPos.current.y, PLAYER_HOME_EXIT)) {
+          transitionTo("overworld", 562, 470);  // exit north of home collision (safe walkable path)
         }
 
         // Flip / anim change
@@ -440,6 +495,15 @@ export function WalkDemo() {
           setNearJay(near);
           if (near) setJayInteractPos({ sx: screenX, sy: screenY });
         }
+        // Near-Jess check (player home)
+        if (sc === "home") {
+          const d = dist(px, py, JESS_POS.x, JESS_POS.y);
+          const near = d < 120;
+          const screenX = (px - cam.current.x) * ZOOM;
+          const screenY = (py - cam.current.y - topOff - 28) * ZOOM;
+          setNearJess(near);
+          if (near) setJessInteractPos({ sx: screenX, sy: screenY });
+        }
         // Near-shell check (maya home)
         if (sc === "maya") {
           const shellCx = (MAYA_SHELL[0] + MAYA_SHELL[2]) / 2;
@@ -464,6 +528,7 @@ export function WalkDemo() {
       d1: "d2", d2: "pick", d3: "d4", d4: "d5", d5: "walk",
       maya_d1: "maya_d2", maya_d2: "maya_d3", maya_d3: "maya_d4", maya_d4: "walk",
       jay_d1: "jay_d2", jay_d2: "jay_d3", jay_d3: "walk",
+      jess_d1: "jess_d2", jess_d2: "jess_d3", jess_d3: "walk",
     };
     const next = map[from];
     if (next) setPhase(next);
@@ -518,6 +583,9 @@ export function WalkDemo() {
     jay_d1: "After everything we've been through — the fences we climbed, mornings we slipped out before sunrise just to see what was past those trees... you really doing this? For real, today?",
     jay_d2: "I've been training harder than you know. Every morning before you were even awake. I'm not stepping out of this village to finish second. That's not who I am and you know it.",
     jay_d3: "But I'm glad it's you out there with me. Nobody else I'd want watching my back. Stay sharp. And don't even think about falling behind — I won't be slowing down. Not for anyone.",
+    jess_d1: "You're really going, aren't you. I've known this day was coming ever since I caught you sneaking off before sunrise to watch the wild Tayanari out in the meadow. You were nine years old. You've been ready since then.",
+    jess_d2: "I'm not going to beg you to stay. That's not what love is. Love is packing your favourite bread in the outer pocket of your pack so you find it when you need it most. I did that last night while you were sleeping.",
+    jess_d3: "Come home with stories worth telling. And come home. That's all I ask. I love you. Now go — before I change my mind and chain you to that kitchen table.",
   };
 
   return (
@@ -529,8 +597,8 @@ export function WalkDemo() {
         {/* World container — camera-scrolled + zoomed */}
         <div ref={worldRef} style={{
           position: "absolute",
-          width:  scene === "overworld" ? OW.w : scene === "lab" ? LB.w : scene === "maya" ? MY.w : JY.w,
-          height: scene === "overworld" ? OW.h : scene === "lab" ? LB.h : scene === "maya" ? MY.h : JY.h,
+          width:  scene === "overworld" ? OW.w : scene === "lab" ? LB.w : scene === "maya" ? MY.w : scene === "jay" ? JY.w : PH.w,
+          height: scene === "overworld" ? OW.h : scene === "lab" ? LB.h : scene === "maya" ? MY.h : scene === "jay" ? JY.h : PH.h,
           willChange: "transform",
           transformOrigin: "0 0",
           transform: `scale(${ZOOM}) translate(${-cam.current.x}px,${-cam.current.y}px)`,
@@ -544,7 +612,9 @@ export function WalkDemo() {
               ? "/__mockup/images/prof-lab-interior.png"
               : scene === "maya"
               ? "/__mockup/images/maya-home-interior.png"
-              : "/__mockup/images/jay-home-interior.png"}
+              : scene === "jay"
+              ? "/__mockup/images/jay-home-interior.png"
+              : "/__mockup/images/player-home-interior.png"}
             alt="map"
             style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit: scene === "overworld" ? "fill" : "cover" }}
           />
@@ -618,6 +688,33 @@ export function WalkDemo() {
                 animation:"pulse 1.4s ease-in-out infinite",
                 pointerEvents:"none",
               }}/>
+              {/* Player home door glow — south face at y≈498 */}
+              <div style={{
+                position:"absolute", left:544, top:498,
+                width:44, height:10, borderRadius:"50%",
+                background:"radial-gradient(ellipse,rgba(255,160,90,0.55)0%,transparent 80%)",
+                animation:"pulse 1.4s ease-in-out infinite",
+                pointerEvents:"none",
+              }}/>
+            </>
+          )}
+
+          {/* Jess NPC sprite inside player home */}
+          {scene === "home" && (
+            <>
+              <canvas ref={jessCanvasRef} style={{
+                position:"absolute",
+                imageRendering:"auto", pointerEvents:"none",
+                left: JESS_POS.x - 34,
+                top:  JESS_POS.y - 51,
+              }}/>
+              <div style={{
+                position:"absolute",
+                left: JESS_POS.x - 16, top: JESS_POS.y - 80,
+                color:"#f8d8b0", fontSize:8, fontWeight:800,
+                letterSpacing:1, pointerEvents:"none",
+                textShadow:"0 0 4px #000,0 0 8px #000",
+              }}>JESS</div>
             </>
           )}
 
@@ -709,6 +806,24 @@ export function WalkDemo() {
               width:36, height:36, borderRadius:"50%",
               background:"#80d0a0", border:"2px solid #fff",
               color:"#0a2018", fontSize:20, fontWeight:900,
+              display:"flex", alignItems:"center", justifyContent:"center",
+              cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite",
+              zIndex:10,
+            }}
+          >!</button>
+        )}
+
+        {/* ── INTERACT BUTTON — Jess ────────────────────────────────────── */}
+        {scene === "home" && nearJess && phase === "walk" && (
+          <button
+            onClick={() => setPhase("jess_d1")}
+            style={{
+              position:"absolute",
+              left: jessInteractPos.sx - 18,
+              top:  jessInteractPos.sy - 10,
+              width:36, height:36, borderRadius:"50%",
+              background:"#f0a050", border:"2px solid #fff",
+              color:"#3a1200", fontSize:20, fontWeight:900,
               display:"flex", alignItems:"center", justifyContent:"center",
               cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite",
               zIndex:10,
@@ -869,6 +984,42 @@ export function WalkDemo() {
                   cursor:"pointer",
                 }}
               >{phase === "maya_d4" ? "OK" : "Next ▶"}</button>
+            </div>
+          </div>
+        )}
+
+        {/* ── JESS DIALOG BOX ──────────────────────────────────────────── */}
+        {(phase === "jess_d1" || phase === "jess_d2" || phase === "jess_d3") && (
+          <div style={{
+            position:"absolute", bottom:0, left:0, right:0,
+            background:"linear-gradient(to top,rgba(18,8,3,0.97),rgba(24,10,4,0.93))",
+            borderTop:"2px solid rgba(240,160,80,0.55)",
+            padding:"10px 14px 14px",
+            zIndex:20,
+          }}>
+            <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+              <canvas ref={jessPortraitRef}
+                style={{ width:44, height:44, borderRadius:8,
+                  background:"#120602", border:"1px solid rgba(240,160,80,0.4)" }}
+              />
+              <span style={{ color:"#f0b070", fontWeight:700, fontSize:13, letterSpacing:1 }}>
+                JESS
+              </span>
+            </div>
+            <p style={{ color:"#e8dcc8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>
+              {LINES[phase]}
+            </p>
+            <div style={{ display:"flex", justifyContent:"flex-end" }}>
+              <button
+                onClick={() => advanceDialog(phase)}
+                style={{
+                  background:"rgba(240,160,80,0.15)",
+                  border:"1px solid rgba(240,160,80,0.5)",
+                  color:"#f0b070", padding:"6px 20px",
+                  borderRadius:8, fontSize:13, fontWeight:700,
+                  cursor:"pointer",
+                }}
+              >{phase === "jess_d3" ? "OK" : "Next ▶"}</button>
             </div>
           </div>
         )}
