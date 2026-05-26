@@ -610,7 +610,7 @@ export function WalkDemo() {
     maya_d2: "My father... he was a legendary Keeper. He spent his whole life exploring, bonding with Tayanari no one else could ever reach. He passed last winter. I still miss him every single day.",
     maya_d3: "Before he left us, he entrusted me with his collection of Weathered Realm Shells — rare items that Keepers use in the wild. He told me: 'Give these to someone worthy, Maya. You'll know them when you see them.'",
     maya_d4: "I've been holding onto them, wondering who that person could be. But looking at you... I think he would be so proud. Please — go inside and take them. Make us both proud out there.",
-    jay_d1: "After everything we've been through — the fences we climbed, mornings we slipped out before sunrise just to see what was past those trees... you really doing this? For real, today?",
+    jay_d1: "Today's the day — you're walking into that lab and picking your first Tayanari. I've been thinking about this for months. I know exactly who I'm going for when it's my turn. You ready? Actually — doesn't matter. Today you're doing it either way.",
     jay_d2: "I've been training harder than you know. Every morning before you were even awake. I'm not stepping out of this village to finish second. That's not who I am and you know it.",
     jay_d3: "But I'm glad it's you out there with me. Nobody else I'd want watching my back. Stay sharp. And don't even think about falling behind — I won't be slowing down. Not for anyone.",
     jay_d4: "I don't go into anything blind. While everyone else was sparring in the yard I was reading — Realm theory, bonding science, rune taxonomy. There are rune types out there most Keepers have never even laid eyes on. Common, rare, mythic. Every single one of them has a name on my list. I'm collecting them all.",
@@ -1340,6 +1340,7 @@ export function WalkDemo() {
                           <div>
                             <div style={{ color:"#2a1206", fontWeight:800, fontSize:13 }}>Obsidian Realm Shell</div>
                             <div style={{ color:"#7060a0", fontSize:10, marginTop:2 }}>Bonded · {starter.name} within</div>
+                            <div style={{ color:"#4a6a30", fontSize:10, marginTop:2, fontWeight:700 }}>1 rune slot available</div>
                           </div>
                         </div>
 
@@ -1410,13 +1411,62 @@ export function WalkDemo() {
                         — No shell yet. Choose a partner from the Professor. —
                       </div>
                     )}
+
+                    {/* ── Weathered Realm Shells in Shells tab ── */}
+                    {shellsCollected && (
+                      <div style={{
+                        background:"rgba(60,40,10,0.05)",
+                        border:"1px solid rgba(140,100,40,0.25)",
+                        borderRadius:14, padding:14,
+                      }}>
+                        <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:12 }}>
+                          <img src="/__mockup/images/weathered-shell.png" alt="Weathered Shell" style={{
+                            width:44, height:44, objectFit:"contain",
+                            flexShrink:0, mixBlendMode:"multiply",
+                          }}/>
+                          <div>
+                            <div style={{ color:"#2a1206", fontWeight:800, fontSize:13 }}>Weathered Realm Shell</div>
+                            <div style={{ color:"#8a6030", fontSize:10, marginTop:2 }}>×24 · Catching Shell</div>
+                            <div style={{ color:"#4a6a30", fontSize:10, marginTop:2, fontWeight:700 }}>+10% XP to bonded Tayanari</div>
+                          </div>
+                        </div>
+                        <div style={{
+                          display:"flex", alignItems:"center", gap:10,
+                          padding:"8px 10px", borderRadius:10,
+                          background:"rgba(80,50,10,0.06)",
+                          border:"1px dashed rgba(140,100,40,0.20)",
+                        }}>
+                          <div style={{
+                            width:38, height:38, borderRadius:9, flexShrink:0,
+                            background:"rgba(80,60,30,0.07)",
+                            border:"1.5px dashed rgba(150,110,60,0.30)",
+                            display:"flex", alignItems:"center", justifyContent:"center",
+                            fontSize:16, color:"rgba(160,120,60,0.30)",
+                          }}>✕</div>
+                          <div>
+                            <div style={{ color:"#7a5830", fontWeight:700, fontSize:11 }}>No rune slot</div>
+                            <div style={{ color:"#a07848", fontSize:10, marginTop:2, fontStyle:"italic" }}>
+                              Worn too smooth — the surface won't hold a socket
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
                 {/* ── BAG PAGE ────────────────────────────────────── */}
                 {journalTab === "bag" && (
                   <div style={{ display:"flex", flexDirection:"column" }}>
-                    {shellsCollected ? (
+                    {!shellsCollected && !hasHealingRune && (
+                      <div style={{
+                        textAlign:"center", padding:"26px 0",
+                        color:"#b09468", fontSize:12, fontStyle:"italic",
+                      }}>— Your bag is empty. —</div>
+                    )}
+
+                    {/* Weathered Realm Shells — consumable catching stack */}
+                    {shellsCollected && (
                       <div style={{
                         display:"flex", alignItems:"center", gap:13,
                         padding:"10px 2px 13px",
@@ -1430,8 +1480,14 @@ export function WalkDemo() {
                           <div style={{ color:"#2a1206", fontWeight:800, fontSize:14 }}>
                             Weathered Realm Shell
                           </div>
-                          <div style={{ color:"#826040", fontSize:11, marginTop:5, lineHeight:1.5 }}>
-                            A shell worn smooth by realms unknown. Said to draw wandering Tayanari close.
+                          <div style={{ color:"#826040", fontSize:11, marginTop:4, lineHeight:1.5 }}>
+                            A shell worn smooth by realms unknown. Draws wandering Tayanari close.
+                          </div>
+                          <div style={{ color:"#4a7a4a", fontSize:10, fontWeight:700, marginTop:4 }}>
+                            +10% XP to bonded Tayanari
+                          </div>
+                          <div style={{ color:"#a07050", fontSize:10, marginTop:2, fontStyle:"italic" }}>
+                            Too worn to socket a rune
                           </div>
                         </div>
                         <div style={{
@@ -1442,11 +1498,6 @@ export function WalkDemo() {
                           flexShrink:0,
                         }}>×24</div>
                       </div>
-                    ) : (
-                      <div style={{
-                        textAlign:"center", padding:"26px 0",
-                        color:"#b09468", fontSize:12, fontStyle:"italic",
-                      }}>— Your bag is empty. —</div>
                     )}
 
                     {/* Obsidian Healing Rune — only shown when not equipped */}
