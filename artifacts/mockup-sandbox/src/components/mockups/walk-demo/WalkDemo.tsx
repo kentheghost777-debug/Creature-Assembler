@@ -118,7 +118,7 @@ function dist(ax: number, ay: number, bx: number, by: number) {
 }
 
 // ── Prof Irwyn NPC world position in lab ────────────────────────────────────
-const PROF = { x: 350, y: 242 }; // feet position in lab world
+const PROF = { x: 350, y: 268 }; // feet position in lab world
 
 // ── Main component ──────────────────────────────────────────────────────────
 export function WalkDemo() {
@@ -645,7 +645,7 @@ export function WalkDemo() {
       <div style={{
         flexShrink:0,
         display:"flex", flexDirection:"column", alignItems:"center",
-        gap:4, padding:"10px 0 18px",
+        gap:4, padding:"10px 0", paddingBottom:"max(18px, env(safe-area-inset-bottom, 18px))",
         background:"rgba(0,0,0,0.82)", backdropFilter:"blur(10px)",
       }}>
         <Btn d="up"   label="↑" />
