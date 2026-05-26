@@ -517,7 +517,7 @@ export function WalkDemo() {
         } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_PLAYER_HOME_DOOR)) {
           transitionTo("home", 405, 660);       // enter player's home
         } else if (sc === "home" && inRect(worldPos.current.x, worldPos.current.y, PLAYER_HOME_EXIT)) {
-          transitionTo("overworld", 552, 525);  // exit in front of player home, well south of lab
+          transitionTo("overworld", 562, 460);  // exit north of home trigger (y<477) and north of blocked body (y<505)
         } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_ELLIO_DOOR)) {
           transitionTo("ellio", 405, 660);      // enter Ellio's home
         } else if (sc === "ellio" && inRect(worldPos.current.x, worldPos.current.y, ELLIO_HOME_EXIT)) {
