@@ -22,8 +22,9 @@ const STARTERS = [
 type StarterId = typeof STARTERS[number]["id"];
 
 // ── Dialog phases ───────────────────────────────────────────────────────────
-type Phase = "walk" | "d1" | "d2" | "pick" | "d3" | "d4" | "d5";
-type Scene = "overworld" | "lab";
+type Phase = "walk" | "d1" | "d2" | "pick" | "d3" | "d4" | "d5"
+           | "maya_d1" | "maya_d2" | "maya_d3" | "maya_d4";
+type Scene = "overworld" | "lab" | "maya";
 type Rect  = [number, number, number, number]; // x1 y1 x2 y2 world-px
 
 // ── Collision zones ─────────────────────────────────────────────────────────
@@ -72,6 +73,23 @@ const LAB_BLOCKED: Rect[] = [
   [558, 0,   700, 700],  // right cylinders
 ];
 const LAB_EXIT: Rect = [262, 645, 438, 692]; // exit lab
+
+// ── Maya's Home ───────────────────────────────────────────────────────────────
+const MY = { w: 800, h: 800 };
+const MAYA_POS = { x: 705, y: 445 }; // Maya standing outside her home
+const OW_MAYA_DOOR: Rect  = [685, 425, 735, 444]; // walk up against door to enter
+const MAYA_HOME_EXIT: Rect = [310, 722, 490, 790]; // exit trigger at interior door
+const MAYA_SHELL: Rect     = [590, 565, 650, 615]; // pickup zone around the chest
+const MAYA_BLOCKED: Rect[] = [
+  [0,    0,   800,  90],  // top wall
+  [0,    0,    75, 800],  // left wall
+  [725,  0,   800, 800],  // right wall
+  [0,   715,  310, 800],  // bottom-left wall
+  [490, 715,  800, 800],  // bottom-right wall
+  [0,    90,  490, 205],  // fireplace / shelves top band
+  [540,  90,  775, 345],  // bed + side tables
+  [30,  475,  270, 675],  // desk table bottom-left
+];
 
 // ── Sprite / image utilities ─────────────────────────────────────────────────
 const imgCache: Record<string, HTMLImageElement> = {};
@@ -126,15 +144,23 @@ export function WalkDemo() {
   const [phase,       setPhase]       = useState<Phase>("walk");
   const [fading,      setFading]      = useState(false);
   const [held,        setHeld]        = useState<string | null>(null);
-  const [nearProf,    setNearProf]    = useState(false);
-  const [selected,    setSelected]    = useState<StarterId | null>(null);
-  const [starter,     setStarter]     = useState<typeof STARTERS[number] | null>(null);
-  const [showParty,   setShowParty]   = useState(false);
-  const [interactPos, setInteractPos] = useState({ sx: 0, sy: 0 });
+  const [nearProf,         setNearProf]         = useState(false);
+  const [nearMaya,         setNearMaya]         = useState(false);
+  const [nearShell,        setNearShell]        = useState(false);
+  const [shellsCollected,  setShellsCollected]  = useState(false);
+  const [pickupNotif,      setPickupNotif]      = useState(false);
+  const [selected,         setSelected]         = useState<StarterId | null>(null);
+  const [starter,          setStarter]          = useState<typeof STARTERS[number] | null>(null);
+  const [showParty,        setShowParty]        = useState(false);
+  const [interactPos,      setInteractPos]      = useState({ sx: 0, sy: 0 });
+  const [mayaInteractPos,  setMayaInteractPos]  = useState({ sx: 0, sy: 0 });
+  const [shellInteractPos, setShellInteractPos] = useState({ sx: 0, sy: 0 });
 
-  const canvasRef    = useRef<HTMLCanvasElement>(null);
-  const profCanvasRef    = useRef<HTMLCanvasElement>(null);
-  const portraitCanvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasRef          = useRef<HTMLCanvasElement>(null);
+  const profCanvasRef      = useRef<HTMLCanvasElement>(null);
+  const portraitCanvasRef  = useRef<HTMLCanvasElement>(null);
+  const mayaCanvasRef      = useRef<HTMLCanvasElement>(null);
+  const mayaPortraitRef    = useRef<HTMLCanvasElement>(null);
   const shadowRef  = useRef<HTMLDivElement>(null);
   const worldRef   = useRef<HTMLDivElement>(null);
   const vpRef      = useRef<HTMLDivElement>(null);
@@ -158,6 +184,9 @@ export function WalkDemo() {
       "/__mockup/images/overworld-map.png",
       "/__mockup/images/prof-lab-interior.png",
       "/__mockup/images/prof-irwyn-sprite.png",
+      "/__mockup/images/maya-home-interior.png",
+      "/__mockup/images/maya-sprite.png",
+      "/__mockup/images/weathered-shell.png",
       ...STARTERS.map(s => s.img),
     ].forEach(loadImg);
   }, []);
@@ -178,12 +207,37 @@ export function WalkDemo() {
     tryDraw();
   }, [scene]);
 
+  // Draw Maya world sprite
+  useEffect(() => {
+    if (scene !== "overworld") return;
+    const src = "/__mockup/images/maya-sprite.png";
+    const tryDraw = () => {
+      const c = mayaCanvasRef.current;
+      if (!c) return;
+      if (!drawSprite(c, src, false)) setTimeout(tryDraw, 150);
+    };
+    tryDraw();
+  }, [scene]);
+
   // Draw Prof portrait in dialog box
   useEffect(() => {
     if (phase === "walk" || phase === "pick") return;
+    if (phase.startsWith("maya_")) return;
     const src = "/__mockup/images/prof-irwyn-sprite.png";
     const tryDraw = () => {
       const c = portraitCanvasRef.current;
+      if (!c) return;
+      if (!drawSprite(c, src, false)) setTimeout(tryDraw, 150);
+    };
+    tryDraw();
+  }, [phase]);
+
+  // Draw Maya portrait in dialog box
+  useEffect(() => {
+    if (!phase.startsWith("maya_")) return;
+    const src = "/__mockup/images/maya-sprite.png";
+    const tryDraw = () => {
+      const c = mayaPortraitRef.current;
       if (!c) return;
       if (!drawSprite(c, src, false)) setTimeout(tryDraw, 150);
     };
@@ -234,8 +288,8 @@ export function WalkDemo() {
       if (!fadingRef.current && phaseRef.current === "walk") {
         const h       = heldRef.current;
         const sc      = sceneRef.current;
-        const world   = sc === "overworld" ? OW : LB;
-        const zones   = sc === "overworld" ? OW_BLOCKED : LAB_BLOCKED;
+        const world   = sc === "overworld" ? OW : sc === "lab" ? LB : MY;
+        const zones   = sc === "overworld" ? OW_BLOCKED : sc === "lab" ? LAB_BLOCKED : MAYA_BLOCKED;
 
         let newAnim = "idle";
         let newFlip = flipRef.current;
@@ -255,8 +309,12 @@ export function WalkDemo() {
         // Door triggers
         if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_PROF_DOOR as Rect)) {
           transitionTo("lab", 350, 590);
+        } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_MAYA_DOOR)) {
+          transitionTo("maya", 400, 660);
         } else if (sc === "lab" && inRect(worldPos.current.x, worldPos.current.y, LAB_EXIT)) {
           transitionTo("overworld", 400, 445);
+        } else if (sc === "maya" && inRect(worldPos.current.x, worldPos.current.y, MAYA_HOME_EXIT)) {
+          transitionTo("overworld", 705, 460);
         }
 
         // Flip / anim change
@@ -285,7 +343,7 @@ export function WalkDemo() {
         if (canvas) { canvas.style.left = `${px - SPRITE_PX/2}px`; canvas.style.top = `${py - topOff}px`; }
         if (shadow) { shadow.style.left = `${px - 18}px`;          shadow.style.top  = `${py + 2}px`; }
 
-        // Near-prof check (lab only) — update React state at low freq via ref flag
+        // Near-prof check (lab only)
         if (sc === "lab") {
           const d = dist(px, py, PROF.x, PROF.y);
           const near = d < 120;
@@ -293,6 +351,26 @@ export function WalkDemo() {
           const screenY = (py - cam.current.y - topOff - 28) * ZOOM;
           setNearProf(near);
           if (near) setInteractPos({ sx: screenX, sy: screenY });
+        }
+        // Near-Maya check (overworld only)
+        if (sc === "overworld") {
+          const d = dist(px, py, MAYA_POS.x, MAYA_POS.y);
+          const near = d < 90;
+          const screenX = (px - cam.current.x) * ZOOM;
+          const screenY = (py - cam.current.y - topOff - 28) * ZOOM;
+          setNearMaya(near);
+          if (near) setMayaInteractPos({ sx: screenX, sy: screenY });
+        }
+        // Near-shell check (maya home)
+        if (sc === "maya") {
+          const shellCx = (MAYA_SHELL[0] + MAYA_SHELL[2]) / 2;
+          const shellCy = (MAYA_SHELL[1] + MAYA_SHELL[3]) / 2;
+          const d = dist(px, py, shellCx, shellCy);
+          const near = d < 80;
+          const screenX = (px - cam.current.x) * ZOOM;
+          const screenY = (py - cam.current.y - topOff - 28) * ZOOM;
+          setNearShell(near);
+          if (near) setShellInteractPos({ sx: screenX, sy: screenY });
         }
       }
       raf = requestAnimationFrame(loop);
@@ -305,6 +383,7 @@ export function WalkDemo() {
   const advanceDialog = useCallback((from: Phase) => {
     const map: Partial<Record<Phase, Phase>> = {
       d1: "d2", d2: "pick", d3: "d4", d4: "d5", d5: "walk",
+      maya_d1: "maya_d2", maya_d2: "maya_d3", maya_d3: "maya_d4", maya_d4: "walk",
     };
     const next = map[from];
     if (next) setPhase(next);
@@ -352,6 +431,10 @@ export function WalkDemo() {
     d3: starter ? `${starter.name}! A wonderful choice. I can already sense a connection forming. Treat them well — they will never let you down.` : "",
     d4: "Head north past the village gate through Route 1 to the Wild Area. Wild Tayanari roam freely there. It is the best place for a new Keeper to earn their first bonds.",
     d5: "But be careful — wild Tayanari are spirited and won't hesitate to test you. Keep your partner healthy and your wits sharp. I'll meet you in the Wild Area. Safe travels, Keeper.",
+    maya_d1: "Oh! You must be the new Keeper everyone's talking about. I'm Maya. I barely leave the village myself — the wild Tayanari out there terrify me. You must be so incredibly brave to set out like this.",
+    maya_d2: "My father... he was a legendary Keeper. He spent his whole life exploring, bonding with Tayanari no one else could ever reach. He passed last winter. I still miss him every single day.",
+    maya_d3: "Before he left us, he entrusted me with his collection of Weathered Realm Shells — rare items that Keepers use in the wild. He told me: 'Give these to someone worthy, Maya. You'll know them when you see them.'",
+    maya_d4: "I've been holding onto them, wondering who that person could be. But looking at you... I think he would be so proud. Please — go inside and take them. Make us both proud out there.",
   };
 
   return (
@@ -363,8 +446,8 @@ export function WalkDemo() {
         {/* World container — camera-scrolled + zoomed */}
         <div ref={worldRef} style={{
           position: "absolute",
-          width:  scene === "overworld" ? OW.w : LB.w,
-          height: scene === "overworld" ? OW.h : LB.h,
+          width:  scene === "overworld" ? OW.w : scene === "lab" ? LB.w : MY.w,
+          height: scene === "overworld" ? OW.h : scene === "lab" ? LB.h : MY.h,
           willChange: "transform",
           transformOrigin: "0 0",
           transform: `scale(${ZOOM}) translate(${-cam.current.x}px,${-cam.current.y}px)`,
@@ -374,7 +457,9 @@ export function WalkDemo() {
             key={scene}
             src={scene === "overworld"
               ? "/__mockup/images/overworld-map.png"
-              : "/__mockup/images/prof-lab-interior.png"}
+              : scene === "lab"
+              ? "/__mockup/images/prof-lab-interior.png"
+              : "/__mockup/images/maya-home-interior.png"}
             alt="map"
             style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover" }}
           />
@@ -405,6 +490,56 @@ export function WalkDemo() {
             }}/>
           )}
 
+          {/* Maya NPC sprite outside her home */}
+          {scene === "overworld" && (
+            <>
+              <canvas ref={mayaCanvasRef} style={{
+                position:"absolute", width:68, height:68,
+                imageRendering:"auto", pointerEvents:"none",
+                left: MAYA_POS.x - 34,
+                top:  MAYA_POS.y - 68,
+              }}/>
+              <div style={{
+                position:"absolute",
+                left: MAYA_POS.x - 20, top: MAYA_POS.y - 80,
+                color:"#d4f0c0", fontSize:8, fontWeight:800,
+                letterSpacing:1, pointerEvents:"none",
+                textShadow:"0 0 4px #000,0 0 8px #000",
+              }}>MAYA</div>
+              {/* Maya's home door glow */}
+              <div style={{
+                position:"absolute", left:698, top:426,
+                width:36, height:10, borderRadius:"50%",
+                background:"radial-gradient(ellipse,rgba(120,220,140,0.5)0%,transparent 80%)",
+                animation:"pulse 1.4s ease-in-out infinite",
+                pointerEvents:"none",
+              }}/>
+            </>
+          )}
+
+          {/* Shell item inside Maya's home */}
+          {scene === "maya" && !shellsCollected && (
+            <>
+              <div style={{
+                position:"absolute",
+                left: (MAYA_SHELL[0]+MAYA_SHELL[2])/2 - 26,
+                top:  (MAYA_SHELL[1]+MAYA_SHELL[3])/2 - 26,
+                width:52, height:52, borderRadius:"50%",
+                background:"radial-gradient(ellipse,rgba(80,220,180,0.4)0%,transparent 75%)",
+                animation:"pulse 1.4s ease-in-out infinite",
+                pointerEvents:"none",
+              }}/>
+              <img src="/__mockup/images/weathered-shell.png" alt="Shell" style={{
+                position:"absolute",
+                left: (MAYA_SHELL[0]+MAYA_SHELL[2])/2 - 22,
+                top:  (MAYA_SHELL[1]+MAYA_SHELL[3])/2 - 22,
+                width:44, height:44, objectFit:"contain",
+                pointerEvents:"none",
+                filter:"drop-shadow(0 0 8px rgba(80,220,180,0.8))",
+              }}/>
+            </>
+          )}
+
           {/* Ground shadow */}
           <div ref={shadowRef} style={{
             position:"absolute",
@@ -423,7 +558,7 @@ export function WalkDemo() {
           }}/>
         </div>
 
-        {/* ── INTERACT BUTTON (viewport-relative, above player) ─────────── */}
+        {/* ── INTERACT BUTTON — Prof ────────────────────────────────────── */}
         {scene === "lab" && nearProf && phase === "walk" && (
           <button
             onClick={() => setPhase("d1")}
@@ -432,14 +567,78 @@ export function WalkDemo() {
               left: interactPos.sx - 18,
               top:  interactPos.sy - 10,
               width:36, height:36, borderRadius:"50%",
-              background:"#f0d050",
-              border:"2px solid #fff",
+              background:"#f0d050", border:"2px solid #fff",
               color:"#1a1200", fontSize:20, fontWeight:900,
               display:"flex", alignItems:"center", justifyContent:"center",
               cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite",
               zIndex:10,
             }}
           >!</button>
+        )}
+
+        {/* ── INTERACT BUTTON — Maya ────────────────────────────────────── */}
+        {scene === "overworld" && nearMaya && phase === "walk" && (
+          <button
+            onClick={() => setPhase("maya_d1")}
+            style={{
+              position:"absolute",
+              left: mayaInteractPos.sx - 18,
+              top:  mayaInteractPos.sy - 10,
+              width:36, height:36, borderRadius:"50%",
+              background:"#80d0a0", border:"2px solid #fff",
+              color:"#0a2018", fontSize:20, fontWeight:900,
+              display:"flex", alignItems:"center", justifyContent:"center",
+              cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite",
+              zIndex:10,
+            }}
+          >!</button>
+        )}
+
+        {/* ── INTERACT BUTTON — Shell pickup ────────────────────────────── */}
+        {scene === "maya" && nearShell && !shellsCollected && phase === "walk" && (
+          <button
+            onClick={() => {
+              setShellsCollected(true);
+              setPickupNotif(true);
+              setTimeout(() => setPickupNotif(false), 2800);
+            }}
+            style={{
+              position:"absolute",
+              left: shellInteractPos.sx - 18,
+              top:  shellInteractPos.sy - 10,
+              width:36, height:36, borderRadius:"50%",
+              background:"#50dcc0", border:"2px solid #fff",
+              color:"#0a2018", fontSize:20, fontWeight:900,
+              display:"flex", alignItems:"center", justifyContent:"center",
+              cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite",
+              zIndex:10,
+            }}
+          >!</button>
+        )}
+
+        {/* ── ITEM PICKUP NOTIFICATION ─────────────────────────────────── */}
+        {pickupNotif && (
+          <div style={{
+            position:"absolute", top:"38%", left:"50%",
+            transform:"translate(-50%,-50%)",
+            background:"rgba(6,18,12,0.96)",
+            border:"1.5px solid rgba(80,220,180,0.65)",
+            borderRadius:14, padding:"14px 20px",
+            display:"flex", alignItems:"center", gap:14,
+            zIndex:60, pointerEvents:"none",
+            boxShadow:"0 4px 24px rgba(80,220,180,0.25)",
+          }}>
+            <img src="/__mockup/images/weathered-shell.png" alt=""
+              style={{ width:42, height:42, objectFit:"contain" }}/>
+            <div>
+              <div style={{ color:"#50dcc0", fontWeight:800, fontSize:13, letterSpacing:0.5 }}>
+                Item Received!
+              </div>
+              <div style={{ color:"#e8dcc8", fontSize:12, marginTop:3, fontWeight:600 }}>
+                Weathered Realm Shell ×24
+              </div>
+            </div>
+          </div>
         )}
 
         {/* ── DIALOG BOX (viewport-relative bottom strip) ──────────────── */}
@@ -476,6 +675,42 @@ export function WalkDemo() {
                   cursor:"pointer",
                 }}
               >{phase === "d5" ? "OK" : "Next ▶"}</button>
+            </div>
+          </div>
+        )}
+
+        {/* ── MAYA DIALOG BOX ──────────────────────────────────────────── */}
+        {(phase === "maya_d1" || phase === "maya_d2" || phase === "maya_d3" || phase === "maya_d4") && (
+          <div style={{
+            position:"absolute", bottom:0, left:0, right:0,
+            background:"linear-gradient(to top,rgba(4,12,8,0.97),rgba(6,16,10,0.93))",
+            borderTop:"2px solid rgba(80,180,120,0.55)",
+            padding:"10px 14px 14px",
+            zIndex:20,
+          }}>
+            <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+              <canvas ref={mayaPortraitRef}
+                style={{ width:44, height:44, borderRadius:8,
+                  background:"#060e08", border:"1px solid rgba(80,180,120,0.4)" }}
+              />
+              <span style={{ color:"#80d0a0", fontWeight:700, fontSize:13, letterSpacing:1 }}>
+                MAYA
+              </span>
+            </div>
+            <p style={{ color:"#e8dcc8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>
+              {LINES[phase]}
+            </p>
+            <div style={{ display:"flex", justifyContent:"flex-end" }}>
+              <button
+                onClick={() => advanceDialog(phase)}
+                style={{
+                  background:"rgba(80,180,120,0.15)",
+                  border:"1px solid rgba(80,180,120,0.5)",
+                  color:"#80d0a0", padding:"6px 20px",
+                  borderRadius:8, fontSize:13, fontWeight:700,
+                  cursor:"pointer",
+                }}
+              >{phase === "maya_d4" ? "OK" : "Next ▶"}</button>
             </div>
           </div>
         )}
@@ -628,7 +863,7 @@ export function WalkDemo() {
           border:"1px solid rgba(240,208,96,0.3)", pointerEvents:"none",
           textTransform:"uppercase", zIndex:5,
         }}>
-          {scene === "overworld" ? "Primeria Village" : "Prof. Irwyn's Lab"}
+          {scene === "overworld" ? "Primeria Village" : scene === "lab" ? "Prof. Irwyn's Lab" : "Maya's Home"}
         </div>
 
         {/* Fade overlay */}
