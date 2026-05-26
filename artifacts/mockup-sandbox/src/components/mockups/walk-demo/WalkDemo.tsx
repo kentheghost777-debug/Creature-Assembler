@@ -447,7 +447,7 @@ export function WalkDemo() {
     const tryDraw = () => {
       const c = ellioCanvasRef.current;
       if (!c) return;
-      if (!drawSprite(c, src, false, 68)) setTimeout(tryDraw, 150);
+      if (!drawSprite(c, src, false, 82)) setTimeout(tryDraw, 150);
     };
     tryDraw();
   }, [scene]);
@@ -471,7 +471,7 @@ export function WalkDemo() {
     const tryDraw = () => {
       const c = jessCanvasRef.current;
       if (!c) return;
-      if (!drawSprite(c, src, false, 68)) setTimeout(tryDraw, 150);
+      if (!drawSprite(c, src, false, 82)) setTimeout(tryDraw, 150);
     };
     tryDraw();
   }, [scene]);
@@ -495,7 +495,7 @@ export function WalkDemo() {
     const tryDraw = () => {
       const c = liaCanvasRef.current;
       if (!c) return;
-      if (!drawSprite(c, src, false, 72)) setTimeout(tryDraw, 150);
+      if (!drawSprite(c, src, false, 82)) setTimeout(tryDraw, 150);
     };
     tryDraw();
   }, [scene]);
@@ -519,7 +519,9 @@ export function WalkDemo() {
     const frames = FRAMES[animRef.current] || FRAMES.idle;
     const src    = frames[frameRef.current] || frames[0];
     if (src === lastSrc.current && flipRef.current === lastFlip.current) return;
-    const ok = drawSprite(canvas, src, flipRef.current);
+    // standing sprite is proportionally taller — render it narrower so height matches walk frames
+    const displayW = (animRef.current === "idle") ? 82 : SPRITE_PX;
+    const ok = drawSprite(canvas, src, flipRef.current, displayW);
     if (ok) { lastSrc.current = src; lastFlip.current = flipRef.current; }
   }, []);
 
@@ -623,9 +625,10 @@ export function WalkDemo() {
         const canvas = canvasRef.current;
         const shadow = shadowRef.current;
         const spriteH = (canvas?.height && canvas.height > 0) ? canvas.height : SPRITE_PX;
+        const spriteW = (canvas?.width  && canvas.width  > 0) ? canvas.width  : SPRITE_PX;
         const topOff = Math.round(spriteH * ANCHOR);
         if (wd)     wd.style.transform = `scale(${ZOOM}) translate(${-cam.current.x}px,${-cam.current.y}px)`;
-        if (canvas) { canvas.style.left = `${px - SPRITE_PX/2}px`; canvas.style.top = `${py - topOff}px`; }
+        if (canvas) { canvas.style.left = `${px - spriteW/2}px`; canvas.style.top = `${py - topOff}px`; }
         if (shadow) { shadow.style.left = `${px - 18}px`;          shadow.style.top  = `${py + 2}px`; }
 
         // Near-prof check (lab only)
