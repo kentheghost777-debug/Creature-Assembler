@@ -44,23 +44,23 @@ const OW_BLOCKED: Rect[] = [
 
   // ── NORTH ZONE FILLS (close corridors between top border and buildings) ─────
   [155,  85,  160,  225],  // sliver: left forest → Jay west fence
-  [335,  85,  367,  312],  // gap between Jay east fence and Lab west wall
+  // [335,  85,  367,  312]  REMOVED — opens north corridor to Route-1 between Jay east and Lab west
   [732,  85,  775,  312],  // gap between Lab east wall and Maya west fence
   [775,  85,  978,  225],  // strip: Maya east fence → right forest
 
   // ── PROFESSOR LAB compound (south gate x 498–580) ──────────────────────────
   [367,  85,  732,  310],  // building body
-  [335,  85,  367,  390],  // west compound wall
+  // west compound wall [335, 85, 367, 390] removed — Route 1 corridor passes here
   [732,  85,  755,  390],  // east compound wall
-  [335, 310,  498,  390],  // south fence — left of gate
+  [367, 310,  498,  390],  // south fence — left of gate (was x=335; trimmed to 367)
   [580, 310,  755,  390],  // south fence — right of gate
 
   // ── JAY'S HOME — fence perimeter + body (south gate x 240–308) ─────────────
   [214, 225,  327,  400],  // building body
   [160, 225,  214,  452],  // west fence
-  [327, 225,  375,  452],  // east fence
+  [327, 225,  335,  452],  // east fence (shrunk x=327–335 — opens Route-1 corridor east of Jay)
   [160, 440,  240,  452],  // south fence — left of gate
-  [308, 440,  375,  452],  // south fence — right of gate
+  [308, 440,  335,  452],  // south fence — right of gate (shrunk to match east fence)
 
   // ── MAYA'S HOME — fence perimeter + body (south gate x 845–912) ────────────
   [807, 225,  928,  383],  // building body
@@ -71,30 +71,30 @@ const OW_BLOCKED: Rect[] = [
 
   // ── PLAYER HOME — fence perimeter + body (north gate x 532–602) ────────────
   [367, 590,  757,  820],  // building body — pushed south to leave a real yard
-  [340, 537,  532,  547],  // north fence — left of gate
-  [602, 537,  782,  547],  // north fence — right of gate
-  [340, 547,  367,  820],  // west fence (starts at fence bottom)
-  [757, 547,  782,  820],  // east fence (starts at fence bottom)
+  [359, 537,  532,  547],  // north fence — left of gate  (was x1=340; trimmed for PH↔Elio south corridor)
+  [602, 537,  765,  547],  // north fence — right of gate (was x2=782; trimmed for PH↔Lia south corridor)
+  [359, 547,  367,  820],  // west fence (narrowed for PH↔Elio south corridor x=335–359)
+  [757, 547,  765,  820],  // east fence (narrowed for PH↔Lia south corridor x=765–789)
 
   // ── ELLIO'S HOME — fence perimeter + body (north gate x 238–308) ───────────
   [214, 565,  327,  780],  // building body
-  [155, 537,  238,  547],  // north fence — left of gate
-  [308, 537,  365,  547],  // north fence — right of gate
-  [155, 537,  214,  790],  // west fence
-  [327, 537,  365,  790],  // east fence
+  [188, 537,  238,  547],  // north fence — left of gate  (was x1=155; trimmed for west-side corridor x=155–188)
+  [308, 537,  335,  547],  // north fence — right of gate (was x2=365; trimmed for Elio↔PH south corridor)
+  [188, 537,  214,  790],  // west fence (narrowed for west-side corridor x=155–188)
+  [327, 537,  335,  790],  // east fence (narrowed for Elio↔PH south corridor x=335–359)
 
   // ── LIA'S HOME — fence perimeter + body (north gate x 846–910) ─────────────
   [807, 565,  942,  780],  // building body
-  [775, 537,  846,  547],  // north fence — left of gate
-  [910, 537,  978,  547],  // north fence — right of gate
-  [775, 537,  807,  790],  // west fence
-  [942, 537,  978,  790],  // east fence
+  [789, 537,  846,  547],  // north fence — left of gate  (was x1=775; trimmed for PH↔Lia south corridor)
+  [910, 537,  950,  547],  // north fence — right of gate (was x2=978; trimmed for east-side corridor x=950–978)
+  [789, 537,  807,  790],  // west fence (narrowed for PH↔Lia south corridor x=765–789)
+  [942, 537,  950,  790],  // east fence (narrowed for east-side corridor x=950–978)
 ];
 
 // ── Lia's Home ─────────────────────────────────────────────────────────────
 const LH = { w: 800, h: 800 };
 const LIA_POS = { x: 385, y: 355 }; // Lia near the center rug
-const OW_LIA_DOOR: Rect  = [846, 537, 910, 568]; // north fence gate (y=537–547) + yard to building north edge
+const OW_LIA_DOOR: Rect  = [850, 558, 902, 572]; // ON the visible front door — strip just N of Lia body (y=565)
 const LIA_HOME_EXIT: Rect = [310, 722, 490, 790]; // bottom-center door
 const LH_BLOCKED: Rect[] = [
   // ── WALLS ──────────────────────────────────────────────────────────────────
@@ -218,7 +218,7 @@ const JAY_BLOCKED: Rect[] = [
 // ── Ellio's Home ─────────────────────────────────────────────────────────────
 const EH = { w: 800, h: 800 };
 const ELLIO_POS = { x: 400, y: 350 };
-const OW_ELLIO_DOOR: Rect  = [238, 537, 308, 568]; // north fence gate (y=537–547) + yard to building north edge
+const OW_ELLIO_DOOR: Rect  = [245, 558, 297, 572]; // ON the visible front door — strip just N of Ellio body (y=565)
 const ELLIO_HOME_EXIT: Rect = [305, 725, 505, 790];
 const EH_BLOCKED: Rect[] = [
   [0, 0, 800, 60], [0, 0, 60, 800], [740, 0, 800, 800],
@@ -233,7 +233,7 @@ const EH_BLOCKED: Rect[] = [
 // ── Player's Home ────────────────────────────────────────────────────────────
 const PH = { w: 800, h: 800 };
 const JESS_POS = { x: 395, y: 370 }; // Jess standing in the open center of the home
-const OW_PLAYER_HOME_DOOR: Rect = [532, 537, 602, 549]; // north fence gate only — stops at fence bottom
+const OW_PLAYER_HOME_DOOR: Rect = [538, 580, 600, 594]; // ON the visible front door — strip just N of PH body (y=590)
 const PLAYER_HOME_EXIT: Rect = [305, 725, 505, 790]; // bottom-center door
 const PH_BLOCKED: Rect[] = [
   // ── WALLS ──────────────────────────────────────────────────────────────────
@@ -646,11 +646,19 @@ export function WalkDemo() {
           transitionTo("overworld", 878, 468);  // south of Maya fence (y=452)
         } else if (sc === "jay" && inRect(worldPos.current.x, worldPos.current.y, JAY_HOME_EXIT)) {
           transitionTo("overworld", 272, 468);  // south of Jay fence (y=452)
+        } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_PLAYER_HOME_DOOR)) {
+          transitionTo("home", 400, 670);       // enter Player Home — trigger sits ON the visible front door
+        } else if (sc === "home" && inRect(worldPos.current.x, worldPos.current.y, PLAYER_HOME_EXIT)) {
+          transitionTo("overworld", 567, 525);  // exit onto road, just N of north fence (y=537)
+        } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_ELLIO_DOOR)) {
+          transitionTo("ellio", 400, 670);      // enter Ellio's Home — trigger on visible front door
+        } else if (sc === "ellio" && inRect(worldPos.current.x, worldPos.current.y, ELLIO_HOME_EXIT)) {
+          transitionTo("overworld", 270, 525);  // exit onto road, just N of north fence
+        } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_LIA_DOOR)) {
+          transitionTo("lia", 400, 670);        // enter Lia's Home — trigger on visible front door
+        } else if (sc === "lia" && inRect(worldPos.current.x, worldPos.current.y, LIA_HOME_EXIT)) {
+          transitionTo("overworld", 875, 525);  // exit onto road, just N of north fence
         }
-        // NOTE: bottom-row home doors (Player Home / Ellio / Lia) intentionally
-        // removed — old north-fence-gate triggers were misaligned with the
-        // visible door art. Pending redesign: triggers belong ON the building's
-        // visible front door, and exit spawns belong just south of that door.
 
         // Flip / anim change
         if (newFlip !== flipRef.current) { flipRef.current = newFlip; lastSrc.current = ""; redraw(); }
