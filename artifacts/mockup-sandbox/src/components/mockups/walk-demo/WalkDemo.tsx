@@ -128,13 +128,14 @@ export function WalkDemo() {
       const shadow = shadowRef.current;
       if (canvas) {
         canvas.style.left = `calc(${x}% - ${SPRITE_PX / 2}px)`;
-        // top so the canvas bottom edge = y% = foot level
-        canvas.style.top  = `calc(${y}% - ${SPRITE_PX}px)`;
+        // Shift canvas down so the character's visual feet (~75% down the image)
+        // land near y% rather than the canvas bottom edge
+        canvas.style.top  = `calc(${y}% - ${Math.round(SPRITE_PX * 0.75)}px)`;
       }
       if (shadow) {
-        // shadow sits right at the foot line (y%), centered on x%
+        // Shadow sits just below the foot-line, at y% + a small drop
         shadow.style.left = `calc(${x}% - 18px)`;
-        shadow.style.top  = `calc(${y}% - 5px)`;
+        shadow.style.top  = `calc(${y}% + 2px)`;
       }
 
       raf = requestAnimationFrame(loop);
@@ -177,7 +178,7 @@ export function WalkDemo() {
           style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
         />
 
-        {/* Foot shadow — at y% (foot level) */}
+        {/* Foot shadow */}
         <div ref={shadowRef} style={{
           position: "absolute",
           width: 36, height: 12,
@@ -185,10 +186,10 @@ export function WalkDemo() {
           background: "radial-gradient(ellipse, rgba(0,0,0,0.6) 0%, transparent 75%)",
           pointerEvents: "none",
           left: `calc(${pct.current.x}% - 18px)`,
-          top:  `calc(${pct.current.y}% - 5px)`,
+          top:  `calc(${pct.current.y}% + 2px)`,
         }} />
 
-        {/* Sprite — canvas so we can strip the baked-in black bg */}
+        {/* Sprite canvas — bottom 25% of canvas is empty space, so anchor at 75% */}
         <canvas
           ref={canvasRef}
           style={{
@@ -197,9 +198,8 @@ export function WalkDemo() {
             height: SPRITE_PX,
             imageRendering: "auto",
             pointerEvents: "none",
-            // bottom of this canvas = y% = foot level → character stands on map
             left: `calc(${pct.current.x}% - ${SPRITE_PX / 2}px)`,
-            top:  `calc(${pct.current.y}% - ${SPRITE_PX}px)`,
+            top:  `calc(${pct.current.y}% - ${Math.round(SPRITE_PX * 0.75)}px)`,
           }}
         />
       </div>
