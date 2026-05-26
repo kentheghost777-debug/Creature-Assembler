@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 // ── World sizes (pixels) ────────────────────────────────────────────────────
 const OW = { w: 1124, h: 900 }; // overworld — matches full 1402×1122 map image at 900px height
 const LB = { w: 700, h: 700 }; // lab
+const R1 = { w: 1024, h: 780 }; // Whisperroot Trail (Area 1)
 const SPEED     = 3.5;
 const ZOOM      = 0.82; // zoom-out factor — values <1 show more of the world
 const SPRITE_PX = 96;   // bigger on mobile
@@ -29,7 +30,7 @@ type Phase = "walk" | "d1" | "d2" | "pick" | "d3" | "d4" | "d5"
            | "jess_d1" | "jess_d2" | "jess_d3"
            | "ellio_d1" | "ellio_d2" | "ellio_d3" | "ellio_done"
            | "lia_d1"  | "lia_d2"  | "lia_d3"  | "lia_d4"  | "lia_d5"  | "lia_done";
-type Scene = "overworld" | "lab" | "maya" | "jay" | "home" | "ellio" | "lia";
+type Scene = "overworld" | "lab" | "maya" | "jay" | "home" | "ellio" | "lia" | "route1";
 type Rect  = [number, number, number, number]; // x1 y1 x2 y2 world-px
 
 // ── Collision zones ─────────────────────────────────────────────────────────
@@ -122,6 +123,32 @@ const LH_BLOCKED: Rect[] = [
 // Route-1 exit trigger aligned with the top-left gap
 const OW_ROUTE1_EXIT: Rect = [212, 0, 327, 15];
 const OW_PROF_DOOR: Rect = [498, 328, 580, 378]; // tight zone around lab door (glow center x≈538)
+
+// ── Whisperroot Trail (Route 1 / Area 1) ─────────────────────────────────────
+// South gate (blue) connects back to town; north continues deeper (future)
+const R1_SOUTH_GATE: Rect = [418, 750, 582, 780]; // bottom-center exit → overworld
+const R1_BLOCKED: Rect[] = [
+  // ── OUTER FOREST BORDER ──────────────────────────────────────────────────
+  [0,    0,  1024,   68],  // top forest (full width)
+  [0,    0,    62,  780],  // left forest
+  [962,  0,  1024,  780],  // right forest
+  [0,   745,  418,  780],  // bottom forest — left of south gate
+  [582,  745, 1024,  780],  // bottom forest — right of south gate
+  // ── RIVER / POND (left-center) ────────────────────────────────────────────
+  [62,  270,  162,  360],  // upper stream channel
+  [62,  355,  252,  598],  // main pond body
+  [62,  592,  178,  655],  // lower bank / stream exit
+  // ── STONE WALLS & ROCK CLUSTERS (top section) ─────────────────────────────
+  [62,   68,  200,  172],  // top-left stone wall / fence cluster
+  [280,  68,  418,  148],  // upper-center fence + raised steps left
+  [582,  68,  752,  158],  // upper-center-right fence + stepped path
+  [750,  68,  962,  192],  // upper-right: tall obelisk + tree cluster
+  // ── RIGHT-SIDE ROCKS & OBELISK ────────────────────────────────────────────
+  [800,  190,  962,  388],  // right-mid rock cluster + second obelisk
+  [812,  388,  962,  530],  // right-lower rocks + hanging lantern post
+  // ── LOWER-LEFT TERRAIN ────────────────────────────────────────────────────
+  [62,   645,  218,  748],  // lower-left rock / fern cluster above gate
+];
 
 const LAB_BLOCKED: Rect[] = [
   [0,   0,   700, 22 ],  // top
@@ -586,8 +613,8 @@ export function WalkDemo() {
       if (!fadingRef.current && phaseRef.current === "walk") {
         const h       = heldRef.current;
         const sc      = sceneRef.current;
-        const world   = sc === "overworld" ? OW : sc === "lab" ? LB : sc === "maya" ? MY : sc === "jay" ? JY : sc === "ellio" ? EH : sc === "lia" ? LH : PH;
-        const zones   = sc === "overworld" ? OW_BLOCKED : sc === "lab" ? LAB_BLOCKED : sc === "maya" ? MAYA_BLOCKED : sc === "jay" ? JAY_BLOCKED : sc === "ellio" ? EH_BLOCKED : sc === "lia" ? LH_BLOCKED : PH_BLOCKED;
+        const world   = sc === "overworld" ? OW : sc === "lab" ? LB : sc === "route1" ? R1 : sc === "maya" ? MY : sc === "jay" ? JY : sc === "ellio" ? EH : sc === "lia" ? LH : PH;
+        const zones   = sc === "overworld" ? OW_BLOCKED : sc === "lab" ? LAB_BLOCKED : sc === "route1" ? R1_BLOCKED : sc === "maya" ? MAYA_BLOCKED : sc === "jay" ? JAY_BLOCKED : sc === "ellio" ? EH_BLOCKED : sc === "lia" ? LH_BLOCKED : PH_BLOCKED;
 
         let newAnim = "idle";
         let newFlip = flipRef.current;
@@ -605,7 +632,11 @@ export function WalkDemo() {
         if (!blocked(x,  ny, zones)) worldPos.current.y = ny;
 
         // Door triggers
-        if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_PROF_DOOR as Rect)) {
+        if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_ROUTE1_EXIT)) {
+          transitionTo("route1", 500, 718);     // enter Whisperroot Trail from south gate
+        } else if (sc === "route1" && inRect(worldPos.current.x, worldPos.current.y, R1_SOUTH_GATE)) {
+          transitionTo("overworld", 270, 30);   // exit back to overworld, south of Route-1 trigger
+        } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_PROF_DOOR as Rect)) {
           transitionTo("lab", 350, 590);
         } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_MAYA_DOOR)) {
           transitionTo("maya", 400, 660);
@@ -828,8 +859,8 @@ export function WalkDemo() {
         {/* World container — camera-scrolled + zoomed */}
         <div ref={worldRef} style={{
           position: "absolute",
-          width:  scene === "overworld" ? OW.w : scene === "lab" ? LB.w : scene === "maya" ? MY.w : scene === "jay" ? JY.w : scene === "ellio" ? EH.w : scene === "lia" ? LH.w : PH.w,
-          height: scene === "overworld" ? OW.h : scene === "lab" ? LB.h : scene === "maya" ? MY.h : scene === "jay" ? JY.h : scene === "ellio" ? EH.h : scene === "lia" ? LH.h : PH.h,
+          width:  scene === "overworld" ? OW.w : scene === "lab" ? LB.w : scene === "route1" ? R1.w : scene === "maya" ? MY.w : scene === "jay" ? JY.w : scene === "ellio" ? EH.w : scene === "lia" ? LH.w : PH.w,
+          height: scene === "overworld" ? OW.h : scene === "lab" ? LB.h : scene === "route1" ? R1.h : scene === "maya" ? MY.h : scene === "jay" ? JY.h : scene === "ellio" ? EH.h : scene === "lia" ? LH.h : PH.h,
           willChange: "transform",
           transformOrigin: "0 0",
           transform: `scale(${ZOOM}) translate(${-cam.current.x}px,${-cam.current.y}px)`,
@@ -838,7 +869,8 @@ export function WalkDemo() {
           <img
             key={scene}
             src={scene === "ellio" ? "/__mockup/images/ellio-home-interior.png"
-              : scene === "lia"   ? "/__mockup/images/lia-home.png"
+              : scene === "lia"    ? "/__mockup/images/lia-home.png"
+              : scene === "route1" ? "/__mockup/images/route1-bg.png"
               : scene === "overworld"
               ? "/__mockup/images/overworld-map.png"
               : scene === "lab"
@@ -1045,6 +1077,21 @@ export function WalkDemo() {
                 pointerEvents:"none",
                 filter:"drop-shadow(0 0 8px rgba(80,220,180,0.8))",
               }}/>
+            </>
+          )}
+
+          {/* Whisperroot Trail — south gate glow (world-space, visible through gate from road) */}
+          {scene === "route1" && (
+            <>
+              <div style={{
+                position:"absolute", left:460, top:742,
+                width:80, height:14, borderRadius:"50%",
+                background:"radial-gradient(ellipse,rgba(100,220,120,0.6)0%,transparent 80%)",
+                animation:"pulse 1.6s ease-in-out infinite",
+                pointerEvents:"none",
+              }}/>
+              {/* Tall grass patches — visual markers for future encounter zones */}
+              {/* (not blocked — just decorative overlays showing where mons will spawn) */}
             </>
           )}
 
@@ -2208,7 +2255,7 @@ export function WalkDemo() {
           border:"1px solid rgba(240,208,96,0.3)", pointerEvents:"none",
           textTransform:"uppercase", zIndex:5,
         }}>
-          {scene === "overworld" ? "Primeria Village" : scene === "lab" ? "Prof. Irwyn's Lab" : scene === "maya" ? "Maya's Home" : scene === "jay" ? "Jay's Home" : scene === "ellio" ? "Ellio's Home" : scene === "lia" ? "Lia's Home" : "Your Home"}
+          {scene === "overworld" ? "Primeria Village" : scene === "lab" ? "Prof. Irwyn's Lab" : scene === "maya" ? "Maya's Home" : scene === "jay" ? "Jay's Home" : scene === "ellio" ? "Ellio's Home" : scene === "lia" ? "Lia's Home" : scene === "route1" ? "Whisperroot Trail" : "Your Home"}
         </div>
 
         {/* Fade overlay */}
