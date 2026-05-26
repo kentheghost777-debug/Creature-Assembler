@@ -28,8 +28,9 @@ type Rect  = [number, number, number, number]; // x1 y1 x2 y2 world-px
 // ── Collision zones ─────────────────────────────────────────────────────────
 // Only block solid structures. Leave wide paths (~90 px) on both sides.
 const OW_BLOCKED: Rect[] = [
-  // Hard map edges
-  [0,   0,   800, 58 ],  // top tree strip
+  // Hard map edges — top strip split to leave the central Route-1 path open
+  [0,   0,   275, 58 ],  // top-left trees
+  [525, 0,   800, 58 ],  // top-right trees
   [0,   852, 800, 900],  // bottom strip
   [0,   0,   58,  900],  // left tree column
   [742, 0,   800, 900],  // right tree column
@@ -44,6 +45,8 @@ const OW_BLOCKED: Rect[] = [
   [150, 692, 212, 778],  // left post
   [588, 692, 650, 778],  // right post
 ];
+// Future Route-1 exit trigger (top of central path)
+const OW_ROUTE1_EXIT: Rect = [275, 0, 525, 12];
 const OW_PROF_DOOR: Rect = [295, 340, 505, 400]; // step into lab
 
 const LAB_BLOCKED: Rect[] = [
@@ -232,7 +235,8 @@ export function WalkDemo() {
 
         const { x, y } = worldPos.current;
         const nx = Math.max(30, Math.min(x + dx, world.w - 30));
-        const ny = Math.max(30, Math.min(y + dy, world.h - 30));
+        // Allow y=0 so the northern path exit is reachable
+        const ny = Math.max(0,  Math.min(y + dy, world.h - 30));
         if (!blocked(nx, y,  zones)) worldPos.current.x = nx;
         if (!blocked(x,  ny, zones)) worldPos.current.y = ny;
 
