@@ -88,15 +88,18 @@ function drawSprite(canvas: HTMLCanvasElement, src: string, flipX: boolean): boo
   ctx.drawImage(img, 0, 0);
   if (flipX) ctx.setTransform(1, 0, 0, 1, 0, 0);
   try {
-    const id  = ctx.getImageData(0, 0, W, H);
-    const d   = id.data;
-    // BFS flood-fill from every edge pixel — only background black gets erased,
-    // interior dark armor/shadow pixels are never touched.
-    const isBlack = (i: number) => d[i] < 30 && d[i+1] < 30 && d[i+2] < 30;
+    const id = ctx.getImageData(0, 0, W, H);
+    const d  = id.data;
+    // BFS flood-fill from every edge — only pixels that are EXACTLY pure black
+    // (0,0,0) get erased. Character dark areas are ≥ 1 on at least one channel
+    // so they are never removed, no matter how dark the armor or shadows.
+    // Threshold 4: catches pure black + anti-alias fringe (values 0-3).
+    // Any character pixel with at least one channel ≥ 4 is preserved.
+    const isPureBlack = (p: number) => d[p] < 4 && d[p+1] < 4 && d[p+2] < 4;
     const vis = new Uint8Array(W * H);
     const q: number[] = [];
     const seed = (idx: number) => {
-      if (!vis[idx] && isBlack(idx * 4)) { vis[idx] = 1; q.push(idx); }
+      if (!vis[idx] && isPureBlack(idx * 4)) { vis[idx] = 1; q.push(idx); }
     };
     for (let x = 0; x < W; x++) { seed(x); seed((H-1)*W + x); }
     for (let y = 1; y < H-1; y++) { seed(y*W); seed(y*W + W-1); }
@@ -110,7 +113,7 @@ function drawSprite(canvas: HTMLCanvasElement, src: string, flipX: boolean): boo
       if (y < H-1) seed(i+W);
     }
     ctx.putImageData(id, 0, 0);
-  } catch { /* leave with black bg if CORS blocked */ }
+  } catch { /* no CORS issue on same-origin but guard anyway */ }
   return true;
 }
 
@@ -382,7 +385,7 @@ export function WalkDemo() {
             style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover" }}
           />
 
-          {/* Prof Irwyn — canvas-rendered, proper transparent bg */}
+          {/* Prof Irwyn */}
           {scene === "lab" && (
             <canvas
               ref={profCanvasRef}
