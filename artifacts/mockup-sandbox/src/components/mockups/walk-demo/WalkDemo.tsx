@@ -780,6 +780,12 @@ export function WalkDemo() {
     ellio_d2: "A Resonance Stone. I came across it on a trade caravan last season. The merchants swore these things build a genuine bond between a Keeper and their Tayanari — something about frequencies, shared energy, resonance between spirits. I don't fully understand the mechanics. But I know it's real.",
     ellio_d3: "Here's how they said to use it in battle: equip it to yourself — not your Tayanari. When you channel it, you can throw a small elemental move tuned to your partner's type. Raw and basic, but yours. I'm told it grows with you over time, though I don't know the full details yet. Take it. A merchant always travels light — and this one belongs with a Keeper.",
     ellio_done: "Safe roads. Come find me when you're a legend — I'll have something worth trading.",
+    lia_d1: "Oh look — the kid finally made it to my door. Took you long enough. Come in. Cindrax won't bite... probably. She's in a decent mood today.",
+    lia_d2: "That's Cindrax. Stone-Flame type. Stubborn, fierce, runs entirely on attitude and spite. We get along perfectly. She was bonded to me before you even knew what a Tayanari was.",
+    lia_d3: "Look — strength alone doesn't cut it out there. The land gives you tools, you just have to know how to read them. Hearthberries. I've been collecting them for months. One before you attempt a bond and the wild Tayanari's guard drops — makes the whole thing smoother.",
+    lia_d4: "Here. Ten of them. And take this satchel — good leather, field-grade. A Keeper who can't carry their kit is just a kid with a dragon, and you're not going to be that kid.",
+    lia_d5: "Now get out of my house. And don't lose to anything on Route 1, alright? I will absolutely hear about it and I will not let it go. Ever. Go do something worth bragging about.",
+    lia_done: "You're still here? Go. If you need more berries later, you know where I live.",
   };
 
   return (
@@ -791,8 +797,8 @@ export function WalkDemo() {
         {/* World container — camera-scrolled + zoomed */}
         <div ref={worldRef} style={{
           position: "absolute",
-          width:  scene === "overworld" ? OW.w : scene === "lab" ? LB.w : scene === "maya" ? MY.w : scene === "jay" ? JY.w : scene === "ellio" ? EH.w : PH.w,
-          height: scene === "overworld" ? OW.h : scene === "lab" ? LB.h : scene === "maya" ? MY.h : scene === "jay" ? JY.h : scene === "ellio" ? EH.h : PH.h,
+          width:  scene === "overworld" ? OW.w : scene === "lab" ? LB.w : scene === "maya" ? MY.w : scene === "jay" ? JY.w : scene === "ellio" ? EH.w : scene === "lia" ? LH.w : PH.w,
+          height: scene === "overworld" ? OW.h : scene === "lab" ? LB.h : scene === "maya" ? MY.h : scene === "jay" ? JY.h : scene === "ellio" ? EH.h : scene === "lia" ? LH.h : PH.h,
           willChange: "transform",
           transformOrigin: "0 0",
           transform: `scale(${ZOOM}) translate(${-cam.current.x}px,${-cam.current.y}px)`,
@@ -800,7 +806,9 @@ export function WalkDemo() {
           {/* Map background */}
           <img
             key={scene}
-            src={scene === "ellio" ? "/__mockup/images/ellio-home-interior.png" : scene === "overworld"
+            src={scene === "ellio" ? "/__mockup/images/ellio-home-interior.png"
+              : scene === "lia"   ? "/__mockup/images/lia-home.png"
+              : scene === "overworld"
               ? "/__mockup/images/overworld-map.png"
               : scene === "lab"
               ? "/__mockup/images/prof-lab-interior.png"
@@ -889,6 +897,14 @@ export function WalkDemo() {
                 animation:"pulse 1.4s ease-in-out infinite",
                 pointerEvents:"none",
               }}/>
+              {/* Lia's home door glow */}
+              <div style={{
+                position:"absolute", left:856, top:557,
+                width:44, height:10, borderRadius:"50%",
+                background:"radial-gradient(ellipse,rgba(255,120,80,0.55)0%,transparent 80%)",
+                animation:"pulse 1.4s ease-in-out infinite",
+                pointerEvents:"none",
+              }}/>
             </>
           )}
 
@@ -926,6 +942,47 @@ export function WalkDemo() {
                 letterSpacing:1, pointerEvents:"none",
                 textShadow:"0 0 4px #000,0 0 8px #000",
               }}>JESS</div>
+            </>
+          )}
+
+          {/* Lia NPC + Cindrax inside Lia's home */}
+          {scene === "lia" && (
+            <>
+              <canvas ref={liaCanvasRef} style={{
+                position:"absolute",
+                imageRendering:"auto", pointerEvents:"none",
+                left: LIA_POS.x - 36,
+                top:  LIA_POS.y - 54,
+              }}/>
+              <div style={{
+                position:"absolute",
+                left: LIA_POS.x - 12, top: LIA_POS.y - 80,
+                color:"#ffaa70", fontSize:8, fontWeight:800,
+                letterSpacing:1, pointerEvents:"none",
+                textShadow:"0 0 4px #000,0 0 8px #000",
+              }}>LIA</div>
+              {/* Cindrax — static image beside Lia */}
+              <img
+                src="/__mockup/images/cindrax.png"
+                alt="Cindrax"
+                style={{
+                  position:"absolute",
+                  left: LIA_POS.x + 55,
+                  top:  LIA_POS.y - 44,
+                  width:72, height:72,
+                  objectFit:"contain",
+                  imageRendering:"auto",
+                  pointerEvents:"none",
+                  filter:"drop-shadow(0 0 6px rgba(255,100,40,0.5))",
+                }}
+              />
+              <div style={{
+                position:"absolute",
+                left: LIA_POS.x + 60, top: LIA_POS.y - 52,
+                color:"#ff8855", fontSize:7, fontWeight:800,
+                letterSpacing:1, pointerEvents:"none",
+                textShadow:"0 0 4px #000,0 0 8px #000",
+              }}>CINDRAX</div>
             </>
           )}
 
@@ -1045,6 +1102,23 @@ export function WalkDemo() {
             }}>!</button>
         )}
 
+        {/* ── INTERACT BUTTON — Lia ─────────────────────────────────────── */}
+        {scene === "lia" && nearLia && phase === "walk" && !liaDone && (
+          <button
+            onClick={() => setPhase(hasHearthberries ? "lia_done" : "lia_d1")}
+            style={{
+              position:"absolute",
+              left: liaInteractPos.sx - 14,
+              top:  liaInteractPos.sy - 10,
+              width:28, height:28, borderRadius:"50%",
+              background:"#ff7a44", border:"2px solid #fff",
+              color:"#2a0800", fontSize:16, fontWeight:900,
+              display:"flex", alignItems:"center", justifyContent:"center",
+              cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite",
+              zIndex:10,
+            }}>!</button>
+        )}
+
         {/* ── INTERACT BUTTON — Jess ────────────────────────────────────── */}
         {scene === "home" && nearJess && phase === "walk" && !jessDone && (
           <button
@@ -1138,6 +1212,39 @@ export function WalkDemo() {
               </div>
               <div style={{ color:"#e8dcc8", fontSize:12, marginTop:3, fontWeight:600 }}>
                 Resonance Stone ×1
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── LIA ITEMS NOTIFICATION ───────────────────────────────────── */}
+        {liaItemsNotif && (
+          <div style={{
+            position:"absolute", top:"38%", left:"50%",
+            transform:"translate(-50%,-50%)",
+            background:"rgba(18,6,2,0.97)",
+            border:"1.5px solid rgba(255,120,60,0.65)",
+            borderRadius:14, padding:"14px 18px",
+            display:"flex", flexDirection:"column", gap:10,
+            zIndex:60, pointerEvents:"none",
+            boxShadow:"0 4px 24px rgba(255,100,40,0.25)",
+            minWidth:210,
+          }}>
+            <div style={{ color:"#ff8855", fontWeight:800, fontSize:13, letterSpacing:0.5 }}>
+              Items Received!
+            </div>
+            <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+              <img src="/__mockup/images/hearthberry.png" alt="Hearthberry"
+                style={{ width:34, height:34, objectFit:"contain", flexShrink:0 }}/>
+              <div style={{ color:"#e8dcc8", fontSize:12, fontWeight:600 }}>
+                Hearthberry ×10
+              </div>
+            </div>
+            <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+              <img src="/__mockup/images/keepers-satchel.png" alt="Keeper's Satchel"
+                style={{ width:34, height:34, objectFit:"contain", flexShrink:0 }}/>
+              <div style={{ color:"#e8dcc8", fontSize:12, fontWeight:600 }}>
+                Keeper's Satchel ×1
               </div>
             </div>
           </div>
@@ -1390,6 +1497,59 @@ export function WalkDemo() {
                   cursor:"pointer",
                 }}
               >{(phase === "ellio_d3" || phase === "ellio_done") ? "OK" : "Next ▶"}</button>
+            </div>
+          </div>
+        )}
+
+        {/* ── LIA DIALOG BOX ───────────────────────────────────────────── */}
+        {(phase === "lia_d1" || phase === "lia_d2" || phase === "lia_d3" || phase === "lia_d4" || phase === "lia_d5" || phase === "lia_done") && (
+          <div style={{
+            position:"absolute", bottom:0, left:0, right:0,
+            background:"linear-gradient(to top,rgba(18,5,2,0.97),rgba(24,7,3,0.93))",
+            borderTop:"2px solid rgba(255,110,50,0.55)",
+            padding:"10px 14px 14px",
+            zIndex:20,
+          }}>
+            <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+              <canvas ref={liaPortraitRef}
+                style={{ width:44, height:44, borderRadius:8,
+                  background:"#120400", border:"1px solid rgba(255,110,50,0.4)" }}
+              />
+              <span style={{ color:"#ff9060", fontWeight:700, fontSize:13, letterSpacing:1 }}>
+                LIA
+              </span>
+              <span style={{ color:"#8a4828", fontSize:9, fontWeight:600, letterSpacing:0.8, marginLeft:2 }}>
+                · Keeper · Stone-Flame
+              </span>
+            </div>
+            <p style={{ color:"#e8dcc8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>
+              {LINES[phase]}
+            </p>
+            <div style={{ display:"flex", justifyContent:"flex-end" }}>
+              <button
+                onClick={() => {
+                  if (phase === "lia_d5") {
+                    setPhase("walk");
+                    setHasHearthberries(true);
+                    setHasSatchel(true);
+                    setLiaDone(true);
+                    setLiaItemsNotif(true);
+                    setTimeout(() => setLiaItemsNotif(false), 3500);
+                  } else if (phase === "lia_done") {
+                    setPhase("walk");
+                    setLiaDone(true);
+                  } else {
+                    advanceDialog(phase);
+                  }
+                }}
+                style={{
+                  background:"rgba(255,110,50,0.12)",
+                  border:"1px solid rgba(255,110,50,0.45)",
+                  color:"#ff9060", padding:"6px 20px",
+                  borderRadius:8, fontSize:13, fontWeight:700,
+                  cursor:"pointer",
+                }}
+              >{(phase === "lia_d5" || phase === "lia_done") ? "OK" : "Next ▶"}</button>
             </div>
           </div>
         )}
@@ -1806,7 +1966,7 @@ export function WalkDemo() {
                 {/* ── BAG PAGE ────────────────────────────────────── */}
                 {journalTab === "bag" && (
                   <div style={{ display:"flex", flexDirection:"column" }}>
-                    {!shellsCollected && !hasHealingRune && !hasResonanceStone && (
+                    {!shellsCollected && !hasHealingRune && !hasResonanceStone && !hasHearthberries && !hasSatchel && (
                       <div style={{
                         textAlign:"center", padding:"26px 0",
                         color:"#b09468", fontSize:12, fontStyle:"italic",
@@ -1915,6 +2075,70 @@ export function WalkDemo() {
                       </div>
                     )}
 
+                    {/* Hearthberries — from Lia */}
+                    {hasHearthberries && (
+                      <div style={{
+                        display:"flex", alignItems:"center", gap:13,
+                        padding:"10px 2px 13px",
+                        borderBottom:"1px dashed rgba(100,64,20,0.28)",
+                      }}>
+                        <img src="/__mockup/images/hearthberry.png" alt="Hearthberry" style={{
+                          width:48, height:48, objectFit:"contain", flexShrink:0,
+                          filter:"drop-shadow(0 0 5px rgba(255,100,40,0.45))",
+                        }}/>
+                        <div style={{ flex:1 }}>
+                          <div style={{ color:"#2a1206", fontWeight:800, fontSize:14 }}>
+                            Hearthberry
+                          </div>
+                          <div style={{ color:"#826040", fontSize:11, marginTop:4, lineHeight:1.5 }}>
+                            Use before attempting a bond. Lowers a wild Tayanari's guard and raises catch chance.
+                          </div>
+                          <div style={{ color:"#c05020", fontSize:10, fontWeight:700, marginTop:4 }}>
+                            +15% bond success rate
+                          </div>
+                        </div>
+                        <div style={{
+                          color:"#8a3a14", fontSize:14, fontWeight:900,
+                          background:"rgba(180,70,30,0.10)",
+                          padding:"4px 12px", borderRadius:20,
+                          border:"1px solid rgba(200,90,40,0.22)",
+                          flexShrink:0,
+                        }}>×10</div>
+                      </div>
+                    )}
+
+                    {/* Keeper's Satchel — from Lia */}
+                    {hasSatchel && (
+                      <div style={{
+                        display:"flex", alignItems:"center", gap:13,
+                        padding:"10px 2px 13px",
+                        borderBottom:"1px dashed rgba(100,64,20,0.28)",
+                      }}>
+                        <img src="/__mockup/images/keepers-satchel.png" alt="Keeper's Satchel" style={{
+                          width:48, height:48, objectFit:"contain", flexShrink:0,
+                          filter:"drop-shadow(0 0 4px rgba(160,100,40,0.4))",
+                        }}/>
+                        <div style={{ flex:1 }}>
+                          <div style={{ color:"#2a1206", fontWeight:800, fontSize:14 }}>
+                            Keeper's Satchel
+                          </div>
+                          <div style={{ color:"#826040", fontSize:11, marginTop:4, lineHeight:1.5 }}>
+                            Field-grade leather satchel. Expands carry capacity for items and shells on the road.
+                          </div>
+                          <div style={{ color:"#7a6030", fontSize:10, fontWeight:700, marginTop:4 }}>
+                            +4 item slots
+                          </div>
+                        </div>
+                        <div style={{
+                          color:"#6a4818", fontSize:14, fontWeight:900,
+                          background:"rgba(120,80,30,0.10)",
+                          padding:"4px 12px", borderRadius:20,
+                          border:"1px solid rgba(160,110,50,0.22)",
+                          flexShrink:0,
+                        }}>×1</div>
+                      </div>
+                    )}
+
                     {[1,2,3].map(n => (
                       <div key={n} style={{
                         padding:"11px 2px",
@@ -1945,7 +2169,7 @@ export function WalkDemo() {
           border:"1px solid rgba(240,208,96,0.3)", pointerEvents:"none",
           textTransform:"uppercase", zIndex:5,
         }}>
-          {scene === "overworld" ? "Primeria Village" : scene === "lab" ? "Prof. Irwyn's Lab" : scene === "maya" ? "Maya's Home" : scene === "jay" ? "Jay's Home" : scene === "ellio" ? "Ellio's Home" : "Your Home"}
+          {scene === "overworld" ? "Primeria Village" : scene === "lab" ? "Prof. Irwyn's Lab" : scene === "maya" ? "Maya's Home" : scene === "jay" ? "Jay's Home" : scene === "ellio" ? "Ellio's Home" : scene === "lia" ? "Lia's Home" : "Your Home"}
         </div>
 
         {/* Fade overlay */}
