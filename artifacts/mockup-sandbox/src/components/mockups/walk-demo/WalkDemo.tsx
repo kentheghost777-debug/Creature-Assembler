@@ -151,7 +151,8 @@ export function WalkDemo() {
   const [pickupNotif,      setPickupNotif]      = useState(false);
   const [selected,         setSelected]         = useState<StarterId | null>(null);
   const [starter,          setStarter]          = useState<typeof STARTERS[number] | null>(null);
-  const [showParty,        setShowParty]        = useState(false);
+  const [showJournal,      setShowJournal]      = useState(false);
+  const [journalTab,       setJournalTab]       = useState<"party"|"bag">("party");
   const [interactPos,      setInteractPos]      = useState({ sx: 0, sy: 0 });
   const [mayaInteractPos,  setMayaInteractPos]  = useState({ sx: 0, sy: 0 });
   const [shellInteractPos, setShellInteractPos] = useState({ sx: 0, sy: 0 });
@@ -792,64 +793,197 @@ export function WalkDemo() {
           </div>
         )}
 
-        {/* ── PARTY OVERLAY ────────────────────────────────────────────── */}
-        {showParty && (
-          <div style={{
-            position:"absolute", inset:0,
-            background:"rgba(5,3,1,0.95)",
-            display:"flex", flexDirection:"column",
-            zIndex:40,
-          }}>
+        {/* ── KEEPER'S JOURNAL ─────────────────────────────────────────── */}
+        {showJournal && (
+          <div
+            onClick={e => { if (e.target === e.currentTarget) setShowJournal(false); }}
+            style={{
+              position:"absolute", inset:0,
+              background:"rgba(10,6,2,0.72)",
+              display:"flex", flexDirection:"column", justifyContent:"flex-end",
+              zIndex:40,
+            }}
+          >
             <div style={{
-              padding:"14px 16px 10px",
-              borderBottom:"1px solid rgba(240,208,80,0.25)",
-              display:"flex", justifyContent:"space-between", alignItems:"center",
+              background:"linear-gradient(175deg,#f5e9cc 0%,#ecdcb4 55%,#e4d0a0 100%)",
+              borderRadius:"18px 18px 0 0",
+              borderTop:"4px solid #2c1a0e",
+              borderLeft:"3px solid #2c1a0e",
+              borderRight:"3px solid #2c1a0e",
+              boxShadow:"0 -6px 32px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.35)",
+              maxHeight:"78vh", display:"flex", flexDirection:"column",
+              overflow:"hidden",
             }}>
-              <div style={{ color:"#f0d060", fontWeight:800, fontSize:14, letterSpacing:1.5 }}>PARTY</div>
-              <button onClick={() => setShowParty(false)} style={{
-                background:"none", border:"1px solid rgba(255,255,255,0.2)",
-                color:"#888", borderRadius:8, padding:"4px 12px", cursor:"pointer", fontSize:13,
-              }}>✕</button>
-            </div>
-            <div style={{ padding:16, display:"flex", flexDirection:"column", gap:12 }}>
-              {/* Slot 1 — starter */}
-              {starter ? (
-                <div style={{
-                  background:"rgba(20,14,6,0.9)",
-                  border:`2px solid ${starter.color}`,
-                  borderRadius:14, padding:"12px 14px",
-                  display:"flex", alignItems:"center", gap:14,
-                }}>
-                  <img src={starter.img} alt={starter.name}
-                    style={{ width:64, height:64, objectFit:"contain",
-                      background:"#0a0604", borderRadius:8, mixBlendMode:"screen" }}
-                  />
-                  <div>
-                    <div style={{ color:"#e8dcc8", fontWeight:700, fontSize:15 }}>{starter.name}</div>
-                    <div style={{
-                      fontSize:11, fontWeight:700, letterSpacing:1,
-                      color: starter.color, marginTop:4,
-                      background:`rgba(${starter.color.slice(1).match(/../g)!.map(h=>parseInt(h,16)).join(",")},0.12)`,
-                      display:"inline-block", padding:"2px 10px", borderRadius:20,
-                    }}>{starter.type.toUpperCase()}</div>
-                    <div style={{ color:"#706050", fontSize:11, marginTop:4 }}>Lv 1 · HP 40/40</div>
-                  </div>
-                </div>
-              ) : (
-                <div style={{
-                  background:"rgba(12,8,3,0.7)",
-                  border:"2px dashed rgba(255,255,255,0.1)",
-                  borderRadius:14, padding:"22px 14px",
-                  color:"#403020", fontSize:13, textAlign:"center",
-                }}>— Empty slot —</div>
-              )}
-              {/* Slot 2 — always empty */}
+              {/* Leather spine */}
               <div style={{
-                background:"rgba(12,8,3,0.7)",
-                border:"2px dashed rgba(255,255,255,0.1)",
-                borderRadius:14, padding:"22px 14px",
-                color:"#403020", fontSize:13, textAlign:"center",
-              }}>— Empty slot —</div>
+                background:"linear-gradient(90deg,#1e0f06,#3d2010,#2c1608,#1e0f06)",
+                padding:"10px 16px 0",
+                display:"flex", alignItems:"flex-end", justifyContent:"space-between",
+                flexShrink:0, gap:10,
+              }}>
+                <span style={{
+                  color:"#c8a44a", fontSize:10, fontWeight:800,
+                  letterSpacing:3.5, textTransform:"uppercase",
+                  paddingBottom:10,
+                  textShadow:"0 1px 3px rgba(0,0,0,0.9)",
+                }}>Keeper's Journal</span>
+
+                {/* Page tabs flush with bottom of spine */}
+                <div style={{ display:"flex", gap:3, alignSelf:"flex-end" }}>
+                  {(["party","bag"] as const).map(tab => (
+                    <button key={tab} onClick={() => setJournalTab(tab)} style={{
+                      padding:"5px 16px 8px",
+                      background: journalTab === tab
+                        ? "linear-gradient(175deg,#f5e9cc,#ecdcb4)"
+                        : "rgba(0,0,0,0.30)",
+                      border:"none",
+                      borderRadius:"7px 7px 0 0",
+                      color: journalTab === tab ? "#3d1e04" : "#a08050",
+                      fontSize:10, fontWeight:800, letterSpacing:1.5,
+                      textTransform:"uppercase", cursor:"pointer",
+                    }}>{tab === "party" ? "Party" : "Bag"}</button>
+                  ))}
+                </div>
+
+                {/* Wax-seal close */}
+                <button onClick={() => setShowJournal(false)} style={{
+                  width:26, height:26, borderRadius:"50%", flexShrink:0,
+                  background:"radial-gradient(circle at 38% 33%,#c0392b,#7b1c12)",
+                  border:"1.5px solid #3d0f0a",
+                  color:"#f5d5d0", fontSize:12, fontWeight:900,
+                  display:"flex", alignItems:"center", justifyContent:"center",
+                  cursor:"pointer", marginBottom:8,
+                  boxShadow:"0 2px 6px rgba(0,0,0,0.7)",
+                }}>✕</button>
+              </div>
+
+              {/* Parchment body */}
+              <div style={{ overflowY:"auto", padding:"14px 18px 22px", flex:1 }}>
+                {/* Section header rule */}
+                <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:14 }}>
+                  <div style={{ flex:1, height:1, background:"rgba(100,64,20,0.28)" }}/>
+                  <span style={{
+                    color:"#8a5c22", fontSize:9, fontWeight:800,
+                    letterSpacing:2.5, textTransform:"uppercase",
+                  }}>{journalTab === "party" ? "Companions" : "Carried Items"}</span>
+                  <div style={{ flex:1, height:1, background:"rgba(100,64,20,0.28)" }}/>
+                </div>
+
+                {/* ── PARTY PAGE ──────────────────────────────────── */}
+                {journalTab === "party" && (
+                  <div style={{ display:"flex", flexDirection:"column" }}>
+                    {starter ? (
+                      <div style={{
+                        display:"flex", alignItems:"center", gap:13,
+                        padding:"10px 2px 13px",
+                        borderBottom:"1px dashed rgba(100,64,20,0.28)",
+                      }}>
+                        <img src={starter.img} alt={starter.name} style={{
+                          width:56, height:56, objectFit:"contain",
+                          background:"rgba(60,30,0,0.05)", borderRadius:8,
+                          mixBlendMode:"multiply", flexShrink:0,
+                        }}/>
+                        <div style={{ flex:1 }}>
+                          <div style={{ color:"#2a1206", fontWeight:800, fontSize:15, letterSpacing:0.3 }}>
+                            {starter.name}
+                          </div>
+                          <div style={{
+                            display:"inline-block", marginTop:5,
+                            fontSize:9, fontWeight:800, letterSpacing:1.8,
+                            color:"#8a5c22", borderBottom:"1px solid rgba(100,64,20,0.35)",
+                            paddingBottom:2,
+                          }}>{starter.type.toUpperCase()}</div>
+                          <div style={{ color:"#826040", fontSize:11, marginTop:5 }}>
+                            Level&nbsp;1&emsp;·&emsp;HP 40 / 40
+                          </div>
+                        </div>
+                        <div style={{
+                          color:"#9a7040", fontSize:10, fontWeight:700,
+                          background:"rgba(100,64,20,0.09)",
+                          padding:"3px 10px", borderRadius:20,
+                          border:"1px solid rgba(100,64,20,0.18)",
+                        }}>No. 1</div>
+                      </div>
+                    ) : (
+                      <div style={{
+                        textAlign:"center", padding:"26px 0",
+                        color:"#b09468", fontSize:12, fontStyle:"italic",
+                      }}>— No companion yet. Speak with the Professor. —</div>
+                    )}
+
+                    {[2,3,4,5,6].map(n => (
+                      <div key={n} style={{
+                        padding:"11px 2px",
+                        borderBottom:"1px dashed rgba(100,64,20,0.16)",
+                        display:"flex", alignItems:"center", gap:13,
+                      }}>
+                        <div style={{
+                          width:56, height:40, borderRadius:7,
+                          border:"1px dashed rgba(100,64,20,0.2)",
+                          background:"rgba(100,64,20,0.03)",
+                          flexShrink:0,
+                        }}/>
+                        <div style={{ color:"#c8a87a", fontSize:11, fontStyle:"italic" }}>
+                          Slot {n} — empty
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* ── BAG PAGE ────────────────────────────────────── */}
+                {journalTab === "bag" && (
+                  <div style={{ display:"flex", flexDirection:"column" }}>
+                    {shellsCollected ? (
+                      <div style={{
+                        display:"flex", alignItems:"center", gap:13,
+                        padding:"10px 2px 13px",
+                        borderBottom:"1px dashed rgba(100,64,20,0.28)",
+                      }}>
+                        <img src="/__mockup/images/weathered-shell.png" alt="Shell" style={{
+                          width:50, height:50, objectFit:"contain",
+                          flexShrink:0, mixBlendMode:"multiply",
+                        }}/>
+                        <div style={{ flex:1 }}>
+                          <div style={{ color:"#2a1206", fontWeight:800, fontSize:14 }}>
+                            Weathered Realm Shell
+                          </div>
+                          <div style={{ color:"#826040", fontSize:11, marginTop:5, lineHeight:1.5 }}>
+                            A shell worn smooth by realms unknown. Said to draw wandering Tayanari close.
+                          </div>
+                        </div>
+                        <div style={{
+                          color:"#7a4e1a", fontSize:14, fontWeight:900,
+                          background:"rgba(100,64,20,0.10)",
+                          padding:"4px 12px", borderRadius:20,
+                          border:"1px solid rgba(100,64,20,0.22)",
+                          flexShrink:0,
+                        }}>×24</div>
+                      </div>
+                    ) : (
+                      <div style={{
+                        textAlign:"center", padding:"26px 0",
+                        color:"#b09468", fontSize:12, fontStyle:"italic",
+                      }}>— Your bag is empty. —</div>
+                    )}
+
+                    {[1,2,3,4].map(n => (
+                      <div key={n} style={{
+                        padding:"11px 2px",
+                        borderBottom:"1px dashed rgba(100,64,20,0.16)",
+                        color:"#c8a87a", fontSize:11, fontStyle:"italic",
+                      }}>—</div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Bottom binding */}
+              <div style={{
+                height:5,
+                background:"linear-gradient(90deg,#1e0f06,#3d2010,#2c1608,#1e0f06)",
+                flexShrink:0,
+              }}/>
             </div>
           </div>
         )}
@@ -891,23 +1025,19 @@ export function WalkDemo() {
         </div>
         <div style={{ display:"flex", gap:8, alignItems:"center" }}>
           <Btn d="down" label="↓" />
-          {starter && (
-            <button
-              onClick={() => setShowParty(true)}
-              style={{
-                width:52, height:52, borderRadius:12,
-                background:"rgba(200,160,30,0.2)",
-                border:"1.5px solid rgba(240,208,50,0.5)",
-                color:"#f0d060", fontSize:9, fontWeight:800,
-                letterSpacing:0.5, cursor:"pointer",
-                display:"flex", flexDirection:"column", alignItems:"center",
-                justifyContent:"center", gap:1, backdropFilter:"blur(6px)",
-              }}
-            >
-              <span style={{ fontSize:18 }}>🐾</span>
-              <span>PARTY</span>
-            </button>
-          )}
+          <button
+            onClick={() => setShowJournal(true)}
+            style={{
+              width:52, height:52, borderRadius:12,
+              background:"rgba(44,26,14,0.75)",
+              border:"1.5px solid rgba(180,130,60,0.45)",
+              color:"#c8a44a", fontSize:20,
+              display:"flex", flexDirection:"column", alignItems:"center",
+              justifyContent:"center", gap:1,
+              cursor:"pointer", backdropFilter:"blur(6px)",
+              boxShadow:"0 2px 8px rgba(0,0,0,0.5)",
+            }}
+          >📖</button>
         </div>
       </div>
 
