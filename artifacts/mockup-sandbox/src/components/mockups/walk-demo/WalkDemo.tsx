@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 const OW = { w: 800, h: 900 }; // overworld
 const LB = { w: 700, h: 700 }; // lab
 const SPEED     = 3.5;
+const ZOOM      = 0.82; // zoom-out factor — values <1 show more of the world
 const SPRITE_PX = 96;   // bigger on mobile
 const ANCHOR    = 0.75; // fraction of sprite above anchor point
 
@@ -264,21 +265,23 @@ export function WalkDemo() {
           animRef.current = newAnim; frameRef.current = 0; lastSrc.current = ""; redraw();
         }
 
-        // Camera
-        const vp  = vpRef.current;
-        const vpW = vp?.clientWidth  ?? 390;
-        const vpH = vp?.clientHeight ?? 520;
-        const px  = worldPos.current.x;
-        const py  = worldPos.current.y;
-        cam.current.x = Math.max(0, Math.min(px - vpW / 2, world.w - vpW));
-        cam.current.y = Math.max(0, Math.min(py - vpH / 2, world.h - vpH));
+        // Camera — world-space viewport accounts for zoom so more world is visible
+        const vp   = vpRef.current;
+        const vpW  = vp?.clientWidth  ?? 390;
+        const vpH  = vp?.clientHeight ?? 520;
+        const wvpW = vpW  / ZOOM; // world units visible horizontally
+        const wvpH = vpH  / ZOOM; // world units visible vertically
+        const px   = worldPos.current.x;
+        const py   = worldPos.current.y;
+        cam.current.x = Math.max(0, Math.min(px - wvpW / 2, world.w - wvpW));
+        cam.current.y = Math.max(0, Math.min(py - wvpH / 2, world.h - wvpH));
 
         // Update DOM
         const wd     = worldRef.current;
         const canvas = canvasRef.current;
         const shadow = shadowRef.current;
         const topOff = Math.round(SPRITE_PX * ANCHOR);
-        if (wd)     wd.style.transform = `translate(${-cam.current.x}px,${-cam.current.y}px)`;
+        if (wd)     wd.style.transform = `scale(${ZOOM}) translate(${-cam.current.x}px,${-cam.current.y}px)`;
         if (canvas) { canvas.style.left = `${px - SPRITE_PX/2}px`; canvas.style.top = `${py - topOff}px`; }
         if (shadow) { shadow.style.left = `${px - 18}px`;          shadow.style.top  = `${py + 2}px`; }
 
@@ -286,8 +289,8 @@ export function WalkDemo() {
         if (sc === "lab") {
           const d = dist(px, py, PROF.x, PROF.y);
           const near = d < 120;
-          const screenX = px - cam.current.x;
-          const screenY = py - cam.current.y - topOff - 28;
+          const screenX = (px - cam.current.x) * ZOOM;
+          const screenY = (py - cam.current.y - topOff - 28) * ZOOM;
           setNearProf(near);
           if (near) setInteractPos({ sx: screenX, sy: screenY });
         }
@@ -357,13 +360,14 @@ export function WalkDemo() {
       {/* ── MAP VIEWPORT ─────────────────────────────────────────────────── */}
       <div ref={vpRef} style={{ flex:1, position:"relative", overflow:"hidden" }}>
 
-        {/* World container — camera-scrolled */}
+        {/* World container — camera-scrolled + zoomed */}
         <div ref={worldRef} style={{
           position: "absolute",
           width:  scene === "overworld" ? OW.w : LB.w,
           height: scene === "overworld" ? OW.h : LB.h,
           willChange: "transform",
-          transform: `translate(${-cam.current.x}px,${-cam.current.y}px)`,
+          transformOrigin: "0 0",
+          transform: `scale(${ZOOM}) translate(${-cam.current.x}px,${-cam.current.y}px)`,
         }}>
           {/* Map background */}
           <img
