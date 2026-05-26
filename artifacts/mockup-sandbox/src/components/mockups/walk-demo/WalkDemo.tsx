@@ -94,7 +94,7 @@ const OW_BLOCKED: Rect[] = [
 // ── Lia's Home ─────────────────────────────────────────────────────────────
 const LH = { w: 800, h: 800 };
 const LIA_POS = { x: 385, y: 355 }; // Lia near the center rug
-const OW_LIA_DOOR: Rect  = [840, 552, 918, 572]; // ON visible front door — widened to span Lia north gate (x=846–910) + slack
+const OW_LIA_DOOR: Rect  = [840, 780, 910, 808]; // ON visible front door — south face of building (south road approach)
 const LIA_HOME_EXIT: Rect = [310, 722, 490, 790]; // bottom-center door
 const LH_BLOCKED: Rect[] = [
   // ── WALLS ──────────────────────────────────────────────────────────────────
@@ -218,7 +218,7 @@ const JAY_BLOCKED: Rect[] = [
 // ── Ellio's Home ─────────────────────────────────────────────────────────────
 const EH = { w: 800, h: 800 };
 const ELLIO_POS = { x: 400, y: 350 };
-const OW_ELLIO_DOOR: Rect  = [230, 552, 315, 572]; // ON visible front door — widened to span Ellio north gate (x=238–308) + slack
+const OW_ELLIO_DOOR: Rect  = [230, 780, 310, 808]; // ON visible front door — south face of building (south road approach)
 const ELLIO_HOME_EXIT: Rect = [305, 725, 505, 790];
 const EH_BLOCKED: Rect[] = [
   [0, 0, 800, 60], [0, 0, 60, 800], [740, 0, 800, 800],
@@ -233,7 +233,7 @@ const EH_BLOCKED: Rect[] = [
 // ── Player's Home ────────────────────────────────────────────────────────────
 const PH = { w: 800, h: 800 };
 const JESS_POS = { x: 395, y: 370 }; // Jess standing in the open center of the home
-const OW_PLAYER_HOME_DOOR: Rect = [520, 565, 615, 594]; // ON visible front door — widened to span PH north gate (x=532–602) + slack, with extra yard height for input forgiveness
+const OW_PLAYER_HOME_DOOR: Rect = [505, 820, 625, 850]; // ON visible front door — south face of building (south road approach)
 const PLAYER_HOME_EXIT: Rect = [305, 725, 505, 790]; // bottom-center door
 const PH_BLOCKED: Rect[] = [
   // ── WALLS ──────────────────────────────────────────────────────────────────
@@ -647,17 +647,17 @@ export function WalkDemo() {
         } else if (sc === "jay" && inRect(worldPos.current.x, worldPos.current.y, JAY_HOME_EXIT)) {
           transitionTo("overworld", 272, 468);  // south of Jay fence (y=452)
         } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_PLAYER_HOME_DOOR)) {
-          transitionTo("home", 400, 670);       // enter Player Home — trigger sits ON the visible front door
+          transitionTo("home", 400, 670);       // enter Player Home — trigger sits ON visible front door (south face)
         } else if (sc === "home" && inRect(worldPos.current.x, worldPos.current.y, PLAYER_HOME_EXIT)) {
-          transitionTo("overworld", 567, 525);  // exit onto road, just N of north fence (y=537)
+          transitionTo("overworld", 565, 856);  // exit onto south road, S of door (door y=820–850)
         } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_ELLIO_DOOR)) {
           transitionTo("ellio", 400, 670);      // enter Ellio's Home — trigger on visible front door
         } else if (sc === "ellio" && inRect(worldPos.current.x, worldPos.current.y, ELLIO_HOME_EXIT)) {
-          transitionTo("overworld", 270, 525);  // exit onto road, just N of north fence
+          transitionTo("overworld", 270, 830);  // exit onto south road, S of door
         } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_LIA_DOOR)) {
           transitionTo("lia", 400, 670);        // enter Lia's Home — trigger on visible front door
         } else if (sc === "lia" && inRect(worldPos.current.x, worldPos.current.y, LIA_HOME_EXIT)) {
-          transitionTo("overworld", 875, 525);  // exit onto road, just N of north fence
+          transitionTo("overworld", 875, 830);  // exit onto south road, S of door
         }
 
         // Flip / anim change
