@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-const frames: Record<string, string[]> = {
+const FRAME_SETS: Record<string, string[]> = {
   idle:       ["/__mockup/images/walk_idle.png"],
   walk_right: ["/__mockup/images/walk_side_1.png", "/__mockup/images/walk_side_2.png"],
   walk_left:  ["/__mockup/images/walk_side_1.png", "/__mockup/images/walk_side_2.png"],
@@ -8,120 +8,187 @@ const frames: Record<string, string[]> = {
   walk_down:  ["/__mockup/images/walk_front_1.png", "/__mockup/images/walk_front_2.png"],
 };
 
+const AUTO_SEQUENCE = [
+  { dir: "walk_right", dx: 3,    dy: 0,    steps: 60 },
+  { dir: "walk_up",    dx: 0,    dy: 0.8,  steps: 30 },
+  { dir: "walk_left",  dx: -3,   dy: 0,    steps: 60 },
+  { dir: "walk_down",  dx: 0,    dy: -0.8, steps: 30 },
+];
+
 export function WalkDemo() {
-  const [frameIdx, setFrameIdx] = useState(0);
-  const [state, setState] = useState("idle");
-  const [flip, setFlip] = useState(false);
-  const pos = useRef({ x: 260, y: 4 });
-  const stateRef = useRef("idle");
-  const keys = useRef<Record<string, boolean>>({});
-  const spriteRef = useRef<HTMLImageElement>(null);
+  const [frameIdx, setFrameIdx]   = useState(0);
+  const [direction, setDirection] = useState("idle");
+  const [flip, setFlip]           = useState(false);
+  const [label, setLabel]         = useState("AUTO DEMO");
+  const [manualDir, setManualDir] = useState<string | null>(null);
 
-  useEffect(() => {
-    const onDown = (e: KeyboardEvent) => {
-      keys.current[e.key] = true;
-      e.preventDefault();
-    };
-    const onUp = (e: KeyboardEvent) => { keys.current[e.key] = false; };
-    window.addEventListener("keydown", onDown);
-    window.addEventListener("keyup", onUp);
-    return () => { window.removeEventListener("keydown", onDown); window.removeEventListener("keyup", onUp); };
-  }, []);
+  const pos        = useRef({ x: 120, y: 10 });
+  const dirRef     = useRef("idle");
+  const flipRef    = useRef(false);
+  const manualRef  = useRef<string | null>(null);
+  const seqIdx     = useRef(0);
+  const stepCount  = useRef(0);
+  const spriteRef  = useRef<HTMLImageElement>(null);
 
-  // Frame ticker
+  // sync manualDir into ref
+  useEffect(() => { manualRef.current = manualDir; }, [manualDir]);
+
+  // Frame ticker — 7fps
   useEffect(() => {
     const id = setInterval(() => {
-      const set = frames[stateRef.current] || frames.idle;
+      const set = FRAME_SETS[dirRef.current] || FRAME_SETS.idle;
       setFrameIdx(i => (i + 1) % set.length);
-    }, 1000 / 7);
+    }, 140);
     return () => clearInterval(id);
   }, []);
 
   // Game loop
   useEffect(() => {
     let raf: number;
+    const ARENA_W = 560;
+
     const loop = () => {
-      const k = keys.current;
-      const SPEED = 3;
-      let newState = "idle";
+      let newDir = "idle";
       let newFlip = false;
+      let dx = 0, dy = 0;
 
-      if (k["ArrowRight"]) { pos.current.x = Math.min(pos.current.x + SPEED, 560); newState = "walk_right"; }
-      if (k["ArrowLeft"])  { pos.current.x = Math.max(pos.current.x - SPEED, 0);   newState = "walk_left"; newFlip = true; }
-      if (k["ArrowUp"])    { pos.current.y = Math.min(pos.current.y + SPEED * 0.5, 55); if (newState === "idle") newState = "walk_up"; }
-      if (k["ArrowDown"])  { pos.current.y = Math.max(pos.current.y - SPEED * 0.5, 4);  if (newState === "idle") newState = "walk_down"; }
+      const manual = manualRef.current;
 
-      if (newState !== stateRef.current) {
-        stateRef.current = newState;
-        setState(newState);
+      if (manual) {
+        // Manual D-pad
+        if (manual === "right") { dx = 3; newDir = "walk_right"; }
+        if (manual === "left")  { dx = -3; newDir = "walk_left"; newFlip = true; }
+        if (manual === "up")    { dy = 0.8; newDir = "walk_up"; }
+        if (manual === "down")  { dy = -0.8; newDir = "walk_down"; }
+        setLabel(newDir.replace("_", " ").toUpperCase());
+      } else {
+        // Auto sequence
+        const step = AUTO_SEQUENCE[seqIdx.current % AUTO_SEQUENCE.length];
+        newDir  = step.dir;
+        newFlip = step.dir === "walk_left";
+        dx = step.dx;
+        dy = step.dy;
+        stepCount.current++;
+        if (stepCount.current >= step.steps) {
+          stepCount.current = 0;
+          seqIdx.current = (seqIdx.current + 1) % AUTO_SEQUENCE.length;
+        }
+        setLabel("AUTO DEMO — " + newDir.replace("walk_", "").toUpperCase());
+      }
+
+      pos.current.x = Math.max(0, Math.min(pos.current.x + dx, ARENA_W - 10));
+      pos.current.y = Math.max(0, Math.min(pos.current.y + dy, 55));
+
+      if (newDir !== dirRef.current) {
+        dirRef.current = newDir;
+        setDirection(newDir);
         setFrameIdx(0);
       }
-      setFlip(newFlip);
+      if (newFlip !== flipRef.current) {
+        flipRef.current = newFlip;
+        setFlip(newFlip);
+      }
 
       if (spriteRef.current) {
         spriteRef.current.style.left   = pos.current.x + "px";
         spriteRef.current.style.bottom = pos.current.y + "px";
+        spriteRef.current.style.transform = newFlip ? "scaleX(-1)" : "scaleX(1)";
       }
 
       raf = requestAnimationFrame(loop);
     };
+
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  const currentFrames = frames[state] || frames.idle;
+  const currentFrames = FRAME_SETS[direction] || FRAME_SETS.idle;
   const src = currentFrames[frameIdx % currentFrames.length];
 
+  const DpadBtn = ({ dir, symbol }: { dir: string; symbol: string }) => (
+    <button
+      onPointerDown={() => setManualDir(dir)}
+      onPointerUp={() => setManualDir(null)}
+      onPointerLeave={() => setManualDir(null)}
+      style={{
+        width: 52, height: 52,
+        background: manualDir === dir ? "rgba(200,168,64,0.25)" : "rgba(255,255,255,0.06)",
+        border: "1px solid rgba(200,168,64,0.3)",
+        borderRadius: 8,
+        color: "#c8a840",
+        fontSize: 20,
+        cursor: "pointer",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        userSelect: "none",
+        WebkitUserSelect: "none",
+        touchAction: "none",
+      }}
+    >
+      {symbol}
+    </button>
+  );
+
   return (
-    <div style={{ width: "100vw", height: "100vh", background: "#0d0d0d", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "monospace" }}>
-      <p style={{ color: "#c8a840", fontSize: 11, letterSpacing: 2, marginBottom: 10, opacity: 0.6 }}>KINJU — SPRITE WALK DEMO</p>
+    <div style={{
+      width: "100vw", height: "100vh",
+      background: "#0d0d0d",
+      display: "flex", flexDirection: "column",
+      alignItems: "center", justifyContent: "center",
+      fontFamily: "monospace",
+      gap: 14,
+    }}>
+      <p style={{ color: "#c8a840", fontSize: 11, letterSpacing: 2, opacity: 0.6, margin: 0 }}>
+        KINJU — SPRITE WALK DEMO
+      </p>
 
       {/* Arena */}
-      <div style={{ width: 600, height: 210, background: "#111", border: "1px solid #222", borderRadius: 6, position: "relative", overflow: "hidden" }}>
-        {/* Grid lines for depth feel */}
-        <div style={{ position: "absolute", inset: 0, backgroundImage: "linear-gradient(rgba(200,168,64,0.03) 1px, transparent 1px)", backgroundSize: "40px 40px" }} />
-        {/* Ground line */}
-        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 1, background: "linear-gradient(90deg, transparent, rgba(200,168,64,0.25) 20%, rgba(200,168,64,0.25) 80%, transparent)" }} />
-
+      <div style={{
+        width: 600, height: 200,
+        background: "#111",
+        border: "1px solid #222",
+        borderRadius: 6,
+        position: "relative",
+        overflow: "hidden",
+      }}>
+        <div style={{
+          position: "absolute", inset: 0,
+          backgroundImage: "linear-gradient(rgba(200,168,64,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(200,168,64,0.025) 1px, transparent 1px)",
+          backgroundSize: "40px 40px",
+        }} />
+        <div style={{
+          position: "absolute", bottom: 0, left: 0, right: 0, height: 1,
+          background: "linear-gradient(90deg, transparent, rgba(200,168,64,0.2) 20%, rgba(200,168,64,0.2) 80%, transparent)",
+        }} />
         <img
           ref={spriteRef}
           src={src}
           alt="Kinju"
           style={{
             position: "absolute",
-            width: 130,
-            height: 130,
+            width: 120, height: 120,
             objectFit: "contain",
             left: pos.current.x,
             bottom: pos.current.y,
-            transform: flip ? "scaleX(-1)" : "scaleX(1)",
-            transition: "none",
-            imageRendering: "auto",
           }}
         />
       </div>
 
-      {/* Controls */}
-      <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-        {[
-          { key: "← →", label: "Sideways" },
-          { key: "↑", label: "Away" },
-          { key: "↓", label: "Toward" },
-        ].map(item => (
-          <div key={item.key} style={{ background: "#181818", border: "1px solid #2a2a2a", borderRadius: 4, padding: "7px 12px", fontSize: 11, color: "#666" }}>
-            <span style={{ color: "#c8a840", fontWeight: "bold" }}>{item.key}</span>
-            {"  "}{item.label}
-          </div>
-        ))}
+      {/* State label */}
+      <p style={{ color: "#555", fontSize: 10, letterSpacing: 2, margin: 0 }}>{label}</p>
+
+      {/* D-Pad */}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+        <DpadBtn dir="up" symbol="↑" />
+        <div style={{ display: "flex", gap: 4 }}>
+          <DpadBtn dir="left" symbol="←" />
+          <div style={{ width: 52, height: 52 }} />
+          <DpadBtn dir="right" symbol="→" />
+        </div>
+        <DpadBtn dir="down" symbol="↓" />
       </div>
 
-      <p style={{ color: "#444", fontSize: 10, marginTop: 10, letterSpacing: 1.5 }}>
-        {state.replace("_", " ").toUpperCase()}
-      </p>
-
-      <p style={{ color: "#333", fontSize: 10, marginTop: 20, letterSpacing: 1, maxWidth: 480, textAlign: "center", lineHeight: 1.7 }}>
-        This cycles 2 frames per direction. Transparent PNGs would remove the black background.
-        4 frames per direction gives a smoother walk. This is the core mechanic.
+      <p style={{ color: "#2a2a2a", fontSize: 10, margin: 0, letterSpacing: 1, textAlign: "center" }}>
+        Hold a direction to take over · Release to resume auto demo
       </p>
     </div>
   );
