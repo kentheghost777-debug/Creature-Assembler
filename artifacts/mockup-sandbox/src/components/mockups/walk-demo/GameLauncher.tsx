@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { WalkDemo } from "./WalkDemo";
 
-const SAVE_KEY = "primeria_v1";
+const SAVE_KEY = "primeria_v2";
 const checkSave = () => !!localStorage.getItem(SAVE_KEY);
 const createSave = () => localStorage.setItem(SAVE_KEY, JSON.stringify({ ts: Date.now() }));
 
@@ -295,18 +295,18 @@ export default function GameLauncher() {
 
             <div style={{ width: 44, height: 1, background: "rgba(240,200,60,0.18)", margin: "22px 0 30px" }} />
 
+            <MenuBtn
+              label="NEW GAME"
+              primary
+              onClick={handleNewGame}
+            />
             {savedGame && (
               <MenuBtn
                 label="CONTINUE"
-                primary
                 onClick={handleContinue}
+                style={{ marginTop: 10 }}
               />
             )}
-            <MenuBtn
-              label="NEW GAME"
-              onClick={handleNewGame}
-              style={{ marginTop: savedGame ? 10 : 0 }}
-            />
 
             <div style={{ marginTop: "auto", paddingBottom: 24, color: "#1e1810", fontSize: 8, letterSpacing: 1.5 }}>
               © PURESTORY GAMING STUDIOS
