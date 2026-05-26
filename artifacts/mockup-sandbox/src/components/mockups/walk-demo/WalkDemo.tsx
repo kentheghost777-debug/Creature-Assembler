@@ -319,7 +319,7 @@ const PROF = { x: 350, y: 268 }; // feet position in lab world
 
 // ── Main component ──────────────────────────────────────────────────────────
 export function WalkDemo() {
-  const [scene,       setScene]       = useState<Scene>("overworld");
+  const [scene,       setScene]       = useState<Scene>("home");
   const [phase,       setPhase]       = useState<Phase>("walk");
   const [fading,      setFading]      = useState(false);
   const [held,        setHeld]        = useState<string | null>(null);
@@ -387,7 +387,7 @@ export function WalkDemo() {
   const frameRef   = useRef(0);
   const lastSrc    = useRef("");
   const lastFlip   = useRef(false);
-  const worldPos   = useRef({ x: 567, y: 470 }); // start on overworld central crossroads (south of signpost) — bottom-row doors disabled, redesign in progress
+  const worldPos   = useRef({ x: 400, y: 670 }); // start inside Player Home (matches OW→home enter spawn)
   const cam        = useRef({ x: 0, y: 0 });
 
   // Preload everything
