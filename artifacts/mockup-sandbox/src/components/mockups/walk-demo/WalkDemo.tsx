@@ -30,15 +30,15 @@ type Rect  = [number, number, number, number]; // x1 y1 x2 y2 world-px
 // Paths between structures are intentionally left open.
 const OW_BLOCKED: Rect[] = [
   // ── OUTER BORDERS ──────────────────────────────────────────────────────────
-  // Top tree line — Route 1 exit gap at x=50-165 (upper-left path)
-  [0,   0,   50,  65 ],
-  [165, 0,   800, 65 ],
-  [0,   65,  50,  900],   // left border column
-  [750, 65,  800, 900],   // right border column
+  // Top trees block y=0-85 to keep player out of visual foliage (gap x=50-165 for Route 1)
+  [0,   0,   50,  85 ],
+  [165, 0,   800, 85 ],
+  [0,   85,  50,  900],   // left border column
+  [750, 85,  800, 900],   // right border column
   [0,   870, 800, 900],   // southern boundary
 
   // ── PROFESSOR LAB ──────────────────────────────────────────────────────────
-  [205, 65,  545, 310],   // solid dome body — garden below y=310 is open (dome stops you naturally)
+  [205, 85,  570, 310],   // dome body; right edge x=570 (was 545) so player can't clip into fence
 
   // ── RIVAL'S HOME (left side) ───────────────────────────────────────────────
   [50,  270, 160, 425],
