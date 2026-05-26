@@ -93,9 +93,10 @@ function drawSprite(canvas: HTMLCanvasElement, src: string, flipX: boolean): boo
     // BFS flood-fill from every edge — only pixels that are EXACTLY pure black
     // (0,0,0) get erased. Character dark areas are ≥ 1 on at least one channel
     // so they are never removed, no matter how dark the armor or shadows.
-    // Threshold 4: catches pure black + anti-alias fringe (values 0-3).
-    // Any character pixel with at least one channel ≥ 4 is preserved.
-    const isPureBlack = (p: number) => d[p] < 4 && d[p+1] < 4 && d[p+2] < 4;
+    // Threshold 12: walk sprites have near-black backgrounds (values 4-11).
+    // BFS only ever removes background-CONNECTED pixels, so interior dark
+    // shadows are never touched even at this higher value.
+    const isPureBlack = (p: number) => d[p] < 12 && d[p+1] < 12 && d[p+2] < 12;
     const vis = new Uint8Array(W * H);
     const q: number[] = [];
     const seed = (idx: number) => {
