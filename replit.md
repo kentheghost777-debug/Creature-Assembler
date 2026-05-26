@@ -34,11 +34,12 @@ _Describe the high-level user-facing capabilities of this app once they exist._
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- Always run `remove_image_background_tool` on every character/NPC sprite before using it in the game — all directions (front, back, side/profile). Sprites from AI generators have gradient backgrounds that break transparency tricks. Proper transparent PNGs are the only reliable fix.
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Sprite images from AI generators have warm gradient backgrounds, NOT black. BFS/threshold pixel tricks do not reliably work. Always pre-process sprites with background removal first.
+- After background removal, `drawSprite` just calls `ctx.drawImage` — no pixel manipulation needed.
 
 ## Pointers
 
