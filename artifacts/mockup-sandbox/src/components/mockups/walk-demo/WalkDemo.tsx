@@ -70,11 +70,11 @@ const OW_BLOCKED: Rect[] = [
   [912, 440,  970,  452],  // south fence — right of gate
 
   // ── PLAYER HOME — fence perimeter + body (north gate x 532–602) ────────────
-  [367, 505,  757,  815],  // building body
-  [340, 455,  532,  465],  // north fence — left of gate
-  [602, 455,  782,  465],  // north fence — right of gate
-  [340, 455,  367,  820],  // west fence
-  [757, 455,  782,  820],  // east fence
+  [367, 562,  757,  815],  // building body (aligned with fence row)
+  [340, 537,  532,  547],  // north fence — left of gate
+  [602, 537,  782,  547],  // north fence — right of gate
+  [340, 537,  367,  820],  // west fence
+  [757, 537,  782,  820],  // east fence
 
   // ── ELLIO'S HOME — fence perimeter + body (north gate x 238–308) ───────────
   [214, 565,  327,  780],  // building body
@@ -233,7 +233,7 @@ const EH_BLOCKED: Rect[] = [
 // ── Player's Home ────────────────────────────────────────────────────────────
 const PH = { w: 800, h: 800 };
 const JESS_POS = { x: 395, y: 370 }; // Jess standing in the open center of the home
-const OW_PLAYER_HOME_DOOR: Rect = [532, 455, 602, 470]; // tight zone: just the north fence gate row
+const OW_PLAYER_HOME_DOOR: Rect = [532, 537, 602, 555]; // north fence gate (y=537–547) + small yard margin
 const PLAYER_HOME_EXIT: Rect = [305, 725, 505, 790]; // bottom-center door
 const PH_BLOCKED: Rect[] = [
   // ── WALLS ──────────────────────────────────────────────────────────────────
@@ -569,7 +569,7 @@ export function WalkDemo() {
     const src    = frames[frameRef.current] || frames[0];
     if (src === lastSrc.current && flipRef.current === lastFlip.current) return;
     // standing sprite is proportionally taller — render it narrower so height matches walk frames
-    const displayW = (animRef.current === "idle") ? 82 : SPRITE_PX;
+    const displayW = (animRef.current === "idle") ? 60 : SPRITE_PX;
     const ok = drawSprite(canvas, src, flipRef.current, displayW);
     if (ok) { lastSrc.current = src; lastFlip.current = flipRef.current; }
   }, []);
@@ -645,7 +645,7 @@ export function WalkDemo() {
         } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_PLAYER_HOME_DOOR)) {
           transitionTo("home", 400, 670);       // enter player's home — just inside door
         } else if (sc === "home" && inRect(worldPos.current.x, worldPos.current.y, PLAYER_HOME_EXIT)) {
-          transitionTo("overworld", 567, 482);  // inside player home yard, south of gate trigger
+          transitionTo("overworld", 567, 560);  // inside player home yard, well south of gate
         } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_ELLIO_DOOR)) {
           transitionTo("ellio", 400, 670);      // enter Ellio's home — just inside door
         } else if (sc === "ellio" && inRect(worldPos.current.x, worldPos.current.y, ELLIO_HOME_EXIT)) {
