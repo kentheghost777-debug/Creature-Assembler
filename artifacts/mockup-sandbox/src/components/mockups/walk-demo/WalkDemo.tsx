@@ -26,23 +26,25 @@ type Scene = "overworld" | "lab";
 type Rect  = [number, number, number, number]; // x1 y1 x2 y2 world-px
 
 // ── Collision zones ─────────────────────────────────────────────────────────
+// Only block solid structures. Leave wide paths (~90 px) on both sides.
 const OW_BLOCKED: Rect[] = [
-  [0,   0,   800, 55 ],  // top edge
-  [0,   845, 800, 900],  // bottom edge
-  [0,   0,   58,  900],  // left edge
-  [742, 0,   800, 900],  // right edge
-  // Prof Lab (leave gap x:290–510 for door path)
-  [90,  50,  710, 322],  // lab body
-  [90,  322, 292, 400],  // lab left fence wing
-  [510, 322, 710, 400],  // lab right fence wing
-  // Player Home (door is wall-blocked)
-  [115, 452, 685, 718],  // home body
-  [115, 718, 292, 805],  // home left fence
-  [510, 718, 685, 805],  // home right fence
-  // Sign + bench top-right area
-  [545, 338, 700, 455],
+  // Hard map edges
+  [0,   0,   800, 58 ],  // top tree strip
+  [0,   852, 800, 900],  // bottom strip
+  [0,   0,   58,  900],  // left tree column
+  [742, 0,   800, 900],  // right tree column
+  // Prof Lab — dome body only (not fences/garden)
+  [210, 58,  590, 295],
+  // Small fence posts either side of lab gate (leave 200–590 as walkable approach)
+  [150, 295, 212, 370],  // left post
+  [588, 295, 650, 370],  // right post
+  // Player Home — dome body only
+  [210, 482, 590, 692],
+  // Small fence posts either side of home gate
+  [150, 692, 212, 778],  // left post
+  [588, 692, 650, 778],  // right post
 ];
-const OW_PROF_DOOR: Rect = [295, 362, 505, 415]; // enter lab
+const OW_PROF_DOOR: Rect = [295, 340, 505, 400]; // step into lab
 
 const LAB_BLOCKED: Rect[] = [
   [0,   0,   700, 22 ],  // top
@@ -89,7 +91,7 @@ function drawSprite(canvas: HTMLCanvasElement, src: string, flipX: boolean): boo
     const id = ctx.getImageData(0, 0, W, H);
     const px = id.data;
     for (let i = 0; i < px.length; i += 4)
-      if (px[i] < 32 && px[i+1] < 32 && px[i+2] < 32) px[i+3] = 0;
+      if (px[i] < 16 && px[i+1] < 16 && px[i+2] < 16) px[i+3] = 0;
     ctx.putImageData(id, 0, 0);
   } catch { /* leave with black bg */ }
   return true;
@@ -120,7 +122,9 @@ export function WalkDemo() {
   const [showParty,   setShowParty]   = useState(false);
   const [interactPos, setInteractPos] = useState({ sx: 0, sy: 0 });
 
-  const canvasRef  = useRef<HTMLCanvasElement>(null);
+  const canvasRef    = useRef<HTMLCanvasElement>(null);
+  const profCanvasRef    = useRef<HTMLCanvasElement>(null);
+  const portraitCanvasRef = useRef<HTMLCanvasElement>(null);
   const shadowRef  = useRef<HTMLDivElement>(null);
   const worldRef   = useRef<HTMLDivElement>(null);
   const vpRef      = useRef<HTMLDivElement>(null);
@@ -151,6 +155,30 @@ export function WalkDemo() {
   useEffect(() => { heldRef.current = held; },      [held]);
   useEffect(() => { phaseRef.current = phase; },    [phase]);
   useEffect(() => { sceneRef.current = scene; },    [scene]);
+
+  // Draw Prof Irwyn world sprite via canvas (proper transparency, no blend-mode)
+  useEffect(() => {
+    if (scene !== "lab") return;
+    const src = "/__mockup/images/prof-irwyn-sprite.png";
+    const tryDraw = () => {
+      const c = profCanvasRef.current;
+      if (!c) return;
+      if (!drawSprite(c, src, false)) setTimeout(tryDraw, 150);
+    };
+    tryDraw();
+  }, [scene]);
+
+  // Draw Prof portrait in dialog box
+  useEffect(() => {
+    if (phase === "walk" || phase === "pick") return;
+    const src = "/__mockup/images/prof-irwyn-sprite.png";
+    const tryDraw = () => {
+      const c = portraitCanvasRef.current;
+      if (!c) return;
+      if (!drawSprite(c, src, false)) setTimeout(tryDraw, 150);
+    };
+    tryDraw();
+  }, [phase]);
 
   // Redraw player canvas
   const redraw = useCallback(() => {
@@ -337,17 +365,15 @@ export function WalkDemo() {
             style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover" }}
           />
 
-          {/* Prof Irwyn — standing in front of his desk */}
+          {/* Prof Irwyn — canvas-rendered, proper transparent bg */}
           {scene === "lab" && (
-            <img
-              src="/__mockup/images/prof-irwyn-sprite.png"
-              alt="Prof Irwyn"
+            <canvas
+              ref={profCanvasRef}
               style={{
                 position: "absolute",
                 width: 80, height: 80,
-                objectFit: "contain",
+                imageRendering: "auto",
                 pointerEvents: "none",
-                mixBlendMode: "screen",
                 left: PROF.x - 40,
                 top:  PROF.y - 80,
               }}
@@ -413,12 +439,10 @@ export function WalkDemo() {
           }}>
             {/* Prof portrait + name */}
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
-              <img
-                src="/__mockup/images/prof-irwyn-sprite.png"
-                style={{ width:44, height:44, objectFit:"contain", borderRadius:8,
-                  background:"#1a1200", border:"1px solid rgba(240,208,80,0.4)",
-                  mixBlendMode:"screen" }}
-                alt=""
+              <canvas
+                ref={portraitCanvasRef}
+                style={{ width:44, height:44, borderRadius:8,
+                  background:"#100a02", border:"1px solid rgba(240,208,80,0.4)" }}
               />
               <span style={{ color:"#f0d060", fontWeight:700, fontSize:13, letterSpacing:1 }}>
                 PROF. IRWYN
