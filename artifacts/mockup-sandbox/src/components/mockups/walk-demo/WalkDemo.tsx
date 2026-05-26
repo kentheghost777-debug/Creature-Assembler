@@ -33,39 +33,67 @@ type Scene = "overworld" | "lab" | "maya" | "jay" | "home" | "ellio" | "lia";
 type Rect  = [number, number, number, number]; // x1 y1 x2 y2 world-px
 
 // ── Collision zones ─────────────────────────────────────────────────────────
-// All OW x-coords shifted +162 from original 800-wide calibration to match the
-// full 1124-wide world (the image was cover-cropping 162px from each side before).
 const OW_BLOCKED: Rect[] = [
   // ── OUTER BORDERS ──────────────────────────────────────────────────────────
-  [0,    0,   155,  900],  // left forest edge (newly visible original left side)
-  [155,  0,   214,   85],  // top strip left of Route-1 path
-  [327,  0,  1124,   85],  // north border (right of Route-1 gap)
-  [978,  85, 1124,  900],  // right forest border
+  [0,    0,   155,  900],  // left forest
+  [155,  0,   214,   85],  // NW top strip (left of Route-1)
+  [327,  0,  1124,   85],  // top border (right of Route-1 gap)
+  [978,  85, 1124,  900],  // right forest
   [0,   865, 1124,  900],  // southern boundary
 
-  // ── PROFESSOR LAB ──────────────────────────────────────────────────────────
-  [367,  85,  732,  310],
+  // ── NORTH ZONE FILLS (close corridors between top border and buildings) ─────
+  [155,  85,  160,  225],  // sliver: left forest → Jay west fence
+  [335,  85,  367,  312],  // gap between Jay east fence and Lab west wall
+  [732,  85,  775,  312],  // gap between Lab east wall and Maya west fence
+  [775,  85,  978,  225],  // strip: Maya east fence → right forest
 
-  // ── RIVAL'S HOME (Jay) — body only, stop well above door strip ─────────────
-  [214, 250,  327,  400],
+  // ── PROFESSOR LAB compound (south gate x 498–580) ──────────────────────────
+  [367,  85,  732,  310],  // building body
+  [335,  85,  367,  390],  // west compound wall
+  [732,  85,  755,  390],  // east compound wall
+  [335, 310,  498,  390],  // south fence — left of gate
+  [580, 310,  755,  390],  // south fence — right of gate
 
-  // ── MAYA'S HOME — body only, stop well above door strip ────────────────────
-  [807, 250,  928,  383],
+  // ── JAY'S HOME — fence perimeter + body (south gate x 240–308) ─────────────
+  [214, 225,  327,  400],  // building body
+  [160, 225,  214,  452],  // west fence
+  [327, 225,  375,  452],  // east fence
+  [160, 440,  240,  452],  // south fence — left of gate
+  [308, 440,  375,  452],  // south fence — right of gate
 
-  // ── PLAYER HOME (center bottom) ────────────────────────────────────────────
-  [367, 505,  757,  815],
+  // ── MAYA'S HOME — fence perimeter + body (south gate x 845–912) ────────────
+  [807, 225,  928,  383],  // building body
+  [775, 225,  807,  452],  // west fence
+  [928, 225,  970,  452],  // east fence
+  [775, 440,  845,  452],  // south fence — left of gate
+  [912, 440,  970,  452],  // south fence — right of gate
 
-  // ── ELIO'S HOME (bottom left) ──────────────────────────────────────────────
-  [214, 565,  327,  780],
+  // ── PLAYER HOME — fence perimeter + body (north gate x 532–602) ────────────
+  [367, 505,  757,  815],  // building body
+  [340, 455,  532,  465],  // north fence — left of gate
+  [602, 455,  782,  465],  // north fence — right of gate
+  [340, 455,  367,  820],  // west fence
+  [757, 455,  782,  820],  // east fence
 
-  // ── LIA'S HOME (bottom right) ──────────────────────────────────────────────
-  [807, 565,  942,  780],
+  // ── ELLIO'S HOME — fence perimeter + body (north gate x 238–308) ───────────
+  [214, 565,  327,  780],  // building body
+  [155, 537,  238,  547],  // north fence — left of gate
+  [308, 537,  365,  547],  // north fence — right of gate
+  [155, 537,  214,  790],  // west fence
+  [327, 537,  365,  790],  // east fence
+
+  // ── LIA'S HOME — fence perimeter + body (north gate x 846–910) ─────────────
+  [807, 565,  942,  780],  // building body
+  [775, 537,  846,  547],  // north fence — left of gate
+  [910, 537,  978,  547],  // north fence — right of gate
+  [775, 537,  807,  790],  // west fence
+  [942, 537,  978,  790],  // east fence
 ];
 
 // ── Lia's Home ─────────────────────────────────────────────────────────────
 const LH = { w: 800, h: 800 };
 const LIA_POS = { x: 385, y: 355 }; // Lia near the center rug
-const OW_LIA_DOOR: Rect  = [846, 545, 910, 566]; // tight zone above Lia's house body (y=565+, glow center x≈878)
+const OW_LIA_DOOR: Rect  = [846, 537, 910, 568]; // north fence gate (y=537–547) + yard to building north edge
 const LIA_HOME_EXIT: Rect = [310, 722, 490, 790]; // bottom-center door
 const LH_BLOCKED: Rect[] = [
   // ── WALLS ──────────────────────────────────────────────────────────────────
@@ -169,7 +197,7 @@ const JAY_BLOCKED: Rect[] = [
 // ── Ellio's Home ─────────────────────────────────────────────────────────────
 const EH = { w: 800, h: 800 };
 const ELLIO_POS = { x: 400, y: 350 };
-const OW_ELLIO_DOOR: Rect  = [238, 545, 308, 566]; // tight zone above Ellio's house body (y=565+)
+const OW_ELLIO_DOOR: Rect  = [238, 537, 308, 568]; // north fence gate (y=537–547) + yard to building north edge
 const ELLIO_HOME_EXIT: Rect = [305, 725, 505, 790];
 const EH_BLOCKED: Rect[] = [
   [0, 0, 800, 60], [0, 0, 60, 800], [740, 0, 800, 800],
@@ -184,7 +212,7 @@ const EH_BLOCKED: Rect[] = [
 // ── Player's Home ────────────────────────────────────────────────────────────
 const PH = { w: 800, h: 800 };
 const JESS_POS = { x: 395, y: 370 }; // Jess standing in the open center of the home
-const OW_PLAYER_HOME_DOOR: Rect = [532, 476, 602, 510]; // tight zone at player home door (glow center x≈566)
+const OW_PLAYER_HOME_DOOR: Rect = [532, 455, 602, 512]; // north fence gate (y=455–465) + yard to building north edge
 const PLAYER_HOME_EXIT: Rect = [305, 725, 505, 790]; // bottom-center door
 const PH_BLOCKED: Rect[] = [
   // ── WALLS ──────────────────────────────────────────────────────────────────
@@ -584,23 +612,23 @@ export function WalkDemo() {
         } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_JAY_DOOR)) {
           transitionTo("jay", 400, 660);
         } else if (sc === "lab" && inRect(worldPos.current.x, worldPos.current.y, LAB_EXIT)) {
-          transitionTo("overworld", 538, 405);  // right outside lab door (glow x≈538, south of trigger)
+          transitionTo("overworld", 538, 408);  // south of lab fence (y=390)
         } else if (sc === "maya" && inRect(worldPos.current.x, worldPos.current.y, MAYA_HOME_EXIT)) {
-          transitionTo("overworld", 878, 458);  // right outside Maya's door
+          transitionTo("overworld", 878, 468);  // south of Maya fence (y=452)
         } else if (sc === "jay" && inRect(worldPos.current.x, worldPos.current.y, JAY_HOME_EXIT)) {
-          transitionTo("overworld", 272, 462);  // right outside Jay's door
+          transitionTo("overworld", 272, 468);  // south of Jay fence (y=452)
         } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_PLAYER_HOME_DOOR)) {
           transitionTo("home", 400, 670);       // enter player's home — just inside door
         } else if (sc === "home" && inRect(worldPos.current.x, worldPos.current.y, PLAYER_HOME_EXIT)) {
-          transitionTo("overworld", 566, 462);  // right outside player home door (glow x≈566, north of trigger)
+          transitionTo("overworld", 566, 445);  // north of Player fence (y=455)
         } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_ELLIO_DOOR)) {
           transitionTo("ellio", 400, 670);      // enter Ellio's home — just inside door
         } else if (sc === "ellio" && inRect(worldPos.current.x, worldPos.current.y, ELLIO_HOME_EXIT)) {
-          transitionTo("overworld", 272, 532);  // right outside Ellio's door (north of trigger)
+          transitionTo("overworld", 272, 528);  // north of Ellio fence (y=537)
         } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_LIA_DOOR)) {
           transitionTo("lia", 400, 670);        // enter Lia's home — just inside door
         } else if (sc === "lia" && inRect(worldPos.current.x, worldPos.current.y, LIA_HOME_EXIT)) {
-          transitionTo("overworld", 878, 532);  // right outside Lia's door (north of trigger)
+          transitionTo("overworld", 878, 528);  // north of Lia fence (y=537)
         }
 
         // Flip / anim change
