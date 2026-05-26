@@ -646,16 +646,16 @@ export function WalkDemo() {
           transitionTo("overworld", 878, 468);  // south of Maya fence (y=452)
         } else if (sc === "jay" && inRect(worldPos.current.x, worldPos.current.y, JAY_HOME_EXIT)) {
           transitionTo("overworld", 272, 468);  // south of Jay fence (y=452)
-        } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_PLAYER_HOME_DOOR)) {
-          transitionTo("home", 400, 670);       // enter player's home — just inside door
+        } else if (sc === "overworld" && dy >= 0 && inRect(worldPos.current.x, worldPos.current.y, OW_PLAYER_HOME_DOOR)) {
+          transitionTo("home", 400, 670);       // enter player's home — only when moving south into gate
         } else if (sc === "home" && inRect(worldPos.current.x, worldPos.current.y, PLAYER_HOME_EXIT)) {
           transitionTo("overworld", 567, 570);  // inside player home yard, clear of trigger and building
-        } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_ELLIO_DOOR)) {
-          transitionTo("ellio", 400, 670);      // enter Ellio's home — just inside door
+        } else if (sc === "overworld" && dy >= 0 && inRect(worldPos.current.x, worldPos.current.y, OW_ELLIO_DOOR)) {
+          transitionTo("ellio", 400, 670);      // enter Ellio's home — only when moving south into gate
         } else if (sc === "ellio" && inRect(worldPos.current.x, worldPos.current.y, ELLIO_HOME_EXIT)) {
           transitionTo("overworld", 272, 528);  // north of Ellio fence (y=537)
-        } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_LIA_DOOR)) {
-          transitionTo("lia", 400, 670);        // enter Lia's home — just inside door
+        } else if (sc === "overworld" && dy >= 0 && inRect(worldPos.current.x, worldPos.current.y, OW_LIA_DOOR)) {
+          transitionTo("lia", 400, 670);        // enter Lia's home — only when moving south into gate
         } else if (sc === "lia" && inRect(worldPos.current.x, worldPos.current.y, LIA_HOME_EXIT)) {
           transitionTo("overworld", 878, 528);  // north of Lia fence (y=537)
         }
