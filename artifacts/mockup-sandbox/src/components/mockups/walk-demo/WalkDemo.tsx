@@ -276,10 +276,13 @@ function loadImg(src: string) {
 }
 
 const FRAMES: Record<string, string[]> = {
-  idle:      ["/__mockup/images/stand_front_3d.png"],
-  walk_side: ["/__mockup/images/walk_side_1.png"],
-  walk_up:   ["/__mockup/images/walk_back_1.png", "/__mockup/images/walk_back_2.png"],
-  walk_down: ["/__mockup/images/walk_idle.png", "/__mockup/images/walk_front_1.png", "/__mockup/images/walk_front_2.png"],
+  idle:       ["/__mockup/images/stand_front_3d.png"],  // only shown at game start
+  idle_up:    ["/__mockup/images/walk_back_1.png"],     // stopped, facing away
+  idle_side:  ["/__mockup/images/walk_side_1.png"],     // stopped, facing side
+  idle_down:  ["/__mockup/images/walk_idle.png"],       // stopped, facing forward
+  walk_side:  ["/__mockup/images/walk_side_1.png"],
+  walk_up:    ["/__mockup/images/walk_back_1.png", "/__mockup/images/walk_back_2.png"],
+  walk_down:  ["/__mockup/images/walk_idle.png", "/__mockup/images/walk_front_1.png", "/__mockup/images/walk_front_2.png"],
 };
 
 // Sprites have transparent backgrounds. Normalise to displayW so all frames
@@ -379,6 +382,7 @@ export function WalkDemo() {
   const fadingRef  = useRef(false);
   const heldRef    = useRef<string | null>(null);
   const animRef    = useRef("idle");
+  const lastDirRef = useRef("idle_down"); // remembers facing direction when stopped
   const flipRef    = useRef(false);
   const frameRef   = useRef(0);
   const lastSrc    = useRef("");
@@ -568,7 +572,7 @@ export function WalkDemo() {
     const frames = FRAMES[animRef.current] || FRAMES.idle;
     const src    = frames[frameRef.current] || frames[0];
     if (src === lastSrc.current && flipRef.current === lastFlip.current) return;
-    // standing sprite is proportionally taller — render it narrower so height matches walk frames
+    // stand_front_3d is a portrait 3D render — shrink it; directional idles use normal size
     const displayW = (animRef.current === "idle") ? 60 : SPRITE_PX;
     const ok = drawSprite(canvas, src, flipRef.current, displayW);
     if (ok) { lastSrc.current = src; lastFlip.current = flipRef.current; }
@@ -610,13 +614,13 @@ export function WalkDemo() {
         const world   = sc === "overworld" ? OW : sc === "lab" ? LB : sc === "route1" ? R1 : sc === "maya" ? MY : sc === "jay" ? JY : sc === "ellio" ? EH : sc === "lia" ? LH : PH;
         const zones   = sc === "overworld" ? OW_BLOCKED : sc === "lab" ? LAB_BLOCKED : sc === "route1" ? R1_BLOCKED : sc === "maya" ? MAYA_BLOCKED : sc === "jay" ? JAY_BLOCKED : sc === "ellio" ? EH_BLOCKED : sc === "lia" ? LH_BLOCKED : PH_BLOCKED;
 
-        let newAnim = "idle";
+        let newAnim = lastDirRef.current; // stay in last-faced direction when idle
         let newFlip = flipRef.current;
         let dx = 0, dy = 0;
-        if (h === "right") { dx =  SPEED; newAnim = "walk_side"; newFlip = false; }
-        if (h === "left")  { dx = -SPEED; newAnim = "walk_side"; newFlip = true;  }
-        if (h === "up")    { dy = -SPEED; newAnim = "walk_up";   newFlip = false; }
-        if (h === "down")  { dy =  SPEED; newAnim = "walk_down"; newFlip = false; }
+        if (h === "right") { dx =  SPEED; newAnim = "walk_side"; newFlip = false; lastDirRef.current = "idle_side"; }
+        if (h === "left")  { dx = -SPEED; newAnim = "walk_side"; newFlip = true;  lastDirRef.current = "idle_side"; }
+        if (h === "up")    { dy = -SPEED; newAnim = "walk_up";   newFlip = false; lastDirRef.current = "idle_up";   }
+        if (h === "down")  { dy =  SPEED; newAnim = "walk_down"; newFlip = false; lastDirRef.current = "idle_down"; }
 
         const { x, y } = worldPos.current;
         const nx = Math.max(30, Math.min(x + dx, world.w - 30));
