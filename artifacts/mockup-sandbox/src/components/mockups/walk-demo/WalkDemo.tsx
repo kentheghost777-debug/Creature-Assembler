@@ -82,14 +82,21 @@ const OW_MAYA_DOOR: Rect  = [685, 425, 735, 444]; // walk up against door to ent
 const MAYA_HOME_EXIT: Rect = [310, 722, 490, 790]; // exit trigger at interior door
 const MAYA_SHELL: Rect     = [590, 565, 650, 615]; // pickup zone around the chest
 const MAYA_BLOCKED: Rect[] = [
+  // ── WALLS ──────────────────────────────────────────────────────────────────
   [0,    0,   800,  90],  // top wall
   [0,    0,    75, 800],  // left wall
   [725,  0,   800, 800],  // right wall
-  [0,   715,  310, 800],  // bottom-left wall
-  [490, 715,  800, 800],  // bottom-right wall
-  [0,    90,  490, 205],  // fireplace / shelves top band
-  [540,  90,  775, 345],  // bed + side tables
-  [30,  475,  270, 675],  // desk table bottom-left
+  [0,   715,  310, 800],  // bottom-left (door gap x=310–490)
+  [490, 715,  800, 800],  // bottom-right
+  // ── FURNITURE — top band ───────────────────────────────────────────────────
+  [75,   90,  315, 255],  // herb shelves (left) + fireplace + hanging wall
+  [295,  90,  455, 225],  // window dresser + potted plant (top-center)
+  [430,  90,  540, 230],  // tall bookshelf (right of window)
+  [510,  90,  725, 365],  // bed + foot chest + side lantern (right)
+  [650, 265,  725, 445],  // right-wall lantern table (mid-right)
+  // ── FURNITURE — bottom ─────────────────────────────────────────────────────
+  [75,  390,  235, 595],  // writing/craft desk + stool
+  [405, 475,  690, 582],  // hanging-rack alcove (bottom-right)
 ];
 
 // ── Jay's Home ────────────────────────────────────────────────────────────────
@@ -98,15 +105,22 @@ const JAY_POS = { x: 370, y: 310 }; // Jay standing in the center of his room
 const OW_JAY_DOOR: Rect  = [75, 425, 145, 444];  // walk up to left home door
 const JAY_HOME_EXIT: Rect = [310, 725, 490, 790]; // interior door at bottom
 const JAY_BLOCKED: Rect[] = [
+  // ── WALLS ──────────────────────────────────────────────────────────────────
   [0,    0,   800,  80],  // top wall
   [0,    0,    65, 800],  // left wall
   [735,  0,   800, 800],  // right wall
-  [0,   715,  310, 800],  // bottom-left wall
-  [490, 715,  800, 800],  // bottom-right wall
-  [65,    0,  320, 210],  // bookshelf + desk top-left
-  [480,   0,  735, 300],  // bed + nightstand top-right
-  [65,  450,  280, 690],  // sofa + coffee table
-  [510, 450,  735, 725],  // training rack bottom-right
+  [0,   715,  310, 800],  // bottom-left (door gap x=310–490)
+  [490, 715,  800, 800],  // bottom-right
+  // ── FURNITURE — top band ───────────────────────────────────────────────────
+  [65,   80,  235, 275],  // bookshelf cluster + crate (top-left)
+  [215,  80,  460, 300],  // reading desk + open books + lantern + stool (top-center)
+  [440,  80,  735, 385],  // bed + red bedside rug + nightstand + chests (top-right)
+  // ── FURNITURE — left wall mid ──────────────────────────────────────────────
+  [65,  270,  160, 400],  // left-wall lantern table + small plant
+  // ── FURNITURE — bottom ─────────────────────────────────────────────────────
+  [65,  390,  300, 630],  // sofa + red rug + coffee table + scattered items
+  [65,  615,  190, 715],  // bottom-left potted plants
+  [420, 385,  735, 715],  // training rack + hanging gear + storage shelves + baskets
 ];
 
 // ── Sprite / image utilities ─────────────────────────────────────────────────
