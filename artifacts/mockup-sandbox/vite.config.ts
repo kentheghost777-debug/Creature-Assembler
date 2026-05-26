@@ -59,6 +59,9 @@ export default defineConfig({
     port,
     host: "0.0.0.0",
     allowedHosts: true,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+    },
     fs: {
       strict: true,
     },
