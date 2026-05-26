@@ -26,25 +26,40 @@ type Scene = "overworld" | "lab";
 type Rect  = [number, number, number, number]; // x1 y1 x2 y2 world-px
 
 // ── Collision zones ─────────────────────────────────────────────────────────
-// Only block solid structures. Leave wide paths (~90 px) on both sides.
+// Mapped precisely from the full overworld screenshot (800×900 world).
+// Paths between structures are intentionally left open.
 const OW_BLOCKED: Rect[] = [
-  // Hard map edges — central corridor x=275-525 left open for Route-1 path
-  [0,   0,   275, 58 ],  // top-left trees
-  [525, 0,   800, 58 ],  // top-right trees
-  [0,   852, 800, 900],  // bottom strip
-  [0,   0,   58,  900],  // left tree column
-  [742, 0,   800, 900],  // right tree column
-  // Lab dome — left side only so the central corridor (x=275-525) stays open
-  [58,  58,  275, 340],
-  // Right-side structures (tech tower, bulletin board)
-  [525, 58,  742, 340],
-  // Player Home — dome body only
-  [210, 482, 590, 692],
-  [150, 692, 212, 778],  // home gate left post
-  [588, 692, 650, 778],  // home gate right post
+  // ── OUTER BORDERS ──────────────────────────────────────────────────────────
+  // Top tree line — Route 1 exit gap at x=50-165 (upper-left path)
+  [0,   0,   50,  65 ],
+  [165, 0,   800, 65 ],
+  [0,   65,  50,  900],   // left border column
+  [750, 65,  800, 900],   // right border column
+  [0,   870, 800, 900],   // southern boundary
+
+  // ── PROFESSOR LAB ──────────────────────────────────────────────────────────
+  [205, 65,  595, 310],   // solid dome body
+  [205, 310, 340, 385],   // left garden wall  } center approach x=340-460
+  [460, 310, 595, 385],   // right garden wall } y=310-385 stays open for door
+
+  // ── RIVAL'S HOME (left side) ───────────────────────────────────────────────
+  [50,  270, 160, 425],
+
+  // ── MAYA'S HOME (right side) ───────────────────────────────────────────────
+  [640, 270, 750, 425],
+
+  // ── PLAYER HOME (center bottom) ────────────────────────────────────────────
+  [205, 505, 595, 815],
+
+  // ── ELIO'S HOME (bottom left) ──────────────────────────────────────────────
+  [50,  565, 160, 780],
+
+  // ── LIA'S HOME (bottom right) ──────────────────────────────────────────────
+  [640, 565, 750, 780],
 ];
-// Future Route-1 exit trigger (top of central path)
-const OW_ROUTE1_EXIT: Rect = [275, 0, 525, 12];
+
+// Route-1 exit trigger aligned with the top-left gap
+const OW_ROUTE1_EXIT: Rect = [50, 0, 165, 15];
 const OW_PROF_DOOR: Rect = [295, 340, 505, 400]; // step into lab
 
 const LAB_BLOCKED: Rect[] = [
