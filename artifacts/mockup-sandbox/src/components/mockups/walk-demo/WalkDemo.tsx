@@ -37,7 +37,7 @@ const OW_BLOCKED: Rect[] = [
   [0,    0,   155,  900],  // left forest edge (newly visible original left side)
   [155,  0,   214,   85],  // top strip left of Route-1 path
   [327,  0,  1124,   85],  // north border (right of Route-1 gap)
-  [940,  85, 1124,  900],  // right forest border
+  [962,  85, 1124,  900],  // right forest border
   [0,   865, 1124,  900],  // southern boundary
 
   // ── PROFESSOR LAB ──────────────────────────────────────────────────────────
@@ -47,7 +47,7 @@ const OW_BLOCKED: Rect[] = [
   [214, 250,  327,  400],
 
   // ── MAYA'S HOME — body only, stop well above door strip ────────────────────
-  [807, 250,  942,  400],
+  [807, 250,  928,  400],
 
   // ── PLAYER HOME (center bottom) ────────────────────────────────────────────
   [367, 505,  757,  815],
@@ -77,7 +77,7 @@ const LAB_EXIT: Rect = [262, 645, 438, 692]; // exit lab
 
 // ── Maya's Home ───────────────────────────────────────────────────────────────
 const MY = { w: 800, h: 800 };
-const MAYA_POS = { x: 774, y: 456 }; // Maya standing left of her home entrance
+const MAYA_POS = { x: 838, y: 446 }; // Maya standing just south of her door
 const OW_MAYA_DOOR: Rect  = [847, 392, 937, 408]; // must walk UP to enter — y≤408 only reachable by pressing UP
 const MAYA_HOME_EXIT: Rect = [310, 722, 490, 790]; // exit trigger at interior door
 const MAYA_SHELL: Rect     = [385, 400, 455, 460]; // pickup zone — center of the living-room rug
@@ -108,7 +108,7 @@ const MAYA_BLOCKED: Rect[] = [
 // ── Jay's Home ────────────────────────────────────────────────────────────────
 const JY = { w: 800, h: 800 };
 const JAY_POS = { x: 370, y: 310 }; // Jay standing in the center of his room
-const OW_JAY_DOOR: Rect  = [214, 392, 322, 408]; // must walk UP to enter — y≤408 only reachable by pressing UP
+const OW_JAY_DOOR: Rect  = [185, 365, 330, 422]; // wider + taller zone so entrance is easy to hit
 const JAY_HOME_EXIT: Rect = [310, 725, 490, 790]; // interior door at bottom
 const JAY_BLOCKED: Rect[] = [
   // ── WALLS ──────────────────────────────────────────────────────────────────
@@ -137,7 +137,7 @@ const JAY_BLOCKED: Rect[] = [
 // ── Player's Home ────────────────────────────────────────────────────────────
 const PH = { w: 800, h: 800 };
 const JESS_POS = { x: 395, y: 370 }; // Jess standing in the open center of the home
-const OW_PLAYER_HOME_DOOR: Rect = [490, 492, 635, 508]; // north face of home — walk SOUTH to enter
+const OW_PLAYER_HOME_DOOR: Rect = [460, 484, 650, 522]; // wider + taller — walk SOUTH to enter
 const PLAYER_HOME_EXIT: Rect = [305, 725, 505, 790]; // bottom-center door
 const PH_BLOCKED: Rect[] = [
   // ── WALLS ──────────────────────────────────────────────────────────────────
@@ -233,13 +233,16 @@ export function WalkDemo() {
   const [selected,         setSelected]         = useState<StarterId | null>(null);
   const [starter,          setStarter]          = useState<typeof STARTERS[number] | null>(null);
   const [showJournal,      setShowJournal]      = useState(false);
-  const [journalTab,       setJournalTab]       = useState<"party"|"bag">("party");
+  const [journalTab,       setJournalTab]       = useState<"party"|"shells"|"bag">("party");
   const [interactPos,      setInteractPos]      = useState({ sx: 0, sy: 0 });
   const [mayaInteractPos,  setMayaInteractPos]  = useState({ sx: 0, sy: 0 });
   const [jayInteractPos,   setJayInteractPos]   = useState({ sx: 0, sy: 0 });
   const [shellInteractPos, setShellInteractPos] = useState({ sx: 0, sy: 0 });
-  const [nearJess,         setNearJess]         = useState(false);
-  const [jessInteractPos,  setJessInteractPos]  = useState({ sx: 0, sy: 0 });
+  const [nearJess,            setNearJess]            = useState(false);
+  const [jessInteractPos,     setJessInteractPos]     = useState({ sx: 0, sy: 0 });
+  const [hasHealingRune,      setHasHealingRune]      = useState(false);
+  const [healingRuneEquipped, setHealingRuneEquipped] = useState(false);
+  const [runeNotif,           setRuneNotif]           = useState(false);
 
   const canvasRef          = useRef<HTMLCanvasElement>(null);
   const profCanvasRef      = useRef<HTMLCanvasElement>(null);
@@ -877,6 +880,37 @@ export function WalkDemo() {
           >!</button>
         )}
 
+        {/* ── RUNE PICKUP NOTIFICATION ─────────────────────────────────── */}
+        {runeNotif && (
+          <div style={{
+            position:"absolute", top:"38%", left:"50%",
+            transform:"translate(-50%,-50%)",
+            background:"rgba(4,12,4,0.96)",
+            border:"1.5px solid rgba(80,200,80,0.65)",
+            borderRadius:14, padding:"14px 20px",
+            display:"flex", alignItems:"center", gap:14,
+            zIndex:60, pointerEvents:"none",
+            boxShadow:"0 4px 24px rgba(80,200,80,0.25)",
+          }}>
+            <div style={{
+              width:42, height:42, borderRadius:8, flexShrink:0,
+              background:"radial-gradient(circle at 38% 33%,#1a4a1a,#0a1a0a)",
+              border:"1.5px solid rgba(80,200,80,0.55)",
+              display:"flex", alignItems:"center", justifyContent:"center",
+              fontSize:22, color:"rgba(80,220,80,0.9)",
+              boxShadow:"0 0 10px rgba(80,200,80,0.4)",
+            }}>✦</div>
+            <div>
+              <div style={{ color:"#80d080", fontWeight:800, fontSize:13, letterSpacing:0.5 }}>
+                Item Received!
+              </div>
+              <div style={{ color:"#e8dcc8", fontSize:12, marginTop:3, fontWeight:600 }}>
+                Obsidian Healing Rune ×1
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* ── ITEM PICKUP NOTIFICATION ─────────────────────────────────── */}
         {pickupNotif && (
           <div style={{
@@ -963,7 +997,16 @@ export function WalkDemo() {
             </p>
             <div style={{ display:"flex", justifyContent:"flex-end" }}>
               <button
-                onClick={() => advanceDialog(phase)}
+                onClick={() => {
+                  if (phase === "jay_d3") {
+                    setPhase("walk");
+                    setHasHealingRune(true);
+                    setRuneNotif(true);
+                    setTimeout(() => setRuneNotif(false), 3200);
+                  } else {
+                    advanceDialog(phase);
+                  }
+                }}
                 style={{
                   background:"rgba(80,130,220,0.15)",
                   border:"1px solid rgba(80,130,220,0.5)",
@@ -1162,9 +1205,9 @@ export function WalkDemo() {
 
                 {/* Page tabs flush with bottom of spine */}
                 <div style={{ display:"flex", gap:3, alignSelf:"flex-end" }}>
-                  {(["party","bag"] as const).map(tab => (
+                  {(["party","shells","bag"] as const).map(tab => (
                     <button key={tab} onClick={() => setJournalTab(tab)} style={{
-                      padding:"5px 16px 8px",
+                      padding:"5px 12px 8px",
                       background: journalTab === tab
                         ? "linear-gradient(175deg,#f5e9cc,#ecdcb4)"
                         : "rgba(0,0,0,0.30)",
@@ -1173,7 +1216,7 @@ export function WalkDemo() {
                       color: journalTab === tab ? "#3d1e04" : "#a08050",
                       fontSize:10, fontWeight:800, letterSpacing:1.5,
                       textTransform:"uppercase", cursor:"pointer",
-                    }}>{tab === "party" ? "Party" : "Bag"}</button>
+                    }}>{tab === "party" ? "Party" : tab === "shells" ? "Shells" : "Bag"}</button>
                   ))}
                 </div>
 
@@ -1228,6 +1271,9 @@ export function WalkDemo() {
                           <div style={{ color:"#826040", fontSize:11, marginTop:5 }}>
                             Level&nbsp;1&emsp;·&emsp;HP 40 / 40
                           </div>
+                          <div style={{ color:"#6a50a0", fontSize:9, fontWeight:800, marginTop:4, letterSpacing:0.5 }}>
+                            ◈ Obsidian Realm Shell{healingRuneEquipped ? "  ·  ✦ Healing Rune" : ""}
+                          </div>
                         </div>
                         <div style={{
                           color:"#9a7040", fontSize:10, fontWeight:700,
@@ -1260,6 +1306,101 @@ export function WalkDemo() {
                         </div>
                       </div>
                     ))}
+                  </div>
+                )}
+
+                {/* ── SHELLS PAGE ──────────────────────────────── */}
+                {journalTab === "shells" && (
+                  <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+                    {starter ? (
+                      <div style={{
+                        background:"rgba(30,20,50,0.06)",
+                        border:"1px solid rgba(100,80,180,0.22)",
+                        borderRadius:14, padding:14,
+                      }}>
+                        {/* Shell header */}
+                        <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:12 }}>
+                          <div style={{
+                            width:44, height:44, borderRadius:"50%", flexShrink:0,
+                            background:"radial-gradient(circle at 38% 33%,#38344a,#0c0a12)",
+                            border:"1.5px solid rgba(140,120,200,0.45)",
+                            display:"flex", alignItems:"center", justifyContent:"center",
+                            fontSize:20, color:"rgba(190,170,230,0.85)",
+                            boxShadow:"0 0 12px rgba(80,60,140,0.3)",
+                          }}>◈</div>
+                          <div>
+                            <div style={{ color:"#2a1206", fontWeight:800, fontSize:13 }}>Obsidian Realm Shell</div>
+                            <div style={{ color:"#7060a0", fontSize:10, marginTop:2 }}>Bonded · {starter.name} within</div>
+                          </div>
+                        </div>
+
+                        {/* Tayanari inside the shell */}
+                        <div style={{
+                          display:"flex", alignItems:"center", gap:10,
+                          padding:"8px 10px", borderRadius:10,
+                          background:"rgba(50,35,90,0.07)",
+                          border:"1px dashed rgba(100,80,160,0.22)",
+                          marginBottom:12,
+                        }}>
+                          <img src={starter.img} alt={starter.name} style={{
+                            width:38, height:38, objectFit:"contain",
+                            background:"rgba(60,30,0,0.04)", borderRadius:6,
+                            mixBlendMode:"multiply", flexShrink:0,
+                          }}/>
+                          <div>
+                            <div style={{ color:"#2a1206", fontWeight:700, fontSize:12 }}>{starter.name}</div>
+                            <div style={{ color:starter.color, fontSize:9, fontWeight:800, letterSpacing:1 }}>{starter.type.toUpperCase()}</div>
+                            <div style={{ color:"#826040", fontSize:10, marginTop:2 }}>Lv 1 · HP 40 / 40</div>
+                          </div>
+                        </div>
+
+                        {/* Rune slot */}
+                        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                          <div style={{
+                            width:38, height:38, borderRadius:9, flexShrink:0,
+                            background: healingRuneEquipped
+                              ? "radial-gradient(circle at 38% 33%,#1a4a1a,#0a1a0a)"
+                              : "rgba(60,40,20,0.07)",
+                            border: healingRuneEquipped
+                              ? "1.5px solid rgba(80,200,80,0.55)"
+                              : "1.5px dashed rgba(100,64,20,0.28)",
+                            display:"flex", alignItems:"center", justifyContent:"center",
+                            fontSize:18,
+                            color: healingRuneEquipped ? "rgba(80,220,80,0.9)" : "rgba(150,120,80,0.35)",
+                            boxShadow: healingRuneEquipped ? "0 0 8px rgba(80,200,80,0.3)" : "none",
+                            transition:"all 0.25s",
+                          }}>{healingRuneEquipped ? "✦" : "·"}</div>
+                          <div style={{ flex:1 }}>
+                            <div style={{ color:"#3a2a14", fontWeight:700, fontSize:11 }}>
+                              {healingRuneEquipped ? "Obsidian Healing Rune" : "Rune Slot — empty"}
+                            </div>
+                            <div style={{ color:"#826040", fontSize:10, marginTop:2 }}>
+                              {healingRuneEquipped
+                                ? "Heals 50% of max HP once per battle"
+                                : hasHealingRune ? "Tap Equip to socket the rune" : "No rune in bag"}
+                            </div>
+                          </div>
+                          {hasHealingRune && (
+                            <button
+                              onClick={() => setHealingRuneEquipped(v => !v)}
+                              style={{
+                                padding:"5px 11px", borderRadius:8, flexShrink:0,
+                                background: healingRuneEquipped
+                                  ? "rgba(180,60,60,0.10)" : "rgba(50,35,90,0.10)",
+                                border: healingRuneEquipped
+                                  ? "1px solid rgba(180,60,60,0.40)" : "1px solid rgba(100,80,180,0.40)",
+                                color: healingRuneEquipped ? "#c04040" : "#7060b0",
+                                fontSize:10, fontWeight:800, cursor:"pointer",
+                              }}
+                            >{healingRuneEquipped ? "Unequip" : "Equip"}</button>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{ textAlign:"center", padding:"26px 0", color:"#b09468", fontSize:12, fontStyle:"italic" }}>
+                        — No shell yet. Choose a partner from the Professor. —
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -1299,7 +1440,40 @@ export function WalkDemo() {
                       }}>— Your bag is empty. —</div>
                     )}
 
-                    {[1,2,3,4].map(n => (
+                    {/* Obsidian Healing Rune — only shown when not equipped */}
+                    {hasHealingRune && !healingRuneEquipped && (
+                      <div style={{
+                        display:"flex", alignItems:"center", gap:13,
+                        padding:"10px 2px 13px",
+                        borderBottom:"1px dashed rgba(100,64,20,0.28)",
+                      }}>
+                        <div style={{
+                          width:44, height:44, borderRadius:9, flexShrink:0,
+                          background:"radial-gradient(circle at 38% 33%,#1a4a1a,#0a1a0a)",
+                          border:"1.5px solid rgba(80,200,80,0.5)",
+                          display:"flex", alignItems:"center", justifyContent:"center",
+                          fontSize:22, color:"rgba(80,220,80,0.9)",
+                          boxShadow:"0 0 8px rgba(80,200,80,0.25)",
+                        }}>✦</div>
+                        <div style={{ flex:1 }}>
+                          <div style={{ color:"#2a1206", fontWeight:800, fontSize:14 }}>
+                            Obsidian Healing Rune
+                          </div>
+                          <div style={{ color:"#826040", fontSize:11, marginTop:5, lineHeight:1.5 }}>
+                            Heals 50% of max HP once per battle. Socket into a shell via the Shells tab.
+                          </div>
+                        </div>
+                        <div style={{
+                          color:"#406a40", fontSize:14, fontWeight:900,
+                          background:"rgba(60,120,60,0.10)",
+                          padding:"4px 12px", borderRadius:20,
+                          border:"1px solid rgba(80,160,80,0.22)",
+                          flexShrink:0,
+                        }}>×1</div>
+                      </div>
+                    )}
+
+                    {[1,2,3].map(n => (
                       <div key={n} style={{
                         padding:"11px 2px",
                         borderBottom:"1px dashed rgba(100,64,20,0.16)",
@@ -1329,7 +1503,7 @@ export function WalkDemo() {
           border:"1px solid rgba(240,208,96,0.3)", pointerEvents:"none",
           textTransform:"uppercase", zIndex:5,
         }}>
-          {scene === "overworld" ? "Primeria Village" : scene === "lab" ? "Prof. Irwyn's Lab" : scene === "maya" ? "Maya's Home" : "Jay's Home"}
+          {scene === "overworld" ? "Primeria Village" : scene === "lab" ? "Prof. Irwyn's Lab" : scene === "maya" ? "Maya's Home" : scene === "jay" ? "Jay's Home" : "Your Home"}
         </div>
 
         {/* Fade overlay */}
