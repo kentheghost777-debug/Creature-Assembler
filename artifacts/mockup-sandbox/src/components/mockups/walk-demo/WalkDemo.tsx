@@ -77,44 +77,18 @@ const FRAMES: Record<string, string[]> = {
   walk_down: ["/__mockup/images/walk_idle.png", "/__mockup/images/walk_front_1.png", "/__mockup/images/walk_front_2.png"],
 };
 
+// Sprites now have proper transparent backgrounds (pre-processed).
+// Just draw directly — no pixel manipulation needed.
 function drawSprite(canvas: HTMLCanvasElement, src: string, flipX: boolean): boolean {
   const img = imgCache[src];
   if (!img?.complete || !img.naturalWidth) return false;
   const W = img.naturalWidth, H = img.naturalHeight;
   canvas.width = W; canvas.height = H;
-  const ctx = canvas.getContext("2d", { willReadFrequently: true })!;
+  const ctx = canvas.getContext("2d")!;
   ctx.clearRect(0, 0, W, H);
   if (flipX) { ctx.translate(W, 0); ctx.scale(-1, 1); }
   ctx.drawImage(img, 0, 0);
   if (flipX) ctx.setTransform(1, 0, 0, 1, 0, 0);
-  try {
-    const id = ctx.getImageData(0, 0, W, H);
-    const d  = id.data;
-    // BFS flood-fill from every edge — only pixels that are EXACTLY pure black
-    // (0,0,0) get erased. Character dark areas are ≥ 1 on at least one channel
-    // so they are never removed, no matter how dark the armor or shadows.
-    // Threshold 12: walk sprites have near-black backgrounds (values 4-11).
-    // BFS only ever removes background-CONNECTED pixels, so interior dark
-    // shadows are never touched even at this higher value.
-    const isPureBlack = (p: number) => d[p] < 12 && d[p+1] < 12 && d[p+2] < 12;
-    const vis = new Uint8Array(W * H);
-    const q: number[] = [];
-    const seed = (idx: number) => {
-      if (!vis[idx] && isPureBlack(idx * 4)) { vis[idx] = 1; q.push(idx); }
-    };
-    for (let x = 0; x < W; x++) { seed(x); seed((H-1)*W + x); }
-    for (let y = 1; y < H-1; y++) { seed(y*W); seed(y*W + W-1); }
-    while (q.length) {
-      const i = q.pop()!;
-      d[i*4+3] = 0;
-      const x = i%W, y = (i/W)|0;
-      if (x > 0)   seed(i-1);
-      if (x < W-1) seed(i+1);
-      if (y > 0)   seed(i-W);
-      if (y < H-1) seed(i+W);
-    }
-    ctx.putImageData(id, 0, 0);
-  } catch { /* no CORS issue on same-origin but guard anyway */ }
   return true;
 }
 
