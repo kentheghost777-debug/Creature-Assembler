@@ -70,11 +70,11 @@ const OW_BLOCKED: Rect[] = [
   [912, 440,  970,  452],  // south fence — right of gate
 
   // ── PLAYER HOME — fence perimeter + body (north gate x 532–602) ────────────
-  [367, 562,  757,  815],  // building body (aligned with fence row)
+  [367, 590,  757,  820],  // building body — pushed south to leave a real yard
   [340, 537,  532,  547],  // north fence — left of gate
   [602, 537,  782,  547],  // north fence — right of gate
-  [340, 537,  367,  820],  // west fence
-  [757, 537,  782,  820],  // east fence
+  [340, 547,  367,  820],  // west fence (starts at fence bottom)
+  [757, 547,  782,  820],  // east fence (starts at fence bottom)
 
   // ── ELLIO'S HOME — fence perimeter + body (north gate x 238–308) ───────────
   [214, 565,  327,  780],  // building body
@@ -233,7 +233,7 @@ const EH_BLOCKED: Rect[] = [
 // ── Player's Home ────────────────────────────────────────────────────────────
 const PH = { w: 800, h: 800 };
 const JESS_POS = { x: 395, y: 370 }; // Jess standing in the open center of the home
-const OW_PLAYER_HOME_DOOR: Rect = [532, 537, 602, 555]; // north fence gate (y=537–547) + small yard margin
+const OW_PLAYER_HOME_DOOR: Rect = [532, 537, 602, 549]; // north fence gate only — stops at fence bottom
 const PLAYER_HOME_EXIT: Rect = [305, 725, 505, 790]; // bottom-center door
 const PH_BLOCKED: Rect[] = [
   // ── WALLS ──────────────────────────────────────────────────────────────────
@@ -649,7 +649,7 @@ export function WalkDemo() {
         } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_PLAYER_HOME_DOOR)) {
           transitionTo("home", 400, 670);       // enter player's home — just inside door
         } else if (sc === "home" && inRect(worldPos.current.x, worldPos.current.y, PLAYER_HOME_EXIT)) {
-          transitionTo("overworld", 567, 560);  // inside player home yard, well south of gate
+          transitionTo("overworld", 567, 570);  // inside player home yard, clear of trigger and building
         } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_ELLIO_DOOR)) {
           transitionTo("ellio", 400, 670);      // enter Ellio's home — just inside door
         } else if (sc === "ellio" && inRect(worldPos.current.x, worldPos.current.y, ELLIO_HOME_EXIT)) {
