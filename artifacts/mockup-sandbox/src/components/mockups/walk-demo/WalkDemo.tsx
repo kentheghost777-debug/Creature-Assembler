@@ -33,30 +33,29 @@ type Rect  = [number, number, number, number]; // x1 y1 x2 y2 world-px
 // Paths between structures are intentionally left open.
 const OW_BLOCKED: Rect[] = [
   // ── OUTER BORDERS ──────────────────────────────────────────────────────────
-  // Top trees block y=0-85 to keep player out of visual foliage (gap x=50-165 for Route 1)
   [0,   0,   50,  85 ],
   [165, 0,   800, 85 ],
-  [0,   85,  50,  900],   // left border column
-  [750, 85,  800, 900],   // right border column
+  [0,   85,  50,  900],   // left border — narrow so Jay's door is reachable
+  [780, 85,  800, 900],   // right border — pulled in so Maya's door area is reachable
   [0,   870, 800, 900],   // southern boundary
 
   // ── PROFESSOR LAB ──────────────────────────────────────────────────────────
-  [205, 85,  570, 310],   // dome body; right edge x=570 (was 545) so player can't clip into fence
+  [205, 85,  570, 310],
 
-  // ── RIVAL'S HOME (left side) ───────────────────────────────────────────────
-  [50,  270, 160, 425],
+  // ── RIVAL'S HOME (Jay) — body only, stop well above door strip ─────────────
+  [50,  250, 165, 400],
 
-  // ── MAYA'S HOME (right side) ───────────────────────────────────────────────
-  [670, 270, 750, 425],   // pushed to x=670; right corridor is x=545-670 (125 px)
+  // ── MAYA'S HOME — body only, stop well above door strip ────────────────────
+  [645, 250, 780, 400],
 
   // ── PLAYER HOME (center bottom) ────────────────────────────────────────────
   [205, 505, 595, 815],
 
   // ── ELIO'S HOME (bottom left) ──────────────────────────────────────────────
-  [50,  565, 160, 780],
+  [50,  565, 165, 780],
 
   // ── LIA'S HOME (bottom right) ──────────────────────────────────────────────
-  [670, 565, 750, 780],   // matches Maya's left edge
+  [645, 565, 780, 780],
 ];
 
 // Route-1 exit trigger aligned with the top-left gap
@@ -77,8 +76,8 @@ const LAB_EXIT: Rect = [262, 645, 438, 692]; // exit lab
 
 // ── Maya's Home ───────────────────────────────────────────────────────────────
 const MY = { w: 800, h: 800 };
-const MAYA_POS = { x: 705, y: 445 }; // Maya standing outside her home
-const OW_MAYA_DOOR: Rect  = [685, 425, 735, 444]; // walk up against door to enter
+const MAYA_POS = { x: 612, y: 456 }; // Maya standing left of her home entrance
+const OW_MAYA_DOOR: Rect  = [685, 396, 775, 472]; // door strip — player must pass Maya to reach it
 const MAYA_HOME_EXIT: Rect = [310, 722, 490, 790]; // exit trigger at interior door
 const MAYA_SHELL: Rect     = [590, 565, 650, 615]; // pickup zone around the chest
 const MAYA_BLOCKED: Rect[] = [
@@ -102,7 +101,7 @@ const MAYA_BLOCKED: Rect[] = [
 // ── Jay's Home ────────────────────────────────────────────────────────────────
 const JY = { w: 800, h: 800 };
 const JAY_POS = { x: 370, y: 310 }; // Jay standing in the center of his room
-const OW_JAY_DOOR: Rect  = [75, 425, 145, 444];  // walk up to left home door
+const OW_JAY_DOOR: Rect  = [50, 392, 165, 478];  // wide strip — full south face of Jay's home
 const JAY_HOME_EXIT: Rect = [310, 725, 490, 790]; // interior door at bottom
 const JAY_BLOCKED: Rect[] = [
   // ── WALLS ──────────────────────────────────────────────────────────────────
