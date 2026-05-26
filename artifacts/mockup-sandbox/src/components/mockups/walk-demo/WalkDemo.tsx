@@ -24,7 +24,8 @@ type StarterId = typeof STARTERS[number]["id"];
 // ── Dialog phases ───────────────────────────────────────────────────────────
 type Phase = "walk" | "d1" | "d2" | "pick" | "d3" | "d4" | "d5"
            | "maya_d1" | "maya_d2" | "maya_d3" | "maya_d4"
-           | "jay_d1"  | "jay_d2"  | "jay_d3"
+           | "maya_post1" | "maya_post2" | "maya_post3"
+           | "jay_d1"  | "jay_d2"  | "jay_d3"  | "jay_done"
            | "jess_d1" | "jess_d2" | "jess_d3";
 type Scene = "overworld" | "lab" | "maya" | "jay" | "home";
 type Rect  = [number, number, number, number]; // x1 y1 x2 y2 world-px
@@ -37,7 +38,7 @@ const OW_BLOCKED: Rect[] = [
   [0,    0,   155,  900],  // left forest edge (newly visible original left side)
   [155,  0,   214,   85],  // top strip left of Route-1 path
   [327,  0,  1124,   85],  // north border (right of Route-1 gap)
-  [962,  85, 1124,  900],  // right forest border
+  [978,  85, 1124,  900],  // right forest border
   [0,   865, 1124,  900],  // southern boundary
 
   // ── PROFESSOR LAB ──────────────────────────────────────────────────────────
@@ -47,7 +48,7 @@ const OW_BLOCKED: Rect[] = [
   [214, 250,  327,  400],
 
   // ── MAYA'S HOME — body only, stop well above door strip ────────────────────
-  [807, 250,  928,  400],
+  [807, 250,  928,  383],
 
   // ── PLAYER HOME (center bottom) ────────────────────────────────────────────
   [367, 505,  757,  815],
@@ -77,8 +78,8 @@ const LAB_EXIT: Rect = [262, 645, 438, 692]; // exit lab
 
 // ── Maya's Home ───────────────────────────────────────────────────────────────
 const MY = { w: 800, h: 800 };
-const MAYA_POS = { x: 838, y: 446 }; // Maya standing just south of her door
-const OW_MAYA_DOOR: Rect  = [847, 392, 937, 408]; // must walk UP to enter — y≤408 only reachable by pressing UP
+const MAYA_POS = { x: 870, y: 427 }; // Maya standing at her doorstep
+const OW_MAYA_DOOR: Rect  = [818, 383, 952, 432]; // wide + tall zone — easy to enter from any approach
 const MAYA_HOME_EXIT: Rect = [310, 722, 490, 790]; // exit trigger at interior door
 const MAYA_SHELL: Rect     = [385, 400, 455, 460]; // pickup zone — center of the living-room rug
 const MAYA_BLOCKED: Rect[] = [
@@ -137,7 +138,7 @@ const JAY_BLOCKED: Rect[] = [
 // ── Player's Home ────────────────────────────────────────────────────────────
 const PH = { w: 800, h: 800 };
 const JESS_POS = { x: 395, y: 370 }; // Jess standing in the open center of the home
-const OW_PLAYER_HOME_DOOR: Rect = [460, 484, 650, 522]; // wider + taller — walk SOUTH to enter
+const OW_PLAYER_HOME_DOOR: Rect = [345, 477, 760, 503]; // very wide — walk SOUTH to enter
 const PLAYER_HOME_EXIT: Rect = [305, 725, 505, 790]; // bottom-center door
 const PH_BLOCKED: Rect[] = [
   // ── WALLS ──────────────────────────────────────────────────────────────────
@@ -554,7 +555,9 @@ export function WalkDemo() {
     const map: Partial<Record<Phase, Phase>> = {
       d1: "d2", d2: "pick", d3: "d4", d4: "d5", d5: "walk",
       maya_d1: "maya_d2", maya_d2: "maya_d3", maya_d3: "maya_d4", maya_d4: "walk",
+      maya_post1: "maya_post2", maya_post2: "maya_post3", maya_post3: "walk",
       jay_d1: "jay_d2", jay_d2: "jay_d3", jay_d3: "walk",
+      jay_done: "walk",
       jess_d1: "jess_d2", jess_d2: "jess_d3", jess_d3: "walk",
     };
     const next = map[from];
@@ -613,6 +616,10 @@ export function WalkDemo() {
     jess_d1: "You're really going, aren't you. I've known this day was coming ever since I caught you sneaking off before sunrise to watch the wild Tayanari out in the meadow. You were nine years old. You've been ready since then.",
     jess_d2: "I'm not going to beg you to stay. That's not what love is. Love is packing your favourite bread in the outer pocket of your pack so you find it when you need it most. I did that last night while you were sleeping.",
     jess_d3: "Come home with stories worth telling. And come home. That's all I ask. I love you. Now go — before I change my mind and chain you to that kitchen table.",
+    maya_post1: "You found them! Those Weathered Realm Shells have been waiting for someone like you. Here's something my father taught me — Tayanari are drawn to beautiful shells. Place one on the ground and a wild one may stop to investigate.",
+    maya_post2: "It's never guaranteed. A calm Tayanari might wander in out of curiosity. Even a rampaging one can blunder straight into a shell and bond with it. The shell becomes its home — if it chooses to accept.",
+    maya_post3: "And my father used to say: 'A shell is just a home, but a rune makes it a welcome.' There are many types of shells, each with their own energy — and so many runes to socket inside them. You've already found one, I hear.",
+    jay_done: "You're good. Go find some wild ones to catch — I'll be right behind you.",
   };
 
   return (
@@ -789,7 +796,7 @@ export function WalkDemo() {
         {/* ── INTERACT BUTTON — Prof ────────────────────────────────────── */}
         {scene === "lab" && nearProf && phase === "walk" && (
           <button
-            onClick={() => setPhase("d1")}
+            onClick={() => setPhase(starter ? "d5" : "d1")}
             style={{
               position:"absolute",
               left: interactPos.sx - 18,
@@ -807,7 +814,7 @@ export function WalkDemo() {
         {/* ── INTERACT BUTTON — Jay ─────────────────────────────────────── */}
         {scene === "jay" && nearJay && phase === "walk" && (
           <button
-            onClick={() => setPhase("jay_d1")}
+            onClick={() => setPhase(hasHealingRune ? "jay_done" : "jay_d1")}
             style={{
               position:"absolute",
               left: jayInteractPos.sx - 18,
@@ -825,7 +832,7 @@ export function WalkDemo() {
         {/* ── INTERACT BUTTON — Maya ────────────────────────────────────── */}
         {scene === "overworld" && nearMaya && phase === "walk" && (
           <button
-            onClick={() => setPhase("maya_d1")}
+            onClick={() => setPhase(shellsCollected ? "maya_post1" : "maya_d1")}
             style={{
               position:"absolute",
               left: mayaInteractPos.sx - 18,
@@ -975,7 +982,7 @@ export function WalkDemo() {
         )}
 
         {/* ── JAY DIALOG BOX ───────────────────────────────────────────── */}
-        {(phase === "jay_d1" || phase === "jay_d2" || phase === "jay_d3") && (
+        {(phase === "jay_d1" || phase === "jay_d2" || phase === "jay_d3" || phase === "jay_done") && (
           <div style={{
             position:"absolute", bottom:0, left:0, right:0,
             background:"linear-gradient(to top,rgba(4,8,18,0.97),rgba(6,10,24,0.93))",
@@ -1020,7 +1027,7 @@ export function WalkDemo() {
         )}
 
         {/* ── MAYA DIALOG BOX ──────────────────────────────────────────── */}
-        {(phase === "maya_d1" || phase === "maya_d2" || phase === "maya_d3" || phase === "maya_d4") && (
+        {(phase === "maya_d1" || phase === "maya_d2" || phase === "maya_d3" || phase === "maya_d4" || phase === "maya_post1" || phase === "maya_post2" || phase === "maya_post3") && (
           <div style={{
             position:"absolute", bottom:0, left:0, right:0,
             background:"linear-gradient(to top,rgba(4,12,8,0.97),rgba(6,16,10,0.93))",
