@@ -94,7 +94,7 @@ const OW_BLOCKED: Rect[] = [
 // ── Lia's Home ─────────────────────────────────────────────────────────────
 const LH = { w: 800, h: 800 };
 const LIA_POS = { x: 385, y: 355 }; // Lia near the center rug
-const OW_LIA_DOOR: Rect  = [850, 558, 902, 572]; // ON the visible front door — strip just N of Lia body (y=565)
+const OW_LIA_DOOR: Rect  = [840, 552, 918, 572]; // ON visible front door — widened to span Lia north gate (x=846–910) + slack
 const LIA_HOME_EXIT: Rect = [310, 722, 490, 790]; // bottom-center door
 const LH_BLOCKED: Rect[] = [
   // ── WALLS ──────────────────────────────────────────────────────────────────
@@ -218,7 +218,7 @@ const JAY_BLOCKED: Rect[] = [
 // ── Ellio's Home ─────────────────────────────────────────────────────────────
 const EH = { w: 800, h: 800 };
 const ELLIO_POS = { x: 400, y: 350 };
-const OW_ELLIO_DOOR: Rect  = [245, 558, 297, 572]; // ON the visible front door — strip just N of Ellio body (y=565)
+const OW_ELLIO_DOOR: Rect  = [230, 552, 315, 572]; // ON visible front door — widened to span Ellio north gate (x=238–308) + slack
 const ELLIO_HOME_EXIT: Rect = [305, 725, 505, 790];
 const EH_BLOCKED: Rect[] = [
   [0, 0, 800, 60], [0, 0, 60, 800], [740, 0, 800, 800],
@@ -233,7 +233,7 @@ const EH_BLOCKED: Rect[] = [
 // ── Player's Home ────────────────────────────────────────────────────────────
 const PH = { w: 800, h: 800 };
 const JESS_POS = { x: 395, y: 370 }; // Jess standing in the open center of the home
-const OW_PLAYER_HOME_DOOR: Rect = [538, 580, 600, 594]; // ON the visible front door — strip just N of PH body (y=590)
+const OW_PLAYER_HOME_DOOR: Rect = [520, 565, 615, 594]; // ON visible front door — widened to span PH north gate (x=532–602) + slack, with extra yard height for input forgiveness
 const PLAYER_HOME_EXIT: Rect = [305, 725, 505, 790]; // bottom-center door
 const PH_BLOCKED: Rect[] = [
   // ── WALLS ──────────────────────────────────────────────────────────────────
