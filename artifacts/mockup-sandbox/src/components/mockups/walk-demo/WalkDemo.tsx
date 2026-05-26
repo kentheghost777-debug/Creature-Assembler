@@ -65,9 +65,9 @@ const OW_BLOCKED: Rect[] = [
   // ── MAYA'S HOME — fence perimeter + body (south gate x 845–912) ────────────
   [807, 225,  928,  383],  // building body
   [775, 225,  807,  452],  // west fence
-  [928, 225,  970,  452],  // east fence
-  [775, 440,  845,  452],  // south fence — left of gate
-  [912, 440,  970,  452],  // south fence — right of gate
+  [965, 225,  970,  452],  // east fence — shrunk (visible door extends east; was [928,225,970,452])
+  [775, 440,  895,  452],  // south fence — left of gate (gate widened east to align with visible door)
+  [960, 440,  970,  452],  // south fence — right of gate (gate widened east)
 
   // ── PLAYER HOME — fence perimeter + body (north gate x 532–602) ────────────
   [367, 590,  757,  820],  // building body — pushed south to leave a real yard
@@ -159,7 +159,7 @@ const LAB_EXIT: Rect = [262, 645, 438, 692]; // exit lab
 // ── Maya's Home ───────────────────────────────────────────────────────────────
 const MY = { w: 800, h: 800 };
 const MAYA_POS = { x: 870, y: 427 }; // Maya standing at her doorstep
-const OW_MAYA_DOOR: Rect  = [845, 383, 912, 440]; // tight zone at Maya's door (glow center x≈878)
+const OW_MAYA_DOOR: Rect  = [895, 383, 960, 445]; // moved EAST to actual visible door art (mailbox/eaves were east of trigger before)
 const MAYA_HOME_EXIT: Rect = [310, 722, 490, 790]; // exit trigger at interior door
 const MAYA_SHELL: Rect     = [385, 400, 455, 460]; // pickup zone — center of the living-room rug
 const MAYA_BLOCKED: Rect[] = [
@@ -934,43 +934,43 @@ export function WalkDemo() {
                 letterSpacing:1, pointerEvents:"none",
                 textShadow:"0 0 4px #000,0 0 8px #000",
               }}>MAYA</div>
-              {/* Maya's home door glow */}
+              {/* Maya's home door glow — south face yard (matches trigger center ~927,414) */}
               <div style={{
-                position:"absolute", left:860, top:426,
-                width:36, height:10, borderRadius:"50%",
-                background:"radial-gradient(ellipse,rgba(120,220,140,0.5)0%,transparent 80%)",
+                position:"absolute", left:910, top:408,
+                width:44, height:14, borderRadius:"50%",
+                background:"radial-gradient(ellipse,rgba(120,220,140,0.7)0%,transparent 80%)",
                 animation:"pulse 1.4s ease-in-out infinite",
                 pointerEvents:"none",
               }}/>
-              {/* Jay's home door glow */}
+              {/* Jay's home door glow — south face yard (matches trigger center ~274,424) */}
               <div style={{
-                position:"absolute", left:250, top:426,
-                width:44, height:10, borderRadius:"50%",
-                background:"radial-gradient(ellipse,rgba(100,160,255,0.5)0%,transparent 80%)",
+                position:"absolute", left:252, top:418,
+                width:44, height:14, borderRadius:"50%",
+                background:"radial-gradient(ellipse,rgba(100,160,255,0.7)0%,transparent 80%)",
                 animation:"pulse 1.4s ease-in-out infinite",
                 pointerEvents:"none",
               }}/>
-              {/* Player home door glow — south face at y≈498 */}
+              {/* Player home door glow — south face on south road (matches trigger center ~575,835) */}
               <div style={{
-                position:"absolute", left:544, top:498,
-                width:44, height:10, borderRadius:"50%",
-                background:"radial-gradient(ellipse,rgba(255,160,90,0.55)0%,transparent 80%)",
+                position:"absolute", left:553, top:828,
+                width:44, height:14, borderRadius:"50%",
+                background:"radial-gradient(ellipse,rgba(255,160,90,0.75)0%,transparent 80%)",
                 animation:"pulse 1.4s ease-in-out infinite",
                 pointerEvents:"none",
               }}/>
-              {/* Ellio's home door glow */}
+              {/* Ellio's home door glow — south face on south road (matches trigger center ~185,795) */}
               <div style={{
-                position:"absolute", left:248, top:548,
-                width:40, height:10, borderRadius:"50%",
-                background:"radial-gradient(ellipse,rgba(140,220,255,0.55)0%,transparent 80%)",
+                position:"absolute", left:163, top:788,
+                width:44, height:14, borderRadius:"50%",
+                background:"radial-gradient(ellipse,rgba(140,220,255,0.75)0%,transparent 80%)",
                 animation:"pulse 1.4s ease-in-out infinite",
                 pointerEvents:"none",
               }}/>
-              {/* Lia's home door glow */}
+              {/* Lia's home door glow — south face on south road (matches trigger center ~920,795) */}
               <div style={{
-                position:"absolute", left:856, top:557,
-                width:44, height:10, borderRadius:"50%",
-                background:"radial-gradient(ellipse,rgba(255,120,80,0.55)0%,transparent 80%)",
+                position:"absolute", left:898, top:788,
+                width:44, height:14, borderRadius:"50%",
+                background:"radial-gradient(ellipse,rgba(255,120,80,0.75)0%,transparent 80%)",
                 animation:"pulse 1.4s ease-in-out infinite",
                 pointerEvents:"none",
               }}/>
