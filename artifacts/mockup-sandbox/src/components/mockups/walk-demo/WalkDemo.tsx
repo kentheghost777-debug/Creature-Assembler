@@ -265,6 +265,12 @@ export function WalkDemo() {
   const [hasResonanceStone,      setHasResonanceStone]      = useState(false);
   const [resonanceStoneEquipped, setResonanceStoneEquipped] = useState(false);
   const [resonanceNotif,         setResonanceNotif]         = useState(false);
+  // ── Quest-done guards — hide ! bubble once each NPC arc is finished ─────────
+  const [jessDone,       setJessDone]       = useState(false);
+  const [jayDone,        setJayDone]        = useState(false);
+  const [mayaInitDone,   setMayaInitDone]   = useState(false); // after first convo (d4)
+  const [mayaDone,       setMayaDone]       = useState(false); // after post-shell convo (post3)
+  const [ellioDone,      setEllioDone]      = useState(false);
 
   const canvasRef          = useRef<HTMLCanvasElement>(null);
   const profCanvasRef      = useRef<HTMLCanvasElement>(null);
@@ -521,7 +527,7 @@ export function WalkDemo() {
         } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_ELLIO_DOOR)) {
           transitionTo("ellio", 405, 660);      // enter Ellio's home
         } else if (sc === "ellio" && inRect(worldPos.current.x, worldPos.current.y, ELLIO_HOME_EXIT)) {
-          transitionTo("overworld", 272, 620);  // exit south of Ellio's door in OW
+          transitionTo("overworld", 272, 540);  // exit north of Ellio trigger (y<553) and above blocked body (y<565)
         }
 
         // Flip / anim change
@@ -885,14 +891,14 @@ export function WalkDemo() {
         {/* ── INTERACT BUTTON — Prof ────────────────────────────────────── */}
         {scene === "lab" && nearProf && phase === "walk" && !starter && (
           <button
-            onClick={() => setPhase(starter ? "d5" : "d1")}
+            onClick={() => setPhase("d1")}
             style={{
               position:"absolute",
-              left: interactPos.sx - 18,
+              left: interactPos.sx - 14,
               top:  interactPos.sy - 10,
-              width:36, height:36, borderRadius:"50%",
+              width:28, height:28, borderRadius:"50%",
               background:"#f0d050", border:"2px solid #fff",
-              color:"#1a1200", fontSize:20, fontWeight:900,
+              color:"#1a1200", fontSize:16, fontWeight:900,
               display:"flex", alignItems:"center", justifyContent:"center",
               cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite",
               zIndex:10,
@@ -901,16 +907,16 @@ export function WalkDemo() {
         )}
 
         {/* ── INTERACT BUTTON — Jay ─────────────────────────────────────── */}
-        {scene === "jay" && nearJay && phase === "walk" && (
+        {scene === "jay" && nearJay && phase === "walk" && !jayDone && (
           <button
             onClick={() => setPhase(hasHealingRune ? "jay_done" : "jay_d1")}
             style={{
               position:"absolute",
-              left: jayInteractPos.sx - 18,
+              left: jayInteractPos.sx - 14,
               top:  jayInteractPos.sy - 10,
-              width:36, height:36, borderRadius:"50%",
+              width:28, height:28, borderRadius:"50%",
               background:"#6090e0", border:"2px solid #fff",
-              color:"#0a1030", fontSize:20, fontWeight:900,
+              color:"#0a1030", fontSize:16, fontWeight:900,
               display:"flex", alignItems:"center", justifyContent:"center",
               cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite",
               zIndex:10,
@@ -919,16 +925,20 @@ export function WalkDemo() {
         )}
 
         {/* ── INTERACT BUTTON — Maya ────────────────────────────────────── */}
-        {scene === "overworld" && nearMaya && phase === "walk" && (
+        {/* Green = first quest; amber = second quest (shells collected); hidden when both done */}
+        {scene === "overworld" && nearMaya && phase === "walk"
+          && !mayaDone && (shellsCollected || !mayaInitDone) && (
           <button
             onClick={() => setPhase(shellsCollected ? "maya_post1" : "maya_d1")}
             style={{
               position:"absolute",
-              left: mayaInteractPos.sx - 18,
+              left: mayaInteractPos.sx - 14,
               top:  mayaInteractPos.sy - 10,
-              width:36, height:36, borderRadius:"50%",
-              background:"#80d0a0", border:"2px solid #fff",
-              color:"#0a2018", fontSize:20, fontWeight:900,
+              width:28, height:28, borderRadius:"50%",
+              background: shellsCollected ? "#f0c060" : "#80d0a0",
+              border:"2px solid #fff",
+              color: shellsCollected ? "#3a2000" : "#0a2018",
+              fontSize:16, fontWeight:900,
               display:"flex", alignItems:"center", justifyContent:"center",
               cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite",
               zIndex:10,
@@ -936,32 +946,34 @@ export function WalkDemo() {
           >!</button>
         )}
 
-        {/* ── INTERACT BUTTON — Jess ────────────────────────────────────── */}
-        {scene === "ellio" && nearEllio && phase === "walk" && (
+        {/* ── INTERACT BUTTON — Ellio ───────────────────────────────────── */}
+        {scene === "ellio" && nearEllio && phase === "walk" && !ellioDone && (
           <button
             onClick={() => setPhase(hasResonanceStone ? "ellio_done" : "ellio_d1")}
             style={{
               position:"absolute",
-              left: ellioInteractPos.sx - 18,
+              left: ellioInteractPos.sx - 14,
               top:  ellioInteractPos.sy - 10,
-              width:36, height:36, borderRadius:"50%",
+              width:28, height:28, borderRadius:"50%",
               background:"#a8e878", border:"2px solid #fff",
-              color:"#1a2a08", fontSize:20, fontWeight:900,
+              color:"#1a2a08", fontSize:16, fontWeight:900,
               cursor:"pointer", zIndex:10,
               display:"flex", alignItems:"center", justifyContent:"center",
+              animation:"bounce 0.7s ease-in-out infinite",
             }}>!</button>
         )}
 
-        {scene === "home" && nearJess && phase === "walk" && (
+        {/* ── INTERACT BUTTON — Jess ────────────────────────────────────── */}
+        {scene === "home" && nearJess && phase === "walk" && !jessDone && (
           <button
             onClick={() => setPhase("jess_d1")}
             style={{
               position:"absolute",
-              left: jessInteractPos.sx - 18,
+              left: jessInteractPos.sx - 14,
               top:  jessInteractPos.sy - 10,
-              width:36, height:36, borderRadius:"50%",
+              width:28, height:28, borderRadius:"50%",
               background:"#f0a050", border:"2px solid #fff",
-              color:"#3a1200", fontSize:20, fontWeight:900,
+              color:"#3a1200", fontSize:16, fontWeight:900,
               display:"flex", alignItems:"center", justifyContent:"center",
               cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite",
               zIndex:10,
@@ -979,11 +991,11 @@ export function WalkDemo() {
             }}
             style={{
               position:"absolute",
-              left: shellInteractPos.sx - 18,
+              left: shellInteractPos.sx - 14,
               top:  shellInteractPos.sy - 10,
-              width:36, height:36, borderRadius:"50%",
+              width:28, height:28, borderRadius:"50%",
               background:"#50dcc0", border:"2px solid #fff",
-              color:"#0a2018", fontSize:20, fontWeight:900,
+              color:"#0a2018", fontSize:16, fontWeight:900,
               display:"flex", alignItems:"center", justifyContent:"center",
               cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite",
               zIndex:10,
@@ -1141,6 +1153,9 @@ export function WalkDemo() {
                     setHasHealingRune(true);
                     setRuneNotif(true);
                     setTimeout(() => setRuneNotif(false), 3200);
+                  } else if (phase === "jay_done") {
+                    setPhase("walk");
+                    setJayDone(true);
                   } else {
                     advanceDialog(phase);
                   }
@@ -1152,7 +1167,7 @@ export function WalkDemo() {
                   borderRadius:8, fontSize:13, fontWeight:700,
                   cursor:"pointer",
                 }}
-              >{phase === "jay_d5" ? "OK" : "Next ▶"}</button>
+              >{(phase === "jay_d5" || phase === "jay_done") ? "OK" : "Next ▶"}</button>
             </div>
           </div>
         )}
@@ -1180,7 +1195,17 @@ export function WalkDemo() {
             </p>
             <div style={{ display:"flex", justifyContent:"flex-end" }}>
               <button
-                onClick={() => advanceDialog(phase)}
+                onClick={() => {
+                  if (phase === "maya_d4") {
+                    advanceDialog(phase); // → "walk"
+                    setMayaInitDone(true);
+                  } else if (phase === "maya_post3") {
+                    setPhase("walk");
+                    setMayaDone(true);
+                  } else {
+                    advanceDialog(phase);
+                  }
+                }}
                 style={{
                   background:"rgba(80,180,120,0.15)",
                   border:"1px solid rgba(80,180,120,0.5)",
@@ -1188,7 +1213,7 @@ export function WalkDemo() {
                   borderRadius:8, fontSize:13, fontWeight:700,
                   cursor:"pointer",
                 }}
-              >{phase === "maya_d4" ? "OK" : "Next ▶"}</button>
+              >{(phase === "maya_d4" || phase === "maya_post3") ? "OK" : "Next ▶"}</button>
             </div>
           </div>
         )}
@@ -1216,7 +1241,14 @@ export function WalkDemo() {
             </p>
             <div style={{ display:"flex", justifyContent:"flex-end" }}>
               <button
-                onClick={() => advanceDialog(phase)}
+                onClick={() => {
+                  if (phase === "jess_d3") {
+                    setPhase("walk");
+                    setJessDone(true);
+                  } else {
+                    advanceDialog(phase);
+                  }
+                }}
                 style={{
                   background:"rgba(240,160,80,0.15)",
                   border:"1px solid rgba(240,160,80,0.5)",
@@ -1261,6 +1293,9 @@ export function WalkDemo() {
                     setHasResonanceStone(true);
                     setResonanceNotif(true);
                     setTimeout(() => setResonanceNotif(false), 3200);
+                  } else if (phase === "ellio_done") {
+                    setPhase("walk");
+                    setEllioDone(true);
                   } else {
                     advanceDialog(phase);
                   }
@@ -1272,7 +1307,7 @@ export function WalkDemo() {
                   borderRadius:8, fontSize:13, fontWeight:700,
                   cursor:"pointer",
                 }}
-              >{phase === "ellio_d3" ? "OK" : "Next ▶"}</button>
+              >{(phase === "ellio_d3" || phase === "ellio_done") ? "OK" : "Next ▶"}</button>
             </div>
           </div>
         )}
@@ -1591,7 +1626,7 @@ export function WalkDemo() {
                           <div>
                             <div style={{ color:"#2a1206", fontWeight:700, fontSize:12 }}>{starter.name}</div>
                             <div style={{ color:starter.color, fontSize:9, fontWeight:800, letterSpacing:1 }}>{starter.type.toUpperCase()}</div>
-                            <div style={{ color:"#826040", fontSize:10, marginTop:2 }}>Lv 1 · HP 40 / 40</div>
+                            <div style={{ color:"#826040", fontSize:10, marginTop:2 }}>Lv 4 · HP 50 / 50</div>
                           </div>
                         </div>
 
