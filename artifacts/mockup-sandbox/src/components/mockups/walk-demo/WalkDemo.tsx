@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 
 // ── World sizes (pixels) ────────────────────────────────────────────────────
-const OW = { w: 800, h: 900 }; // overworld
+const OW = { w: 1124, h: 900 }; // overworld — matches full 1402×1122 map image at 900px height
 const LB = { w: 700, h: 700 }; // lab
 const SPEED     = 3.5;
 const ZOOM      = 0.82; // zoom-out factor — values <1 show more of the world
@@ -29,38 +29,38 @@ type Scene = "overworld" | "lab" | "maya" | "jay";
 type Rect  = [number, number, number, number]; // x1 y1 x2 y2 world-px
 
 // ── Collision zones ─────────────────────────────────────────────────────────
-// Mapped precisely from the full overworld screenshot (800×900 world).
-// Paths between structures are intentionally left open.
+// All OW x-coords shifted +162 from original 800-wide calibration to match the
+// full 1124-wide world (the image was cover-cropping 162px from each side before).
 const OW_BLOCKED: Rect[] = [
   // ── OUTER BORDERS ──────────────────────────────────────────────────────────
-  [0,   0,   50,  85 ],
-  [165, 0,   800, 85 ],
-  [0,   85,  50,  900],   // left border — narrow so Jay's door is reachable
-  [780, 85,  800, 900],   // right border — pulled in so Maya's door area is reachable
-  [0,   870, 800, 900],   // southern boundary
+  [0,    0,   155,  900],  // left forest edge (newly visible original left side)
+  [155,  0,   214,   85],  // top strip left of Route-1 path
+  [327,  0,  1124,   85],  // north border (right of Route-1 gap)
+  [940,  85, 1124,  900],  // right forest border
+  [0,   865, 1124,  900],  // southern boundary
 
   // ── PROFESSOR LAB ──────────────────────────────────────────────────────────
-  [205, 85,  570, 310],
+  [367,  85,  732,  310],
 
   // ── RIVAL'S HOME (Jay) — body only, stop well above door strip ─────────────
-  [50,  250, 165, 400],
+  [214, 250,  327,  400],
 
   // ── MAYA'S HOME — body only, stop well above door strip ────────────────────
-  [645, 250, 780, 400],
+  [807, 250,  942,  400],
 
   // ── PLAYER HOME (center bottom) ────────────────────────────────────────────
-  [205, 505, 595, 815],
+  [367, 505,  757,  815],
 
   // ── ELIO'S HOME (bottom left) ──────────────────────────────────────────────
-  [50,  565, 165, 780],
+  [214, 565,  327,  780],
 
   // ── LIA'S HOME (bottom right) ──────────────────────────────────────────────
-  [645, 565, 780, 780],
+  [807, 565,  942,  780],
 ];
 
 // Route-1 exit trigger aligned with the top-left gap
-const OW_ROUTE1_EXIT: Rect = [50, 0, 165, 15];
-const OW_PROF_DOOR: Rect = [295, 340, 505, 400]; // step into lab
+const OW_ROUTE1_EXIT: Rect = [212, 0, 327, 15];
+const OW_PROF_DOOR: Rect = [457, 340, 667, 400]; // step into lab
 
 const LAB_BLOCKED: Rect[] = [
   [0,   0,   700, 22 ],  // top
@@ -76,8 +76,8 @@ const LAB_EXIT: Rect = [262, 645, 438, 692]; // exit lab
 
 // ── Maya's Home ───────────────────────────────────────────────────────────────
 const MY = { w: 800, h: 800 };
-const MAYA_POS = { x: 612, y: 456 }; // Maya standing left of her home entrance
-const OW_MAYA_DOOR: Rect  = [685, 392, 775, 408]; // must walk UP to enter — y≤408 only reachable by pressing UP
+const MAYA_POS = { x: 774, y: 456 }; // Maya standing left of her home entrance
+const OW_MAYA_DOOR: Rect  = [847, 392, 937, 408]; // must walk UP to enter — y≤408 only reachable by pressing UP
 const MAYA_HOME_EXIT: Rect = [310, 722, 490, 790]; // exit trigger at interior door
 const MAYA_SHELL: Rect     = [590, 565, 650, 615]; // pickup zone around the chest
 const MAYA_BLOCKED: Rect[] = [
@@ -101,7 +101,7 @@ const MAYA_BLOCKED: Rect[] = [
 // ── Jay's Home ────────────────────────────────────────────────────────────────
 const JY = { w: 800, h: 800 };
 const JAY_POS = { x: 370, y: 310 }; // Jay standing in the center of his room
-const OW_JAY_DOOR: Rect  = [52, 392, 160, 408];  // must walk UP to enter — y≤408 only reachable by pressing UP
+const OW_JAY_DOOR: Rect  = [214, 392, 322, 408]; // must walk UP to enter — y≤408 only reachable by pressing UP
 const JAY_HOME_EXIT: Rect = [310, 725, 490, 790]; // interior door at bottom
 const JAY_BLOCKED: Rect[] = [
   // ── WALLS ──────────────────────────────────────────────────────────────────
@@ -214,7 +214,7 @@ export function WalkDemo() {
   const frameRef   = useRef(0);
   const lastSrc    = useRef("");
   const lastFlip   = useRef(false);
-  const worldPos   = useRef({ x: 400, y: 430 }); // overworld start
+  const worldPos   = useRef({ x: 562, y: 430 }); // overworld start (centred in new 1124-wide world)
   const cam        = useRef({ x: 0, y: 0 });
 
   // Preload everything
@@ -380,11 +380,11 @@ export function WalkDemo() {
         } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_JAY_DOOR)) {
           transitionTo("jay", 400, 660);
         } else if (sc === "lab" && inRect(worldPos.current.x, worldPos.current.y, LAB_EXIT)) {
-          transitionTo("overworld", 400, 445);
+          transitionTo("overworld", 562, 445);  // lab exit → centred in new OW
         } else if (sc === "maya" && inRect(worldPos.current.x, worldPos.current.y, MAYA_HOME_EXIT)) {
-          transitionTo("overworld", 705, 460);
+          transitionTo("overworld", 867, 460);  // just south of Maya's door (y=460 > 408 safe)
         } else if (sc === "jay" && inRect(worldPos.current.x, worldPos.current.y, JAY_HOME_EXIT)) {
-          transitionTo("overworld", 110, 460);
+          transitionTo("overworld", 272, 460);  // just south of Jay's door (y=460 > 408 safe)
         }
 
         // Flip / anim change
@@ -546,7 +546,7 @@ export function WalkDemo() {
               ? "/__mockup/images/maya-home-interior.png"
               : "/__mockup/images/jay-home-interior.png"}
             alt="map"
-            style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover" }}
+            style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit: scene === "overworld" ? "fill" : "cover" }}
           />
 
           {/* Prof Irwyn */}
@@ -567,7 +567,7 @@ export function WalkDemo() {
           {/* Lab door glow on overworld */}
           {scene === "overworld" && (
             <div style={{
-              position:"absolute", left:354, top:348,
+              position:"absolute", left:516, top:348,
               width:44, height:10, borderRadius:"50%",
               background:"radial-gradient(ellipse,rgba(255,210,60,0.6)0%,transparent 80%)",
               animation:"pulse 1.4s ease-in-out infinite",
@@ -604,7 +604,7 @@ export function WalkDemo() {
               }}>MAYA</div>
               {/* Maya's home door glow */}
               <div style={{
-                position:"absolute", left:698, top:426,
+                position:"absolute", left:860, top:426,
                 width:36, height:10, borderRadius:"50%",
                 background:"radial-gradient(ellipse,rgba(120,220,140,0.5)0%,transparent 80%)",
                 animation:"pulse 1.4s ease-in-out infinite",
@@ -612,7 +612,7 @@ export function WalkDemo() {
               }}/>
               {/* Jay's home door glow */}
               <div style={{
-                position:"absolute", left:88, top:426,
+                position:"absolute", left:250, top:426,
                 width:44, height:10, borderRadius:"50%",
                 background:"radial-gradient(ellipse,rgba(100,160,255,0.5)0%,transparent 80%)",
                 animation:"pulse 1.4s ease-in-out infinite",
