@@ -319,7 +319,7 @@ const PROF = { x: 350, y: 268 }; // feet position in lab world
 
 // ── Main component ──────────────────────────────────────────────────────────
 export function WalkDemo() {
-  const [scene,       setScene]       = useState<Scene>("home");
+  const [scene,       setScene]       = useState<Scene>("overworld");
   const [phase,       setPhase]       = useState<Phase>("walk");
   const [fading,      setFading]      = useState(false);
   const [held,        setHeld]        = useState<string | null>(null);
@@ -387,7 +387,7 @@ export function WalkDemo() {
   const frameRef   = useRef(0);
   const lastSrc    = useRef("");
   const lastFlip   = useRef(false);
-  const worldPos   = useRef({ x: 405, y: 580 }); // start inside player's home, open floor area
+  const worldPos   = useRef({ x: 567, y: 470 }); // start on overworld central crossroads (south of signpost) — bottom-row doors disabled, redesign in progress
   const cam        = useRef({ x: 0, y: 0 });
 
   // Preload everything
@@ -646,19 +646,11 @@ export function WalkDemo() {
           transitionTo("overworld", 878, 468);  // south of Maya fence (y=452)
         } else if (sc === "jay" && inRect(worldPos.current.x, worldPos.current.y, JAY_HOME_EXIT)) {
           transitionTo("overworld", 272, 468);  // south of Jay fence (y=452)
-        } else if (sc === "overworld" && dy >= 0 && inRect(worldPos.current.x, worldPos.current.y, OW_PLAYER_HOME_DOOR)) {
-          transitionTo("home", 400, 670);       // enter player's home — only when moving south into gate
-        } else if (sc === "home" && inRect(worldPos.current.x, worldPos.current.y, PLAYER_HOME_EXIT)) {
-          transitionTo("overworld", 567, 528);  // north of player home fence (y=537), matching Ellio/Lia pattern
-        } else if (sc === "overworld" && dy >= 0 && inRect(worldPos.current.x, worldPos.current.y, OW_ELLIO_DOOR)) {
-          transitionTo("ellio", 400, 670);      // enter Ellio's home — only when moving south into gate
-        } else if (sc === "ellio" && inRect(worldPos.current.x, worldPos.current.y, ELLIO_HOME_EXIT)) {
-          transitionTo("overworld", 272, 528);  // north of Ellio fence (y=537)
-        } else if (sc === "overworld" && dy >= 0 && inRect(worldPos.current.x, worldPos.current.y, OW_LIA_DOOR)) {
-          transitionTo("lia", 400, 670);        // enter Lia's home — only when moving south into gate
-        } else if (sc === "lia" && inRect(worldPos.current.x, worldPos.current.y, LIA_HOME_EXIT)) {
-          transitionTo("overworld", 878, 528);  // north of Lia fence (y=537)
         }
+        // NOTE: bottom-row home doors (Player Home / Ellio / Lia) intentionally
+        // removed — old north-fence-gate triggers were misaligned with the
+        // visible door art. Pending redesign: triggers belong ON the building's
+        // visible front door, and exit spawns belong just south of that door.
 
         // Flip / anim change
         if (newFlip !== flipRef.current) { flipRef.current = newFlip; lastSrc.current = ""; redraw(); }
