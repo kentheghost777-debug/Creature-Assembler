@@ -73,21 +73,21 @@ const OW_BLOCKED: Rect[] = [
   [367, 590,  757,  820],  // building body — pushed south to leave a real yard
   [359, 537,  532,  547],  // north fence — left of gate  (was x1=340; trimmed for PH↔Elio south corridor)
   [602, 537,  765,  547],  // north fence — right of gate (was x2=782; trimmed for PH↔Lia south corridor)
-  [359, 547,  367,  820],  // west fence (narrowed for PH↔Elio south corridor x=335–359)
-  [757, 547,  765,  820],  // east fence (narrowed for PH↔Lia south corridor x=765–789)
+  // PH west fence REMOVED — Elio↔PH corridor now spans body-to-body (x=327–367, ~40 wide)
+  // PH east fence REMOVED — PH↔Lia corridor now spans body-to-body (x=757–807, ~50 wide)
 
   // ── ELLIO'S HOME — fence perimeter + body (north gate x 238–308) ───────────
   [214, 565,  327,  780],  // building body
   [188, 537,  238,  547],  // north fence — left of gate  (was x1=155; trimmed for west-side corridor x=155–188)
   [308, 537,  335,  547],  // north fence — right of gate (was x2=365; trimmed for Elio↔PH south corridor)
   [188, 537,  214,  790],  // west fence (narrowed for west-side corridor x=155–188)
-  [327, 537,  335,  790],  // east fence (narrowed for Elio↔PH south corridor x=335–359)
+  // Elio east fence REMOVED — Elio↔PH corridor widened to body-to-body
 
   // ── LIA'S HOME — fence perimeter + body (north gate x 846–910) ─────────────
   [807, 565,  942,  780],  // building body
   [789, 537,  846,  547],  // north fence — left of gate  (was x1=775; trimmed for PH↔Lia south corridor)
   [910, 537,  950,  547],  // north fence — right of gate (was x2=978; trimmed for east-side corridor x=950–978)
-  [789, 537,  807,  790],  // west fence (narrowed for PH↔Lia south corridor x=765–789)
+  // Lia west fence REMOVED — PH↔Lia corridor widened to body-to-body
   [942, 537,  950,  790],  // east fence (narrowed for east-side corridor x=950–978)
 ];
 
