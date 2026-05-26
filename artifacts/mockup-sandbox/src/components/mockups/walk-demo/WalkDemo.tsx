@@ -80,7 +80,7 @@ const MY = { w: 800, h: 800 };
 const MAYA_POS = { x: 774, y: 456 }; // Maya standing left of her home entrance
 const OW_MAYA_DOOR: Rect  = [847, 392, 937, 408]; // must walk UP to enter — y≤408 only reachable by pressing UP
 const MAYA_HOME_EXIT: Rect = [310, 722, 490, 790]; // exit trigger at interior door
-const MAYA_SHELL: Rect     = [590, 565, 650, 615]; // pickup zone around the chest
+const MAYA_SHELL: Rect     = [385, 400, 455, 460]; // pickup zone — center of the living-room rug
 const MAYA_BLOCKED: Rect[] = [
   // ── WALLS ──────────────────────────────────────────────────────────────────
   [0,    0,   800,  90],  // top wall
