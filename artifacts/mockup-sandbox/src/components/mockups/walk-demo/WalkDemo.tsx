@@ -38,15 +38,15 @@ const OW_BLOCKED: Rect[] = [
   [0,   870, 800, 900],   // southern boundary
 
   // ── PROFESSOR LAB ──────────────────────────────────────────────────────────
-  [205, 65,  595, 310],   // solid dome body
+  [205, 65,  545, 310],   // solid dome body (right edge at ~545, not 595)
   [205, 310, 340, 385],   // left garden wall  } center approach x=340-460
-  [460, 310, 595, 385],   // right garden wall } y=310-385 stays open for door
+  [460, 310, 545, 385],   // right garden wall } y=310-385 stays open for door
 
   // ── RIVAL'S HOME (left side) ───────────────────────────────────────────────
   [50,  270, 160, 425],
 
   // ── MAYA'S HOME (right side) ───────────────────────────────────────────────
-  [640, 270, 750, 425],
+  [655, 270, 750, 425],   // left edge at ~655, leaving right corridor x=545-655
 
   // ── PLAYER HOME (center bottom) ────────────────────────────────────────────
   [205, 505, 595, 815],
@@ -55,7 +55,7 @@ const OW_BLOCKED: Rect[] = [
   [50,  565, 160, 780],
 
   // ── LIA'S HOME (bottom right) ──────────────────────────────────────────────
-  [640, 565, 750, 780],
+  [655, 565, 750, 780],   // matches Maya's left edge
 ];
 
 // Route-1 exit trigger aligned with the top-left gap
