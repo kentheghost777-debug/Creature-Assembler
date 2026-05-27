@@ -459,6 +459,18 @@ export function WalkDemo() {
   const [floatMsg,      setFloatMsg]      = useState<{ x: number; y: number; text: string; key: number } | null>(null);
   const [showStarterGate, setShowStarterGate] = useState(false);
   const [battleNotif,   setBattleNotif]   = useState<{ title: string; sub: string } | null>(null);
+  // ── Starter progression ───────────────────────────────────────────────────
+  const [starterLevel, setStarterLevel] = useState(5);
+  const [starterXp,    setStarterXp]    = useState(0);
+  // Post-battle report modal (shell recovery + xp + level up)
+  const [battleReport, setBattleReport] = useState<{
+    outcome: string;
+    xpGained: number;
+    recovered: number;
+    lostToBond: number;
+    levelUps: number;
+    newLevel: number;
+  } | null>(null);
 
   const canvasRef          = useRef<HTMLCanvasElement>(null);
   const profCanvasRef      = useRef<HTMLCanvasElement>(null);
@@ -1036,22 +1048,59 @@ export function WalkDemo() {
   const handleBattleEnd = useCallback((result: BattleResult) => {
     const returnX = worldPos.current.x;
     const returnY = worldPos.current.y;
+
+    // Shell recovery: thrown shells aren't destroyed, just emptied. Recover all except
+    // the one consumed in the bond (if caught).
+    const thrown   = result.shellsThrown;
+    const lostBond = result.kind === "caught" ? Math.min(1, thrown) : 0;
+    const recovered = Math.max(0, thrown - lostBond);
+    if (recovered > 0) setShellCount(c => c + recovered);
+
+    // XP + level-up math (level threshold = level × 12)
+    const xpGained = (result.kind === "caught" || result.kind === "ko") ? result.xpGained : 0;
+    let newLevel  = starterLevel;
+    let newXp     = starterXp + xpGained;
+    let levelUps  = 0;
+    let threshold = newLevel * 12;
+    while (newXp >= threshold) {
+      newXp    -= threshold;
+      newLevel += 1;
+      levelUps += 1;
+      threshold = newLevel * 12;
+    }
+    if (xpGained > 0) {
+      setStarterXp(newXp);
+      if (levelUps > 0) setStarterLevel(newLevel);
+    }
+
+    let outcome: string;
     if (result.kind === "caught") {
       setCaughtParty(p => [...p, result.mon]);
-      setBattleNotif({ title: `Bond formed — ${result.mon.name}!`, sub: "Joined your party · +10% XP boost" });
+      setBattleNotif({ title: `Bond formed — ${result.mon.name}!`, sub: "Joined your party · full heal" });
       setChecksStreak(0);
+      outcome = `${result.mon.name} bonded with you and joined the party!`;
     } else if (result.kind === "ko") {
-      setBattleNotif({ title: `${result.mon.name} fainted!`, sub: "Full XP earned" });
+      setBattleNotif({ title: `${result.mon.name} fainted!`, sub: `+${xpGained} XP` });
+      outcome = `${result.mon.name} fainted in the clash.`;
     } else if (result.kind === "fled") {
       setBattleNotif({ title: "Got away safely.", sub: "" });
+      outcome = "You slipped back into the trail brush.";
     } else {
       setBattleNotif({ title: `Your ${starter?.name ?? "Tayanari"} fainted!`, sub: healingRuneEquipped ? "Rune revived (50%) — back to trail" : "Limp back to the trail…" });
       setChecksStreak(0);
+      outcome = `${starter?.name ?? "Your Tayanari"} fell. You retreat to recover.`;
     }
     setWildEncounter(null);
     window.setTimeout(() => setBattleNotif(null), 2800);
     transitionTo("route1", returnX, returnY);
-  }, [transitionTo, starter, healingRuneEquipped]);
+
+    // Show post-battle report modal if there's anything to report (shells or xp)
+    if (thrown > 0 || xpGained > 0) {
+      window.setTimeout(() => {
+        setBattleReport({ outcome, xpGained, recovered, lostToBond: lostBond, levelUps, newLevel });
+      }, 1200);
+    }
+  }, [transitionTo, starter, healingRuneEquipped, starterLevel, starterXp]);
 
   // ── Battle scene — full takeover when scene === "battle" ───────────────────
   if (scene === "battle" && wildEncounter && starter) {
@@ -1060,6 +1109,7 @@ export function WalkDemo() {
         <BattleScene
           wild={wildEncounter}
           starter={starter}
+          starterLevel={starterLevel}
           hasResonanceStone={resonanceStoneEquipped}
           healingRuneEquipped={healingRuneEquipped}
           shellsCount={shellCount}
@@ -2573,6 +2623,106 @@ export function WalkDemo() {
           }}>
             <div style={{ color:"#f0d890", fontSize:14, fontWeight:900 }}>{battleNotif.title}</div>
             {battleNotif.sub && <div style={{ color:"#a89070", fontSize:10, marginTop:3, letterSpacing:1 }}>{battleNotif.sub}</div>}
+          </div>
+        )}
+
+        {/* Post-battle report — shell recovery + XP + level-up */}
+        {battleReport && (
+          <div
+            onClick={() => setBattleReport(null)}
+            style={{
+              position:"absolute", inset:0,
+              background:"rgba(0,0,0,0.72)",
+              zIndex:75, display:"flex",
+              alignItems:"center", justifyContent:"center",
+              padding:24,
+            }}>
+            <div
+              onClick={e => e.stopPropagation()}
+              style={{
+                maxWidth:340, width:"100%",
+                background:"linear-gradient(180deg, rgba(40,24,12,0.98), rgba(20,10,4,0.98))",
+                border:"2px solid rgba(180,130,60,0.6)",
+                borderRadius:14, padding:"18px 20px",
+                boxShadow:"0 6px 30px rgba(0,0,0,0.7)",
+              }}>
+              <div style={{ color:"#f0d060", fontSize:11, fontWeight:800, letterSpacing:2, marginBottom:10, textAlign:"center" }}>
+                ━━ AFTER THE CLASH ━━
+              </div>
+              <div style={{ color:"#f0d890", fontSize:13, lineHeight:1.5, marginBottom:12 }}>
+                {battleReport.outcome}
+              </div>
+
+              {battleReport.recovered > 0 && (
+                <div style={{
+                  background:"rgba(120,80,40,0.18)",
+                  border:"1px solid rgba(180,130,60,0.35)",
+                  borderRadius:8, padding:"8px 12px", marginBottom:8,
+                }}>
+                  <div style={{ color:"#e0c890", fontSize:11, fontWeight:700, marginBottom:2 }}>
+                    🐚 Shells recovered: ×{battleReport.recovered}
+                  </div>
+                  <div style={{ color:"#a89070", fontSize:10, lineHeight:1.45, fontStyle:"italic" }}>
+                    You gathered the empty Worn Realm Shells back from the brush — they didn't break, just opened.
+                  </div>
+                </div>
+              )}
+
+              {battleReport.lostToBond > 0 && (
+                <div style={{
+                  background:"rgba(80,40,120,0.18)",
+                  border:"1px solid rgba(160,110,200,0.35)",
+                  borderRadius:8, padding:"8px 12px", marginBottom:8,
+                }}>
+                  <div style={{ color:"#d0a8ff", fontSize:11, fontWeight:700 }}>
+                    🐚 1 shell bonded with your new partner
+                  </div>
+                </div>
+              )}
+
+              {battleReport.xpGained > 0 && (
+                <div style={{
+                  background:"rgba(60,100,180,0.18)",
+                  border:"1px solid rgba(100,160,255,0.35)",
+                  borderRadius:8, padding:"8px 12px", marginBottom:8,
+                }}>
+                  <div style={{ color:"#a8c8ff", fontSize:11, fontWeight:700 }}>
+                    ✦ {starter?.name ?? "Tayanari"} earned +{battleReport.xpGained} XP
+                  </div>
+                  <div style={{ color:"#7090c0", fontSize:10, marginTop:2 }}>
+                    Now Lv.{battleReport.newLevel} · {starterXp}/{battleReport.newLevel * 12} XP
+                  </div>
+                </div>
+              )}
+
+              {battleReport.levelUps > 0 && (
+                <div style={{
+                  background:"rgba(240,180,40,0.22)",
+                  border:"1.5px solid rgba(240,200,80,0.6)",
+                  borderRadius:8, padding:"10px 12px", marginBottom:8,
+                  boxShadow:"0 0 16px rgba(240,200,80,0.25)",
+                }}>
+                  <div style={{ color:"#ffd860", fontSize:12, fontWeight:900, letterSpacing:1 }}>
+                    ★ LEVEL UP ×{battleReport.levelUps}
+                  </div>
+                  <div style={{ color:"#e0b860", fontSize:10, marginTop:2 }}>
+                    {starter?.name ?? "Tayanari"} is now Lv.{battleReport.newLevel}
+                  </div>
+                </div>
+              )}
+
+              <button
+                onClick={() => setBattleReport(null)}
+                style={{
+                  marginTop:8, width:"100%", padding:"9px 22px",
+                  background:"linear-gradient(180deg, #6a4a20, #3a2810)",
+                  border:"1.5px solid rgba(240,200,80,0.55)",
+                  borderRadius:8,
+                  color:"#f0d890", fontSize:12, fontWeight:800,
+                  cursor:"pointer",
+                }}
+              >Continue</button>
+            </div>
           </div>
         )}
 

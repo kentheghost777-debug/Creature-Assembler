@@ -63,14 +63,15 @@ function rollOutcome(hpFrac: number): typeof SHELL_OUTCOMES[number] {
 }
 
 export type BattleResult =
-  | { kind: "caught"; mon: MonSpec }
-  | { kind: "fled" }
-  | { kind: "fainted" }
-  | { kind: "ko"; mon: MonSpec };
+  | { kind: "caught";  mon: MonSpec; shellsThrown: number; xpGained: number }
+  | { kind: "fled";    shellsThrown: number }
+  | { kind: "fainted"; shellsThrown: number }
+  | { kind: "ko";      mon: MonSpec; shellsThrown: number; xpGained: number };
 
 type Props = {
   wild: MonSpec;
   starter: StarterSpec;
+  starterLevel: number;
   hasResonanceStone: boolean;
   healingRuneEquipped: boolean;
   shellsCount: number;
@@ -79,13 +80,19 @@ type Props = {
   onEnd: (r: BattleResult) => void;
 };
 
+// XP rewards: half the wild's maxHp on KO, ×1.10 on capture.
+function xpFor(wild: MonSpec, caught: boolean): number {
+  const base = Math.max(4, Math.round(wild.maxHp / 2));
+  return caught ? Math.round(base * 1.10) : base;
+}
+
 type Menu = "root" | "shellConfirm" | "ended";
 
 const BTN_BG    = "linear-gradient(180deg, rgba(60,40,20,0.92), rgba(36,22,10,0.92))";
 const BTN_BG_HI = "linear-gradient(180deg, rgba(90,62,30,0.96), rgba(56,36,16,0.96))";
 
 export function BattleScene({
-  wild, starter, hasResonanceStone, healingRuneEquipped,
+  wild, starter, starterLevel, hasResonanceStone, healingRuneEquipped,
   shellsCount, onConsumeShell, onConsumeRune, onEnd,
 }: Props) {
   const playerMaxHp = starter.maxHp ?? 40;
@@ -99,6 +106,8 @@ export function BattleScene({
   const [resBar,   setResBar]     = useState(0);              // 0..15
   const [intro,    setIntro]      = useState(true);
   const [shake,    setShake]      = useState<"player" | "wild" | null>(null);
+  const [shellsThrown, setShellsThrown] = useState(0);
+  const shellsThrownRef = useRef(0);
   const tRef = useRef<number[]>([]);
 
   useEffect(() => {
@@ -130,12 +139,7 @@ export function BattleScene({
         if (next === 0) {
           later(() => {
             setLog(`${starter.name} fainted…`);
-            if (healingRuneEquipped) {
-              // Passive 50% post-battle revive
-              later(() => onEnd({ kind: "fainted" }), 900);
-            } else {
-              later(() => onEnd({ kind: "fainted" }), 900);
-            }
+            later(() => onEnd({ kind: "fainted", shellsThrown: shellsThrownRef.current }), 900);
           }, 700);
         } else {
           later(() => {
@@ -158,10 +162,11 @@ export function BattleScene({
       const next = Math.max(0, hp - dmg);
       setResBar(b => Math.min(15, b + 5));
       if (next === 0) {
+        const xp = xpFor(wild, false);
         later(() => {
-          setLog(`${wild.name} fainted! Your ${starter.name} gains full XP.`);
+          setLog(`${wild.name} fainted! ${starter.name} gains ${xp} XP.`);
           setMenu("ended");
-          later(() => onEnd({ kind: "ko", mon: wild }), 1100);
+          later(() => onEnd({ kind: "ko", mon: wild, shellsThrown: shellsThrownRef.current, xpGained: xp }), 1100);
         }, 650);
       } else {
         wildTurn(afterCb);
@@ -225,7 +230,7 @@ export function BattleScene({
     if (Math.random() < 0.70) {
       setLog("You slip away…");
       setMenu("ended");
-      later(() => onEnd({ kind: "fled" }), 800);
+      later(() => onEnd({ kind: "fled", shellsThrown: shellsThrownRef.current }), 800);
     } else {
       setLog("Couldn't escape!");
       wildTurn();
@@ -242,18 +247,20 @@ export function BattleScene({
     setMenu("root");
     setBusy(true);
     onConsumeShell();
+    shellsThrownRef.current += 1;
+    setShellsThrown(shellsThrownRef.current);
     const hpFrac = wildHp / wild.maxHp;
     const outcome = rollOutcome(hpFrac);
     setLog(outcome.flavor);
     later(() => {
       const caught = Math.random() < outcome.pct;
       if (caught) {
-        setLog(`Bond formed! ${wild.name} joins you — fully healed.`);
+        const xp = xpFor(wild, true);
+        setLog(`Bond formed! ${wild.name} joins you — fully healed. (+${xp} XP)`);
         setMenu("ended");
-        // Worn shells: +10% XP, instant full heal on capture (handled at parent)
-        later(() => onEnd({ kind: "caught", mon: wild }), 1200);
+        later(() => onEnd({ kind: "caught", mon: wild, shellsThrown: shellsThrownRef.current, xpGained: xp }), 1200);
       } else {
-        setLog(`${wild.name} broke free!`);
+        setLog(`${wild.name} broke free! (Shell empty — recoverable after battle)`);
         wildTurn();
       }
     }, 1100);
@@ -302,7 +309,7 @@ export function BattleScene({
         <div style={hpPlateStyle("right")}>
           <div style={{ display:"flex", alignItems:"baseline", gap:6, marginBottom:4 }}>
             <span style={{ color:"#fff", fontSize:13, fontWeight:800 }}>{starter.name}</span>
-            <span style={{ color:"#aaa", fontSize:9 }}>Lv.5</span>
+            <span style={{ color:"#aaa", fontSize:9 }}>Lv.{starterLevel}</span>
           </div>
           <HpBar hp={playerHp} max={playerMaxHp} />
           <div style={{ color: starter.color, fontSize:9, marginTop:2 }}>{starter.type}</div>
