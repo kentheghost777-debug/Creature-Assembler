@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { BattleScene, type MonSpec, type MonRarity, type BattleResult } from "./BattleScene";
+import { BattleScene, RARITY_COLOR, type MonSpec, type MonRarity, type BattleResult } from "./BattleScene";
 
 // ── World sizes (pixels) ────────────────────────────────────────────────────
 const OW = { w: 1124, h: 900 }; // overworld — matches full 1402×1122 map image at 900px height
@@ -711,7 +711,7 @@ export function WalkDemo() {
   useEffect(() => {
     let raf: number;
     const loop = () => {
-      if (!fadingRef.current && phaseRef.current === "walk") {
+      if (!fadingRef.current && phaseRef.current === "walk" && sceneRef.current !== "battle") {
         const h       = heldRef.current;
         const sc      = sceneRef.current;
         const world   = sc === "overworld" ? OW : sc === "lab" ? LB : sc === "route1" ? R1 : sc === "maya" ? MY : sc === "jay" ? JY : sc === "ellio" ? EH : sc === "lia" ? LH : PH;
@@ -734,7 +734,13 @@ export function WalkDemo() {
 
         // Door triggers
         if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_ROUTE1_EXIT)) {
-          transitionTo("route1", 500, 718);     // enter Whisperroot Trail from south gate
+          if (!starter) {
+            // Starter gate — block entry until player picks one from Prof Irwyn
+            worldPos.current.y = OW_ROUTE1_EXIT[3] + 20;
+            setShowStarterGate(true);
+          } else {
+            transitionTo("route1", 500, 718);     // enter Whisperroot Trail from south gate
+          }
         } else if (sc === "route1" && inRect(worldPos.current.x, worldPos.current.y, R1_SOUTH_GATE)) {
           transitionTo("overworld", 270, 30);   // exit back to overworld, south of Route-1 trigger
         } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_PROF_DOOR as Rect)) {
@@ -950,6 +956,135 @@ export function WalkDemo() {
     lia_d5: "Now get out of my house. And don't lose to anything on Route 1, alright? I will absolutely hear about it and I will not let it go. Ever. Go do something worth bragging about.",
     lia_done: "You're still here? Go. If you need more berries later, you know where I live.",
   };
+
+  // ── Encounter handlers & disturbance tick ──────────────────────────────────
+  const hotspotCdRef     = useRef<Record<number, number>>({});
+  const activeDistRef    = useRef<Record<number, { mon: MonSpec; expiresAt: number }>>({});
+  const checksStreakRef  = useRef(0);
+  useEffect(() => { hotspotCdRef.current   = hotspotCd; },          [hotspotCd]);
+  useEffect(() => { activeDistRef.current  = activeDisturbances; }, [activeDisturbances]);
+  useEffect(() => { checksStreakRef.current = checksStreak; },      [checksStreak]);
+
+  useEffect(() => {
+    if (scene !== "route1") return;
+    const id = window.setInterval(() => {
+      const now = Date.now();
+      const cur = activeDistRef.current;
+      const cd  = hotspotCdRef.current;
+      const nextActive: typeof cur = {};
+      const newCds: Record<number, number> = {};
+      for (const [k, d] of Object.entries(cur)) {
+        if (d.expiresAt > now) nextActive[Number(k)] = d;
+        else newCds[Number(k)] = now + 12000;
+      }
+      const free = R1_HOTSPOTS.map((_, i) => i)
+        .filter(i => !(i in nextActive) && (!cd[i] || cd[i] <= now) && !(i in newCds));
+      if (Object.keys(nextActive).length < 4 && free.length > 0 && Math.random() < 0.75) {
+        const idx = free[Math.floor(Math.random() * free.length)];
+        const rarity = rollRarity(checksStreakRef.current);
+        nextActive[idx] = { mon: pickMon(rarity), expiresAt: now + 30000 };
+      }
+      setActiveDisturbances(nextActive);
+      setHotspotCd(prev => {
+        const out: typeof prev = { ...newCds };
+        for (const [k, t] of Object.entries(prev)) {
+          if (t > now && !(Number(k) in out)) out[Number(k)] = t;
+        }
+        return out;
+      });
+    }, 2000);
+    return () => clearInterval(id);
+  }, [scene]);
+
+  const handleHotspotClick = useCallback((idx: number, h: Hotspot) => {
+    if (phase !== "walk") return;
+    const now = Date.now();
+    // Enforce cooldown — visual fade already shows it but block the click too
+    if ((hotspotCdRef.current[idx] ?? 0) > now) return;
+    const dist = activeDistRef.current[idx];
+    // Reject expired disturbances (could linger briefly between ticks or after returning from battle)
+    if (dist && dist.expiresAt <= now) {
+      setHotspotCd(prev => ({ ...prev, [idx]: now + 4000 }));
+      return;
+    }
+    if (dist) {
+      setActiveDisturbances(prev => {
+        const next = { ...prev };
+        delete next[idx];
+        return next;
+      });
+      setHotspotCd(prev => ({ ...prev, [idx]: Date.now() + 12000 }));
+      setWildEncounter(dist.mon);
+      if (dist.mon.rarity === "ultra" || dist.mon.rarity === "apex") setChecksStreak(0);
+      setBattleNotif({ title: `Wild ${dist.mon.name} appears!`, sub: dist.mon.rarity.toUpperCase() });
+      window.setTimeout(() => setBattleNotif(null), 1600);
+      // Preserve current world position so we return to where we triggered
+      const savedX = worldPos.current.x;
+      const savedY = worldPos.current.y;
+      transitionTo("battle", savedX, savedY);
+    } else {
+      const flavor = FLAVOR_TRACKS[Math.floor(Math.random() * FLAVOR_TRACKS.length)];
+      const screenX = (h.x - cam.current.x) * ZOOM;
+      const screenY = (h.y - cam.current.y) * ZOOM;
+      setFloatMsg({ x: screenX, y: screenY, text: flavor, key: Date.now() });
+      setHotspotCd(prev => ({ ...prev, [idx]: Date.now() + 4000 }));
+      setChecksStreak(s => s + 1);
+      window.setTimeout(() => setFloatMsg(null), 2500);
+    }
+  }, [phase, transitionTo]);
+
+  const handleBattleEnd = useCallback((result: BattleResult) => {
+    const returnX = worldPos.current.x;
+    const returnY = worldPos.current.y;
+    if (result.kind === "caught") {
+      setCaughtParty(p => [...p, result.mon]);
+      setBattleNotif({ title: `Bond formed — ${result.mon.name}!`, sub: "Joined your party · +10% XP boost" });
+      setChecksStreak(0);
+    } else if (result.kind === "ko") {
+      setBattleNotif({ title: `${result.mon.name} fainted!`, sub: "Full XP earned" });
+    } else if (result.kind === "fled") {
+      setBattleNotif({ title: "Got away safely.", sub: "" });
+    } else {
+      setBattleNotif({ title: `Your ${starter?.name ?? "Tayanari"} fainted!`, sub: healingRuneEquipped ? "Rune revived (50%) — back to trail" : "Limp back to the trail…" });
+      setChecksStreak(0);
+    }
+    setWildEncounter(null);
+    window.setTimeout(() => setBattleNotif(null), 2800);
+    transitionTo("route1", returnX, returnY);
+  }, [transitionTo, starter, healingRuneEquipped]);
+
+  // ── Battle scene — full takeover when scene === "battle" ───────────────────
+  if (scene === "battle" && wildEncounter && starter) {
+    return (
+      <div style={{ width:"100vw", height:"100vh", background:"#000", position:"relative", overflow:"hidden" }}>
+        <BattleScene
+          wild={wildEncounter}
+          starter={starter}
+          hasResonanceStone={resonanceStoneEquipped}
+          healingRuneEquipped={healingRuneEquipped}
+          shellsCount={shellCount}
+          onConsumeShell={() => setShellCount(c => Math.max(0, c - 1))}
+          onConsumeRune={() => {}}
+          onEnd={handleBattleEnd}
+        />
+        {battleNotif && (
+          <div style={{
+            position:"absolute", top:"30%", left:"50%",
+            transform:"translate(-50%,-50%)",
+            background:"rgba(8,4,2,0.94)",
+            border:"1.5px solid rgba(240,200,80,0.6)",
+            borderRadius:14, padding:"14px 22px",
+            zIndex:80, pointerEvents:"none",
+            boxShadow:"0 4px 24px rgba(240,200,80,0.3)",
+            textAlign:"center",
+          }}>
+            <div style={{ color:"#f0d890", fontSize:14, fontWeight:900 }}>{battleNotif.title}</div>
+            {battleNotif.sub && <div style={{ color:"#a89070", fontSize:10, marginTop:3, letterSpacing:1 }}>{battleNotif.sub}</div>}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div style={{ width:"100vw", height:"100vh", background:"#060606", display:"flex", flexDirection:"column", overflow:"hidden" }}>
@@ -1191,8 +1326,58 @@ export function WalkDemo() {
                 animation:"pulse 1.6s ease-in-out infinite",
                 pointerEvents:"none",
               }}/>
-              {/* Tall grass patches — visual markers for future encounter zones */}
-              {/* (not blocked — just decorative overlays showing where mons will spawn) */}
+
+              {/* Disturbance hotspots — clickable bushes/rocks/trees */}
+              {R1_HOTSPOTS.map((h, i) => {
+                const dist = activeDisturbances[i];
+                const onCd = !!hotspotCd[i];
+                const rarity = dist?.mon.rarity;
+                const ringColor = rarity ? RARITY_COLOR[rarity] : "transparent";
+                const drama = rarity === "apex" ? 1 : rarity === "ultra" ? 0.8 : rarity === "rare" ? 0.55 : rarity === "uncommon" ? 0.4 : rarity === "common" ? 0.25 : 0.15;
+                return (
+                  <button
+                    key={i}
+                    onClick={() => handleHotspotClick(i, h)}
+                    style={{
+                      position:"absolute",
+                      left: h.x - h.r, top: h.y - h.r,
+                      width: h.r * 2, height: h.r * 2,
+                      borderRadius:"50%",
+                      background: dist
+                        ? `radial-gradient(circle, ${ringColor}66 0%, ${ringColor}22 55%, transparent 78%)`
+                        : "transparent",
+                      border: dist ? `2px solid ${ringColor}` : "2px dashed rgba(180,160,80,0.18)",
+                      boxShadow: dist ? `0 0 ${20 + drama * 30}px ${ringColor}99` : "none",
+                      animation: dist ? `disturb${rarity === "apex" || rarity === "ultra" ? "Big" : "Sml"} ${rarity === "apex" ? "1.0s" : rarity === "ultra" ? "1.2s" : "1.5s"} ease-in-out infinite` : undefined,
+                      cursor:"pointer",
+                      padding:0,
+                      opacity: onCd ? 0.25 : 1,
+                      zIndex: 4,
+                    }}
+                    aria-label={dist ? `disturbance-${rarity}` : `inspect-${h.kind}`}
+                  />
+                );
+              })}
+
+              {/* Apex pillar fx overlay */}
+              {Object.entries(activeDisturbances).map(([k, d]) => {
+                if (d.mon.rarity !== "apex" && d.mon.rarity !== "ultra") return null;
+                const h = R1_HOTSPOTS[Number(k)];
+                const color = RARITY_COLOR[d.mon.rarity];
+                return (
+                  <div key={`pillar-${k}`} style={{
+                    position:"absolute",
+                    left: h.x - 18, top: h.y - 140,
+                    width: 36, height: 140,
+                    background: `linear-gradient(180deg, transparent 0%, ${color}88 60%, ${color}cc 100%)`,
+                    borderRadius:"40% 40% 50% 50% / 90% 90% 50% 50%",
+                    filter:"blur(4px)",
+                    pointerEvents:"none",
+                    animation: "pillarPulse 1.4s ease-in-out infinite",
+                    zIndex: 3,
+                  }}/>
+                );
+              })}
             </>
           )}
 
@@ -2357,8 +2542,82 @@ export function WalkDemo() {
           border:"1px solid rgba(240,208,96,0.3)", pointerEvents:"none",
           textTransform:"uppercase", zIndex:5,
         }}>
-          {scene === "overworld" ? "Primeria Village" : scene === "lab" ? "Prof. Irwyn's Lab" : scene === "maya" ? "Maya's Home" : scene === "jay" ? "Jay's Home" : scene === "ellio" ? "Ellio's Home" : scene === "lia" ? "Lia's Home" : scene === "route1" ? "Whisperroot Trail" : "Your Home"}
+          {scene === "overworld" ? "Primeria Village" : scene === "lab" ? "Prof. Irwyn's Lab" : scene === "maya" ? "Maya's Home" : scene === "jay" ? "Jay's Home" : scene === "ellio" ? "Ellio's Home" : scene === "lia" ? "Lia's Home" : scene === "route1" ? "Whisperroot Trail" : scene === "battle" ? "Battle" : "Your Home"}
         </div>
+
+        {/* Float message (flavor text on dormant hotspot click) */}
+        {floatMsg && (
+          <div key={floatMsg.key} style={{
+            position:"absolute",
+            left: floatMsg.x, top: floatMsg.y,
+            transform:"translate(-50%, 0)",
+            color:"#f0e0a0", fontSize:11, fontWeight:700,
+            textShadow:"0 0 4px #000, 0 0 8px #000, 0 0 12px #000",
+            pointerEvents:"none", zIndex:45,
+            maxWidth:220, textAlign:"center", lineHeight:1.3,
+            animation:"floatUp 2.5s ease-out forwards",
+          }}>{floatMsg.text}</div>
+        )}
+
+        {/* Battle return notification */}
+        {battleNotif && scene !== "battle" && (
+          <div style={{
+            position:"absolute", top:"38%", left:"50%",
+            background:"rgba(8,4,2,0.94)",
+            border:"1.5px solid rgba(240,200,80,0.6)",
+            borderRadius:14, padding:"14px 22px",
+            zIndex:60, pointerEvents:"none",
+            boxShadow:"0 4px 24px rgba(240,200,80,0.3)",
+            textAlign:"center",
+            animation:"notifPop 0.4s ease-out forwards",
+          }}>
+            <div style={{ color:"#f0d890", fontSize:14, fontWeight:900 }}>{battleNotif.title}</div>
+            {battleNotif.sub && <div style={{ color:"#a89070", fontSize:10, marginTop:3, letterSpacing:1 }}>{battleNotif.sub}</div>}
+          </div>
+        )}
+
+        {/* Starter gate dialogue */}
+        {showStarterGate && (
+          <div
+            onClick={() => setShowStarterGate(false)}
+            style={{
+              position:"absolute", inset:0,
+              background:"rgba(0,0,0,0.65)",
+              zIndex:70, display:"flex",
+              alignItems:"center", justifyContent:"center",
+              padding:24,
+            }}>
+            <div style={{
+              maxWidth:320,
+              background:"linear-gradient(180deg, rgba(40,24,12,0.98), rgba(20,10,4,0.98))",
+              border:"2px solid rgba(180,130,60,0.6)",
+              borderRadius:14, padding:"18px 20px",
+              boxShadow:"0 6px 30px rgba(0,0,0,0.7)",
+              textAlign:"center",
+            }}>
+              <div style={{ color:"#f0d060", fontSize:11, fontWeight:800, letterSpacing:2, marginBottom:8 }}>
+                ⚠ ROUTE BLOCKED ⚠
+              </div>
+              <div style={{ color:"#f0d890", fontSize:13, lineHeight:1.5 }}>
+                The trail beyond Primeria is wild ground. You need a Tayanari at your side first.
+              </div>
+              <div style={{ color:"#a89070", fontSize:11, marginTop:8, fontStyle:"italic" }}>
+                Head to Prof. Irwyn's Lab to choose your first.
+              </div>
+              <button
+                onClick={() => setShowStarterGate(false)}
+                style={{
+                  marginTop:14, padding:"8px 22px",
+                  background:"linear-gradient(180deg, #6a4a20, #3a2810)",
+                  border:"1.5px solid rgba(240,200,80,0.55)",
+                  borderRadius:8,
+                  color:"#f0d890", fontSize:12, fontWeight:800,
+                  cursor:"pointer",
+                }}
+              >OK</button>
+            </div>
+          </div>
+        )}
 
         {/* Fade overlay */}
         <div style={{
@@ -2386,7 +2645,7 @@ export function WalkDemo() {
         <div style={{ display:"flex", gap:8, alignItems:"center" }}>
           <Btn d="down" label="↓" />
           <button
-            onClick={() => setShowJournal(true)}
+            onClick={() => { setJournalTab("party"); setShowJournal(true); }}
             style={{
               width:52, height:52, borderRadius:12,
               background:"rgba(44,26,14,0.75)",
@@ -2397,13 +2656,33 @@ export function WalkDemo() {
               cursor:"pointer", backdropFilter:"blur(6px)",
               boxShadow:"0 2px 8px rgba(0,0,0,0.5)",
             }}
+            aria-label="START — Menu"
           >📖</button>
+          <button
+            onClick={() => { setJournalTab("bag"); setShowJournal(true); }}
+            style={{
+              width:52, height:52, borderRadius:12,
+              background:"rgba(44,26,14,0.75)",
+              border:"1.5px solid rgba(180,130,60,0.45)",
+              color:"#c8a44a", fontSize:20,
+              display:"flex", flexDirection:"column", alignItems:"center",
+              justifyContent:"center", gap:1,
+              cursor:"pointer", backdropFilter:"blur(6px)",
+              boxShadow:"0 2px 8px rgba(0,0,0,0.5)",
+            }}
+            aria-label="SELECT — Bag"
+          >🎒</button>
         </div>
       </div>
 
       <style>{`
-        @keyframes pulse  { 0%,100%{opacity:.35} 50%{opacity:1} }
-        @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+        @keyframes pulse       { 0%,100%{opacity:.35} 50%{opacity:1} }
+        @keyframes bounce      { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+        @keyframes disturbSml  { 0%,100%{transform:scale(1)} 50%{transform:scale(1.07)} }
+        @keyframes disturbBig  { 0%,100%{transform:scale(1) rotate(0deg)} 50%{transform:scale(1.18) rotate(2deg)} }
+        @keyframes pillarPulse { 0%,100%{opacity:.55} 50%{opacity:1} }
+        @keyframes floatUp     { 0%{opacity:0;transform:translate(-50%,0)} 15%{opacity:1} 100%{opacity:0;transform:translate(-50%,-40px)} }
+        @keyframes notifPop    { 0%{opacity:0;transform:translate(-50%,-50%) scale(0.85)} 25%{opacity:1;transform:translate(-50%,-50%) scale(1.05)} 100%{opacity:1;transform:translate(-50%,-50%) scale(1)} }
       `}</style>
     </div>
   );

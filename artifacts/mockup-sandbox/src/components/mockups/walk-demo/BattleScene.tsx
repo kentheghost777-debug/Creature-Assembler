@@ -139,7 +139,7 @@ export function BattleScene({
           }, 700);
         } else {
           later(() => {
-            if (healCd > 0) setHealCd(c => c - 1);
+            setHealCd(c => Math.max(0, c - 1));
             setBusy(false);
             afterCb?.();
           }, 520);
@@ -323,27 +323,28 @@ export function BattleScene({
           }}/>
         </div>
 
-        {/* Keeper — standing behind starter, back to camera, facing enemy */}
+        {/* Side-view stage: Keeper + Tayanari on LEFT facing RIGHT, wild on RIGHT facing LEFT */}
+        {/* Keeper — side-facing, left edge of stage */}
         <div style={{
-          position:"absolute", left:"2%", bottom:"30%",
-          width:"22%", maxWidth:90, aspectRatio:"1",
+          position:"absolute", left:"3%", bottom:"18%",
+          width:"24%", maxWidth:110, aspectRatio:"1",
           animation: intro ? "introSlide 1.1s ease-out" : "none",
-          zIndex:1,
+          zIndex:2,
         }}>
-          <img src="/__mockup/images/walk_back_1.png" alt="Keeper" style={{
+          <img src="/__mockup/images/walk_side_1.png" alt="Keeper" style={{
             width:"100%", height:"100%", objectFit:"contain",
             filter:"drop-shadow(0 6px 8px rgba(0,0,0,0.5))",
             imageRendering:"auto",
           }}/>
         </div>
 
-        {/* Player Tayanari sprite — bottom-left, in front of Keeper */}
+        {/* Player Tayanari — to the right of Keeper, same ground line, facing right */}
         <div style={{
-          position:"absolute", left:"14%", bottom:"18%",
-          width:"42%", maxWidth:200, aspectRatio:"1",
+          position:"absolute", left:"22%", bottom:"16%",
+          width:"38%", maxWidth:190, aspectRatio:"1",
           animation: intro ? "introSlide 1.1s ease-out" : (playerShake || "none"),
           animationDelay: intro ? "0.15s" : undefined,
-          zIndex:2,
+          zIndex:3,
         }}>
           <img src={starter.img} alt={starter.name} style={{
             width:"100%", height:"100%", objectFit:"contain",
