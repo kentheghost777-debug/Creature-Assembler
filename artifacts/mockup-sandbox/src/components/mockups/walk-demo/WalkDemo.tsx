@@ -2221,7 +2221,7 @@ export function WalkDemo() {
                             Level&nbsp;1&emsp;·&emsp;HP 50 / 50
                           </div>
                           <div style={{ color:"#6a50a0", fontSize:9, fontWeight:800, marginTop:4, letterSpacing:0.5 }}>
-                            ◈ Obsidian Realm Shell{healingRuneEquipped ? "  ·  ✦ Healing Rune" : ""}
+                            ◈ Obsidianeye Shell{healingRuneEquipped ? "  ·  ✦ Healing Rune" : ""}
                           </div>
                         </div>
                         <div style={{
@@ -2323,18 +2323,19 @@ export function WalkDemo() {
                       }}>
                         {/* Shell header */}
                         <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:12 }}>
-                          <div style={{
-                            width:44, height:44, borderRadius:"50%", flexShrink:0,
-                            background:"radial-gradient(circle at 38% 33%,#38344a,#0c0a12)",
-                            border:"1.5px solid rgba(140,120,200,0.45)",
-                            display:"flex", alignItems:"center", justifyContent:"center",
-                            fontSize:20, color:"rgba(190,170,230,0.85)",
-                            boxShadow:"0 0 12px rgba(80,60,140,0.3)",
-                          }}>◈</div>
+                          <img src="/__mockup/images/obsidianeye-shell.png" alt="Obsidianeye Shell" style={{
+                            width:48, height:48, objectFit:"contain", flexShrink:0,
+                            filter:"drop-shadow(0 0 8px rgba(120,80,180,0.45))",
+                          }}/>
                           <div>
-                            <div style={{ color:"#2a1206", fontWeight:800, fontSize:13 }}>Obsidian Realm Shell</div>
+                            <div style={{ color:"#2a1206", fontWeight:800, fontSize:13 }}>Obsidianeye Shell</div>
+                            <div style={{ color:"#7060a0", fontSize:10, marginTop:2, fontStyle:"italic" }}>
+                              "Sees what others cannot perceive."
+                            </div>
                             <div style={{ color:"#7060a0", fontSize:10, marginTop:2 }}>Bonded · {starter.name} within</div>
-                            <div style={{ color:"#4a6a30", fontSize:10, marginTop:2, fontWeight:700 }}>1 rune slot available</div>
+                            <div style={{ color:"#4a6a30", fontSize:10, marginTop:2, fontWeight:700 }}>
+                              {healingRuneEquipped ? "1 / 2 rune slots filled" : "2 rune slots — 1 empty"}
+                            </div>
                           </div>
                         </div>
 
@@ -2485,7 +2486,9 @@ export function WalkDemo() {
                           // shells are found in the overworld so far. Advanced
                           // and awakened shells appear as silhouettes until the
                           // player obtains one from a merchant or tribal trial.
-                          const discovered = s.tier === "basic";
+                          // Basic shells appear in the overworld; Obsidianeye
+                          // is the unique starter shell granted by Professor.
+                          const discovered = s.tier === "basic" || s.id === "obsidianeye";
                           const tierColor =
                             s.tier === "awakened" ? "#c89030" :
                             s.tier === "advanced" ? "#7060b0" : "#6a8a4a";
