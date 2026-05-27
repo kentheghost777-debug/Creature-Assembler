@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { BattleScene, RARITY_COLOR, type MonSpec, type MonRarity, type BattleResult, type StarterStats } from "./BattleScene";
+import { SHELLS, ELEMENT_COLOR } from "./progression";
 
 // ── Level-up reward generation ────────────────────────────────────────────
 const STAT_KEYS = ["hp", "atk", "def", "spd"] as const;
@@ -2445,6 +2446,97 @@ export function WalkDemo() {
                         </div>
                       </div>
                     )}
+
+                    {/* ── SHELL CODEX (all 18 known shells) ─────────── */}
+                    <div style={{
+                      background:"rgba(30,20,50,0.05)",
+                      border:"1px solid rgba(100,80,180,0.22)",
+                      borderRadius:14, padding:12,
+                    }}>
+                      <div style={{
+                        display:"flex", alignItems:"center", justifyContent:"space-between",
+                        marginBottom:10,
+                      }}>
+                        <div style={{ color:"#2a1206", fontWeight:800, fontSize:13, letterSpacing:0.5 }}>
+                          Shell Codex
+                        </div>
+                        <div style={{ color:"#7060a0", fontSize:10, fontWeight:700 }}>
+                          {SHELLS.length} catalogued
+                        </div>
+                      </div>
+                      <div style={{
+                        color:"#7a5a8a", fontSize:10, fontStyle:"italic",
+                        marginBottom:10, textAlign:"center",
+                      }}>
+                        Shells hold echoes of ancient Primians.<br/>
+                        Each shape carries a story. Each pattern, a past.
+                      </div>
+                      <img
+                        src="/__mockup/images/shells-chart.png"
+                        alt="Primeria Shells chart"
+                        style={{
+                          width:"100%", height:"auto", borderRadius:10,
+                          marginBottom:10, mixBlendMode:"multiply",
+                        }}
+                      />
+                      <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                        {SHELLS.map(s => {
+                          const tierColor =
+                            s.tier === "awakened" ? "#c89030" :
+                            s.tier === "advanced" ? "#7060b0" : "#6a8a4a";
+                          return (
+                            <div key={s.id} style={{
+                              display:"flex", alignItems:"flex-start", gap:8,
+                              padding:"7px 9px", borderRadius:8,
+                              background:"rgba(255,255,255,0.35)",
+                              border:`1px solid ${tierColor}33`,
+                            }}>
+                              <div style={{
+                                width:8, height:8, borderRadius:"50%",
+                                background: ELEMENT_COLOR[s.primary],
+                                marginTop:4, flexShrink:0,
+                                boxShadow:`0 0 6px ${ELEMENT_COLOR[s.primary]}80`,
+                              }}/>
+                              <div style={{ flex:1, minWidth:0 }}>
+                                <div style={{ display:"flex", alignItems:"baseline", gap:6, flexWrap:"wrap" }}>
+                                  <span style={{ color:"#2a1206", fontWeight:800, fontSize:11 }}>
+                                    {s.name}
+                                  </span>
+                                  <span style={{ color: ELEMENT_COLOR[s.primary], fontSize:8, fontWeight:800, letterSpacing:0.5 }}>
+                                    {s.primary.toUpperCase()}
+                                    {s.secondary && (
+                                      <span style={{ color:ELEMENT_COLOR[s.secondary] }}>
+                                        {" / "}{s.secondary.toUpperCase()}
+                                      </span>
+                                    )}
+                                  </span>
+                                </div>
+                                <div style={{
+                                  color:"#5a4a30", fontSize:9.5, fontStyle:"italic",
+                                  marginTop:1, lineHeight:1.3,
+                                }}>
+                                  "{s.flavor}"
+                                </div>
+                                <div style={{ display:"flex", gap:8, marginTop:3, flexWrap:"wrap" }}>
+                                  <span style={{
+                                    color: tierColor, fontSize:8.5, fontWeight:800,
+                                    letterSpacing:0.5,
+                                  }}>
+                                    {s.tier.toUpperCase()} · {s.runeSlots} slot{s.runeSlots>1?"s":""}
+                                  </span>
+                                  <span style={{ color:"#806080", fontSize:8.5 }}>
+                                    align {s.alignmentLean>0?"+":""}{s.alignmentLean}
+                                  </span>
+                                  <span style={{ color:"#608060", fontSize:8.5 }}>
+                                    xp ×{s.xpMod.toFixed(2)}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
                 )}
 
