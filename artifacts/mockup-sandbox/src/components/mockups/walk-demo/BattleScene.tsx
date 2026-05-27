@@ -323,11 +323,27 @@ export function BattleScene({
           }}/>
         </div>
 
-        {/* Player sprite — bottom-left */}
+        {/* Keeper — standing behind starter, back to camera, facing enemy */}
         <div style={{
-          position:"absolute", left:"4%", bottom:"22%",
-          width:"46%", maxWidth:220, aspectRatio:"1",
+          position:"absolute", left:"2%", bottom:"30%",
+          width:"22%", maxWidth:90, aspectRatio:"1",
+          animation: intro ? "introSlide 1.1s ease-out" : "none",
+          zIndex:1,
+        }}>
+          <img src="/__mockup/images/walk_back_1.png" alt="Keeper" style={{
+            width:"100%", height:"100%", objectFit:"contain",
+            filter:"drop-shadow(0 6px 8px rgba(0,0,0,0.5))",
+            imageRendering:"auto",
+          }}/>
+        </div>
+
+        {/* Player Tayanari sprite — bottom-left, in front of Keeper */}
+        <div style={{
+          position:"absolute", left:"14%", bottom:"18%",
+          width:"42%", maxWidth:200, aspectRatio:"1",
           animation: intro ? "introSlide 1.1s ease-out" : (playerShake || "none"),
+          animationDelay: intro ? "0.15s" : undefined,
+          zIndex:2,
         }}>
           <img src={starter.img} alt={starter.name} style={{
             width:"100%", height:"100%", objectFit:"contain",
