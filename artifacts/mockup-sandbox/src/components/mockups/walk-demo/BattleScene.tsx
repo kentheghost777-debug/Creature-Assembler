@@ -318,7 +318,8 @@ export function BattleScene({
         }}>
           <img src={wild.wildImg} alt={wild.name} style={{
             width:"100%", height:"100%", objectFit:"contain",
-            transform: wild.wildFaces === "left" ? "none" : "scaleX(-1)",
+            // Wild faces WEST (left). Native left-facing => no flip; native right => scaleX(-1).
+            transform: wildScaleX === 1 ? "none" : "scaleX(-1)",
             filter:"drop-shadow(0 6px 8px rgba(0,0,0,0.5))",
           }}/>
         </div>
@@ -348,7 +349,8 @@ export function BattleScene({
         }}>
           <img src={starter.img} alt={starter.name} style={{
             width:"100%", height:"100%", objectFit:"contain",
-            transform: "scaleX(-1)",
+            // Keeper-side mon faces EAST (right). Native right-facing sprite => no flip; native left => scaleX(-1).
+            transform: playerScaleX === 1 ? "none" : "scaleX(-1)",
             filter:"drop-shadow(0 6px 8px rgba(0,0,0,0.5))",
           }}/>
         </div>
