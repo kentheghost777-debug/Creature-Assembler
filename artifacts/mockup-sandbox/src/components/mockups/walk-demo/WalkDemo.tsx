@@ -57,8 +57,11 @@ type Phase = "walk" | "d1" | "d2" | "pick" | "d3" | "d4" | "d5"
            | "jay_d1"  | "jay_d2"  | "jay_d3"  | "jay_d4"  | "jay_d5"  | "jay_done"
            | "jess_d1" | "jess_d2" | "jess_d3"
            | "ellio_d1" | "ellio_d2" | "ellio_d3" | "ellio_done"
-           | "lia_d1"  | "lia_d2"  | "lia_d3"  | "lia_d4"  | "lia_d5"  | "lia_done";
-type Scene = "overworld" | "lab" | "maya" | "jay" | "home" | "ellio" | "lia" | "route1" | "battle";
+           | "lia_d1"  | "lia_d2"  | "lia_d3"  | "lia_d4"  | "lia_d5"  | "lia_done"
+           | "jess_path_d1" | "jess_path_d2"
+           | "prof2_d1" | "prof2_d2" | "prof2_d3" | "prof2_d4"
+           | "scripted_t1" | "scripted_t2" | "scripted_throw" | "scripted_caught";
+type Scene = "overworld" | "lab" | "maya" | "jay" | "home" | "ellio" | "lia" | "route1" | "route2" | "battle";
 type Rect  = [number, number, number, number]; // x1 y1 x2 y2 world-px
 
 // ── Bestiary (Route 1 encounter pool) ───────────────────────────────────────
@@ -117,6 +120,41 @@ const WYVRUNT_SPEC: MonSpec = {
   maxHp: 60,
   baseDmg: [9, 15], // +5 over other starter-tier ceilings; scripted fight ignores it anyway
 };
+
+// ── Route 2 (east of Maya's home) ───────────────────────────────────────────
+// route2-map.png native 1024w × 1536h — vertical scrolling route, enter west.
+const R2 = { w: 1024, h: 1536 };
+const R2_SPAWN     = { x: 290, y: 1180 };   // red cross — west-side path entry
+const PROF_R2_POS  = { x: 470, y: 1040 };   // yellow X — prof at signpost
+const WYV_R2_POS   = { x: 620, y: 780 };    // wyvrunt appears north of prof
+// Return-to-overworld trigger (west edge, near the small fence on the red-cross side)
+const R2_RETURN_OW: Rect    = [0,  1100,  30, 1300];
+// Locked future-content beats — show a "blocked"/"locked" toast
+const R2_NORTH_BLOCKED: Rect = [520,   0, 780,  40]; // cliff stairs (top-right)
+const R2_SOUTH_BLOCKED: Rect = [360, 1510, 600,1536]; // south continuation
+const R2_LOCKED_DOOR: Rect   = [820, 760, 900, 830]; // locked house door
+const R2_BLOCKED: Rect[] = [
+  // outer borders
+  [0,    0, 1024,  60],
+  [0, 1500, 1024,1536],
+  [0,    0,   30, 1100],
+  [0, 1300,   30,1536],
+  [990,  0, 1024,1536],
+  // forest / rock / cliff masses (estimated from route2-map.png)
+  [0,    60,  220, 600],
+  [220,  60,  520, 300],
+  [520,  60,  860, 360],
+  [860, 220,  990, 700],
+  [0,   800,  200,1500],
+  [600, 900,  990,1500],
+  // locked house body
+  [780, 720,  920, 860],
+];
+
+// East overworld exit → Route 2 (opens only after wife intercept)
+const OW_EAST_EXIT: Rect = [1100, 400, 1124, 470];
+// Wife intercepts on the south road just east of Ellio's
+const JESS_PATH_POS = { x: 470, y: 815 };
 
 const RARITY_BASE: Record<MonRarity, number> = {
   common: 55, uncommon: 30, rare: 11, ultra: 3.5, apex: 0.5,
@@ -493,6 +531,19 @@ export function WalkDemo() {
   const [hasHearthberries, setHasHearthberries] = useState(false);
   const [hasSatchel,       setHasSatchel]       = useState(false);
   const [liaItemsNotif,    setLiaItemsNotif]    = useState(false);
+  // ── Route 2 / Wyvrunt arc ────────────────────────────────────────────────
+  const [route1Visited,        setRoute1Visited]        = useState(false);
+  const [wifeOnPath,           setWifeOnPath]           = useState(false);
+  const [wifeIntercepted,      setWifeIntercepted]      = useState(false);
+  const [route2Greeted,        setRoute2Greeted]        = useState(false);
+  const [profRoute2Done,       setProfRoute2Done]       = useState(false);
+  const [nearProfR2,           setNearProfR2]           = useState(false);
+  const [profR2InteractPos,    setProfR2InteractPos]    = useState({ sx: 0, sy: 0 });
+  const [hasObsidianRealmShell, setHasObsidianRealmShell] = useState(false);
+  const [wyvruntCaught,        setWyvruntCaught]        = useState(false);
+  const [nearWyvrunt,          setNearWyvrunt]          = useState(false);
+  const [eastGateNotif,        setEastGateNotif]        = useState(false);
+  const [lockedDoorNotif,      setLockedDoorNotif]      = useState<string | null>(null);
 
   // ── Encounter / battle state ────────────────────────────────────────────
   const [shellCount,    setShellCount]    = useState(0);
@@ -534,6 +585,19 @@ export function WalkDemo() {
   const ellioPortraitRef   = useRef<HTMLCanvasElement>(null);
   const liaCanvasRef       = useRef<HTMLCanvasElement>(null);
   const liaPortraitRef     = useRef<HTMLCanvasElement>(null);
+  const profR2CanvasRef    = useRef<HTMLCanvasElement>(null);
+  const profR2PortraitRef  = useRef<HTMLCanvasElement>(null);
+  const jessPathCanvasRef  = useRef<HTMLCanvasElement>(null);
+  const jessPathPortraitRef= useRef<HTMLCanvasElement>(null);
+  // Refs synced from arc state so the game-loop closure stays fresh
+  const wifeOnPathRef       = useRef(false);
+  const wifeInterceptedRef  = useRef(false);
+  const route2GreetedRef    = useRef(false);
+  const profRoute2DoneRef   = useRef(false);
+  const wyvruntCaughtRef    = useRef(false);
+  const route1VisitedRef    = useRef(false);
+  const starterRefArc       = useRef(false);
+  const allTownItemsRef     = useRef(false);
   const shadowRef  = useRef<HTMLDivElement>(null);
   const worldRef   = useRef<HTMLDivElement>(null);
   const vpRef      = useRef<HTMLDivElement>(null);
@@ -583,6 +647,16 @@ export function WalkDemo() {
   }, []);
 
   useEffect(() => { heldRef.current = held; },      [held]);
+  useEffect(() => { wifeOnPathRef.current      = wifeOnPath; },      [wifeOnPath]);
+  useEffect(() => { wifeInterceptedRef.current = wifeIntercepted; }, [wifeIntercepted]);
+  useEffect(() => { route2GreetedRef.current   = route2Greeted; },   [route2Greeted]);
+  useEffect(() => { profRoute2DoneRef.current  = profRoute2Done; },  [profRoute2Done]);
+  useEffect(() => { wyvruntCaughtRef.current   = wyvruntCaught; },   [wyvruntCaught]);
+  useEffect(() => { route1VisitedRef.current   = route1Visited; },   [route1Visited]);
+  useEffect(() => { starterRefArc.current      = !!starter; },       [starter]);
+  useEffect(() => {
+    allTownItemsRef.current = shellsCollected && hasHealingRune && hasResonanceStone && hasHearthberries && hasSatchel;
+  }, [shellsCollected, hasHealingRune, hasResonanceStone, hasHearthberries, hasSatchel]);
   useEffect(() => { phaseRef.current = phase; },    [phase]);
   useEffect(() => { sceneRef.current = scene; },    [scene]);
 
@@ -731,6 +805,54 @@ export function WalkDemo() {
     tryDraw();
   }, [phase]);
 
+  // Draw Prof Irwyn world sprite on Route 2
+  useEffect(() => {
+    if (scene !== "route2") return;
+    const src = "/__mockup/images/prof-irwyn-sprite.png";
+    const tryDraw = () => {
+      const c = profR2CanvasRef.current;
+      if (!c) return;
+      if (!drawSprite(c, src, false, 72)) setTimeout(tryDraw, 150);
+    };
+    tryDraw();
+  }, [scene]);
+
+  // Draw Prof Irwyn portrait for Route 2 dialogue + scripted catch phases
+  useEffect(() => {
+    if (!phase.startsWith("prof2_") && !phase.startsWith("scripted_")) return;
+    const src = "/__mockup/images/prof-irwyn-sprite.png";
+    const tryDraw = () => {
+      const c = profR2PortraitRef.current;
+      if (!c) return;
+      if (!drawSprite(c, src, false)) setTimeout(tryDraw, 150);
+    };
+    tryDraw();
+  }, [phase]);
+
+  // Draw wife on the town path (overworld) only while intercepting
+  useEffect(() => {
+    if (scene !== "overworld" || !wifeOnPath) return;
+    const src = "/__mockup/images/jess-sprite.png";
+    const tryDraw = () => {
+      const c = jessPathCanvasRef.current;
+      if (!c) return;
+      if (!drawSprite(c, src, false, 68)) setTimeout(tryDraw, 150);
+    };
+    tryDraw();
+  }, [scene, wifeOnPath]);
+
+  // Draw wife portrait for jess_path_ dialogue phases
+  useEffect(() => {
+    if (!phase.startsWith("jess_path_")) return;
+    const src = "/__mockup/images/jess-sprite.png";
+    const tryDraw = () => {
+      const c = jessPathPortraitRef.current;
+      if (!c) return;
+      if (!drawSprite(c, src, false)) setTimeout(tryDraw, 150);
+    };
+    tryDraw();
+  }, [phase]);
+
   // Redraw player canvas
   const redraw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -777,8 +899,8 @@ export function WalkDemo() {
       if (!fadingRef.current && phaseRef.current === "walk" && sceneRef.current !== "battle") {
         const h       = heldRef.current;
         const sc      = sceneRef.current;
-        const world   = sc === "overworld" ? OW : sc === "lab" ? LB : sc === "route1" ? R1 : sc === "maya" ? MY : sc === "jay" ? JY : sc === "ellio" ? EH : sc === "lia" ? LH : PH;
-        const zones   = sc === "overworld" ? OW_BLOCKED : sc === "lab" ? LAB_BLOCKED : sc === "route1" ? R1_BLOCKED : sc === "maya" ? MAYA_BLOCKED : sc === "jay" ? JAY_BLOCKED : sc === "ellio" ? EH_BLOCKED : sc === "lia" ? LH_BLOCKED : PH_BLOCKED;
+        const world   = sc === "overworld" ? OW : sc === "lab" ? LB : sc === "route1" ? R1 : sc === "route2" ? R2 : sc === "maya" ? MY : sc === "jay" ? JY : sc === "ellio" ? EH : sc === "lia" ? LH : PH;
+        const zones   = sc === "overworld" ? OW_BLOCKED : sc === "lab" ? LAB_BLOCKED : sc === "route1" ? R1_BLOCKED : sc === "route2" ? R2_BLOCKED : sc === "maya" ? MAYA_BLOCKED : sc === "jay" ? JAY_BLOCKED : sc === "ellio" ? EH_BLOCKED : sc === "lia" ? LH_BLOCKED : PH_BLOCKED;
 
         let newAnim = lastDirRef.current; // stay in last-faced direction when idle
         let newFlip = flipRef.current;
@@ -803,9 +925,37 @@ export function WalkDemo() {
             setShowStarterGate(true);
           } else {
             transitionTo("route1", 500, 718);     // enter Whisperroot Trail from south gate
+            setRoute1Visited(true);
           }
         } else if (sc === "route1" && inRect(worldPos.current.x, worldPos.current.y, R1_SOUTH_GATE)) {
           transitionTo("overworld", 270, 30);   // exit back to overworld, south of Route-1 trigger
+          // Wife intercept — once gating met & not yet done, spawn her on the south path
+          if (!wifeInterceptedRef.current && !wifeOnPathRef.current
+              && starterRefArc.current && allTownItemsRef.current && route1VisitedRef.current) {
+            setWifeOnPath(true);
+          }
+        } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_EAST_EXIT)) {
+          if (wifeInterceptedRef.current) {
+            transitionTo("route2", R2_SPAWN.x, R2_SPAWN.y);
+          } else {
+            worldPos.current.x = OW_EAST_EXIT[0] - 20;
+            setEastGateNotif(true);
+            window.setTimeout(() => setEastGateNotif(false), 1800);
+          }
+        } else if (sc === "route2" && inRect(worldPos.current.x, worldPos.current.y, R2_RETURN_OW)) {
+          transitionTo("overworld", 1085, 432);
+        } else if (sc === "route2" && inRect(worldPos.current.x, worldPos.current.y, R2_NORTH_BLOCKED)) {
+          worldPos.current.y = R2_NORTH_BLOCKED[3] + 20;
+          setLockedDoorNotif("The cliff stairs are sealed for now.");
+          window.setTimeout(() => setLockedDoorNotif(null), 1600);
+        } else if (sc === "route2" && inRect(worldPos.current.x, worldPos.current.y, R2_SOUTH_BLOCKED)) {
+          worldPos.current.y = R2_SOUTH_BLOCKED[1] - 20;
+          setLockedDoorNotif("The south path is blocked.");
+          window.setTimeout(() => setLockedDoorNotif(null), 1600);
+        } else if (sc === "route2" && inRect(worldPos.current.x, worldPos.current.y, R2_LOCKED_DOOR)) {
+          worldPos.current.y = R2_LOCKED_DOOR[3] + 20;
+          setLockedDoorNotif("It's locked.");
+          window.setTimeout(() => setLockedDoorNotif(null), 1600);
         } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_PROF_DOOR as Rect)) {
           transitionTo("lab", 350, 590);
         } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_MAYA_DOOR)) {
@@ -925,6 +1075,33 @@ export function WalkDemo() {
           setNearLia(near);
           if (near) setLiaInteractPos({ sx: screenX, sy: screenY });
         }
+        // Near-wife on south town path (overworld, while she's there)
+        if (sc === "overworld" && wifeOnPathRef.current) {
+          const d = dist(px, py, JESS_PATH_POS.x, JESS_PATH_POS.y);
+          if (d < 70 && phaseRef.current === "walk" && !wifeInterceptedRef.current) {
+            setPhase("jess_path_d1");
+          }
+        }
+        // Route 2 — prof greeting on arrival + wyvrunt proximity
+        if (sc === "route2") {
+          const dp = dist(px, py, PROF_R2_POS.x, PROF_R2_POS.y);
+          const screenX = (px - cam.current.x) * ZOOM;
+          const screenY = (py - cam.current.y - topOff - 28) * ZOOM;
+          setNearProfR2(dp < 110);
+          if (dp < 110) setProfR2InteractPos({ sx: screenX, sy: screenY });
+          // Auto-greet on first arrival
+          if (!route2GreetedRef.current && phaseRef.current === "walk") {
+            setRoute2Greeted(true);
+            setPhase("prof2_d1");
+          }
+          if (profRoute2DoneRef.current && !wyvruntCaughtRef.current) {
+            const dw = dist(px, py, WYV_R2_POS.x, WYV_R2_POS.y);
+            setNearWyvrunt(dw < 90);
+            if (dw < 55 && phaseRef.current === "walk") {
+              setPhase("scripted_t1");
+            }
+          }
+        }
       }
       raf = requestAnimationFrame(loop);
     };
@@ -945,6 +1122,10 @@ export function WalkDemo() {
       ellio_done: "walk",
       lia_d1: "lia_d2", lia_d2: "lia_d3", lia_d3: "lia_d4", lia_d4: "lia_d5", lia_d5: "walk",
       lia_done: "walk",
+      jess_path_d1: "jess_path_d2", jess_path_d2: "walk",
+      prof2_d1: "prof2_d2", prof2_d2: "prof2_d3", prof2_d3: "prof2_d4", prof2_d4: "walk",
+      scripted_t1: "scripted_t2", scripted_t2: "scripted_throw",
+      scripted_throw: "scripted_caught", scripted_caught: "walk",
     };
     const next = map[from];
     if (next) setPhase(next);
@@ -1023,6 +1204,16 @@ export function WalkDemo() {
     lia_d4: "Here. Ten of them. And take this satchel — good leather, field-grade. A Keeper who can't carry their kit is just a kid with a dragon, and you're not going to be that kid.",
     lia_d5: "Now get out of my house. And don't lose to anything on Route 1, alright? I will absolutely hear about it and I will not let it go. Ever. Go do something worth bragging about.",
     lia_done: "You're still here? Go. If you need more berries later, you know where I live.",
+    jess_path_d1: "There you are! Professor Irwyn was looking for you. He said to meet him on Route 2 — past Maya's house, east of town. Wouldn't tell me why. Only that you'd understand when you got there.",
+    jess_path_d2: "Go on. I'll head back home. ...Just be careful out there, alright?",
+    prof2_d1: "There you are. I felt you on the wind. ...Or maybe just heard your boots on the path. Either way — come closer. There is something I want you to see.",
+    prof2_d2: "I have been tracking a creature. Chaos-aligned. They do not behave like the others — and even their colors come in wrong. Lia bonded with one years ago. She calls hers Draco. Stubborn as her, and just as fierce.",
+    prof2_d3: "But this one is rarer still. It came down from the high cliffs and stopped here. I think it has been waiting. For you, specifically. Here — take this. An Obsidianeye Realm Shell. Carved for the truly singular.",
+    prof2_d4: "Go to it. Slowly. I will watch from here. If it is what I believe it is, it will not fight you. It will test you. Trust the moment.",
+    scripted_t1: "The Wyvrunt is still. Watching you. Its tail-flame ripples but it does not strike. PROF: \"Don't move yet. Let it read you.\"",
+    scripted_t2: "Its eyes soften — curiosity replacing caution. The yin-yang sigils on its scales flicker brighter. PROF: \"Now. The shell. It is ready.\"",
+    scripted_throw: "You raise the Obsidianeye Realm Shell. Wyvrunt tilts its head — and waits.",
+    scripted_caught: "The shell hums, drinks the light, and seals shut. Wyvrunt ☯ chose you. PROF: \"...Incredible. It bonded on the first try.\"",
   };
 
   // ── Encounter handlers & disturbance tick ──────────────────────────────────
@@ -1228,8 +1419,8 @@ export function WalkDemo() {
         {/* World container — camera-scrolled + zoomed */}
         <div ref={worldRef} style={{
           position: "absolute",
-          width:  scene === "overworld" ? OW.w : scene === "lab" ? LB.w : scene === "route1" ? R1.w : scene === "maya" ? MY.w : scene === "jay" ? JY.w : scene === "ellio" ? EH.w : scene === "lia" ? LH.w : PH.w,
-          height: scene === "overworld" ? OW.h : scene === "lab" ? LB.h : scene === "route1" ? R1.h : scene === "maya" ? MY.h : scene === "jay" ? JY.h : scene === "ellio" ? EH.h : scene === "lia" ? LH.h : PH.h,
+          width:  scene === "overworld" ? OW.w : scene === "lab" ? LB.w : scene === "route1" ? R1.w : scene === "route2" ? R2.w : scene === "maya" ? MY.w : scene === "jay" ? JY.w : scene === "ellio" ? EH.w : scene === "lia" ? LH.w : PH.w,
+          height: scene === "overworld" ? OW.h : scene === "lab" ? LB.h : scene === "route1" ? R1.h : scene === "route2" ? R2.h : scene === "maya" ? MY.h : scene === "jay" ? JY.h : scene === "ellio" ? EH.h : scene === "lia" ? LH.h : PH.h,
           willChange: "transform",
           transformOrigin: "0 0",
           transform: `scale(${ZOOM}) translate(${-cam.current.x}px,${-cam.current.y}px)`,
@@ -1240,6 +1431,7 @@ export function WalkDemo() {
             src={scene === "ellio" ? "/__mockup/images/ellio-home-interior.png"
               : scene === "lia"    ? "/__mockup/images/lia-home.png"
               : scene === "route1" ? "/__mockup/images/route1-bg.png"
+              : scene === "route2" ? "/__mockup/images/route2-map.png"
               : scene === "overworld"
               ? "/__mockup/images/overworld-map.png"
               : scene === "lab"
@@ -2815,7 +3007,7 @@ export function WalkDemo() {
           border:"1px solid rgba(240,208,96,0.3)", pointerEvents:"none",
           textTransform:"uppercase", zIndex:5,
         }}>
-          {scene === "overworld" ? "Primeria Village" : scene === "lab" ? "Prof. Irwyn's Lab" : scene === "maya" ? "Maya's Home" : scene === "jay" ? "Jay's Home" : scene === "ellio" ? "Ellio's Home" : scene === "lia" ? "Lia's Home" : scene === "route1" ? "Whisperroot Trail" : scene === "battle" ? "Battle" : "Your Home"}
+          {scene === "overworld" ? "Primeria Village" : scene === "lab" ? "Prof. Irwyn's Lab" : scene === "maya" ? "Maya's Home" : scene === "jay" ? "Jay's Home" : scene === "ellio" ? "Ellio's Home" : scene === "lia" ? "Lia's Home" : scene === "route1" ? "Whisperroot Trail" : scene === "route2" ? "Route 2 — Eastern Path" : scene === "battle" ? "Battle" : "Your Home"}
         </div>
 
         {/* Float message (flavor text on dormant hotspot click) */}
