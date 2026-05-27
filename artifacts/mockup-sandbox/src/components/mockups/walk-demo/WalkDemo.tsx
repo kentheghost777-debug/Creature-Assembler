@@ -2481,9 +2481,55 @@ export function WalkDemo() {
                       />
                       <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
                         {SHELLS.map(s => {
+                          // Discovery rule (mockup): only common (basic-tier)
+                          // shells are found in the overworld so far. Advanced
+                          // and awakened shells appear as silhouettes until the
+                          // player obtains one from a merchant or tribal trial.
+                          const discovered = s.tier === "basic";
                           const tierColor =
                             s.tier === "awakened" ? "#c89030" :
                             s.tier === "advanced" ? "#7060b0" : "#6a8a4a";
+
+                          if (!discovered) {
+                            return (
+                              <div key={s.id} style={{
+                                display:"flex", alignItems:"flex-start", gap:8,
+                                padding:"7px 9px", borderRadius:8,
+                                background:"rgba(20,15,30,0.06)",
+                                border:"1px dashed rgba(80,60,120,0.30)",
+                                opacity:0.85,
+                              }}>
+                                <div style={{
+                                  width:8, height:8, borderRadius:"50%",
+                                  background:"rgba(80,60,120,0.45)",
+                                  marginTop:4, flexShrink:0,
+                                }}/>
+                                <div style={{ flex:1, minWidth:0 }}>
+                                  <div style={{ display:"flex", alignItems:"baseline", gap:6, flexWrap:"wrap" }}>
+                                    <span style={{
+                                      color:"#3a2a4a", fontWeight:800, fontSize:11,
+                                      filter:"blur(0.6px)",
+                                    }}>
+                                      {s.name}
+                                    </span>
+                                    <span style={{ color:"#80708a", fontSize:8, fontWeight:800, letterSpacing:0.5 }}>
+                                      ???
+                                    </span>
+                                  </div>
+                                  <div style={{
+                                    color:"#80708a", fontSize:9.5, fontStyle:"italic",
+                                    marginTop:1, lineHeight:1.3,
+                                  }}>
+                                    "???"
+                                  </div>
+                                  <div style={{ color:"#80708a", fontSize:8.5, marginTop:3, fontStyle:"italic" }}>
+                                    — undiscovered —
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          }
+
                           return (
                             <div key={s.id} style={{
                               display:"flex", alignItems:"flex-start", gap:8,
