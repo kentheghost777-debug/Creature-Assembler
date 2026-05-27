@@ -100,6 +100,24 @@ const BESTIARY: MonSpec[] = [
     wildFaces:"left", playerFaces:"right", maxHp:80, baseDmg:[8,14] },
 ];
 
+// ── Wyvrunt — unique scripted-encounter mon (Chaos type, loyal-only) ────────
+// Not in BESTIARY (never a random encounter). Triggered solely from the
+// Route 2 Prof Irwyn scene. The golden yin-yang glyph marks loyalty + chaos.
+// Stats: +5 baseDmg ceiling over apex starters, hp tuned for the scripted
+// 3-turn guaranteed-catch fight (player can't lose if they don't try to lose).
+const WYVRUNT_SPEC: MonSpec = {
+  id: "wyvrunt",
+  name: "Wyvrunt",
+  nameIcon: "☯",
+  type: "Chaos",
+  rarity: "apex",
+  wildImg:   "/__mockup/images/wyvrunt.png",
+  playerImg: "/__mockup/images/wyvrunt.png",
+  wildFaces: "left", playerFaces: "right",
+  maxHp: 60,
+  baseDmg: [9, 15], // +5 over other starter-tier ceilings; scripted fight ignores it anyway
+};
+
 const RARITY_BASE: Record<MonRarity, number> = {
   common: 55, uncommon: 30, rare: 11, ultra: 3.5, apex: 0.5,
 };
@@ -559,6 +577,8 @@ export function WalkDemo() {
       "/__mockup/images/forest-arena.png",
       ...STARTERS.map(s => s.img),
       ...BESTIARY.flatMap(m => [m.wildImg, m.playerImg]),
+      WYVRUNT_SPEC.wildImg,
+      "/__mockup/images/route2-map.png",
     ].forEach(loadImg);
   }, []);
 
@@ -997,8 +1017,8 @@ export function WalkDemo() {
     ellio_d2: "A Resonance Stone. I came across it on a trade caravan last season. The merchants swore these things build a genuine bond between a Keeper and their Tayanari — something about frequencies, shared energy, resonance between spirits. I don't fully understand the mechanics. But I know it's real.",
     ellio_d3: "Here's how they said to use it in battle: equip it to yourself — not your Tayanari. When you channel it, you can throw a small elemental move tuned to your partner's type. Raw and basic, but yours. I'm told it grows with you over time, though I don't know the full details yet. Take it. A merchant always travels light — and this one belongs with a Keeper.",
     ellio_done: "Safe roads. Come find me when you're a legend — I'll have something worth trading.",
-    lia_d1: "Oh look — the kid finally made it to my door. Took you long enough. Come in. Cindrax won't bite... probably. She's in a decent mood today.",
-    lia_d2: "That's Cindrax. Stone-Flame type. Stubborn, fierce, runs entirely on attitude and spite. We get along perfectly. She was bonded to me before you even knew what a Tayanari was.",
+    lia_d1: "Oh look — the kid finally made it to my door. Took you long enough. Come in. Draco won't bite... probably. He's in a decent mood today.",
+    lia_d2: "That's Draco. Stone-Flame type. Stubborn, fierce, runs entirely on attitude and spite. We get along perfectly. He was bonded to me before you even knew what a Tayanari was.",
     lia_d3: "Look — strength alone doesn't cut it out there. The land gives you tools, you just have to know how to read them. Hearthberries. I've been collecting them for months. One before you attempt a bond and the wild Tayanari's guard drops — makes the whole thing smoother.",
     lia_d4: "Here. Ten of them. And take this satchel — good leather, field-grade. A Keeper who can't carry their kit is just a kid with a dragon, and you're not going to be that kid.",
     lia_d5: "Now get out of my house. And don't lose to anything on Route 1, alright? I will absolutely hear about it and I will not let it go. Ever. Go do something worth bragging about.",

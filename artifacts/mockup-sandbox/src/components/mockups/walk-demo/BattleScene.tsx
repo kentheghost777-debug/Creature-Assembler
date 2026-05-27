@@ -20,6 +20,9 @@ export type MonSpec = {
   playerFaces: "left" | "right";
   maxHp: number;
   baseDmg: [number, number];
+  /** Optional glyph rendered after the name (e.g. "☯" for Wyvrunt) with
+   *  a golden glow halo to mark a unique/loyal-only mon. */
+  nameIcon?: string;
 };
 
 export type StarterSpec = {
@@ -399,7 +402,18 @@ export function BattleScene({
         {/* Wild HP plate (top-left) */}
         <div style={hpPlateStyle("left")}>
           <div style={{ display:"flex", alignItems:"baseline", gap:6, marginBottom:4 }}>
-            <span style={{ color:"#fff", fontSize:13, fontWeight:800 }}>{wild.name}</span>
+            <span style={{ color:"#fff", fontSize:13, fontWeight:800 }}>
+              {wild.name}
+              {wild.nameIcon && (
+                <span style={{
+                  marginLeft:4,
+                  color:"#ffe080",
+                  textShadow:"0 0 4px #ffb030, 0 0 10px #ffa020, 0 0 2px #fff",
+                  filter:"drop-shadow(0 0 3px rgba(255,200,80,0.9))",
+                  fontWeight:900,
+                }}>{wild.nameIcon}</span>
+              )}
+            </span>
             <span style={{
               color: RARITY_COLOR[wild.rarity], fontSize:9, fontWeight:700,
               padding:"1px 6px", borderRadius:8,
