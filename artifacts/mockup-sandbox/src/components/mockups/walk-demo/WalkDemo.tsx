@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
+import { BattleScene, type MonSpec, type MonRarity, type BattleResult } from "./BattleScene";
 
 // ── World sizes (pixels) ────────────────────────────────────────────────────
 const OW = { w: 1124, h: 900 }; // overworld — matches full 1402×1122 map image at 900px height
@@ -30,8 +31,96 @@ type Phase = "walk" | "d1" | "d2" | "pick" | "d3" | "d4" | "d5"
            | "jess_d1" | "jess_d2" | "jess_d3"
            | "ellio_d1" | "ellio_d2" | "ellio_d3" | "ellio_done"
            | "lia_d1"  | "lia_d2"  | "lia_d3"  | "lia_d4"  | "lia_d5"  | "lia_done";
-type Scene = "overworld" | "lab" | "maya" | "jay" | "home" | "ellio" | "lia" | "route1";
+type Scene = "overworld" | "lab" | "maya" | "jay" | "home" | "ellio" | "lia" | "route1" | "battle";
 type Rect  = [number, number, number, number]; // x1 y1 x2 y2 world-px
+
+// ── Bestiary (Route 1 encounter pool) ───────────────────────────────────────
+const BESTIARY: MonSpec[] = [
+  // Commons (≈18% each within trail = 55% pool / 3)
+  { id:"hatchick",  name:"Hatchick",  type:"Skyborne",     rarity:"common",
+    wildImg:"/__mockup/images/hatchick-wild.png",  playerImg:"/__mockup/images/hatchick-player.png",
+    wildFaces:"left", playerFaces:"right", maxHp:24, baseDmg:[3,6] },
+  { id:"loth",      name:"Loth",      type:"Nature",       rarity:"common",
+    wildImg:"/__mockup/images/loth-wild.png",      playerImg:"/__mockup/images/loth-player.png",
+    wildFaces:"left", playerFaces:"right", maxHp:28, baseDmg:[3,7] },
+  { id:"voltowl",   name:"Voltowl",   type:"Stormproven",  rarity:"common",
+    wildImg:"/__mockup/images/voltowl-wild.png",   playerImg:"/__mockup/images/voltowl-player.png",
+    wildFaces:"left", playerFaces:"right", maxHp:26, baseDmg:[3,7] },
+  // Uncommons
+  { id:"stonub",    name:"Stonub",    type:"Volcanic",     rarity:"uncommon",
+    wildImg:"/__mockup/images/stonub-wild.png",    playerImg:"/__mockup/images/stonub-player.png",
+    wildFaces:"left", playerFaces:"right", maxHp:34, baseDmg:[4,8] },
+  { id:"potent",    name:"Potent",    type:"Alchemy",      rarity:"uncommon",
+    wildImg:"/__mockup/images/potent-wild.png",    playerImg:"/__mockup/images/potent-player.png",
+    wildFaces:"left", playerFaces:"right", maxHp:30, baseDmg:[4,8] },
+  { id:"scavencrow",name:"Scavencrow",type:"Abyss",        rarity:"uncommon",
+    wildImg:"/__mockup/images/scavencrow-wild.png",playerImg:"/__mockup/images/scavencrow-player.png",
+    wildFaces:"left", playerFaces:"right", maxHp:32, baseDmg:[4,9] },
+  // Rares
+  { id:"ghosti",    name:"Ghosti",    type:"Spirit",       rarity:"rare",
+    wildImg:"/__mockup/images/ghosti-wild.png",    playerImg:"/__mockup/images/ghosti-player.png",
+    wildFaces:"left", playerFaces:"right", maxHp:42, baseDmg:[5,10] },
+  { id:"scalel",    name:"Scalel",    type:"Armored",      rarity:"rare",
+    wildImg:"/__mockup/images/scalel-wild.png",    playerImg:"/__mockup/images/scalel-player.png",
+    wildFaces:"left", playerFaces:"right", maxHp:48, baseDmg:[5,10] },
+  // Ultra
+  { id:"mentyke_w", name:"Mentyke",   type:"Mind",         rarity:"ultra",
+    wildImg:"/__mockup/images/mentyke-wild-a.png", playerImg:"/__mockup/images/mentyke-wild-b.png",
+    wildFaces:"left", playerFaces:"right", maxHp:58, baseDmg:[6,12] },
+  // Apex
+  { id:"peachi_w",  name:"Pea-chi",   type:"Nature",       rarity:"apex",
+    wildImg:"/__mockup/images/peachi-wild-a.png",  playerImg:"/__mockup/images/peachi-wild-b.png",
+    wildFaces:"left", playerFaces:"right", maxHp:80, baseDmg:[8,14] },
+];
+
+const RARITY_BASE: Record<MonRarity, number> = {
+  common: 55, uncommon: 30, rare: 11, ultra: 3.5, apex: 0.5,
+};
+
+function rollRarity(checksStreak: number): MonRarity {
+  // Streak A: +2% Rare/Ultra per 5 checks since last UR/Apex, cap +20
+  const streakBonus = Math.min(20, Math.floor(checksStreak / 5) * 2);
+  const weights: Record<MonRarity, number> = {
+    common:   RARITY_BASE.common   - streakBonus,
+    uncommon: RARITY_BASE.uncommon,
+    rare:     RARITY_BASE.rare     + streakBonus * 0.5,
+    ultra:    RARITY_BASE.ultra    + streakBonus * 0.4,
+    apex:     RARITY_BASE.apex     + streakBonus * 0.1,
+  };
+  const total = Object.values(weights).reduce((a, b) => a + b, 0);
+  let r = Math.random() * total;
+  for (const k of Object.keys(weights) as MonRarity[]) {
+    r -= weights[k];
+    if (r <= 0) return k;
+  }
+  return "common";
+}
+
+function pickMon(rarity: MonRarity): MonSpec {
+  const pool = BESTIARY.filter(m => m.rarity === rarity);
+  return pool[Math.floor(Math.random() * pool.length)] ?? BESTIARY[0];
+}
+
+// ── Route 1 disturbance hotspots (clickable bushes/rocks/trees in world-space)
+type Hotspot = { x: number; y: number; r: number; kind: "bush" | "rock" | "tree" };
+const R1_HOTSPOTS: Hotspot[] = [
+  { x: 180, y: 620, r: 38, kind: "bush" },
+  { x: 320, y: 520, r: 36, kind: "rock" },
+  { x: 500, y: 460, r: 42, kind: "tree" },
+  { x: 680, y: 540, r: 38, kind: "bush" },
+  { x: 820, y: 640, r: 38, kind: "rock" },
+  { x: 240, y: 380, r: 38, kind: "tree" },
+  { x: 580, y: 280, r: 40, kind: "bush" },
+  { x: 760, y: 380, r: 38, kind: "bush" },
+];
+
+const FLAVOR_TRACKS = [
+  "Soft prints curl into the leaves — Tayanari passed here, but not now.",
+  "A scuffed patch of moss. Something small was sleeping under it.",
+  "The branches still tremble. Whatever it was, it's long gone.",
+  "You catch the scent of feathers and damp soil. Empty for now.",
+  "Pawprints disappear into the brush. The trail goes cold.",
+];
 
 // ── Collision zones ─────────────────────────────────────────────────────────
 const OW_BLOCKED: Rect[] = [
@@ -360,6 +449,17 @@ export function WalkDemo() {
   const [hasSatchel,       setHasSatchel]       = useState(false);
   const [liaItemsNotif,    setLiaItemsNotif]    = useState(false);
 
+  // ── Encounter / battle state ────────────────────────────────────────────
+  const [shellCount,    setShellCount]    = useState(0);
+  const [wildEncounter, setWildEncounter] = useState<MonSpec | null>(null);
+  const [caughtParty,   setCaughtParty]   = useState<MonSpec[]>([]);
+  const [activeDisturbances, setActiveDisturbances] = useState<Record<number, { mon: MonSpec; expiresAt: number }>>({});
+  const [hotspotCd,     setHotspotCd]     = useState<Record<number, number>>({});
+  const [checksStreak,  setChecksStreak]  = useState(0);
+  const [floatMsg,      setFloatMsg]      = useState<{ x: number; y: number; text: string; key: number } | null>(null);
+  const [showStarterGate, setShowStarterGate] = useState(false);
+  const [battleNotif,   setBattleNotif]   = useState<{ title: string; sub: string } | null>(null);
+
   const canvasRef          = useRef<HTMLCanvasElement>(null);
   const profCanvasRef      = useRef<HTMLCanvasElement>(null);
   const portraitCanvasRef  = useRef<HTMLCanvasElement>(null);
@@ -412,7 +512,10 @@ export function WalkDemo() {
       "/__mockup/images/hearthberry.png",
       "/__mockup/images/keepers-satchel.png",
       "/__mockup/images/weathered-shell.png",
+      "/__mockup/images/worn-realm-shell.png",
+      "/__mockup/images/forest-arena.png",
       ...STARTERS.map(s => s.img),
+      ...BESTIARY.flatMap(m => [m.wildImg, m.playerImg]),
     ].forEach(loadImg);
   }, []);
 
@@ -1226,6 +1329,7 @@ export function WalkDemo() {
           <button
             onClick={() => {
               setShellsCollected(true);
+              setShellCount(c => c + 24);
               setPickupNotif(true);
               setTimeout(() => setPickupNotif(false), 2800);
             }}
