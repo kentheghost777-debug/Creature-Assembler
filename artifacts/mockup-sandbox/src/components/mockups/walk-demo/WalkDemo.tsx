@@ -1,5 +1,31 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { BattleScene, RARITY_COLOR, type MonSpec, type MonRarity, type BattleResult } from "./BattleScene";
+import { BattleScene, RARITY_COLOR, type MonSpec, type MonRarity, type BattleResult, type StarterStats } from "./BattleScene";
+
+// ── Level-up reward generation ────────────────────────────────────────────
+const STAT_KEYS = ["hp", "atk", "def", "spd"] as const;
+type StatKey = typeof STAT_KEYS[number];
+const STAT_LABEL: Record<StatKey, string> = { hp: "HP", atk: "ATK", def: "DEF", spd: "SPD" };
+
+function rollLevelUpGains(): Partial<Record<StatKey, number>> {
+  // 2 or 3 unique stats, each +1..+5. HP gains are scaled ×3 so HP feels meaningful.
+  const count = Math.random() < 0.5 ? 2 : 3;
+  const pool = [...STAT_KEYS];
+  const gains: Partial<Record<StatKey, number>> = {};
+  for (let i = 0; i < count; i++) {
+    const idx = Math.floor(Math.random() * pool.length);
+    const stat = pool.splice(idx, 1)[0];
+    const amt  = 1 + Math.floor(Math.random() * 5); // 1..5
+    gains[stat] = stat === "hp" ? amt * 3 : amt;
+  }
+  return gains;
+}
+
+// Element move names — placeholders; user will replace later.
+const MOVE_NAMES = ["Strike", "Flare", "Surge", "Howl", "Pulse", "Crescent", "Maelstrom", "Dirge"];
+function newMoveFor(type: string, existing: string[]): string {
+  const idx = existing.length % MOVE_NAMES.length;
+  return `${type} ${MOVE_NAMES[idx]}`;
+}
 
 // ── World sizes (pixels) ────────────────────────────────────────────────────
 const OW = { w: 1124, h: 900 }; // overworld — matches full 1402×1122 map image at 900px height
@@ -462,6 +488,8 @@ export function WalkDemo() {
   // ── Starter progression ───────────────────────────────────────────────────
   const [starterLevel, setStarterLevel] = useState(5);
   const [starterXp,    setStarterXp]    = useState(0);
+  const [starterStats, setStarterStats] = useState<StarterStats>({ hp: 40, atk: 6, def: 4, spd: 5 });
+  const [starterMoves, setStarterMoves] = useState<string[]>([]);
   // Post-battle report modal (shell recovery + xp + level up)
   const [battleReport, setBattleReport] = useState<{
     outcome: string;
@@ -470,6 +498,8 @@ export function WalkDemo() {
     lostToBond: number;
     levelUps: number;
     newLevel: number;
+    statGains: Partial<Record<StatKey, number>>;
+    newMoves: string[];
   } | null>(null);
 
   const canvasRef          = useRef<HTMLCanvasElement>(null);
@@ -903,6 +933,11 @@ export function WalkDemo() {
     if (!selected) return;
     const s = STARTERS.find(t => t.id === selected)!;
     setStarter(s);
+    // Reset progression for the newly chosen starter
+    setStarterLevel(5);
+    setStarterXp(0);
+    setStarterStats({ hp: 40, atk: 6, def: 4, spd: 5 });
+    setStarterMoves([`${s.type} ${MOVE_NAMES[0]}`]); // L5 starts with one element move
     setPhase("d3");
     setSelected(null);
   }, [selected]);
@@ -1056,21 +1091,44 @@ export function WalkDemo() {
     const recovered = Math.max(0, thrown - lostBond);
     if (recovered > 0) setShellCount(c => c + recovered);
 
-    // XP + level-up math (level threshold = level × 12)
+    // XP + level-up math (gentle curve: level × 10, +2 per level — not skyrocket, not grindy)
     const xpGained = (result.kind === "caught" || result.kind === "ko") ? result.xpGained : 0;
     let newLevel  = starterLevel;
     let newXp     = starterXp + xpGained;
     let levelUps  = 0;
-    let threshold = newLevel * 12;
+    let threshold = newLevel * 10 + 10;
+    // Aggregate stat gains and new moves across every level gained this battle
+    const totalGains: Partial<Record<StatKey, number>> = {};
+    const newMoves: string[] = [];
+    let workingMoves = [...starterMoves];
     while (newXp >= threshold) {
       newXp    -= threshold;
       newLevel += 1;
       levelUps += 1;
-      threshold = newLevel * 12;
+      const g = rollLevelUpGains();
+      for (const k of Object.keys(g) as StatKey[]) {
+        totalGains[k] = (totalGains[k] ?? 0) + (g[k] ?? 0);
+      }
+      // Learn a new move every 3 levels (L8, L11, L14, ...)
+      if (newLevel % 3 === 0) {
+        const m = newMoveFor(starter?.type ?? "Element", workingMoves);
+        workingMoves.push(m);
+        newMoves.push(m);
+      }
+      threshold = newLevel * 10 + 10;
     }
     if (xpGained > 0) {
       setStarterXp(newXp);
-      if (levelUps > 0) setStarterLevel(newLevel);
+      if (levelUps > 0) {
+        setStarterLevel(newLevel);
+        setStarterStats(s => ({
+          hp:  s.hp  + (totalGains.hp  ?? 0),
+          atk: s.atk + (totalGains.atk ?? 0),
+          def: s.def + (totalGains.def ?? 0),
+          spd: s.spd + (totalGains.spd ?? 0),
+        }));
+        if (newMoves.length > 0) setStarterMoves(workingMoves);
+      }
     }
 
     let outcome: string;
@@ -1097,10 +1155,13 @@ export function WalkDemo() {
     // Show post-battle report modal if there's anything to report (shells or xp)
     if (thrown > 0 || xpGained > 0) {
       window.setTimeout(() => {
-        setBattleReport({ outcome, xpGained, recovered, lostToBond: lostBond, levelUps, newLevel });
+        setBattleReport({
+          outcome, xpGained, recovered, lostToBond: lostBond,
+          levelUps, newLevel, statGains: totalGains, newMoves,
+        });
       }, 1200);
     }
-  }, [transitionTo, starter, healingRuneEquipped, starterLevel, starterXp]);
+  }, [transitionTo, starter, healingRuneEquipped, starterLevel, starterXp, starterMoves]);
 
   // ── Battle scene — full takeover when scene === "battle" ───────────────────
   if (scene === "battle" && wildEncounter && starter) {
@@ -1110,6 +1171,7 @@ export function WalkDemo() {
           wild={wildEncounter}
           starter={starter}
           starterLevel={starterLevel}
+          starterStats={starterStats}
           hasResonanceStone={resonanceStoneEquipped}
           healingRuneEquipped={healingRuneEquipped}
           shellsCount={shellCount}
@@ -2705,9 +2767,35 @@ export function WalkDemo() {
                   <div style={{ color:"#ffd860", fontSize:12, fontWeight:900, letterSpacing:1 }}>
                     ★ LEVEL UP ×{battleReport.levelUps}
                   </div>
-                  <div style={{ color:"#e0b860", fontSize:10, marginTop:2 }}>
+                  <div style={{ color:"#e0b860", fontSize:10, marginTop:2, marginBottom:6 }}>
                     {starter?.name ?? "Tayanari"} is now Lv.{battleReport.newLevel}
                   </div>
+                  {/* Stat gains */}
+                  <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginTop:4 }}>
+                    {(Object.keys(battleReport.statGains) as StatKey[]).map(k => (
+                      <div key={k} style={{
+                        background:"rgba(0,0,0,0.35)",
+                        border:"1px solid rgba(240,200,80,0.45)",
+                        borderRadius:6, padding:"3px 8px",
+                        color:"#ffe890", fontSize:10, fontWeight:800,
+                      }}>
+                        +{battleReport.statGains[k]} {STAT_LABEL[k]}
+                      </div>
+                    ))}
+                  </div>
+                  {battleReport.newMoves.length > 0 && (
+                    <div style={{ marginTop:8, paddingTop:8, borderTop:"1px dashed rgba(240,200,80,0.3)" }}>
+                      <div style={{ color:"#ffd860", fontSize:10, fontWeight:800, letterSpacing:1, marginBottom:4 }}>
+                        ✦ NEW MOVE LEARNED
+                      </div>
+                      {battleReport.newMoves.map(m => (
+                        <div key={m} style={{
+                          color:"#fff0c0", fontSize:11, fontWeight:700,
+                          padding:"3px 0",
+                        }}>· {m}</div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 

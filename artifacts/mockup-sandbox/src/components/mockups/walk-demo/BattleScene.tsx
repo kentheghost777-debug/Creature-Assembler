@@ -68,10 +68,13 @@ export type BattleResult =
   | { kind: "fainted"; shellsThrown: number }
   | { kind: "ko";      mon: MonSpec; shellsThrown: number; xpGained: number };
 
+export type StarterStats = { hp: number; atk: number; def: number; spd: number };
+
 type Props = {
   wild: MonSpec;
   starter: StarterSpec;
   starterLevel: number;
+  starterStats: StarterStats;
   hasResonanceStone: boolean;
   healingRuneEquipped: boolean;
   shellsCount: number;
@@ -92,10 +95,10 @@ const BTN_BG    = "linear-gradient(180deg, rgba(60,40,20,0.92), rgba(36,22,10,0.
 const BTN_BG_HI = "linear-gradient(180deg, rgba(90,62,30,0.96), rgba(56,36,16,0.96))";
 
 export function BattleScene({
-  wild, starter, starterLevel, hasResonanceStone, healingRuneEquipped,
+  wild, starter, starterLevel, starterStats, hasResonanceStone, healingRuneEquipped,
   shellsCount, onConsumeShell, onConsumeRune, onEnd,
 }: Props) {
-  const playerMaxHp = starter.maxHp ?? 40;
+  const playerMaxHp = starterStats.hp;
   const [playerHp, setPlayerHp]   = useState(playerMaxHp);
   const [wildHp,   setWildHp]     = useState(wild.maxHp);
   const [log,      setLog]        = useState<string>(`A wild ${wild.name} appears!`);
@@ -129,7 +132,9 @@ export function BattleScene({
 
   function wildTurn(afterCb?: () => void) {
     later(() => {
-      const dmg = dmgRange(wild.baseDmg);
+      // Defense soaks 1 dmg per 2 def points, min 1 dmg
+      const raw = dmgRange(wild.baseDmg);
+      const dmg = Math.max(1, raw - Math.floor(starterStats.def / 2));
       setShake("player");
       later(() => setShake(null), 220);
       setPlayerHp(hp => {
@@ -177,8 +182,8 @@ export function BattleScene({
 
   function onFight() {
     if (busy) return;
-    // Starter +3-5 damage bonus
-    const dmg = dmgRange([4, 9], 3 + Math.floor(Math.random() * 3));
+    // Damage scales off atk: roll [atk, atk+5] with a small variance bonus
+    const dmg = dmgRange([starterStats.atk, starterStats.atk + 5], Math.floor(Math.random() * 2));
     playerHit(dmg, `${starter.name} attacks for ${dmg}!`);
   }
 
