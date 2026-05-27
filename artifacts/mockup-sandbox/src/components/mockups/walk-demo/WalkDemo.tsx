@@ -11,14 +11,14 @@ const ANCHOR    = 0.75; // fraction of sprite above anchor point
 
 // ── Tayanari starter data ───────────────────────────────────────────────────
 const STARTERS = [
-  { id: "frostbite",   name: "Frostbite",    type: "Ice",      color: "#7ddeff", img: "/__mockup/images/frostbite-baby.png" },
-  { id: "grrountain",  name: "Grr-ountain",  type: "Rock",     color: "#c8a020", img: "/__mockup/images/grrountain-baby.png" },
-  { id: "leafkit",     name: "Leafkit",      type: "Grass",    color: "#50c040", img: "/__mockup/images/leafkit.png" },
-  { id: "emberfox",    name: "Emberfox",     type: "Fire",     color: "#ff6020", img: "/__mockup/images/emberfox.png" },
-  { id: "phantorch",   name: "Phantorch",    type: "Water",    color: "#3080ff", img: "/__mockup/images/phantorch.png" },
-  { id: "voltfang",    name: "Voltfang",     type: "Electric", color: "#ffd000", img: "/__mockup/images/voltfang.png" },
-  { id: "lumacorn",    name: "Lumacorn",     type: "Fairy",    color: "#ff80cc", img: "/__mockup/images/lumacorn.png" },
-  { id: "vixgrim",     name: "Vixgrim",      type: "Dark",     color: "#9040a0", img: "/__mockup/images/vixgrim.png" },
+  { id: "burg",       name: "Burg",       type: "Frostformed",  color: "#7ddeff", img: "/__mockup/images/frostbite-baby.png" },
+  { id: "pebble",     name: "Pebble",     type: "Earthbound",   color: "#c8a020", img: "/__mockup/images/grrountain-baby.png" },
+  { id: "peachi",     name: "Pea-chi",    type: "Nature",       color: "#50c040", img: "/__mockup/images/leafkit.png" },
+  { id: "cerepup",    name: "Cerepup",    type: "Volcanic",     color: "#ff6020", img: "/__mockup/images/emberfox.png" },
+  { id: "cunbubble",  name: "Cun-bubble", type: "Oceanic",      color: "#3080ff", img: "/__mockup/images/phantorch.png" },
+  { id: "shockit",    name: "Shockit",    type: "Stormproven",  color: "#ffd000", img: "/__mockup/images/voltfang.png" },
+  { id: "mentyke",    name: "Mentyke",    type: "Mind",         color: "#c080ff", img: "/__mockup/images/lumacorn.png" },
+  { id: "foxin",      name: "Foxin",      type: "Spirit",       color: "#60a070", img: "/__mockup/images/vixgrim.png" },
 ] as const;
 type StarterId = typeof STARTERS[number]["id"];
 
