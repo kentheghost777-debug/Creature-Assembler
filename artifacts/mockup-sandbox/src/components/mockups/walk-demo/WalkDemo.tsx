@@ -454,7 +454,7 @@ const FRAMES: Record<string, string[]> = {
   idle_up:    ["/__mockup/images/walk_back_1.png"],     // stopped, facing away
   idle_side:  ["/__mockup/images/walk_side_1.png"],     // stopped, facing side
   idle_down:  ["/__mockup/images/walk_idle.png"],       // stopped, facing forward
-  walk_side:  ["/__mockup/images/walk_side_1.png"],
+  walk_side:  ["/__mockup/images/walk_side_1.png", "/__mockup/images/walk_side_2r.png"],
   walk_up:    ["/__mockup/images/walk_back_1.png", "/__mockup/images/walk_back_2.png"],
   walk_down:  ["/__mockup/images/walk_idle.png", "/__mockup/images/walk_front_1.png", "/__mockup/images/walk_front_2.png"],
 };
