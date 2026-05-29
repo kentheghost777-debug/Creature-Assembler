@@ -114,6 +114,12 @@ export type WorldSave = {
   profRoute2Done: boolean;
   hasObsidianRealmShell: boolean;
   wyvruntCaught: boolean;
+  // Wyvrunt evolution chain
+  wyvruntForm: number;   // 0=Wyvrunt, 1=Wyrnak, 2=Wyrvast, 3=Aureyvant
+  wyrLoyalty: number;    // 0–100 loyalty bar; fills from battles/catches/quests
+  // Area 3 trainer battles (Jay & Lia)
+  jayA3Wins: number;     // cumulative wins vs Jay in Area 3
+  liaA3Wins: number;
   // Declared path — chosen in the lab when you receive your starter (not at
   // character creation). Until then the role badge stays hidden.
   roleChosen: boolean;

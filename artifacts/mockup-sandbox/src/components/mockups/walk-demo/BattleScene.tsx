@@ -118,10 +118,11 @@ function rollOutcome(hpFrac: number): typeof SHELL_OUTCOMES[number] {
 }
 
 export type BattleResult =
-  | { kind: "caught";  mon: MonSpec; shellsSet: number; xpGained: number }
-  | { kind: "fled";    shellsSet: number }
-  | { kind: "fainted"; shellsSet: number }
-  | { kind: "ko";      mon: MonSpec; shellsSet: number; xpGained: number };
+  | { kind: "caught";     mon: MonSpec; shellsSet: number; xpGained: number }
+  | { kind: "fled";       shellsSet: number }
+  | { kind: "fainted";    shellsSet: number }
+  | { kind: "ko";         mon: MonSpec; shellsSet: number; xpGained: number }
+  | { kind: "trainerWin"; shellsSet: number; xpGained: number };
 
 export type StarterStats = { hp: number; atk: number; def: number; spd: number };
 
@@ -146,6 +147,11 @@ type Props = {
   keeperImg?: string;
   /** Player's own hero sprite (faces east). Defaults to the generic walker. */
   heroImg?: string;
+  /** Full team for a trainer battle (wild = team[0]). When set, defeated mons
+   *  cycle through the roster and the battle ends with `trainerWin`. */
+  keeperTeam?: MonSpec[];
+  /** Fixed level per trainer mon (parallel array with keeperTeam). */
+  keeperMonLevels?: number[];
   onConsumeShell: () => void;
   onEnd: (r: BattleResult) => void;
 };
@@ -166,9 +172,23 @@ export function BattleScene({
   catchMult = 1, shellsCount,
   opponentKind = "wild", keeperName = "Keeper", keeperImg = "/__mockup/images/rowan_side_1.png",
   heroImg = "/__mockup/images/walk_side_1.png",
+  keeperTeam, keeperMonLevels,
   onConsumeShell, onEnd,
 }: Props) {
   const isKeeper = opponentKind === "keeper";
+
+  // ── Trainer team cycling ─────────────────────────────────────────────────
+  const [trainerMonIdx, setTrainerMonIdx] = useState(0);
+  const trainerXpRef = useRef(0); // accumulated XP across all trainer mons
+
+  // Effective opponent for this turn; may advance mid-battle in trainer fights.
+  const currentOpponent: MonSpec = (isKeeper && keeperTeam?.length)
+    ? (keeperTeam[trainerMonIdx] ?? wild)
+    : wild;
+  const currentOpponentLevel: number = (isKeeper && keeperMonLevels?.length)
+    ? (keeperMonLevels[trainerMonIdx] ?? Math.max(5, starterLevel))
+    : (isKeeper ? Math.max(5, starterLevel) : wildLevelFor(wild.rarity));
+
   const playerMaxHp = starterStats.hp;
   const [playerHp, setPlayerHp]   = useState(playerMaxHp);
   const [wildHp,   setWildHp]     = useState(wild.maxHp);
@@ -203,11 +223,11 @@ export function BattleScene({
   const fxIdRef = useRef(1);
   const nextFxId = () => ++fxIdRef.current;
 
-  // ── Move system: derived combatants ───────────────────────────────────
-  const playerEl = asElement(starter.type);
-  const wildEl   = asElement(wild.type);
-  const wildStats = wildCombatStats(wild.baseDmg, wild.rarity);
-  const wildLevel = isKeeper ? Math.max(5, starterLevel) : wildLevelFor(wild.rarity);
+  // ── Move system: derived combatants (all from currentOpponent) ───────────
+  const playerEl  = asElement(starter.type);
+  const wildEl    = asElement(currentOpponent.type);
+  const wildStats = wildCombatStats(currentOpponent.baseDmg, currentOpponent.rarity);
+  const wildLevel = currentOpponentLevel;
 
   // Player's active loadout (fall back to a sensible default, then Struggle).
   const playerMoves: Move[] = (() => {
@@ -228,8 +248,8 @@ export function BattleScene({
     }
     // Unknown element: a single neutral strike scaled off baseDmg.
     return [{
-      id: "wild_strike", name: `${wild.type} Strike`, category: "damage",
-      power: Math.round((wild.baseDmg[0] + wild.baseDmg[1]) / 2) + 4,
+      id: "wild_strike", name: `${currentOpponent.type} Strike`, category: "damage",
+      power: Math.round((currentOpponent.baseDmg[0] + currentOpponent.baseDmg[1]) / 2) + 4,
       accuracy: 100, pp: 99, anim: "glitch", desc: "A wild strike.",
     }];
   })();
@@ -240,10 +260,11 @@ export function BattleScene({
     for (const m of playerMoves) o[m.id] = m.pp;
     return o;
   });
-  const wildPpRef = useRef<Record<string, number>>({});
-  const wildPpInit = useRef(false);
-  if (!wildPpInit.current) {
-    wildPpInit.current = true;
+  const wildPpRef    = useRef<Record<string, number>>({});
+  const wildPpKeyRef = useRef(-1); // tracks which trainerMonIdx PP was last populated for
+  if (wildPpKeyRef.current !== trainerMonIdx) {
+    wildPpKeyRef.current = trainerMonIdx;
+    wildPpRef.current = {};
     for (const m of wildMoves) wildPpRef.current[m.id] = m.pp;
   }
 
@@ -315,7 +336,7 @@ export function BattleScene({
   function pickWildMove(): Move {
     const usable = wildMoves.filter(m => (wildPpRef.current[m.id] ?? 0) > 0);
     if (usable.length === 0) return STRUGGLE;
-    const lowHp = wildHpRef.current < wild.maxHp * 0.4;
+    const lowHp = wildHpRef.current < currentOpponent.maxHp * 0.4;
     const heals = usable.filter(m => m.category === "heal");
     if (lowHp && heals.length && Math.random() < 0.5) return heals[0];
     const support = usable.filter(m => m.category === "buff" || m.category === "shield");
@@ -341,21 +362,21 @@ export function BattleScene({
       if (move.id !== STRUGGLE.id) {
         wildPpRef.current[move.id] = Math.max(0, (wildPpRef.current[move.id] ?? 0) - 1);
       }
-      const color = wildEl ? typeColor(wild.type) : "#ffe080";
+      const color = wildEl ? typeColor(currentOpponent.type) : "#ffe080";
 
       // Utility moves — wild heals or buffs itself, no damage to player.
       if (move.category !== "damage") {
         triggerMove(move.anim, color, "wild", move.category);
         if (move.category === "heal" && move.heal) {
-          const heal = Math.floor(wild.maxHp * move.heal);
-          setWildHp(hp => { const n = Math.min(wild.maxHp, hp + heal); wildHpRef.current = n; return n; });
-          setLog(`${wild.name} uses ${move.name} — recovers ${heal} HP!`);
+          const heal = Math.floor(currentOpponent.maxHp * move.heal);
+          setWildHp(hp => { const n = Math.min(currentOpponent.maxHp, hp + heal); wildHpRef.current = n; return n; });
+          setLog(`${currentOpponent.name} uses ${move.name} — recovers ${heal} HP!`);
         } else if (move.category === "buff" && move.atkBuff) {
           setBuffs(b => ({ ...b, wAtk: b.wAtk + move.atkBuff! }));
-          setLog(`${wild.name} uses ${move.name} — its attack rises!`);
+          setLog(`${currentOpponent.name} uses ${move.name} — its attack rises!`);
         } else if (move.category === "shield" && move.defBuff) {
           setBuffs(b => ({ ...b, wDef: b.wDef + move.defBuff! }));
-          setLog(`${wild.name} uses ${move.name} — its defense rises!`);
+          setLog(`${currentOpponent.name} uses ${move.name} — its defense rises!`);
         }
         later(() => { setHealCd(c => Math.max(0, c - 1)); setBusy(false); afterCb?.(); }, 760);
         return;
@@ -363,7 +384,7 @@ export function BattleScene({
 
       // Accuracy check.
       if (Math.random() * 100 > move.accuracy) {
-        setLog(`${wild.name} uses ${move.name} — but it missed!`);
+        setLog(`${currentOpponent.name} uses ${move.name} — but it missed!`);
         later(() => { setHealCd(c => Math.max(0, c - 1)); setBusy(false); afterCb?.(); }, 700);
         return;
       }
@@ -379,7 +400,7 @@ export function BattleScene({
         setShake("player");
         showDmg("player", dmg, crit);
         const tag = effLabel(eff);
-        setLog(`${wild.name} uses ${move.name}!${crit ? " A critical hit!" : ""}${tag ? " " + tag : ""}`);
+        setLog(`${currentOpponent.name} uses ${move.name}!${crit ? " A critical hit!" : ""}${tag ? " " + tag : ""}`);
         setResBar(b => Math.min(15, b + 5));
       }, 380);
       later(() => setShake(null), 600);
@@ -418,14 +439,37 @@ export function BattleScene({
         wildHpRef.current = next;
         setResBar(b => Math.min(15, b + 5));
         if (next === 0) {
-          const xp = xpFor(wild, false);
-          later(() => {
-            setLog(isKeeper
-              ? `${wild.name} is defeated! You bested ${keeperName}. (+${xp} XP)`
-              : `${wild.name} fainted! ${starter.name} gains ${xp} XP.`);
-            setMenu("ended");
-            later(() => onEnd({ kind: "ko", mon: wild, shellsSet: shellsSetRef.current, xpGained: xp }), 1100);
-          }, 650);
+          const monXp = xpFor(currentOpponent, false);
+          if (isKeeper && keeperTeam && trainerMonIdx < keeperTeam.length - 1) {
+            // More trainer mons — accumulate XP and switch to next
+            trainerXpRef.current += monXp;
+            const nextIdx = trainerMonIdx + 1;
+            const nextMon = keeperTeam[nextIdx];
+            later(() => {
+              setLog(`${currentOpponent.name} is down! (+${monXp} XP) — ${keeperName} sends out ${nextMon.name}!`);
+              setWildHp(nextMon.maxHp);
+              wildHpRef.current = nextMon.maxHp;
+              setBuffs(b => ({ ...b, wAtk: 0, wDef: 0 }));
+              setTrainerMonIdx(nextIdx);
+              setMenu("root");
+              setBusy(false);
+            }, 1400);
+          } else {
+            // Last mon — resolve battle
+            const totalXp = trainerXpRef.current + monXp;
+            trainerXpRef.current = 0;
+            later(() => {
+              setLog(isKeeper && keeperTeam
+                ? `${currentOpponent.name} is down! You bested ${keeperName}! (+${totalXp} XP total)`
+                : `${currentOpponent.name} fainted! ${starter.name} gains ${monXp} XP.`);
+              setMenu("ended");
+              later(() => onEnd(
+                isKeeper && keeperTeam
+                  ? { kind: "trainerWin", shellsSet: shellsSetRef.current, xpGained: totalXp }
+                  : { kind: "ko", mon: currentOpponent, shellsSet: shellsSetRef.current, xpGained: monXp }
+              ), 1100);
+            }, 650);
+          }
         } else {
           wildTurn(afterCb);
         }
@@ -607,8 +651,8 @@ export function BattleScene({
   // wildFaces / playerFaces describe each sprite's NATIVE art orientation (same
   // file orientation is reused for both sides). Wild stands on the RIGHT and must
   // face LEFT (toward player); player mon stands on the LEFT and must face RIGHT.
-  const wildScaleX   = wild.wildFaces === "left"   ? 1 : -1; // flip when native faces right
-  const playerScaleX = wild.playerFaces === "right" ? 1 : -1; // flip when native faces left
+  const wildScaleX   = currentOpponent.wildFaces === "left"   ? 1 : -1; // flip when native faces right
+  const playerScaleX = currentOpponent.playerFaces === "right" ? 1 : -1; // flip when native faces left
   const wildShake   = shake === "wild"   ? "shakeFx 0.22s" : "none";
   const playerShake = shake === "player" ? "shakeFx 0.22s" : "none";
 
@@ -677,29 +721,29 @@ export function BattleScene({
         <div style={hpPlateStyle("left")}>
           <div style={{ display:"flex", alignItems:"baseline", gap:6, marginBottom:4 }}>
             <span style={{ color:"#fff", fontSize:13, fontWeight:800 }}>
-              {wild.name}
-              {wild.nameIcon && (
+              {currentOpponent.name}
+              {currentOpponent.nameIcon && (
                 <span style={{
                   marginLeft:4,
                   color:"#ffe080",
                   textShadow:"0 0 4px #ffb030, 0 0 10px #ffa020, 0 0 2px #fff",
                   filter:"drop-shadow(0 0 3px rgba(255,200,80,0.9))",
                   fontWeight:900,
-                }}>{wild.nameIcon}</span>
+                }}>{currentOpponent.nameIcon}</span>
               )}
             </span>
             <span style={{
-              color: RARITY_COLOR[wild.rarity], fontSize:9, fontWeight:700,
+              color: RARITY_COLOR[currentOpponent.rarity], fontSize:9, fontWeight:700,
               padding:"1px 6px", borderRadius:8,
-              border:`1px solid ${RARITY_COLOR[wild.rarity]}`,
+              border:`1px solid ${RARITY_COLOR[currentOpponent.rarity]}`,
               background:"rgba(0,0,0,0.4)",
               textTransform:"uppercase", letterSpacing:1,
-            }}>{RARITY_LABEL[wild.rarity]}</span>
+            }}>{RARITY_LABEL[currentOpponent.rarity]}</span>
           </div>
-          <HpBar hp={wildHp} max={wild.maxHp} />
+          <HpBar hp={wildHp} max={currentOpponent.maxHp} />
           <div style={{ display:"flex", justifyContent:"space-between", marginTop:2 }}>
-            <span style={{ color:"#a8c0d0", fontSize:9 }}>{wild.type}</span>
-            <span style={{ color:"#c8c8c8", fontSize:9, fontWeight:700 }}>{wildHp}/{wild.maxHp}</span>
+            <span style={{ color:"#a8c0d0", fontSize:9 }}>{currentOpponent.type}</span>
+            <span style={{ color:"#c8c8c8", fontSize:9, fontWeight:700 }}>{wildHp}/{currentOpponent.maxHp}</span>
           </div>
         </div>
 
@@ -728,38 +772,38 @@ export function BattleScene({
             transition:"opacity 0.45s",
           }}>
             {/* Feint afterimage — a translucent ghost that lingers where it stood */}
-            {feinting && (wild.wildSheet ? (
+            {feinting && (currentOpponent.wildSheet ? (
               <div aria-hidden style={{
                 position:"absolute", inset:0,
-                ...sheetBgStyle(wild.wildSheet),
+                ...sheetBgStyle(currentOpponent.wildSheet),
                 transform: (wildFlip + wildExtra).trim() || "none",
                 transformOrigin:"center center",
-                filter:`drop-shadow(0 0 10px ${typeColor(wild.type)})`,
+                filter:`drop-shadow(0 0 10px ${typeColor(currentOpponent.type)})`,
                 animation:"feintGhost 0.6s ease-out forwards",
                 pointerEvents:"none",
               }}/>
             ) : (
-              <img src={wild.wildImg} alt="" aria-hidden style={{
+              <img src={currentOpponent.wildImg} alt="" aria-hidden style={{
                 position:"absolute", inset:0,
                 width:"100%", height:"100%", objectFit:"contain",
                 transform: (wildFlip + wildExtra).trim() || "none",
                 transformOrigin:"center center",
-                filter:`drop-shadow(0 0 10px ${typeColor(wild.type)})`,
+                filter:`drop-shadow(0 0 10px ${typeColor(currentOpponent.type)})`,
                 animation:"feintGhost 0.6s ease-out forwards",
                 pointerEvents:"none",
               }}/>
             ))}
-            {wild.wildSheet ? (
-              <div role="img" aria-label={wild.name} style={{
+            {currentOpponent.wildSheet ? (
+              <div role="img" aria-label={currentOpponent.name} style={{
                 position:"absolute", inset:0,
-                ...sheetBgStyle(wild.wildSheet),
+                ...sheetBgStyle(currentOpponent.wildSheet),
                 transform: (wildFlip + wildExtra).trim() || "none",
                 transformOrigin:"center center",
                 transition:"transform 0.45s ease-in",
                 filter:"drop-shadow(0 6px 8px rgba(0,0,0,0.5))",
               }}/>
             ) : (
-              <img src={wild.wildImg} alt={wild.name} style={{
+              <img src={currentOpponent.wildImg} alt={currentOpponent.name} style={{
                 width:"100%", height:"100%", objectFit:"contain",
                 transform: (wildFlip + wildExtra).trim() || "none",
                 transformOrigin:"center center",
@@ -827,7 +871,7 @@ export function BattleScene({
             {/* Player Tayanari glimmer (left circle, starter element color) */}
             <SummonBurst x={POS.mon.x} y={POS.mon.y - 8} color={typeColor(starter.type)} delay={0.15}/>
             {/* Opponent glimmer (right circle, wild element color) */}
-            <SummonBurst x={POS.wild.x} y={POS.wild.y - 8} color={typeColor(wild.type)} delay={0}/>
+            <SummonBurst x={POS.wild.x} y={POS.wild.y - 8} color={typeColor(currentOpponent.type)} delay={0}/>
           </div>
         )}
         {/* Move animation (elemental projectile / utility aura) */}

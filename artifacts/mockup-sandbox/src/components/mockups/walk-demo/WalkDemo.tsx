@@ -142,21 +142,21 @@ type StarterId = typeof STARTERS[number]["id"];
 const EVO_BG_IMG: string | undefined = "/__mockup/images/evo-bg.png";
 
 const EVO_TABLE: Array<{ from: string; atLevel: number; to: StarterSpec }> = [
-  { from:"burg",        atLevel:14, to:{ id:"burg_2",       name:"Burg·II",        type:"Frostformed",  color:"#7ddeff", img:"/__mockup/images/frostbite-baby.png"  } },
+  { from:"burg",        atLevel:16, to:{ id:"burg_2",       name:"Burg·II",        type:"Frostformed",  color:"#7ddeff", img:"/__mockup/images/frostbite-baby.png"  } },
   { from:"burg_2",      atLevel:30, to:{ id:"burg_3",       name:"Burg·III",       type:"Frostformed",  color:"#7ddeff", img:"/__mockup/images/frostbite-baby.png"  } },
-  { from:"pebble",      atLevel:14, to:{ id:"pebble_2",     name:"Pebble·II",      type:"Earthbound",   color:"#c8a020", img:"/__mockup/images/grrountain-baby.png" } },
+  { from:"pebble",      atLevel:16, to:{ id:"pebble_2",     name:"Pebble·II",      type:"Earthbound",   color:"#c8a020", img:"/__mockup/images/grrountain-baby.png" } },
   { from:"pebble_2",    atLevel:30, to:{ id:"pebble_3",     name:"Pebble·III",     type:"Earthbound",   color:"#c8a020", img:"/__mockup/images/grrountain-baby.png" } },
-  { from:"peachi",      atLevel:14, to:{ id:"peachi_2",     name:"Pea-chi·II",     type:"Nature",       color:"#50c040", img:"/__mockup/images/leafkit.png"          } },
+  { from:"peachi",      atLevel:16, to:{ id:"peachi_2",     name:"Pea-chi·II",     type:"Nature",       color:"#50c040", img:"/__mockup/images/leafkit.png"          } },
   { from:"peachi_2",    atLevel:30, to:{ id:"peachi_3",     name:"Pea-chi·III",    type:"Nature",       color:"#50c040", img:"/__mockup/images/leafkit.png"          } },
-  { from:"cerepup",     atLevel:14, to:{ id:"cerepup_2",    name:"Cerepup·II",     type:"Volcanic",     color:"#ff6020", img:"/__mockup/images/emberfox.png"         } },
+  { from:"cerepup",     atLevel:16, to:{ id:"cerepup_2",    name:"Cerepup·II",     type:"Volcanic",     color:"#ff6020", img:"/__mockup/images/emberfox.png"         } },
   { from:"cerepup_2",   atLevel:30, to:{ id:"cerepup_3",    name:"Cerepup·III",    type:"Volcanic",     color:"#ff6020", img:"/__mockup/images/emberfox.png"         } },
-  { from:"cunbubble",   atLevel:14, to:{ id:"cunbubble_2",  name:"Cun-bubble·II",  type:"Oceanic",      color:"#3080ff", img:"/__mockup/images/phantorch.png"        } },
+  { from:"cunbubble",   atLevel:16, to:{ id:"cunbubble_2",  name:"Cun-bubble·II",  type:"Oceanic",      color:"#3080ff", img:"/__mockup/images/phantorch.png"        } },
   { from:"cunbubble_2", atLevel:30, to:{ id:"cunbubble_3",  name:"Cun-bubble·III", type:"Oceanic",      color:"#3080ff", img:"/__mockup/images/phantorch.png"        } },
-  { from:"shockit",     atLevel:14, to:{ id:"shockit_2",    name:"Shockit·II",     type:"Stormproven",  color:"#ffd000", img:"/__mockup/images/voltfang.png"         } },
+  { from:"shockit",     atLevel:16, to:{ id:"shockit_2",    name:"Shockit·II",     type:"Stormproven",  color:"#ffd000", img:"/__mockup/images/voltfang.png"         } },
   { from:"shockit_2",   atLevel:30, to:{ id:"shockit_3",    name:"Shockit·III",    type:"Stormproven",  color:"#ffd000", img:"/__mockup/images/voltfang.png"         } },
-  { from:"mentyke",     atLevel:14, to:{ id:"mentyke_2",    name:"Mentyke·II",     type:"Mind",         color:"#c080ff", img:"/__mockup/images/lumacorn.png"         } },
+  { from:"mentyke",     atLevel:16, to:{ id:"mentyke_2",    name:"Mentyke·II",     type:"Mind",         color:"#c080ff", img:"/__mockup/images/lumacorn.png"         } },
   { from:"mentyke_2",   atLevel:30, to:{ id:"mentyke_3",    name:"Mentyke·III",    type:"Mind",         color:"#c080ff", img:"/__mockup/images/lumacorn.png"         } },
-  { from:"foxin",       atLevel:14, to:{ id:"foxin_2",      name:"Foxin·II",       type:"Spirit",       color:"#60a070", img:"/__mockup/images/vixgrim.png"          } },
+  { from:"foxin",       atLevel:16, to:{ id:"foxin_2",      name:"Foxin·II",       type:"Spirit",       color:"#60a070", img:"/__mockup/images/vixgrim.png"          } },
   { from:"foxin_2",     atLevel:30, to:{ id:"foxin_3",      name:"Foxin·III",      type:"Spirit",       color:"#60a070", img:"/__mockup/images/vixgrim.png"          } },
 ];
 
@@ -182,7 +182,13 @@ type Phase = "walk" | "d1" | "d2" | "pick" | "d3" | "role_pick" | "d4" | "d5"
            // Prof Irwyn Realm Shell resupply (repeatable, after Route 2 / Wyvrunt quest)
            | "prof_shells" | "prof_shells_got"
            // Rowan — the professor's disciple who dreams of the Professor's seat
-           | "rowan_d1" | "rowan_d2" | "rowan_d3";
+           | "rowan_d1" | "rowan_d2" | "rowan_d3"
+           // Area 3 — Jay trainer battle (4-tier progressive, repeatable)
+           | "jay_a3_d1" | "jay_a3_d2" | "jay_a3_d3" | "jay_a3_battle"
+           | "jay_a3_win" | "jay_a3_lose" | "jay_a3_idle"
+           // Area 3 — Lia trainer battle (4-tier progressive, repeatable)
+           | "lia_a3_d1" | "lia_a3_d2" | "lia_a3_d3" | "lia_a3_battle"
+           | "lia_a3_win" | "lia_a3_lose" | "lia_a3_idle";
 type Scene = "overworld" | "lab" | "maya" | "jay" | "home" | "ellio" | "lia" | "route1" | "route2" | "area3" | "battle";
 type Rect  = [number, number, number, number]; // x1 y1 x2 y2 world-px
 
@@ -245,10 +251,48 @@ const WYVRUNT_SPEC: MonSpec = {
   rarity: "apex",
   wildImg:   "/__mockup/images/wyvrunt.png",
   playerImg: "/__mockup/images/wyvrunt.png",
-  wildFaces: "left", playerFaces: "left",
+  wildFaces: "left", playerFaces: "right",
   maxHp: 60,
   baseDmg: [9, 15], // +5 over other starter-tier ceilings; scripted fight ignores it anyway
 };
+
+// ── Wyvrunt evolution chain forms (loyalty + level gated) ───────────────────
+// Forms 0-2 cap at lv30 (when wyvruntCaught). Form 3 (Aureyvant) has no cap.
+const WYRNAK_SPEC:    MonSpec = { ...WYVRUNT_SPEC, id:"wyrnak",    name:"Wyrnak",    nameIcon:"☯", wildImg:"/__mockup/images/wyrnak.png",    playerImg:"/__mockup/images/wyrnak.png",    maxHp:80,  baseDmg:[11,18] };
+const WYRVAST_SPEC:   MonSpec = { ...WYVRUNT_SPEC, id:"wyrvast",   name:"Wyrvast",   nameIcon:"☯", wildImg:"/__mockup/images/wyrvast.png",   playerImg:"/__mockup/images/wyrvast.png",   maxHp:100, baseDmg:[13,22] };
+const AUREYVANT_SPEC: MonSpec = { ...WYVRUNT_SPEC, id:"aureyvant", name:"Aureyvant", nameIcon:"✦", wildImg:"/__mockup/images/aureyvant.png", playerImg:"/__mockup/images/aureyvant.png", maxHp:120, baseDmg:[16,26] };
+const WYV_FORMS: MonSpec[] = [WYVRUNT_SPEC, WYRNAK_SPEC, WYRVAST_SPEC, AUREYVANT_SPEC];
+
+// ── Area 3 trainer battle MonSpecs ───────────────────────────────────────────
+// Jay's team (Spirit-type Foxin as anchor + escalating support). We reuse
+// wild/player images already loaded for the bestiary — no new assets needed.
+const TR_FOXIN:  MonSpec = { id:"tr_foxin",  name:"Foxin",    type:"Spirit",    rarity:"uncommon", wildImg:"/__mockup/images/vixgrim.png",          playerImg:"/__mockup/images/vixgrim.png",          wildFaces:"left", playerFaces:"left", maxHp:58,  baseDmg:[6,12] };
+const TR_STONUB: MonSpec = { id:"tr_stonub", name:"Stonub",   type:"Volcanic",  rarity:"uncommon", wildImg:"/__mockup/images/stonub-wild.png",       playerImg:"/__mockup/images/stonub-player.png",    wildFaces:"left", playerFaces:"left", maxHp:66,  baseDmg:[7,13] };
+const TR_SAVEN:  MonSpec = { id:"tr_saven",  name:"Scavencrow",type:"Abyss",    rarity:"uncommon", wildImg:"/__mockup/images/scavencrow-wild.png",   playerImg:"/__mockup/images/scavencrow-player.png",wildFaces:"left", playerFaces:"left", maxHp:62,  baseDmg:[7,14] };
+const TR_MENTY:  MonSpec = { id:"tr_menty",  name:"Mentyke",  type:"Mind",      rarity:"ultra",    wildImg:"/__mockup/images/mentyke-wild-a.png",    playerImg:"/__mockup/images/mentyke-wild-b.png",   wildFaces:"left", playerFaces:"left", maxHp:80,  baseDmg:[8,16] };
+// Lia's team (Oceanic Cunbubble as anchor + Nature/Storm support).
+const TR_CUNB:   MonSpec = { id:"tr_cunb",   name:"Cunbubble",type:"Oceanic",   rarity:"uncommon", wildImg:"/__mockup/images/phantorch.png",          playerImg:"/__mockup/images/phantorch.png",         wildFaces:"left", playerFaces:"left", maxHp:58,  baseDmg:[6,12] };
+const TR_DRIFT:  MonSpec = { id:"tr_drift",  name:"Driftpaw", type:"Skyborne",  rarity:"uncommon", wildImg:"/__mockup/images/vixgrim.png",            playerImg:"/__mockup/images/vixgrim.png",           wildFaces:"left", playerFaces:"left", maxHp:56,  baseDmg:[6,11] };
+const TR_SPRIG:  MonSpec = { id:"tr_sprig",  name:"Sprigget", type:"Nature",    rarity:"common",   wildImg:"", playerImg:"",                          wildSheet:{ url:"/__mockup/images/a3-wild-sheet.png", x:0, y:0, w:512, h:384, sheetW:1024, sheetH:1536 }, playerSheet:{ url:"/__mockup/images/a3-wild-sheet.png", x:0, y:0, w:512, h:384, sheetW:1024, sheetH:1536 }, wildFaces:"left", playerFaces:"left", maxHp:52, baseDmg:[5,10] };
+const TR_MURK:   MonSpec = { id:"tr_murk",   name:"Murkspine",type:"Abyss",    rarity:"rare",     wildImg:"", playerImg:"",                          wildSheet:{ url:"/__mockup/images/a3-new-sheet.png", x:512, y:0, w:512, h:512, sheetW:1536, sheetH:1024 }, playerSheet:{ url:"/__mockup/images/a3-new-sheet.png", x:512, y:0, w:512, h:512, sheetW:1536, sheetH:1024 }, wildFaces:"left", playerFaces:"left", maxHp:78, baseDmg:[8,15] };
+
+type TrainerTier = { team: MonSpec[]; levels: number[] };
+function jayA3Team(wins: number): TrainerTier {
+  if (wins === 0) return { team:[TR_FOXIN],                               levels:[12] };
+  if (wins === 1) return { team:[TR_FOXIN, TR_STONUB],                    levels:[15,14] };
+  if (wins === 2) return { team:[TR_FOXIN, TR_STONUB, TR_SAVEN],          levels:[19,18,17] };
+  return            { team:[TR_FOXIN, TR_STONUB, TR_SAVEN, TR_MENTY],     levels:[23,22,20,19] };
+}
+function liaA3Team(wins: number): TrainerTier {
+  if (wins === 0) return { team:[TR_CUNB],                                 levels:[12] };
+  if (wins === 1) return { team:[TR_CUNB, TR_DRIFT],                       levels:[15,13] };
+  if (wins === 2) return { team:[TR_CUNB, TR_DRIFT, TR_SPRIG],             levels:[19,17,16] };
+  return            { team:[TR_CUNB, TR_DRIFT, TR_SPRIG, TR_MURK],        levels:[23,21,19,17] };
+}
+
+// NPC positions inside Area 3 (world-px coordinates)
+const JAY_A3_POS = { x: 310, y: 560 };
+const LIA_A3_POS = { x: 670, y: 540 };
 
 // ── Area 3 sprite-sheet frame helpers ────────────────────────────────────────
 // Sheets (all background-removed PNGs in /images/):
@@ -905,6 +949,15 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
   const [profR2InteractPos,    setProfR2InteractPos]    = useState({ sx: 0, sy: 0 });
   const [hasObsidianRealmShell, setHasObsidianRealmShell] = useState(() => savedWorld?.hasObsidianRealmShell ?? false);
   const [wyvruntCaught,        setWyvruntCaught]        = useState(() => savedWorld?.wyvruntCaught ?? false);
+  const [wyvruntForm,          setWyvruntForm]          = useState(() => savedWorld?.wyvruntForm ?? 0);
+  const [wyrLoyalty,           setWyrLoyalty]           = useState(() => savedWorld?.wyrLoyalty ?? 0);
+  const [jayA3Wins,            setJayA3Wins]            = useState(() => savedWorld?.jayA3Wins ?? 0);
+  const [liaA3Wins,            setLiaA3Wins]            = useState(() => savedWorld?.liaA3Wins ?? 0);
+  const [trainerEncounter,     setTrainerEncounter]     = useState<{ trainer:"jay"|"lia"; name:string; team:MonSpec[]; levels:number[] } | null>(null);
+  const [nearJayA3,            setNearJayA3]            = useState(false);
+  const [jayA3InteractPos,     setJayA3InteractPos]     = useState({ sx: 0, sy: 0 });
+  const [nearLiaA3,            setNearLiaA3]            = useState(false);
+  const [liaA3InteractPos,     setLiaA3InteractPos]     = useState({ sx: 0, sy: 0 });
   // Role is declared in the lab at starter time. Older saves (pre-change) that
   // already hold a starter are treated as having declared, so their badge shows.
   const [roleChosen,           setRoleChosen]           = useState(() => savedWorld?.roleChosen ?? (savedParty?.starterId != null));
@@ -995,7 +1048,8 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
     hasResonanceStone, resonanceStoneEquipped, hasHearthberries, hasSatchel,
     jessDone, jayDone, mayaInitDone, mayaDone, ellioDone, liaDone,
     route1Visited, wifeOnPath, wifeIntercepted, route2Greeted, profRoute2Done,
-    hasObsidianRealmShell, wyvruntCaught, roleChosen, checksStreak,
+    hasObsidianRealmShell, wyvruntCaught, wyvruntForm, wyrLoyalty,
+    jayA3Wins, liaA3Wins, roleChosen, checksStreak,
   });
   const persistWorld = useCallback(() => {
     const safe = lastSafeRef.current;
@@ -1014,7 +1068,8 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
       hasResonanceStone, resonanceStoneEquipped, hasHearthberries, hasSatchel,
       jessDone, jayDone, mayaInitDone, mayaDone, ellioDone, liaDone,
       route1Visited, wifeOnPath, wifeIntercepted, route2Greeted, profRoute2Done,
-      hasObsidianRealmShell, wyvruntCaught, roleChosen, checksStreak,
+      hasObsidianRealmShell, wyvruntCaught, wyvruntForm, wyrLoyalty,
+      jayA3Wins, liaA3Wins, roleChosen, checksStreak,
     };
     persistWorld();
   }, [
@@ -1022,7 +1077,8 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
     hasResonanceStone, resonanceStoneEquipped, hasHearthberries, hasSatchel,
     jessDone, jayDone, mayaInitDone, mayaDone, ellioDone, liaDone,
     route1Visited, wifeOnPath, wifeIntercepted, route2Greeted, profRoute2Done,
-    hasObsidianRealmShell, wyvruntCaught, roleChosen, checksStreak, persistWorld,
+    hasObsidianRealmShell, wyvruntCaught, wyvruntForm, wyrLoyalty,
+    jayA3Wins, liaA3Wins, roleChosen, checksStreak, persistWorld,
   ]);
   // On resume with Wyvrunt already caught, seed the follower beside the player
   // so it doesn't visibly fly in from the map origin on the first frame.
@@ -1116,6 +1172,8 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
   const profR2PortraitRef  = useRef<HTMLCanvasElement>(null);
   const jessPathCanvasRef  = useRef<HTMLCanvasElement>(null);
   const jessPathPortraitRef= useRef<HTMLCanvasElement>(null);
+  const jayA3CanvasRef     = useRef<HTMLCanvasElement>(null);
+  const liaA3CanvasRef     = useRef<HTMLCanvasElement>(null);
   // Refs synced from arc state so the game-loop closure stays fresh
   const wifeOnPathRef       = useRef(false);
   const wifeInterceptedRef  = useRef(false);
@@ -1377,6 +1435,28 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
     };
     tryDraw();
   }, [scene, wifeOnPath]);
+
+  // Draw Jay in Area 3
+  useEffect(() => {
+    if (scene !== "area3") return;
+    const tryDraw = () => {
+      const c = jayA3CanvasRef.current;
+      if (!c) return;
+      if (!drawSprite(c, "/__mockup/images/jay_front_idle.png", false, 68)) setTimeout(tryDraw, 150);
+    };
+    tryDraw();
+  }, [scene]);
+
+  // Draw Lia in Area 3
+  useEffect(() => {
+    if (scene !== "area3") return;
+    const tryDraw = () => {
+      const c = liaA3CanvasRef.current;
+      if (!c) return;
+      if (!drawSprite(c, "/__mockup/images/lia_front_idle.png", false, 68)) setTimeout(tryDraw, 150);
+    };
+    tryDraw();
+  }, [scene]);
 
   // Draw wife portrait for jess_path_ dialogue phases
   useEffect(() => {
@@ -1700,6 +1780,17 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
           setNearLia(near);
           if (near) setLiaInteractPos({ sx: screenX, sy: screenY });
         }
+        // Near-Jay/Lia check (Area 3 — trainer battles)
+        if (sc === "area3") {
+          const djay = dist(px, py, JAY_A3_POS.x, JAY_A3_POS.y);
+          const dlia = dist(px, py, LIA_A3_POS.x, LIA_A3_POS.y);
+          const screenX = (px - cam.current.x) * ZOOM;
+          const screenY = (py - cam.current.y - topOff - 28) * ZOOM;
+          setNearJayA3(djay < 120);
+          if (djay < 120) setJayA3InteractPos({ sx: screenX, sy: screenY });
+          setNearLiaA3(dlia < 120);
+          if (dlia < 120) setLiaA3InteractPos({ sx: screenX, sy: screenY });
+        }
         // Near-wife on south town path (overworld, while she's there)
         if (sc === "overworld" && wifeOnPathRef.current) {
           const d = dist(px, py, JESS_PATH_POS.x, JESS_PATH_POS.y);
@@ -1756,6 +1847,11 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
       ellio_idle: "walk", lia_idle: "walk", jess_idle: "walk",
       // Rowan's three-line dream-of-becoming-professor chat.
       rowan_d1: "rowan_d2", rowan_d2: "rowan_d3", rowan_d3: "walk",
+      // Area 3 Jay/Lia trainer battles.
+      jay_a3_d1: "jay_a3_d2", jay_a3_d2: "jay_a3_d3", jay_a3_d3: "jay_a3_battle",
+      jay_a3_win: "walk", jay_a3_lose: "walk", jay_a3_idle: "walk",
+      lia_a3_d1: "lia_a3_d2", lia_a3_d2: "lia_a3_d3", lia_a3_d3: "lia_a3_battle",
+      lia_a3_win: "walk", lia_a3_lose: "walk", lia_a3_idle: "walk",
     };
     const next = map[from];
     if (next) setPhase(next);
@@ -1861,6 +1957,22 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
     rowan_d1: "Oh — hey! You're the one starting your Trial today. I'm Rowan, the Professor's disciple. I sweep these floors, log the specimens, and read every journal he leaves lying around. Twice.",
     rowan_d2: "Everyone wants to be a Keeper. Not me. I want to be a Professor. I want the lab, the field notes, the whole maddening science of how Tayanari bond and why. Someday this seat is going to be mine.",
     rowan_d3: "So do me a favor out there — see things. Strange things. The Tayanari nobody can explain. Then come back and tell me everything. One day I'll be the one handing a kid their first partner, and I want to be ready.",
+    // ── Area 3 — Jay trainer battle (4-tier, repeatable) ──────────────────
+    jay_a3_d1: "You made it. Finally. I've been training here every day since town — these ruins hit different from Route 1. I needed it. I can see you've grown too. Good.",
+    jay_a3_d2: "I've been waiting for a real fight. No holding back. If you're not ready, say so now. But I think you are. I think you've been ready for a while.",
+    jay_a3_d3: "Then let's go. No going easy. Show me everything you've got.",
+    jay_a3_battle: "",
+    jay_a3_win: "You beat me. Fair fight, solid strategy. I'm not going to pretend that didn't sting — but I respect it. I'll be stronger next time. Come find me when you want another round.",
+    jay_a3_lose: "That's how it goes. You're not done growing yet. Come back when you're ready — I'll be here.",
+    jay_a3_idle: "These ruins have a weight to them. Good place to train — you never forget how small you are out here.",
+    // ── Area 3 — Lia trainer battle (4-tier, repeatable) ──────────────────
+    lia_a3_d1: "Here already? I didn't think you'd make it this deep this fast. Draco's been restless since we arrived. He needs a real fight — and so do I.",
+    lia_a3_d2: "This place used to be something. Now it just sits here, waiting. I've been here long enough to know it respects strength. So do I.",
+    lia_a3_d3: "Enough talk. Draco's been patient long enough. Think you can handle us?",
+    lia_a3_battle: "",
+    lia_a3_win: "Hm. Not bad at all. Draco's giving me that look — the one that says he actually enjoyed that. Come back. We'll go again.",
+    lia_a3_lose: "Right. That's why I keep training. Don't give up — come back when you've got more.",
+    lia_a3_idle: "The air here is strange. Draco loves it. Strange things drawn to strange places, I suppose.",
   };
 
   // ── Encounter handlers & disturbance tick ──────────────────────────────────
@@ -1946,74 +2058,104 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
     }
   }, [phase, transitionTo]);
 
-  const handleBattleEnd = useCallback((result: BattleResult) => {
-    const returnX = worldPos.current.x;
-    const returnY = worldPos.current.y;
-
-    // Shell recovery: set shells aren't destroyed, just emptied. Recover all except
-    // the one consumed in the bond (if caught).
-    const thrown   = result.shellsSet;
-    const lostBond = result.kind === "caught" ? Math.min(1, thrown) : 0;
-    const recovered = Math.max(0, thrown - lostBond);
-    if (recovered > 0) setShellCount(c => c + recovered);
-
-    // XP + level-up math (gentle curve: level × 10, +2 per level — not skyrocket, not grindy)
-    // Keeper's boon: bond XP is multiplied by the declared role's xpMult.
-    const rawXp = (result.kind === "caught" || result.kind === "ko") ? result.xpGained : 0;
-    const xpGained = rawXp > 0 ? Math.round(rawXp * role.xpMult) : 0;
-    let newLevel  = starterLevel;
-    let newXp     = starterXp + xpGained;
+  // ── Shared XP / level-up helper used by both wild and trainer battle ends ──
+  function calcBattleXp(rawXp: number, xpMult: number, baseLevel: number, baseXp: number, baseMoves: string[]) {
+    const xpGained = rawXp > 0 ? Math.round(rawXp * xpMult) : 0;
+    let newLevel  = baseLevel;
+    let newXp     = baseXp + xpGained;
     let levelUps  = 0;
     let threshold = newLevel * 10 + 10;
-    // Aggregate stat gains and new moves across every level gained this battle
+    const isAureyvantNow = wyvruntCaught && wyvruntForm >= 3;
+    const maxLevel = isAureyvantNow ? Infinity : (wyvruntCaught && wyvruntForm < 3) ? 30 : 25;
     const totalGains: Partial<Record<StatKey, number>> = {};
     const newMoves: string[] = [];
-    let workingMoves = [...starterMoves];
-    while (newXp >= threshold) {
+    let workingMoves = [...baseMoves];
+    while (newXp >= threshold && newLevel < maxLevel) {
       newXp    -= threshold;
       newLevel += 1;
       levelUps += 1;
       const g = rollLevelUpGains();
-      for (const k of Object.keys(g) as StatKey[]) {
-        totalGains[k] = (totalGains[k] ?? 0) + (g[k] ?? 0);
-      }
-      // Learn real moves from this element's learnset at the levels they unlock.
+      for (const k of Object.keys(g) as StatKey[]) totalGains[k] = (totalGains[k] ?? 0) + (g[k] ?? 0);
       const lvEl = asElement(starter?.type ?? "");
       if (lvEl) {
         for (const id of movesLearnedAt(lvEl, newLevel)) {
           newMoves.push(moveName(id));
-          // Auto-equip into a free active slot; otherwise it waits in the
-          // learned pool for the player to swap in via the move manager.
-          if (workingMoves.length < 4 && !workingMoves.includes(id)) {
-            workingMoves.push(id);
-          }
+          if (workingMoves.length < 4 && !workingMoves.includes(id)) workingMoves.push(id);
         }
       }
       threshold = newLevel * 10 + 10;
     }
-    // Check whether any level crossed in this battle triggers an evolution
-    let evoTarget: StarterSpec | null = null;
-    if (levelUps > 0 && starter) {
-      for (const evolvesAt of [14, 30]) {
-        if (evolvesAt > starterLevel && evolvesAt <= newLevel) {
-          const found = evoAt(starter.id, evolvesAt);
-          if (found) { evoTarget = found; break; }
-        }
-      }
-    }
-    if (xpGained > 0) {
-      setStarterXp(newXp);
-      if (levelUps > 0) {
-        setStarterLevel(newLevel);
+    return { xpGained, newLevel, newXp, levelUps, totalGains, newMoves, workingMoves };
+  }
+
+  // ── Apply level-up state (shared by both handlers) ──────────────────────
+  function applyLevelUp(r: ReturnType<typeof calcBattleXp>) {
+    if (r.xpGained > 0) {
+      setStarterXp(r.newXp);
+      if (r.levelUps > 0) {
+        setStarterLevel(r.newLevel);
         setStarterStats(s => ({
-          hp:  s.hp  + (totalGains.hp  ?? 0),
-          atk: s.atk + (totalGains.atk ?? 0),
-          def: s.def + (totalGains.def ?? 0),
-          spd: s.spd + (totalGains.spd ?? 0),
+          hp:  s.hp  + (r.totalGains.hp  ?? 0),
+          atk: s.atk + (r.totalGains.atk ?? 0),
+          def: s.def + (r.totalGains.def ?? 0),
+          spd: s.spd + (r.totalGains.spd ?? 0),
         }));
-        if (newMoves.length > 0) setStarterMoves(workingMoves);
+        if (r.newMoves.length > 0) setStarterMoves(r.workingMoves);
       }
     }
+  }
+
+  // ── Wyvrunt form check (shared) ──────────────────────────────────────────
+  function checkWyvForms(newLevel: number, loyaltyAfter: number) {
+    if (!wyvruntCaught) return;
+    let newForm = wyvruntForm;
+    if (newForm === 0 && newLevel >= 16) newForm = 1;
+    if (newForm === 1 && newLevel >= 30) newForm = 2;
+    if (newForm === 2 && loyaltyAfter >= 80) newForm = 3;
+    if (newForm !== wyvruntForm) {
+      setWyvruntForm(newForm);
+      setCaughtParty(prev => prev.map(m =>
+        (["wyvrunt","wyrnak","wyrvast","aureyvant"] as string[]).includes(m.id)
+          ? WYV_FORMS[newForm]!
+          : m
+      ));
+    }
+  }
+
+  // ── Starter evo check ────────────────────────────────────────────────────
+  function checkStarterEvo(newLevel: number): StarterSpec | null {
+    if (!starter) return null;
+    for (const evolvesAt of [16, 30]) {
+      if (evolvesAt > starterLevel && evolvesAt <= newLevel) {
+        const found = evoAt(starter.id, evolvesAt);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+
+  const handleBattleEnd = useCallback((result: BattleResult) => {
+    const returnX = worldPos.current.x;
+    const returnY = worldPos.current.y;
+    const returnScene = lastSafeRef.current.scene;
+
+    // Shell recovery
+    const thrown    = result.shellsSet;
+    const lostBond  = result.kind === "caught" ? Math.min(1, thrown) : 0;
+    const recovered = Math.max(0, thrown - lostBond);
+    if (recovered > 0) setShellCount(c => c + recovered);
+
+    const rawXp = (result.kind === "caught" || result.kind === "ko") ? result.xpGained : 0;
+    const r = calcBattleXp(rawXp, role.xpMult, starterLevel, starterXp, starterMoves);
+    applyLevelUp(r);
+
+    // Loyalty gains (+3 win, +2 catch)
+    const loyaltyDelta = result.kind === "ko" ? 3 : result.kind === "caught" ? 2 : 0;
+    if (loyaltyDelta > 0) setWyrLoyalty(l => Math.min(100, l + loyaltyDelta));
+    const loyaltyAfter = Math.min(100, wyrLoyalty + loyaltyDelta);
+    checkWyvForms(r.newLevel, loyaltyAfter);
+
+    const evoTarget = checkStarterEvo(r.newLevel);
 
     let outcome: string;
     if (result.kind === "caught") {
@@ -2027,7 +2169,7 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
       }
       setChecksStreak(0);
     } else if (result.kind === "ko") {
-      setBattleNotif({ title: `${result.mon.name} fainted!`, sub: `+${xpGained} XP` });
+      setBattleNotif({ title: `${result.mon.name} fainted!`, sub: `+${r.xpGained} XP` });
       outcome = `${result.mon.name} fainted in the clash.`;
     } else if (result.kind === "fled") {
       setBattleNotif({ title: "Got away safely.", sub: "" });
@@ -2039,23 +2181,113 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
     }
     setWildEncounter(null);
     window.setTimeout(() => setBattleNotif(null), 2800);
-    transitionTo("route1", returnX, returnY);
+    transitionTo(returnScene, returnX, returnY);
 
-    // Show battle report — if an evolution fires, queue it first; report follows after
     const reportData = {
-      outcome, xpGained, recovered, lostToBond: lostBond,
-      levelUps, newLevel, statGains: totalGains, newMoves,
+      outcome, xpGained: r.xpGained, recovered, lostToBond: lostBond,
+      levelUps: r.levelUps, newLevel: r.newLevel, statGains: r.totalGains, newMoves: r.newMoves,
     };
     const evo = evoTarget;
-    if (evo && (thrown > 0 || xpGained > 0)) {
+    if (evo && (thrown > 0 || r.xpGained > 0)) {
       pendingEvoDataRef.current = reportData;
       window.setTimeout(() => setPendingEvo(evo), 1000);
-    } else if (thrown > 0 || xpGained > 0) {
+    } else if (thrown > 0 || r.xpGained > 0) {
       window.setTimeout(() => setBattleReport(reportData), 1200);
     }
-  }, [transitionTo, starter, healingRuneEquipped, starterLevel, starterXp, starterMoves, addCaughtMon, role]);
+  }, [transitionTo, starter, healingRuneEquipped, starterLevel, starterXp, starterMoves, addCaughtMon, role, wyvruntCaught, wyvruntForm, wyrLoyalty]);
 
-  // ── Battle scene — full takeover when scene === "battle" ───────────────────
+  const handleTrainerEnd = useCallback((result: BattleResult) => {
+    const returnX = worldPos.current.x;
+    const returnY = worldPos.current.y;
+    const enc = trainerEncounter;
+    if (!enc) return;
+
+    const thrown    = result.shellsSet;
+    if (thrown > 0) setShellCount(c => c + thrown); // shells can't bond trainer mons, all recover
+
+    const rawXp = result.kind === "trainerWin" ? result.xpGained : 0;
+    const r = calcBattleXp(rawXp, role.xpMult, starterLevel, starterXp, starterMoves);
+    applyLevelUp(r);
+
+    // Loyalty +3 trainer win
+    const loyaltyDelta = result.kind === "trainerWin" ? 3 : 0;
+    if (loyaltyDelta > 0) setWyrLoyalty(l => Math.min(100, l + loyaltyDelta));
+    const loyaltyAfter = Math.min(100, wyrLoyalty + loyaltyDelta);
+    checkWyvForms(r.newLevel, loyaltyAfter);
+
+    const evoTarget = checkStarterEvo(r.newLevel);
+
+    if (result.kind === "trainerWin") {
+      if (enc.trainer === "jay") setJayA3Wins(w => Math.min(3, w + 1));
+      else                       setLiaA3Wins(w => Math.min(3, w + 1));
+      setBattleNotif({ title: `You beat ${enc.name}!`, sub: `+${r.xpGained} XP` });
+      setPhase(enc.trainer === "jay" ? "jay_a3_win" : "lia_a3_win");
+    } else {
+      setBattleNotif({ title: `${enc.name} won this round.`, sub: "Come back stronger!" });
+      setPhase(enc.trainer === "jay" ? "jay_a3_lose" : "lia_a3_lose");
+    }
+    setTrainerEncounter(null);
+    window.setTimeout(() => setBattleNotif(null), 2800);
+    transitionTo("area3", returnX, returnY);
+
+    const outcome = result.kind === "trainerWin"
+      ? `You defeated ${enc.name}'s team!`
+      : `${enc.name}'s team defeated you.`;
+    const reportData = {
+      outcome, xpGained: r.xpGained, recovered: thrown, lostToBond: 0,
+      levelUps: r.levelUps, newLevel: r.newLevel, statGains: r.totalGains, newMoves: r.newMoves,
+    };
+    const evo = evoTarget;
+    if (evo && r.xpGained > 0) {
+      pendingEvoDataRef.current = reportData;
+      window.setTimeout(() => setPendingEvo(evo), 1000);
+    } else if (r.xpGained > 0) {
+      window.setTimeout(() => setBattleReport(reportData), 1200);
+    }
+  }, [transitionTo, trainerEncounter, starter, starterLevel, starterXp, starterMoves, role, wyvruntCaught, wyvruntForm, wyrLoyalty]);
+
+  // ── Trainer battle — full takeover when scene === "battle" + trainerEncounter ─
+  if (scene === "battle" && trainerEncounter && starter) {
+    return (
+      <div style={{ width:"100vw", height:"100vh", background:"#000", position:"relative", overflow:"hidden" }}>
+        <BattleScene
+          wild={trainerEncounter.team[0]}
+          starter={starter}
+          starterLevel={starterLevel}
+          starterStats={starterStats}
+          starterMoves={starterMoves}
+          hasResonanceStone={resonanceStoneEquipped}
+          healingRuneEquipped={healingRuneEquipped}
+          catchMult={0}
+          shellsCount={shellCount}
+          heroImg={heroSideImg}
+          opponentKind="keeper"
+          keeperName={trainerEncounter.name}
+          keeperTeam={trainerEncounter.team}
+          keeperMonLevels={trainerEncounter.levels}
+          onConsumeShell={() => setShellCount(c => Math.max(0, c - 1))}
+          onEnd={handleTrainerEnd}
+        />
+        {battleNotif && (
+          <div style={{
+            position:"absolute", top:"30%", left:"50%",
+            transform:"translate(-50%,-50%)",
+            background:"rgba(8,4,2,0.94)",
+            border:"1.5px solid rgba(240,200,80,0.6)",
+            borderRadius:14, padding:"14px 22px",
+            zIndex:80, pointerEvents:"none",
+            boxShadow:"0 4px 24px rgba(240,200,80,0.3)",
+            textAlign:"center",
+          }}>
+            <div style={{ color:"#f0d890", fontSize:14, fontWeight:900 }}>{battleNotif.title}</div>
+            {battleNotif.sub && <div style={{ color:"#a89070", fontSize:10, marginTop:3, letterSpacing:1 }}>{battleNotif.sub}</div>}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ── Wild battle — full takeover when scene === "battle" ───────────────────
   if (scene === "battle" && wildEncounter && starter) {
     return (
       <div style={{ width:"100vw", height:"100vh", background:"#000", position:"relative", overflow:"hidden" }}>
@@ -2445,6 +2677,34 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
             </>
           )}
 
+          {/* Area 3 — Jay & Lia trainer NPCs */}
+          {scene === "area3" && (
+            <>
+              <canvas ref={jayA3CanvasRef} style={{
+                position:"absolute", imageRendering:"auto", pointerEvents:"none",
+                left: JAY_A3_POS.x - 34, top: JAY_A3_POS.y - 60,
+              }}/>
+              <div style={{
+                position:"absolute",
+                left: JAY_A3_POS.x - 12, top: JAY_A3_POS.y - 84,
+                color:"#8ab0f0", fontSize:8, fontWeight:800,
+                letterSpacing:1, pointerEvents:"none",
+                textShadow:"0 0 4px #000,0 0 8px #000",
+              }}>JAY</div>
+              <canvas ref={liaA3CanvasRef} style={{
+                position:"absolute", imageRendering:"auto", pointerEvents:"none",
+                left: LIA_A3_POS.x - 34, top: LIA_A3_POS.y - 60,
+              }}/>
+              <div style={{
+                position:"absolute",
+                left: LIA_A3_POS.x - 12, top: LIA_A3_POS.y - 84,
+                color:"#ff9060", fontSize:8, fontWeight:800,
+                letterSpacing:1, pointerEvents:"none",
+                textShadow:"0 0 4px #000,0 0 8px #000",
+              }}>LIA</div>
+            </>
+          )}
+
           {/* Shell item inside Maya's home */}
           {scene === "maya" && !shellsCollected && (
             <>
@@ -2725,6 +2985,42 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
               cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite",
               zIndex:10,
             }}>{liaDone ? "…" : "!"}</button>
+        )}
+
+        {/* ── INTERACT BUTTON — Jay (Area 3 trainer) ────────────────────── */}
+        {scene === "area3" && nearJayA3 && phase === "walk" && (
+          <button
+            onClick={() => setPhase(jayA3Wins > 0 ? "jay_a3_d3" : "jay_a3_d1")}
+            style={{
+              position:"absolute",
+              left: jayA3InteractPos.sx - 14,
+              top:  jayA3InteractPos.sy - 10,
+              width:28, height:28, borderRadius:"50%",
+              background:"#6090e0", border:"2px solid #fff",
+              color:"#0a1030", fontSize:14, fontWeight:900,
+              display:"flex", alignItems:"center", justifyContent:"center",
+              cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite",
+              zIndex:10,
+            }}
+          >{jayA3Wins > 0 ? "↺" : "!"}</button>
+        )}
+
+        {/* ── INTERACT BUTTON — Lia (Area 3 trainer) ─────────────────────── */}
+        {scene === "area3" && nearLiaA3 && phase === "walk" && (
+          <button
+            onClick={() => setPhase(liaA3Wins > 0 ? "lia_a3_d3" : "lia_a3_d1")}
+            style={{
+              position:"absolute",
+              left: liaA3InteractPos.sx - 14,
+              top:  liaA3InteractPos.sy - 10,
+              width:28, height:28, borderRadius:"50%",
+              background:"#ff7a44", border:"2px solid #fff",
+              color:"#2a0800", fontSize:14, fontWeight:900,
+              display:"flex", alignItems:"center", justifyContent:"center",
+              cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite",
+              zIndex:10,
+            }}
+          >{liaA3Wins > 0 ? "↺" : "!"}</button>
         )}
 
         {/* ── INTERACT BUTTON — Jess ────────────────────────────────────── */}
@@ -3432,17 +3728,115 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
           </div>
         )}
 
+        {/* ── JAY A3 DIALOG BOX ────────────────────────────────────────── */}
+        {(phase === "jay_a3_d1" || phase === "jay_a3_d2" || phase === "jay_a3_d3"
+          || phase === "jay_a3_win" || phase === "jay_a3_lose") && (
+          <div style={{
+            position:"absolute", bottom:0, left:0, right:0,
+            background:"linear-gradient(to top,rgba(4,8,18,0.97),rgba(6,10,24,0.93))",
+            borderTop:"2px solid rgba(80,130,220,0.55)",
+            padding:"10px 14px 14px",
+            zIndex:20,
+          }}>
+            <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+              <canvas ref={jayPortraitRef}
+                style={{ width:44, height:44, borderRadius:8,
+                  background:"#060810", border:"1px solid rgba(80,130,220,0.4)" }}
+              />
+              <span style={{ color:"#8ab0f0", fontWeight:700, fontSize:13, letterSpacing:1 }}>JAY</span>
+              <span style={{ color:"#3a5080", fontSize:9, fontWeight:600, letterSpacing:0.8, marginLeft:2 }}>
+                · Rival · {jayA3Wins === 0 ? "Undefeated" : `${jayA3Wins}W`}
+              </span>
+            </div>
+            <p style={{ color:"#e8dcc8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>
+              {LINES[phase]}
+            </p>
+            <div style={{ display:"flex", justifyContent:"flex-end" }}>
+              {(phase === "jay_a3_win" || phase === "jay_a3_lose") ? (
+                <button onClick={() => advanceDialog(phase)}
+                  style={{ background:"rgba(80,130,220,0.15)", border:"1px solid rgba(80,130,220,0.5)",
+                    color:"#8ab0f0", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}
+                >OK</button>
+              ) : phase === "jay_a3_d3" ? (
+                <button
+                  onClick={() => {
+                    const tier = jayA3Team(jayA3Wins);
+                    setTrainerEncounter({ trainer:"jay", name:"Jay", team:tier.team, levels:tier.levels });
+                    transitionTo("battle", worldPos.current.x, worldPos.current.y);
+                  }}
+                  style={{ background:"rgba(220,60,40,0.18)", border:"1px solid rgba(220,60,40,0.55)",
+                    color:"#e87050", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}
+                >Battle!</button>
+              ) : (
+                <button onClick={() => advanceDialog(phase)}
+                  style={{ background:"rgba(80,130,220,0.15)", border:"1px solid rgba(80,130,220,0.5)",
+                    color:"#8ab0f0", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}
+                >Next ▶</button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── LIA A3 DIALOG BOX ─────────────────────────────────────────── */}
+        {(phase === "lia_a3_d1" || phase === "lia_a3_d2" || phase === "lia_a3_d3"
+          || phase === "lia_a3_win" || phase === "lia_a3_lose") && (
+          <div style={{
+            position:"absolute", bottom:0, left:0, right:0,
+            background:"linear-gradient(to top,rgba(18,5,2,0.97),rgba(24,7,3,0.93))",
+            borderTop:"2px solid rgba(255,110,50,0.55)",
+            padding:"10px 14px 14px",
+            zIndex:20,
+          }}>
+            <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+              <canvas ref={liaPortraitRef}
+                style={{ width:44, height:44, borderRadius:8,
+                  background:"#120400", border:"1px solid rgba(255,110,50,0.4)" }}
+              />
+              <span style={{ color:"#ff9060", fontWeight:700, fontSize:13, letterSpacing:1 }}>LIA</span>
+              <span style={{ color:"#8a4828", fontSize:9, fontWeight:600, letterSpacing:0.8, marginLeft:2 }}>
+                · Keeper · {liaA3Wins === 0 ? "Undefeated" : `${liaA3Wins}W`}
+              </span>
+            </div>
+            <p style={{ color:"#e8dcc8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>
+              {LINES[phase]}
+            </p>
+            <div style={{ display:"flex", justifyContent:"flex-end" }}>
+              {(phase === "lia_a3_win" || phase === "lia_a3_lose") ? (
+                <button onClick={() => advanceDialog(phase)}
+                  style={{ background:"rgba(255,110,50,0.12)", border:"1px solid rgba(255,110,50,0.45)",
+                    color:"#ff9060", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}
+                >OK</button>
+              ) : phase === "lia_a3_d3" ? (
+                <button
+                  onClick={() => {
+                    const tier = liaA3Team(liaA3Wins);
+                    setTrainerEncounter({ trainer:"lia", name:"Lia", team:tier.team, levels:tier.levels });
+                    transitionTo("battle", worldPos.current.x, worldPos.current.y);
+                  }}
+                  style={{ background:"rgba(220,60,40,0.18)", border:"1px solid rgba(220,60,40,0.55)",
+                    color:"#e87050", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}
+                >Battle!</button>
+              ) : (
+                <button onClick={() => advanceDialog(phase)}
+                  style={{ background:"rgba(255,110,50,0.12)", border:"1px solid rgba(255,110,50,0.45)",
+                    color:"#ff9060", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}
+                >Next ▶</button>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* ── AMBIENT CHAT BOX (idle NPC lines + Rowan's dream) ─────────── */}
         {(phase === "prof_idle" || phase === "jay_idle" || phase === "maya_idle"
           || phase === "maya_wait" || phase === "ellio_idle" || phase === "lia_idle"
           || phase === "jess_idle" || phase === "rowan_d1" || phase === "rowan_d2"
-          || phase === "rowan_d3") && (() => {
+          || phase === "rowan_d3" || phase === "jay_a3_idle" || phase === "lia_a3_idle") && (() => {
           const speaker =
             phase === "prof_idle" ? { name: "PROF. IRWYN", color: "#f0d060" } :
-            phase === "jay_idle" ? { name: "JAY", color: "#6090e0" } :
+            (phase === "jay_idle" || phase === "jay_a3_idle") ? { name: "JAY", color: "#6090e0" } :
             (phase === "maya_idle" || phase === "maya_wait") ? { name: "MAYA", color: "#80d0a0" } :
             phase === "ellio_idle" ? { name: "ELLIO", color: "#a8e878" } :
-            phase === "lia_idle" ? { name: "LIA", color: "#ff7a44" } :
+            (phase === "lia_idle" || phase === "lia_a3_idle") ? { name: "LIA", color: "#ff7a44" } :
             phase === "jess_idle" ? { name: "JESS", color: "#f0a050" } :
             { name: "ROWAN", color: "#b8a0e0" };
           const more = phase === "rowan_d1" || phase === "rowan_d2";
@@ -3766,6 +4160,23 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
                               </div>
                             ))}
                           </div>
+                          {/* Wyvrunt loyalty bar — shown while bonded + not yet Aureyvant */}
+                          {wyvruntCaught && wyvruntForm < 3 && (
+                            <div style={{ display:"flex", alignItems:"center", gap:6, marginTop:5 }}>
+                              <span style={{ fontSize:8, color:"#7060a0", fontWeight:800, letterSpacing:0.5, flexShrink:0 }}>☯ BOND</span>
+                              <div style={{ flex:1, height:4, background:"rgba(80,50,140,0.18)", borderRadius:2, overflow:"hidden" }}>
+                                <div style={{
+                                  height:"100%", borderRadius:2,
+                                  background:"linear-gradient(90deg,#8060c0,#b090f0)",
+                                  width:`${wyrLoyalty}%`,
+                                  transition:"width 0.6s",
+                                }}/>
+                              </div>
+                              <span style={{ fontSize:8, color:"#9070c0", fontWeight:700, flexShrink:0, letterSpacing:0.3 }}>
+                                {wyrLoyalty}/100
+                              </span>
+                            </div>
+                          )}
                           {/* Equipment line — only shown when something is equipped */}
                           {(resonanceStoneEquipped || healingRuneEquipped) && (
                             <div style={{ color:"#6a50a0", fontSize:9, fontWeight:800, marginTop:5, letterSpacing:0.5 }}>
