@@ -61,7 +61,7 @@ type Phase = "walk" | "d1" | "d2" | "pick" | "d3" | "role_pick" | "d4" | "d5"
            | "lia_d1"  | "lia_d2"  | "lia_d3"  | "lia_d4"  | "lia_d5"  | "lia_done"
            | "jess_path_d1" | "jess_path_d2"
            | "prof2_d1" | "prof2_d2" | "prof2_d3" | "prof2_d4"
-           | "scripted_t1" | "scripted_t2" | "scripted_throw" | "scripted_caught"
+           | "scripted_t1" | "scripted_t2" | "scripted_set" | "scripted_caught"
            // Ambient "always talkable" idle chats (set no flags, never gate quests)
            | "prof_idle" | "jay_idle" | "maya_idle" | "maya_wait"
            | "ellio_idle" | "lia_idle" | "jess_idle"
@@ -1431,8 +1431,8 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
       lia_done: "walk",
       jess_path_d1: "jess_path_d2", jess_path_d2: "walk",
       prof2_d1: "prof2_d2", prof2_d2: "prof2_d3", prof2_d3: "prof2_d4", prof2_d4: "walk",
-      scripted_t1: "scripted_t2", scripted_t2: "scripted_throw",
-      scripted_throw: "scripted_caught", scripted_caught: "walk",
+      scripted_t1: "scripted_t2", scripted_t2: "scripted_set",
+      scripted_set: "scripted_caught", scripted_caught: "walk",
       // Ambient idle chats just close (no flags touched).
       prof_idle: "walk", jay_idle: "walk", maya_idle: "walk", maya_wait: "walk",
       ellio_idle: "walk", lia_idle: "walk", jess_idle: "walk",
@@ -1524,7 +1524,7 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
     prof2_d4: "Go to it. Slowly. I will watch from here. If it is what I believe it is, it will not fight you. It will test you. Trust the moment.",
     scripted_t1: "The Wyvrunt is still. Watching you. Its tail-flame ripples but it does not strike. PROF: \"Don't move yet. Let it read you.\"",
     scripted_t2: "Its eyes soften — curiosity replacing caution. The yin-yang sigils on its scales flicker brighter. PROF: \"Now. The shell. It is ready.\"",
-    scripted_throw: "You raise the Obsidianeye Realm Shell. Wyvrunt tilts its head — and waits.",
+    scripted_set: "You set the Obsidianeye Realm Shell open before it. Wyvrunt tilts its head — and waits.",
     scripted_caught: "The shell hums, drinks the light, and seals shut. Wyvrunt ☯ chose you. PROF: \"...Incredible. It bonded on the first try.\"",
     // The lab role-pick uses a custom modal, not this dialog strip.
     role_pick: "",
@@ -1622,9 +1622,9 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
     const returnX = worldPos.current.x;
     const returnY = worldPos.current.y;
 
-    // Shell recovery: thrown shells aren't destroyed, just emptied. Recover all except
+    // Shell recovery: set shells aren't destroyed, just emptied. Recover all except
     // the one consumed in the bond (if caught).
-    const thrown   = result.shellsThrown;
+    const thrown   = result.shellsSet;
     const lostBond = result.kind === "caught" ? Math.min(1, thrown) : 0;
     const recovered = Math.max(0, thrown - lostBond);
     if (recovered > 0) setShellCount(c => c + recovered);
@@ -2730,7 +2730,7 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
         )}
 
         {/* ── SCRIPTED WYVRUNT CATCH ───────────────────────────────────── */}
-        {(phase === "scripted_t1" || phase === "scripted_t2" || phase === "scripted_throw" || phase === "scripted_caught") && (
+        {(phase === "scripted_t1" || phase === "scripted_t2" || phase === "scripted_set" || phase === "scripted_caught") && (
           <>
             {/* Floating Wyvrunt above the dialog */}
             <div style={{
@@ -2744,7 +2744,7 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
                 style={{
                   width:140, height:140, objectFit:"contain",
                   filter:"drop-shadow(0 0 16px rgba(255,200,80,0.75)) drop-shadow(0 0 6px rgba(255,255,255,0.6))",
-                  animation: phase === "scripted_throw" ? "pulse 0.6s ease-in-out infinite" : "pulse 1.8s ease-in-out infinite",
+                  animation: phase === "scripted_set" ? "pulse 0.6s ease-in-out infinite" : "pulse 1.8s ease-in-out infinite",
                 }}
               />
               <div style={{
@@ -2757,8 +2757,8 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
               </div>
             </div>
 
-            {/* Catch flash overlay during throw / caught */}
-            {(phase === "scripted_throw" || phase === "scripted_caught") && (
+            {/* Catch flash overlay during set / caught */}
+            {(phase === "scripted_set" || phase === "scripted_caught") && (
               <div style={{
                 position:"absolute", inset:0, zIndex:24, pointerEvents:"none",
                 background: phase === "scripted_caught"
@@ -2791,7 +2791,7 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
               <div style={{ display:"flex", justifyContent:"flex-end" }}>
                 <button
                   onClick={() => {
-                    if (phase === "scripted_throw") {
+                    if (phase === "scripted_set") {
                       window.setTimeout(() => setPhase("scripted_caught"), 650);
                     } else if (phase === "scripted_caught") {
                       setWyvruntCaught(true);
@@ -2820,7 +2820,7 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
                     cursor:"pointer",
                   }}
                 >{
-                  phase === "scripted_throw" ? "Throw Obsidianeye Shell ☯"
+                  phase === "scripted_set" ? "Set Obsidianeye Shell ☯"
                   : phase === "scripted_caught" ? "OK"
                   : "Next ▶"
                 }</button>

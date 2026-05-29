@@ -47,11 +47,13 @@ const RARITY_LABEL: Record<MonRarity, string> = {
 };
 
 type Outcome = "trap" | "curious" | "critical" | "perfect";
+// Tayanari are never thrown at — per the Elders' lore they "can only be bonded".
+// A Realm Shell is SET open before the wild; bonding succeeds if it steps in.
 const SHELL_OUTCOMES: { kind: Outcome; weight: number; pct: number; flavor: string }[] = [
-  { kind: "trap",     weight: 55, pct: 0.74, flavor: "You set it down — the shell sits open like a trap." },
-  { kind: "curious",  weight: 30, pct: 0.82, flavor: "You toss the shell near it. Curiosity gets the better of it…" },
-  { kind: "critical", weight: 12, pct: 0.91, flavor: "Critical! The shell lands right beside it." },
-  { kind: "perfect",  weight:  3, pct: 1.00, flavor: "Perfect! The shell lands at its feet." },
+  { kind: "trap",     weight: 55, pct: 0.74, flavor: "You set the shell open before it, like a waiting hollow." },
+  { kind: "curious",  weight: 30, pct: 0.82, flavor: "You set the shell near it. Curiosity gets the better of it…" },
+  { kind: "critical", weight: 12, pct: 0.91, flavor: "Critical placement! The shell settles right beside it." },
+  { kind: "perfect",  weight:  3, pct: 1.00, flavor: "Perfect! The shell settles open at its feet." },
 ];
 
 function rollOutcome(hpFrac: number): typeof SHELL_OUTCOMES[number] {
@@ -73,10 +75,10 @@ function rollOutcome(hpFrac: number): typeof SHELL_OUTCOMES[number] {
 }
 
 export type BattleResult =
-  | { kind: "caught";  mon: MonSpec; shellsThrown: number; xpGained: number }
-  | { kind: "fled";    shellsThrown: number }
-  | { kind: "fainted"; shellsThrown: number }
-  | { kind: "ko";      mon: MonSpec; shellsThrown: number; xpGained: number };
+  | { kind: "caught";  mon: MonSpec; shellsSet: number; xpGained: number }
+  | { kind: "fled";    shellsSet: number }
+  | { kind: "fainted"; shellsSet: number }
+  | { kind: "ko";      mon: MonSpec; shellsSet: number; xpGained: number };
 
 export type StarterStats = { hp: number; atk: number; def: number; spd: number };
 
@@ -90,6 +92,13 @@ type Props = {
   /** Role boon: capture odds multiplier (Hopeful path raises it). Defaults to 1. */
   catchMult?: number;
   shellsCount: number;
+  /** Opponent kind. A "keeper" (trainer) battle pits you against another Keeper's
+   *  already-bonded Tayanari — it CANNOT be bonded (no shell), and you cannot flee. */
+  opponentKind?: "wild" | "keeper";
+  /** Display name for a Keeper opponent (e.g. "Keeper Rowan"). */
+  keeperName?: string;
+  /** Sprite for the opposing Keeper (faces west). Defaults to Rowan's side art. */
+  keeperImg?: string;
   onConsumeShell: () => void;
   onConsumeRune: () => void;
   onEnd: (r: BattleResult) => void;
@@ -108,12 +117,17 @@ const BTN_BG_HI = "linear-gradient(180deg, rgba(90,62,30,0.96), rgba(56,36,16,0.
 
 export function BattleScene({
   wild, starter, starterLevel, starterStats, hasResonanceStone, healingRuneEquipped,
-  catchMult = 1, shellsCount, onConsumeShell, onConsumeRune, onEnd,
+  catchMult = 1, shellsCount,
+  opponentKind = "wild", keeperName = "Keeper", keeperImg = "/__mockup/images/rowan_side_1.png",
+  onConsumeShell, onConsumeRune, onEnd,
 }: Props) {
+  const isKeeper = opponentKind === "keeper";
   const playerMaxHp = starterStats.hp;
   const [playerHp, setPlayerHp]   = useState(playerMaxHp);
   const [wildHp,   setWildHp]     = useState(wild.maxHp);
-  const [log,      setLog]        = useState<string>(`A wild ${wild.name} appears!`);
+  const [log,      setLog]        = useState<string>(
+    isKeeper ? `${keeperName} sends out ${wild.name}!` : `A wild ${wild.name} appears!`,
+  );
   const [busy,     setBusy]       = useState(true);
   const [menu,     setMenu]       = useState<Menu>("root");
   const [healCd,   setHealCd]     = useState(0);              // turns remaining
@@ -121,26 +135,32 @@ export function BattleScene({
   const [resBar,   setResBar]     = useState(0);              // 0..15
   const [intro,    setIntro]      = useState(true);
   const [shake,    setShake]      = useState<"player" | "wild" | null>(null);
-  const [shellsThrown, setShellsThrown] = useState(0);
-  const shellsThrownRef = useRef(0);
+  const [shellsSet, setShellsSet] = useState(0);
+  const shellsSetRef = useRef(0);
   const tRef = useRef<number[]>([]);
 
   // ── FX layer state ────────────────────────────────────────────────────
   type AttackFx = { from: "player" | "wild"; color: string; id: number };
   type DmgFx    = { at: "player" | "wild"; value: number; crit?: boolean; id: number };
-  type ShellFx  = { phase: "throw" | "wobble" | "caught" | "break"; id: number };
+  type ShellFx  = { phase: "set" | "wobble" | "caught" | "break"; id: number };
   type AuxFx    = { kind: "heal" | "rune" | "resonate" | "feint";
                     color?: string; at?: "player" | "wild"; id: number };
   const [attackFx, setAttackFx] = useState<AttackFx | null>(null);
   const [dmgFx,    setDmgFx]    = useState<DmgFx    | null>(null);
   const [shellFx,  setShellFx]  = useState<ShellFx  | null>(null);
   const [auxFx,    setAuxFx]    = useState<AuxFx    | null>(null);
+  // Summon bloom at battle start (plays once during the intro window).
+  const [summon,   setSummon]   = useState(true);
+  // Quick dodge state for the wild when it feints a strike.
+  const [feinting, setFeinting] = useState(false);
   const fxIdRef = useRef(1);
   const nextFxId = () => ++fxIdRef.current;
 
   useEffect(() => {
     const t1 = window.setTimeout(() => { setIntro(false); setBusy(false); }, 1100);
-    tRef.current.push(t1);
+    // Summon bloom lingers a touch past the intro float, then clears.
+    const t2 = window.setTimeout(() => setSummon(false), 1300);
+    tRef.current.push(t1, t2);
     return () => { tRef.current.forEach(clearTimeout); };
   }, []);
 
@@ -198,7 +218,7 @@ export function BattleScene({
           if (next === 0) {
             later(() => {
               setLog(`${starter.name} fainted…`);
-              later(() => onEnd({ kind: "fainted", shellsThrown: shellsThrownRef.current }), 900);
+              later(() => onEnd({ kind: "fainted", shellsSet: shellsSetRef.current }), 900);
             }, 700);
           } else {
             later(() => {
@@ -227,9 +247,11 @@ export function BattleScene({
         if (next === 0) {
           const xp = xpFor(wild, false);
           later(() => {
-            setLog(`${wild.name} fainted! ${starter.name} gains ${xp} XP.`);
+            setLog(isKeeper
+              ? `${wild.name} is defeated! You bested ${keeperName}. (+${xp} XP)`
+              : `${wild.name} fainted! ${starter.name} gains ${xp} XP.`);
             setMenu("ended");
-            later(() => onEnd({ kind: "ko", mon: wild, shellsThrown: shellsThrownRef.current, xpGained: xp }), 1100);
+            later(() => onEnd({ kind: "ko", mon: wild, shellsSet: shellsSetRef.current, xpGained: xp }), 1100);
           }, 650);
         } else {
           wildTurn(afterCb);
@@ -247,6 +269,8 @@ export function BattleScene({
     if (Math.random() < 0.10) {
       later(() => {
         triggerAux("feint", undefined, "wild", 750);
+        setFeinting(true);
+        later(() => setFeinting(false), 600);
         setLog(`${wild.name} feinted away — the strike missed!`);
         later(() => wildTurn(), 650);
       }, 320);
@@ -306,11 +330,13 @@ export function BattleScene({
 
   function onFlee() {
     if (busy) return;
+    // A Keeper's challenge cannot be fled — see it through.
+    if (isKeeper) { setLog(`There's no fleeing ${keeperName}'s challenge!`); return; }
     setBusy(true);
     if (Math.random() < 0.70) {
       setLog("You slip away…");
       setMenu("ended");
-      later(() => onEnd({ kind: "fled", shellsThrown: shellsThrownRef.current }), 800);
+      later(() => onEnd({ kind: "fled", shellsSet: shellsSetRef.current }), 800);
     } else {
       setLog("Couldn't escape!");
       wildTurn();
@@ -319,26 +345,33 @@ export function BattleScene({
 
   function onShell() {
     if (busy) return;
+    // Keeper battles: the opposing Tayanari is already bonded to its Keeper and
+    // can never be bonded to you. Setting a shell is impossible here.
+    if (isKeeper) {
+      setLog(`${wild.name} is already bonded to ${keeperName} — you can't set a shell on it.`);
+      return;
+    }
     if (shellsCount <= 0) { setLog("No Worn Realm Shells left."); return; }
     setMenu("shellConfirm");
   }
 
-  function doShellThrow() {
+  function doShellSet() {
+    if (isKeeper) return; // safety: keeper mons are never bondable
     setMenu("root");
     setBusy(true);
     onConsumeShell();
-    shellsThrownRef.current += 1;
-    setShellsThrown(shellsThrownRef.current);
+    shellsSetRef.current += 1;
+    setShellsSet(shellsSetRef.current);
     const hpFrac = wildHp / wild.maxHp;
     const outcome = rollOutcome(hpFrac);
     setLog(outcome.flavor);
 
     // Capture animation timeline:
-    //  0ms        shell arcs from keeper toward wild        (throw, 600ms)
-    //  600ms      wild absorbed into shell, wobble begins   (wobble, 1500ms)
-    //  2100ms     resolve — caught (green burst) / broke    (700ms)
+    //  0ms        shell is SET open before the wild + blooms   (set, 600ms)
+    //  600ms      wild drawn into the shell, wobble begins      (wobble, 1500ms)
+    //  2100ms     resolve — bond formed (gold burst) / broke    (700ms)
     const seqId = nextFxId();
-    setShellFx({ phase: "throw", id: seqId });
+    setShellFx({ phase: "set", id: seqId });
     later(() => setShellFx({ phase: "wobble", id: seqId }), 600);
 
     later(() => {
@@ -354,7 +387,7 @@ export function BattleScene({
           setShellFx(null);
           later(() => onEnd({
             kind: "caught", mon: wild,
-            shellsThrown: shellsThrownRef.current, xpGained: xp,
+            shellsSet: shellsSetRef.current, xpGained: xp,
           }), 900);
         }, 750);
       } else {
@@ -479,10 +512,25 @@ export function BattleScene({
         <div style={standOn(POS.wild, 26, 3, 80)}>
           <div style={{
             width:"100%", height:"100%",
-            animation: intro ? "introFloat 1.1s ease-out" : (wildShake || "none"),
+            animation: intro
+              ? "introFloat 1.1s ease-out"
+              : feinting ? "feintDodge 0.6s ease-out"
+              : (wildShake || "none"),
             opacity: wildAbsorbed ? 0 : (wildHp === 0 ? 0.3 : 1),
             transition:"opacity 0.45s",
           }}>
+            {/* Feint afterimage — a translucent ghost that lingers where it stood */}
+            {feinting && (
+              <img src={wild.wildImg} alt="" aria-hidden style={{
+                position:"absolute", inset:0,
+                width:"100%", height:"100%", objectFit:"contain",
+                transform: (wildFlip + wildExtra).trim() || "none",
+                transformOrigin:"center center",
+                filter:`drop-shadow(0 0 10px ${typeColor(wild.type)})`,
+                animation:"feintGhost 0.6s ease-out forwards",
+                pointerEvents:"none",
+              }}/>
+            )}
             <img src={wild.wildImg} alt={wild.name} style={{
               width:"100%", height:"100%", objectFit:"contain",
               // Wild faces WEST (left). Native left-facing => no flip; native right => scaleX(-1).
@@ -509,6 +557,23 @@ export function BattleScene({
           </div>
         </div>
 
+        {/* Opposing Keeper — purple ritual circle, facing west (keeper battles only) */}
+        {isKeeper && (
+          <div style={standOn(POS.keeper, 15, 4, 84)}>
+            <div style={{
+              width:"100%", height:"100%",
+              animation: intro ? "introFloatR 1.1s ease-out" : "none",
+            }}>
+              <img src={keeperImg} alt={keeperName} style={{
+                width:"100%", height:"100%", objectFit:"contain",
+                transform:"scaleX(-1)",
+                filter:"drop-shadow(0 6px 8px rgba(0,0,0,0.5))",
+                imageRendering:"auto",
+              }}/>
+            </div>
+          </div>
+        )}
+
         {/* Player Tayanari — red ritual circle, facing east toward the wild */}
         <div style={standOn(POS.mon, 24, 3, 80)}>
           <div style={{
@@ -528,6 +593,15 @@ export function BattleScene({
         </div>
 
         {/* ── FX OVERLAY ──────────────────────────────────────────────── */}
+        {/* Summon bloom — element-tinted glimmer as each mon materializes */}
+        {summon && (
+          <div key="summon" style={{ position:"absolute", inset:0, pointerEvents:"none", zIndex:6 }}>
+            {/* Player Tayanari glimmer (left circle, starter element color) */}
+            <SummonBurst x={POS.mon.x} y={POS.mon.y - 8} color={typeColor(starter.type)} delay={0.15}/>
+            {/* Opponent glimmer (right circle, wild element color) */}
+            <SummonBurst x={POS.wild.x} y={POS.wild.y - 8} color={typeColor(wild.type)} delay={0}/>
+          </div>
+        )}
         {/* Attack streak + impact burst */}
         {attackFx && (
           <div key={`atk-${attackFx.id}`} style={{
@@ -556,6 +630,27 @@ export function BattleScene({
               animation:"burstFx 0.55s ease-out 0.32s forwards",
               mixBlendMode:"screen",
             }}/>
+            {/* Element shards flung from the impact point */}
+            <div style={{
+              position:"absolute",
+              ...(attackFx.from === "player"
+                ? { right:"29%", top:"54%" }
+                : { left:"22%", top:"56%" }),
+              width:0, height:0,
+            }}>
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} style={{
+                  position:"absolute", left:0, top:0,
+                  width:7, height:7, borderRadius:"50%",
+                  background:attackFx.color,
+                  boxShadow:`0 0 8px ${attackFx.color}, 0 0 3px #fff`,
+                  ["--ang" as string]: `${i * 45}deg`,
+                  transform:"rotate(var(--ang)) translateX(0)",
+                  animation:`shard 0.5s ease-out 0.32s forwards`,
+                  mixBlendMode:"screen",
+                }}/>
+              ))}
+            </div>
           </div>
         )}
 
@@ -631,23 +726,55 @@ export function BattleScene({
 
         {/* Shell capture sequence — shell sprite rides absolute positioning */}
         {shellFx && (
-          <div key={`shell-${shellFx.id}-${shellFx.phase}`} style={{
-            position:"absolute",
-            // Lands at wild's centroid for wobble/resolve
-            right:"27%", top:"50%",
-            width:46, height:46,
-            pointerEvents:"none", zIndex:7,
-            animation:
-              shellFx.phase === "throw"  ? "shellArc 0.6s cubic-bezier(.4,.1,.7,1) forwards" :
-              shellFx.phase === "wobble" ? "shellWobble 1.5s ease-in-out" :
-              shellFx.phase === "caught" ? "shellCaught 0.75s ease-out forwards" :
-                                            "shellBreak 0.7s ease-out forwards",
-          }}>
-            <img src="/__mockup/images/weathered-shell.png" alt="" style={{
-              width:"100%", height:"100%", objectFit:"contain",
-              filter:"drop-shadow(0 0 12px rgba(200,160,90,0.85))",
-            }}/>
-          </div>
+          <>
+            {/* Bonding bloom — element light pulses from the set shell as it opens */}
+            {(shellFx.phase === "set" || shellFx.phase === "wobble") && (
+              <div key={`bloom-${shellFx.id}`} style={{
+                position:"absolute", right:"27%", top:"50%",
+                width:120, height:120, borderRadius:"50%",
+                transform:"translate(50%,-50%) scale(0)",
+                background:`radial-gradient(circle, ${typeColor(wild.type)}cc 0%, ${typeColor(wild.type)}33 45%, transparent 72%)`,
+                pointerEvents:"none", zIndex:6,
+                animation:"shellBloom 1.4s ease-out 0.4s forwards",
+                mixBlendMode:"screen",
+              }}/>
+            )}
+            <div key={`shell-${shellFx.id}-${shellFx.phase}`} style={{
+              position:"absolute",
+              // Set down at the wild's centroid for set/wobble/resolve
+              right:"27%", top:"50%",
+              width:46, height:46,
+              pointerEvents:"none", zIndex:7,
+              animation:
+                shellFx.phase === "set"    ? "shellSet 0.6s cubic-bezier(.3,.7,.4,1) forwards" :
+                shellFx.phase === "wobble" ? "shellWobble 1.5s ease-in-out" :
+                shellFx.phase === "caught" ? "shellCaught 0.75s ease-out forwards" :
+                                              "shellBreak 0.7s ease-out forwards",
+            }}>
+              <img src="/__mockup/images/weathered-shell.png" alt="" style={{
+                width:"100%", height:"100%", objectFit:"contain",
+                filter:"drop-shadow(0 0 12px rgba(200,160,90,0.85))",
+              }}/>
+            </div>
+            {/* Bond-formed sparkles rise on a successful catch */}
+            {shellFx.phase === "caught" && (
+              <div key={`spark-${shellFx.id}`} style={{
+                position:"absolute", right:"27%", top:"50%",
+                width:0, height:0, pointerEvents:"none", zIndex:8,
+              }}>
+                {Array.from({ length: 10 }).map((_, i) => (
+                  <div key={i} style={{
+                    position:"absolute", left:0, top:0,
+                    width:6, height:6, borderRadius:"50%",
+                    background:"#ffe9a0",
+                    boxShadow:"0 0 8px #ffd060, 0 0 3px #fff",
+                    ["--sx" as string]: `${(i - 5) * 9}px`,
+                    animation:`bondSpark 0.75s ease-out ${i * 0.03}s forwards`,
+                  }}/>
+                ))}
+              </div>
+            )}
+          </>
         )}
 
         {/* Resonance bar (mini, above HP plates) */}
@@ -697,8 +824,8 @@ export function BattleScene({
 
         {menu === "shellConfirm" ? (
           <div style={{ display:"flex", gap:6, marginTop:8 }}>
-            <button onClick={doShellThrow} style={confirmBtn("#4a8a4a")}>
-              Throw Shell ({shellsCount})
+            <button onClick={doShellSet} style={confirmBtn("#4a8a4a")}>
+              Set Shell ({shellsCount})
             </button>
             <button onClick={() => setMenu("root")} style={confirmBtn("#7a3a3a")}>
               Cancel
@@ -712,10 +839,10 @@ export function BattleScene({
           }}>
             <BattleBtn label="Fight"    sub="atk"           disabled={busy} onClick={onFight}/>
             <BattleBtn label="Resonate" sub={hasResonanceStone ? `${resBar}/15` : "locked"} disabled={busy || !hasResonanceStone || resBar < 15} onClick={onResonate}/>
-            <BattleBtn label="Shell"    sub={`×${shellsCount}`} disabled={busy || shellsCount <= 0} onClick={onShell}/>
+            <BattleBtn label="Set Shell" sub={isKeeper ? "bonded" : `×${shellsCount}`} disabled={busy || isKeeper || shellsCount <= 0} onClick={onShell}/>
             <BattleBtn label="Heal"     sub={healCd > 0 ? `CD ${healCd}` : "50%"} disabled={busy || healCd > 0} onClick={onHeal}/>
             <BattleBtn label="Rune"     sub={healingRuneEquipped ? `×${runeUses}` : "—"} disabled={busy || !healingRuneEquipped || runeUses <= 0} onClick={onRune}/>
-            <BattleBtn label="Flee"     sub="70%"           disabled={busy} onClick={onFlee}/>
+            <BattleBtn label="Flee"     sub={isKeeper ? "locked" : "70%"} disabled={busy || isKeeper} onClick={onFlee}/>
             <BattleBtn label="Bag"      sub="soon"          disabled placeholder onClick={() => {}}/>
             <BattleBtn label="—"        sub=""              disabled placeholder onClick={() => {}}/>
           </div>
@@ -769,11 +896,54 @@ export function BattleScene({
           100% { transform: translateY(-28px) scale(1);    opacity: 0; }
         }
 
-        /* Capture timeline */
-        @keyframes shellArc {
-          0%   { transform: translate(-260px, 80px) scale(0.6) rotate(-360deg); opacity: 0; }
+        /* Mon entry (right side) + summon glimmer */
+        @keyframes introFloatR { 0%{transform:translateX(60px) translateY(-20px);opacity:0} 100%{transform:translate(0,0);opacity:1} }
+        @keyframes summonRing {
+          0%   { transform: translate(-50%,-50%) scale(0.1); opacity: 0; }
+          25%  { opacity: 1; }
+          100% { transform: translate(-50%,-50%) scale(1.8); opacity: 0; }
+        }
+        @keyframes summonCore {
+          0%   { transform: translate(-50%,-50%) scale(0); opacity: 0; }
+          30%  { transform: translate(-50%,-50%) scale(1.3); opacity: 1; }
+          100% { transform: translate(-50%,-50%) scale(0.4); opacity: 0; }
+        }
+        @keyframes summonSpark {
+          0%   { transform: rotate(var(--ang)) translateY(0) scale(1); opacity: 0; }
+          25%  { opacity: 1; }
+          100% { transform: rotate(var(--ang)) translateY(-44px) scale(0.2); opacity: 0; }
+        }
+
+        /* Element impact shards */
+        @keyframes shard {
+          0%   { transform: rotate(var(--ang)) translateX(0)    scale(1);   opacity: 0; }
           20%  { opacity: 1; }
-          100% { transform: translate(0, 0) scale(1) rotate(0deg);              opacity: 1; }
+          100% { transform: rotate(var(--ang)) translateX(48px) scale(0.2); opacity: 0; }
+        }
+
+        /* Feint dodge + lingering afterimage */
+        @keyframes feintDodge {
+          0%   { transform: translateX(0); }
+          35%  { transform: translateX(26px) translateY(-4px); }
+          70%  { transform: translateX(26px) translateY(-4px); }
+          100% { transform: translateX(0); }
+        }
+        @keyframes feintGhost {
+          0%   { opacity: 0.55; transform: translateX(0); }
+          100% { opacity: 0;    transform: translateX(-14px); }
+        }
+
+        /* Capture timeline — the shell is SET down (descends + places), not thrown */
+        @keyframes shellSet {
+          0%   { transform: translateY(-120px) scale(0.7); opacity: 0; }
+          25%  { opacity: 1; }
+          70%  { transform: translateY(6px)   scale(1.06); }
+          100% { transform: translateY(0)     scale(1);    opacity: 1; }
+        }
+        @keyframes shellBloom {
+          0%   { transform: translate(50%,-50%) scale(0);   opacity: 0; }
+          30%  { transform: translate(50%,-50%) scale(1);   opacity: 0.95; }
+          100% { transform: translate(50%,-50%) scale(1.8); opacity: 0; }
         }
         @keyframes shellWobble {
           0%, 100% { transform: rotate(0deg)   translateY(0); }
@@ -784,8 +954,13 @@ export function BattleScene({
         }
         @keyframes shellCaught {
           0%   { transform: scale(1);                filter: drop-shadow(0 0 8px #fff); }
-          40%  { transform: scale(1.4);              filter: drop-shadow(0 0 36px #80ff80) brightness(2); }
-          100% { transform: scale(0.5) translateY(20px); opacity: 0; filter: drop-shadow(0 0 8px #80ff80); }
+          40%  { transform: scale(1.4);              filter: drop-shadow(0 0 40px #ffd060) brightness(2); }
+          100% { transform: scale(0.5) translateY(20px); opacity: 0; filter: drop-shadow(0 0 8px #ffd060); }
+        }
+        @keyframes bondSpark {
+          0%   { transform: translate(-50%,-50%) translate(var(--sx),0) scale(1); opacity: 0; }
+          25%  { opacity: 1; }
+          100% { transform: translate(-50%,-50%) translate(var(--sx),-52px) scale(0.2); opacity: 0; }
         }
         @keyframes shellBreak {
           0%   { transform: scale(1) rotate(0deg); }
@@ -811,6 +986,46 @@ export function BattleScene({
       boxShadow:"0 2px 8px rgba(0,0,0,0.5)",
     };
   }
+}
+
+// Element-tinted glimmer that blooms where a mon materializes at battle start.
+function SummonBurst({ x, y, color, delay }: { x: number; y: number; color: string; delay: number }) {
+  return (
+    <div style={{ position:"absolute", left:`${x}%`, top:`${y}%`, width:0, height:0 }}>
+      {/* Expanding ring */}
+      <div style={{
+        position:"absolute", left:0, top:0,
+        width:90, height:90, borderRadius:"50%",
+        border:`3px solid ${color}`,
+        boxShadow:`0 0 16px ${color}`,
+        transform:"translate(-50%,-50%) scale(0.1)",
+        animation:`summonRing 0.9s ease-out ${delay}s forwards`,
+        mixBlendMode:"screen",
+      }}/>
+      {/* Soft core flash */}
+      <div style={{
+        position:"absolute", left:0, top:0,
+        width:70, height:70, borderRadius:"50%",
+        background:`radial-gradient(circle, #ffffff 0%, ${color} 40%, transparent 72%)`,
+        transform:"translate(-50%,-50%) scale(0)",
+        animation:`summonCore 0.9s ease-out ${delay}s forwards`,
+        mixBlendMode:"screen",
+      }}/>
+      {/* Rising sparkles */}
+      {Array.from({ length: 7 }).map((_, i) => (
+        <div key={i} style={{
+          position:"absolute", left:0, top:0,
+          width:6, height:6, borderRadius:"50%",
+          background:color,
+          boxShadow:`0 0 8px ${color}, 0 0 3px #fff`,
+          ["--ang" as string]: `${(i - 3) * 18}deg`,
+          transform:"rotate(var(--ang)) translateY(0)",
+          animation:`summonSpark 0.95s ease-out ${delay + i * 0.04}s forwards`,
+          mixBlendMode:"screen",
+        }}/>
+      ))}
+    </div>
+  );
 }
 
 function HpBar({ hp, max }: { hp: number; max: number }) {
