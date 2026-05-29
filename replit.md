@@ -17,7 +17,11 @@ A monster-tamer RPG (Pokémon-style) built entirely in the browser — explore a
 ## Where things live
 
 - Game "Primeria" (monster-tamer RPG): `artifacts/mockup-sandbox/src/components/mockups/walk-demo/`
-  - `GameLauncher.tsx` — title/menu/intro/character-reveal flow → mounts the game (role/path is declared in-game at the lab)
+  - `GameLauncher.tsx` — title/menu/character-reveal/intro flow → mounts the game (role/path is declared in-game at the lab)
+    - **New Game flow**: NEW GAME → `char_reveal` (pick character first) → `beginJourney()` creates save → `intro` (character-tailored Prof. Irwyn speech) → game.
+    - **Characters**: `CHARACTERS` array carries `id`, `name`, `tag`, `sprite`, `desc`, `stats` per char. `CHAR_INTRO_LINES` is a `Record<CharId, string[]>` with 5 character-specific lines each.
+    - **Playable characters**: Kinju (id `"kinju"`, sunlit wanderer — horizon-seeker), Jess (wildheart roamer — instinct/nature), Rowan (seasoned traveler — knowledge/discovery). Image files still use `"kael"` prefix for Kinju (mapped via `CHAR_IMG_KEY` in WalkDemo).
+    - **CHAR_IMG_KEY**: `Record<CharId, string>` in WalkDemo maps `kinju → "kael"` for image lookups until new Kinju sprites ship.
   - `WalkDemo.tsx` — overworld engine (scenes: overworld/home/lab/route1/route2/area3/maya/jay/ellio/lia, movement, doors, NPCs, quests, inventory UI).
     - Area 3 = Westwood Reaches (west of overworld via corridor at y≈290-360). Encounter transition flourish: element-tinted radial burst (`encounterFlash` state + `@keyframes encounterFlash`) fires on disturbance click before the battle fade.
     - `MoveManager` component lets the player rearrange their active 4 moves from the full learned pool in the party tab.

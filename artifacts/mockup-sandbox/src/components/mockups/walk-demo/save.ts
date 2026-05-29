@@ -1,6 +1,6 @@
 import type { MonSpec, StarterStats } from "./BattleScene";
 
-export type CharId = "kael" | "rowan" | "jess";
+export type CharId = "kinju" | "rowan" | "jess";
 
 /**
  * The path a Keeper-hopeful declares before the Elders at the start of their
@@ -153,9 +153,9 @@ export function readSave(): SaveData | null {
     return {
       ts: typeof data.ts === "number" ? data.ts : Date.now(),
       characterId:
-        data.characterId === "rowan" || data.characterId === "jess"
+        data.characterId === "rowan" || data.characterId === "jess" || data.characterId === "kinju"
           ? data.characterId
-          : "kael",
+          : "kinju",
       roleId:
         data.roleId === "hopeful" || data.roleId === "wanderer"
           ? data.roleId
@@ -186,7 +186,7 @@ export function updateParty(party: PartySave): void {
   const cur = readSave();
   writeSave({
     ts: Date.now(),
-    characterId: cur?.characterId ?? "kael",
+    characterId: cur?.characterId ?? "kinju",
     roleId: cur?.roleId ?? "keeper",
     party,
     world: cur?.world ?? null,
@@ -198,7 +198,7 @@ export function updateWorld(world: WorldSave): void {
   const cur = readSave();
   writeSave({
     ts: Date.now(),
-    characterId: cur?.characterId ?? "kael",
+    characterId: cur?.characterId ?? "kinju",
     roleId: cur?.roleId ?? "keeper",
     party: cur?.party ?? null,
     world,
@@ -210,7 +210,7 @@ export function updateRole(roleId: RoleId): void {
   const cur = readSave();
   writeSave({
     ts: Date.now(),
-    characterId: cur?.characterId ?? "kael",
+    characterId: cur?.characterId ?? "kinju",
     roleId,
     party: cur?.party ?? null,
     world: cur?.world ?? null,

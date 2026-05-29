@@ -803,10 +803,12 @@ function dirFrames(c: string): Record<string, string[]> {
 }
 
 const CHAR_FRAMES: Record<CharId, Record<string, string[]>> = {
-  kael:  dirFrames("kael"),
+  kinju: dirFrames("kael"),
   rowan: dirFrames("rowan"),
   jess:  dirFrames("jess"),
 };
+// Maps CharId → actual image filename prefix (kinju reuses "kael" assets until new sprites ship).
+const CHAR_IMG_KEY: Record<CharId, string> = { kinju: "kael", rowan: "rowan", jess: "jess" };
 
 // Wyvrunt follower frame set (Pokémon-Yellow style trailing companion).
 const WYV_FRAMES = dirFrames("wyvrunt");
@@ -850,7 +852,7 @@ const PROF = { x: 350, y: 268 }; // feet position in lab world
 const PARTY_CAP = 6;
 
 // ── Main component ──────────────────────────────────────────────────────────
-export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }: { characterId?: CharId; roleId?: RoleId } = {}) {
+export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" }: { characterId?: CharId; roleId?: RoleId } = {}) {
   // The declared path is now chosen in the lab when you receive your starter, so
   // roleId is live state (the prop is only the initial/resumed value).
   const [roleId, setRoleId] = useState<RoleId>(roleIdProp);
@@ -874,18 +876,18 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
   })();
 
   // Active character's animation frame set (stable for the session).
-  const charFrames = CHAR_FRAMES[characterId] ?? CHAR_FRAMES.kael;
+  const charFrames = CHAR_FRAMES[characterId] ?? CHAR_FRAMES.kinju;
   // Character-specific side sprite for the battle arena (each character has a full sprite set).
-  const heroSideImg = `/__mockup/images/${characterId}_side_1.png`;
+  const heroSideImg = `/__mockup/images/${CHAR_IMG_KEY[characterId]}_side_1.png`;
 
   // ── Role / spawn swap ──────────────────────────────────────────────────────
-  // The spouse waiting at home is whichever of Kael/Jess you are NOT playing
+  // The spouse waiting at home is whichever of Kinju/Jess you are NOT playing
   // (playing Rowan keeps Jess as spouse). Rowan, when not the player, becomes
-  // the professor's disciple in the lab. When you play Rowan, Kael also waits at
-  // home alongside Jess.
-  const partnerId: CharId = characterId === "jess" ? "kael" : "jess";
-  const partnerName  = partnerId === "kael" ? "Kael" : "Jess";
-  const partnerSprite = `/__mockup/images/${partnerId}_front_idle.png`;
+  // the professor's disciple in the lab. When you play Rowan, Kinju also waits
+  // at home alongside Jess.
+  const partnerId: CharId = characterId === "jess" ? "kinju" : "jess";
+  const partnerName  = partnerId === "kinju" ? "Kinju" : "Jess";
+  const partnerSprite = `/__mockup/images/${CHAR_IMG_KEY[partnerId]}_front_idle.png`;
   const rowanInLab    = characterId !== "rowan";   // Rowan is the lab disciple
   const kaelAtHome    = characterId === "rowan";    // extra figure at home
 
@@ -1899,8 +1901,16 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
   // ── Dialog lines (d3 is dynamic) ─────────────────────────────────────────
   const LINES: Record<Phase, string> = {
     walk: "",
-    d1: "Ah — right on time. I knew today would be the day. I've had your partner selection ready since last week, if I'm honest. No more waiting — it is finally time. Choose your first Tayanari.",
-    d2: "The bond between a Keeper and their Tayanari deepens through trust, exploration, and challenge. Treat them well and they will never let you down. Now — who is it going to be?",
+    d1: characterId === "kinju"
+      ? "Right on time — I had a feeling about today. Your selection has been ready a while. No ceremony needed. The horizon is calling, after all. Choose your first Tayanari."
+      : characterId === "jess"
+      ? "There you are. Something shifted the moment you walked in — I don't think that's my imagination. Your selection has been waiting. Let your instincts guide you. Choose your first Tayanari."
+      : "Ah — precisely on schedule. Your selection has been prepared with care. Take a moment to consider each option. Though knowing you, you've already thought this through. Choose your first Tayanari.",
+    d2: characterId === "kinju"
+      ? "The bond between a Keeper and their Tayanari grows through every mile you share together. There are no wrong choices here — only the one that calls to you. Who is it going to be?"
+      : characterId === "jess"
+      ? "Trust what you feel right now. The bond between a Keeper and their Tayanari runs deeper than strategy. Your Tayanari will know your heart before they know your name. Now — who is it going to be?"
+      : "The bond between a Keeper and their Tayanari deepens through trust, exploration, and challenge. Treat them well and they will never let you down. Consider each one carefully. Who is it going to be?",
     pick: "",
     d3: starter ? `${starter.name}! A wonderful choice. I can already sense a connection forming. Treat them well — they will never let you down.` : "",
     d4: "Head north past the village gate through Route 1 to the Wild Area. Wild Tayanari roam freely there. It is the best place for a new Keeper to earn their first bonds.",
@@ -2557,13 +2567,13 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
                     color:"#f8d8b0", fontSize:8, fontWeight:800,
                     letterSpacing:1, pointerEvents:"none",
                     textShadow:"0 0 4px #000,0 0 8px #000",
-                  }}>KAEL</div>
+                  }}>KINJU</div>
                 </>
               )}
             </>
           )}
 
-          {/* Lia NPC + Cindrax inside Lia's home */}
+          {/* Lia NPC + Draco (her nicknamed Wyvburn) inside Lia's home */}
           {scene === "lia" && (
             <>
               <canvas ref={liaCanvasRef} style={{
@@ -2579,10 +2589,10 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
                 letterSpacing:1, pointerEvents:"none",
                 textShadow:"0 0 4px #000,0 0 8px #000",
               }}>LIA</div>
-              {/* Cindrax — static image beside Lia */}
+              {/* Draco — Lia's nicknamed Wyvburn, resting beside her */}
               <img
                 src="/__mockup/images/cindrax.png"
-                alt="Cindrax"
+                alt="Draco"
                 style={{
                   position:"absolute",
                   left: LIA_POS.x + 55,
@@ -2600,7 +2610,7 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
                 color:"#ff8855", fontSize:7, fontWeight:800,
                 letterSpacing:1, pointerEvents:"none",
                 textShadow:"0 0 4px #000,0 0 8px #000",
-              }}>CINDRAX</div>
+              }}>DRACO</div>
             </>
           )}
 

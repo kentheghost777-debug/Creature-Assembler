@@ -4,26 +4,57 @@ import { type CharId, type RoleId, hasSave, readSave, startNewSave } from "./sav
 
 type Screen = "studio" | "dedication" | "title" | "menu" | "intro" | "char_reveal" | "game";
 
-const CHARACTERS: { id: CharId; name: string; tag: string; sprite: string }[] = [
-  { id: "kael",  name: "Kael",  tag: "Sunlit wanderer",   sprite: "/__mockup/images/kael_front_idle.png" },
-  { id: "jess",  name: "Jess",  tag: "Wildheart roamer",  sprite: "/__mockup/images/jess_front_idle.png" },
-  { id: "rowan", name: "Rowan", tag: "Seasoned traveler", sprite: "/__mockup/images/rowan_front_idle.png" },
+const CHARACTERS: { id: CharId; name: string; tag: string; sprite: string; desc: string; stats: [string, string][] }[] = [
+  {
+    id: "kinju", name: "Kinju", tag: "Sunlit wanderer",
+    sprite: "/__mockup/images/kael_front_idle.png",
+    desc: "Born curious. Always at the edge of the known. When the world finally called your name — there was never any doubt.",
+    stats: [["ORIGIN", "Primeria Village"], ["HEART", "Wanderlust"], ["CALL", "Horizon"]],
+  },
+  {
+    id: "jess", name: "Jess", tag: "Wildheart roamer",
+    sprite: "/__mockup/images/jess_front_idle.png",
+    desc: "Born to the living world. You speak in the language of creatures, silence, and instinct — without ever saying a word.",
+    stats: [["ORIGIN", "Primeria Village"], ["HEART", "Wildborn"], ["CALL", "The Living Land"]],
+  },
+  {
+    id: "rowan", name: "Rowan", tag: "Seasoned traveler",
+    sprite: "/__mockup/images/rowan_front_idle.png",
+    desc: "Born to understand. Every question leads to the next. For you, the Trial is not a beginning — it is a continuation.",
+    stats: [["ORIGIN", "Primeria Village"], ["HEART", "Discovery"], ["CALL", "The Unknown"]],
+  },
 ];
 
-const INTRO_LINES = [
-  "Come in, come in — I've been expecting you since dawn. Forgive an old scholar his nerves; I don't read this scroll often. Most years it stays sealed in the Elders' hall. This year... it has your name on it.",
-  "You know our world. Primeria — its mountains breathe with elemental force, its rivers run with memory, its wildlands sprawl past every map ever drawn. And everywhere within it live the Tayanari: creatures of pure elemental essence, born of the land itself. They cannot be owned. They cannot be commanded. They can only be bonded.",
-  "Once a generation, each village is asked to put a name forward — to send one of its own to face the Trial of the Elders. It is not a punishment, child. It is the highest honor we have. The whole village knew today was the day. And when we gathered to choose... every hand pointed to you.",
-  "I have watched you grow up at the edge of these woods. I have seen how the wild quiets when you pass. So I put your name in the hat myself, and I have never been more certain of anything. The Elders will test your heart, not your strength — and I believe in yours.",
-  "But first, you must declare your path before them — the calling you'll carry through the Trial and beyond. Take a breath. When you're ready, come to the lab. The wild has waited a generation for you. It won't mind a few more minutes.",
-];
+const CHAR_INTRO_LINES: Record<CharId, string[]> = {
+  kinju: [
+    "Come in, come in — I've been expecting you since dawn. There's an energy about you today — well, every day, if I'm honest. But today it feels like the world finally caught up with it. Forgive me a moment's pause; I don't open this scroll often.",
+    "You know our world. Primeria — its mountains breathe with elemental force, its rivers run with memory, its wildlands sprawl past every map ever drawn. And everywhere within it live the Tayanari: creatures of pure elemental essence, born of the land itself. They cannot be owned. They cannot be commanded. They can only be bonded.",
+    "Once a generation, each village is asked to put a name forward — to send one of its own to face the Trial of the Elders. It is the highest honor we have. The whole village knew today was the day. And when we gathered to choose... every hand pointed to you.",
+    "I have watched you wander to the village edge since you were small — eyes always on the horizon, like something out there was calling your name. The Elders don't test strength. They test direction. And yours has never wavered.",
+    "But first, you must declare your path before them — the calling you'll carry through the Trial and beyond. Take a breath. When you're ready, come to the lab. The wild has waited a generation for someone like you. It can wait a few more minutes.",
+  ],
+  jess: [
+    "Come in, come in — I've been expecting you since first light. Even the Tayanari in the back garden have been restless all morning. They feel it too, I think. Something's shifting today, and it has your name on it.",
+    "You know our world. Primeria — its mountains breathe with elemental force, its rivers run with memory, its wildlands sprawl past every map ever drawn. And everywhere within it live the Tayanari: creatures of pure elemental essence, born of the land itself. They cannot be owned. They cannot be commanded. They can only be bonded.",
+    "Once a generation, each village is asked to put a name forward — to send one of its own to face the Trial of the Elders. It is the highest honor we have. The whole village knew today was the day. And when we gathered to choose... the answer came from the heart, not the head.",
+    "I have never seen anyone quiet a Tayanari the way you do — not with commands, but with presence. Some Keepers spend decades learning that. You were born with it. The Elders will feel it the moment you walk in. I am certain of it.",
+    "But first, you must declare your path before them — the calling you'll carry through the Trial and beyond. Take a breath. When you're ready, come to the lab. The wild has waited a long time for you. It won't mind a few more minutes.",
+  ],
+  rowan: [
+    "Come in, come in — punctual as ever. I expected no less. I've had your selection prepared for some time; every day I waited, every day something confirmed it. Today, there is no more waiting. Forgive me — I've been rehearsing this speech for weeks.",
+    "You know our world. Primeria — its mountains breathe with elemental force, its rivers run with memory, its wildlands sprawl past every map ever drawn. And everywhere within it live the Tayanari: creatures of pure elemental essence, born of the land itself. They cannot be owned. They cannot be commanded. They can only be bonded.",
+    "Once a generation, each village is asked to put a name forward — to send one of its own to face the Trial of the Elders. It is the highest honor we have. The whole village knew today was the day. And when we gathered to choose... you had already been studying for it.",
+    "I have watched you work through every scroll in this lab twice over. You ask the questions most Keepers never think to ask. The Elders will not test your strength — they will test your mind, your patience, your purpose. There is no one in this village more ready for that test than you.",
+    "But first, you must declare your path before them — the calling you'll carry through the Trial and beyond. Take a breath. When you're ready, come to the lab. The world has more left to discover than any one person can chart. You will chart more of it than most.",
+  ],
+};
 
 export default function GameLauncher() {
   const [screen, setScreen]       = useState<Screen>("studio");
   const [introPhase, setIntroPhase] = useState(1);
   const [fading, setFading]       = useState(false);
   const [savedGame, setSavedGame] = useState(() => hasSave());
-  const [characterId, setCharacterId] = useState<CharId>("kael");
+  const [characterId, setCharacterId] = useState<CharId>("kinju");
   const [roleId, setRoleId] = useState<RoleId>("keeper");
 
   const fadeTo = useCallback((next: Screen, ms = 380) => {
@@ -56,15 +87,15 @@ export default function GameLauncher() {
   }, [screen, fadeTo]);
 
   const handleNewGame = () => {
-    setCharacterId("kael");
+    setCharacterId("kinju");
     setRoleId("keeper");
     setIntroPhase(1);
-    fadeTo("intro");
+    fadeTo("char_reveal");
   };
 
   const handleContinue = () => {
     const save = readSave();
-    setCharacterId(save?.characterId ?? "kael");
+    setCharacterId(save?.characterId ?? "kinju");
     setRoleId(save?.roleId ?? "keeper");
     fadeTo("game");
   };
@@ -72,14 +103,15 @@ export default function GameLauncher() {
   const beginJourney = () => {
     startNewSave(characterId, roleId);
     setSavedGame(true);
-    fadeTo("game");
+    fadeTo("intro");
   };
 
   const advanceIntro = () => {
-    if (introPhase < INTRO_LINES.length) {
+    const lines = CHAR_INTRO_LINES[characterId] ?? CHAR_INTRO_LINES.kinju;
+    if (introPhase < lines.length) {
       setIntroPhase(p => p + 1);
     } else {
-      fadeTo("char_reveal");
+      fadeTo("game");
     }
   };
 
@@ -424,14 +456,14 @@ export default function GameLauncher() {
                   PROF. IRWYN
                 </div>
                 <div style={{ marginLeft: "auto", color: "#2e2010", fontSize: 8 }}>
-                  {introPhase} / {INTRO_LINES.length}
+                  {introPhase} / {(CHAR_INTRO_LINES[characterId] ?? CHAR_INTRO_LINES.kinju).length}
                 </div>
               </div>
               <p style={{
                 color: "#ddd0b0", fontSize: 12, lineHeight: 1.78,
                 margin: 0, fontWeight: 300,
               }}>
-                {INTRO_LINES[introPhase - 1]}
+                {(CHAR_INTRO_LINES[characterId] ?? CHAR_INTRO_LINES.kinju)[introPhase - 1]}
               </p>
             </div>
           </div>
@@ -444,7 +476,7 @@ export default function GameLauncher() {
           }}>
             {/* Progress dots */}
             <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-              {INTRO_LINES.map((_, i) => (
+              {(CHAR_INTRO_LINES[characterId] ?? CHAR_INTRO_LINES.kinju).map((_, i) => (
                 <div key={i} style={{
                   width: i + 1 === introPhase ? 18 : 6,
                   height: 6, borderRadius: 3,
@@ -464,7 +496,7 @@ export default function GameLauncher() {
                 borderRadius: 8, fontSize: 11, fontWeight: 700,
                 letterSpacing: 1, cursor: "pointer",
               }}
-            >{introPhase < INTRO_LINES.length ? "Next ▶" : "Continue →"}</button>
+            >{introPhase < (CHAR_INTRO_LINES[characterId] ?? CHAR_INTRO_LINES.kinju).length ? "Next ▶" : "Continue →"}</button>
           </div>
         </div>
       )}
@@ -513,17 +545,11 @@ export default function GameLauncher() {
               color: "#c8bca0", fontSize: 11, lineHeight: 1.85,
               fontWeight: 300, maxWidth: 170,
             }}>
-              Born in Primeria.<br />
-              Raised by the land.<br />
-              Called by something greater.
+              {(CHARACTERS.find(c => c.id === characterId) ?? CHARACTERS[0]).desc}
             </div>
 
             <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 7 }}>
-              {[
-                ["ORIGIN", "Primeria Village"],
-                ["CLASS",  "Keeper"],
-                ["REALM",  "Unbound"],
-              ].map(([k, v]) => (
+              {(CHARACTERS.find(c => c.id === characterId) ?? CHARACTERS[0]).stats.map(([k, v]) => (
                 <div key={k} style={{ display: "flex", gap: 10, alignItems: "center" }}>
                   <div style={{ color: "#3a2c14", fontSize: 7.5, letterSpacing: 2, width: 52 }}>{k}</div>
                   <div style={{ color: "#9a7c40", fontSize: 10, fontWeight: 600 }}>{v}</div>
@@ -608,7 +634,7 @@ export default function GameLauncher() {
               />
             ) : (
               <img
-                src={`/__mockup/images/${characterId}_front_idle.png`}
+                src={(CHARACTERS.find(c => c.id === characterId) ?? CHARACTERS[0]).sprite}
                 alt="Your Keeper"
                 style={{
                   height: "74%", objectFit: "contain", objectPosition: "bottom center",
