@@ -1,6 +1,6 @@
 import type { MonSpec, StarterStats } from "./BattleScene";
 
-export type CharId = "kael" | "rowan";
+export type CharId = "kael" | "rowan" | "jess";
 
 export type PartySave = {
   starterId: string | null;
@@ -36,7 +36,10 @@ export function readSave(): SaveData | null {
     const data = JSON.parse(raw) as Partial<SaveData>;
     return {
       ts: typeof data.ts === "number" ? data.ts : Date.now(),
-      characterId: data.characterId === "rowan" ? "rowan" : "kael",
+      characterId:
+        data.characterId === "rowan" || data.characterId === "jess"
+          ? data.characterId
+          : "kael",
       party: data.party ?? null,
     };
   } catch {

@@ -6,7 +6,8 @@ type Screen = "studio" | "dedication" | "title" | "menu" | "intro" | "char_revea
 
 const CHARACTERS: { id: CharId; name: string; tag: string; sprite: string }[] = [
   { id: "kael",  name: "Kael",  tag: "Sunlit wanderer",   sprite: "/__mockup/images/kael_front_idle.png" },
-  { id: "rowan", name: "Rowan", tag: "Seasoned traveler", sprite: "/__mockup/images/stand_front_3d.png" },
+  { id: "jess",  name: "Jess",  tag: "Wildheart roamer",  sprite: "/__mockup/images/jess_front_idle.png" },
+  { id: "rowan", name: "Rowan", tag: "Seasoned traveler", sprite: "/__mockup/images/rowan_front_idle.png" },
 ];
 
 const INTRO_LINES = [
@@ -602,7 +603,7 @@ export default function GameLauncher() {
               />
             ) : (
               <img
-                src="/__mockup/images/kael_front_idle.png"
+                src={`/__mockup/images/${characterId}_front_idle.png`}
                 alt="Your Keeper"
                 style={{
                   height: "74%", objectFit: "contain", objectPosition: "bottom center",

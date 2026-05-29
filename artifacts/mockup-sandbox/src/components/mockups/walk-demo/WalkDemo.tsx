@@ -450,29 +450,32 @@ function loadImg(src: string) {
   return imgCache[src];
 }
 
-// Per-character animation frame sets. Side frames face RIGHT natively; the walk
-// loop mirrors them (flipX) when moving left. "kael" is the blonde default;
-// "rowan" is the original selectable character.
+// Build a full 4-direction frame set for a character. Side frames face RIGHT
+// natively; the walk loop mirrors them (flipX) when moving left. Each direction
+// has a neutral idle plus a 6-frame walk cycle, all sliced from the character's
+// sprite sheet and normalised to a shared bottom-anchored canvas.
+function dirFrames(c: string): Record<string, string[]> {
+  const p = (n: string) => `/__mockup/images/${c}_${n}.png`;
+  const cycle = (dir: string) => [1, 2, 3, 4, 5, 6].map(i => p(`${dir}_${i}`));
+  return {
+    idle:       [p("front_idle")], // shown at game start, facing forward
+    idle_up:    [p("back_idle")],  // stopped, facing away
+    idle_side:  [p("side_idle")],  // stopped, facing side (right; mirrored for left)
+    idle_down:  [p("front_idle")], // stopped, facing forward
+    walk_side:  cycle("side"),
+    walk_up:    cycle("back"),
+    walk_down:  cycle("front"),
+  };
+}
+
 const CHAR_FRAMES: Record<CharId, Record<string, string[]>> = {
-  kael: {
-    idle:       ["/__mockup/images/kael_front_idle.png"], // shown at game start
-    idle_up:    ["/__mockup/images/kael_back_idle.png"],  // stopped, facing away
-    idle_side:  ["/__mockup/images/kael_side_idle.png"],  // stopped, facing side
-    idle_down:  ["/__mockup/images/kael_front_idle.png"], // stopped, facing forward
-    walk_side:  ["/__mockup/images/kael_side_1.png", "/__mockup/images/kael_side_2.png"],
-    walk_up:    ["/__mockup/images/kael_back_1.png", "/__mockup/images/kael_back_2.png"],
-    walk_down:  ["/__mockup/images/kael_front_1.png", "/__mockup/images/kael_front_2.png"],
-  },
-  rowan: {
-    idle:       ["/__mockup/images/stand_front_3d.png"],  // portrait render — shrunk
-    idle_up:    ["/__mockup/images/walk_back_1.png"],
-    idle_side:  ["/__mockup/images/walk_side_1.png"],
-    idle_down:  ["/__mockup/images/walk_idle.png"],
-    walk_side:  ["/__mockup/images/walk_side_1.png", "/__mockup/images/walk_side_2r.png"],
-    walk_up:    ["/__mockup/images/walk_back_1.png", "/__mockup/images/walk_back_2.png"],
-    walk_down:  ["/__mockup/images/walk_idle.png", "/__mockup/images/walk_front_1.png", "/__mockup/images/walk_front_2.png"],
-  },
+  kael:  dirFrames("kael"),
+  rowan: dirFrames("rowan"),
+  jess:  dirFrames("jess"),
 };
+
+// Wyvrunt follower frame set (Pokémon-Yellow style trailing companion).
+const WYV_FRAMES = dirFrames("wyvrunt");
 
 const ALL_FRAME_SRCS: string[] = Object.values(CHAR_FRAMES)
   .flatMap(set => Object.values(set).flat());
@@ -519,6 +522,17 @@ export function WalkDemo({ characterId = "kael" }: { characterId?: CharId } = {}
 
   // Active character's animation frame set (stable for the session).
   const charFrames = CHAR_FRAMES[characterId] ?? CHAR_FRAMES.kael;
+
+  // ── Role / spawn swap ──────────────────────────────────────────────────────
+  // The spouse waiting at home is whichever of Kael/Jess you are NOT playing
+  // (playing Rowan keeps Jess as spouse). Rowan, when not the player, becomes
+  // the professor's disciple in the lab. When you play Rowan, Kael also waits at
+  // home alongside Jess.
+  const partnerId: CharId = characterId === "jess" ? "kael" : "jess";
+  const partnerName  = partnerId === "kael" ? "Kael" : "Jess";
+  const partnerSprite = `/__mockup/images/${partnerId}_front_idle.png`;
+  const rowanInLab    = characterId !== "rowan";   // Rowan is the lab disciple
+  const kaelAtHome    = characterId === "rowan";    // extra figure at home
 
   const [scene,       setScene]       = useState<Scene>("home");
   const [phase,       setPhase]       = useState<Phase>("walk");
@@ -643,6 +657,19 @@ export function WalkDemo({ characterId = "kael" }: { characterId?: CharId } = {}
   const jayPortraitRef     = useRef<HTMLCanvasElement>(null);
   const jessCanvasRef      = useRef<HTMLCanvasElement>(null);
   const jessPortraitRef    = useRef<HTMLCanvasElement>(null);
+  const rowanLabCanvasRef  = useRef<HTMLCanvasElement>(null);
+  const kaelHomeCanvasRef  = useRef<HTMLCanvasElement>(null);
+
+  // ── Wyvrunt follower state ─────────────────────────────────────────────────
+  const wyvFollowRef    = useRef<HTMLCanvasElement>(null);
+  const breadcrumbsRef  = useRef<{ x: number; y: number }[]>([]);
+  const followPosRef    = useRef({ x: 0, y: 0 });
+  const followAnimRef   = useRef("idle_down");
+  const followFrameRef  = useRef(0);
+  const followFlipRef   = useRef(false);
+  const followLastDirRef= useRef("idle_down");
+  const followLastSrc   = useRef("");
+  const followLastFlip  = useRef(false);
   const ellioCanvasRef     = useRef<HTMLCanvasElement>(null);
   const ellioPortraitRef   = useRef<HTMLCanvasElement>(null);
   const liaCanvasRef       = useRef<HTMLCanvasElement>(null);
@@ -704,6 +731,7 @@ export function WalkDemo({ characterId = "kael" }: { characterId?: CharId } = {}
       ...STARTERS.map(s => s.img),
       ...BESTIARY.flatMap(m => [m.wildImg, m.playerImg]),
       WYVRUNT_SPEC.wildImg,
+      ...Object.values(WYV_FRAMES).flat(), // follower frames
       "/__mockup/images/route2-map.png",
     ].forEach(loadImg);
   }, []);
@@ -822,7 +850,7 @@ export function WalkDemo({ characterId = "kael" }: { characterId?: CharId } = {}
   // Draw Jess world sprite inside player home
   useEffect(() => {
     if (scene !== "home") return;
-    const src = "/__mockup/images/jess-sprite.png";
+    const src = partnerSprite;
     const tryDraw = () => {
       const c = jessCanvasRef.current;
       if (!c) return;
@@ -834,7 +862,7 @@ export function WalkDemo({ characterId = "kael" }: { characterId?: CharId } = {}
   // Draw Jess portrait in dialog box
   useEffect(() => {
     if (!phase.startsWith("jess_")) return;
-    const src = "/__mockup/images/jess-sprite.png";
+    const src = partnerSprite;
     const tryDraw = () => {
       const c = jessPortraitRef.current;
       if (!c) return;
@@ -842,6 +870,30 @@ export function WalkDemo({ characterId = "kael" }: { characterId?: CharId } = {}
     };
     tryDraw();
   }, [phase]);
+
+  // Draw Rowan as the professor's disciple in the lab (unless you ARE Rowan)
+  useEffect(() => {
+    if (scene !== "lab" || !rowanInLab) return;
+    const tryDraw = () => {
+      const c = rowanLabCanvasRef.current;
+      if (!c) return;
+      if (!drawSprite(c, "/__mockup/images/rowan_front_idle.png", false, 78))
+        setTimeout(tryDraw, 150);
+    };
+    tryDraw();
+  }, [scene, rowanInLab]);
+
+  // Draw Kael also waiting at home when you are playing Rowan
+  useEffect(() => {
+    if (scene !== "home" || !kaelAtHome) return;
+    const tryDraw = () => {
+      const c = kaelHomeCanvasRef.current;
+      if (!c) return;
+      if (!drawSprite(c, "/__mockup/images/kael_front_idle.png", false, 82))
+        setTimeout(tryDraw, 150);
+    };
+    tryDraw();
+  }, [scene, kaelAtHome]);
 
   // Draw Lia world sprite inside Lia's home
   useEffect(() => {
@@ -894,7 +946,7 @@ export function WalkDemo({ characterId = "kael" }: { characterId?: CharId } = {}
   // Draw wife on the town path (overworld) only while intercepting
   useEffect(() => {
     if (scene !== "overworld" || !wifeOnPath) return;
-    const src = "/__mockup/images/jess-sprite.png";
+    const src = partnerSprite;
     const tryDraw = () => {
       const c = jessPathCanvasRef.current;
       if (!c) return;
@@ -906,7 +958,7 @@ export function WalkDemo({ characterId = "kael" }: { characterId?: CharId } = {}
   // Draw wife portrait for jess_path_ dialogue phases
   useEffect(() => {
     if (!phase.startsWith("jess_path_")) return;
-    const src = "/__mockup/images/jess-sprite.png";
+    const src = partnerSprite;
     const tryDraw = () => {
       const c = jessPathPortraitRef.current;
       if (!c) return;
@@ -928,15 +980,29 @@ export function WalkDemo({ characterId = "kael" }: { characterId?: CharId } = {}
     if (ok) { lastSrc.current = src; lastFlip.current = flipRef.current; }
   }, [charFrames]);
 
-  // Frame ticker
+  // Wyvrunt follower sprite redraw (own animation state, independent of player)
+  const followRedraw = useCallback(() => {
+    const canvas = wyvFollowRef.current;
+    if (!canvas) return;
+    const frames = WYV_FRAMES[followAnimRef.current] || WYV_FRAMES.idle_down;
+    const src    = frames[followFrameRef.current] || frames[0];
+    if (src === followLastSrc.current && followFlipRef.current === followLastFlip.current) return;
+    const ok = drawSprite(canvas, src, followFlipRef.current, 78);
+    if (ok) { followLastSrc.current = src; followLastFlip.current = followFlipRef.current; }
+  }, []);
+
+  // Frame ticker (player + follower share the cadence)
   useEffect(() => {
     const id = setInterval(() => {
       const frames = charFrames[animRef.current] || charFrames.idle;
       frameRef.current = (frameRef.current + 1) % frames.length;
       redraw();
+      const fframes = WYV_FRAMES[followAnimRef.current] || WYV_FRAMES.idle_down;
+      followFrameRef.current = (followFrameRef.current + 1) % fframes.length;
+      followRedraw();
     }, 145);
     return () => clearInterval(id);
-  }, [redraw]);
+  }, [redraw, followRedraw]);
 
   // Scene transition
   const transitionTo = useCallback((next: Scene, sx: number, sy: number) => {
@@ -948,6 +1014,12 @@ export function WalkDemo({ characterId = "kael" }: { characterId?: CharId } = {}
       animRef.current  = "idle";
       frameRef.current = 0;
       lastSrc.current  = "";
+      // Reset the follower so Wyvrunt re-spawns beside the player in the new scene
+      breadcrumbsRef.current = [];
+      followPosRef.current   = { x: sx, y: sy + 24 };
+      followAnimRef.current  = "idle_down";
+      followLastDirRef.current = "idle_down";
+      followLastSrc.current  = "";
       sceneRef.current = next;
       setScene(next);
       setTimeout(() => { fadingRef.current = false; setFading(false); }, 350);
@@ -1071,6 +1143,47 @@ export function WalkDemo({ characterId = "kael" }: { characterId?: CharId } = {}
         if (wd)     wd.style.transform = `scale(${ZOOM}) translate(${-cam.current.x}px,${-cam.current.y}px)`;
         if (canvas) { canvas.style.left = `${px - spriteW/2}px`; canvas.style.top = `${py - topOff}px`; }
         if (shadow) { shadow.style.left = `${px - 18}px`;          shadow.style.top  = `${py + 2}px`; }
+
+        // ── Wyvrunt follower (Pokémon-Yellow style trailing companion) ────────
+        const followOn = wyvruntCaughtRef.current
+          && (sc === "overworld" || sc === "route1" || sc === "route2");
+        const fcv = wyvFollowRef.current;
+        if (followOn && fcv) {
+          const STEP = 26; // world-px spacing between breadcrumb trail points
+          const bc   = breadcrumbsRef.current;
+          const head = bc[0];
+          if (!head || dist(head.x, head.y, px, py) >= STEP) {
+            bc.unshift({ x: px, y: py });
+            if (bc.length > 10) bc.pop();
+          }
+          const fp     = followPosRef.current;
+          const target = bc[1] ?? { x: px, y: py };
+          const fdx = target.x - fp.x, fdy = target.y - fp.y;
+          const fd  = Math.hypot(fdx, fdy);
+          if (fd > 1.2) {
+            const step = Math.min(SPEED, fd);
+            fp.x += (fdx / fd) * step;
+            fp.y += (fdy / fd) * step;
+            if (Math.abs(fdx) > Math.abs(fdy)) {
+              followAnimRef.current = "walk_side";
+              followFlipRef.current = fdx < 0;
+              followLastDirRef.current = "idle_side";
+            } else {
+              followAnimRef.current = fdy < 0 ? "walk_up" : "walk_down";
+              followFlipRef.current = false;
+              followLastDirRef.current = fdy < 0 ? "idle_up" : "idle_down";
+            }
+          } else {
+            followAnimRef.current = followLastDirRef.current;
+          }
+          const fh = (fcv.height && fcv.height > 0) ? fcv.height : SPRITE_PX;
+          const fw = (fcv.width  && fcv.width  > 0) ? fcv.width  : SPRITE_PX;
+          fcv.style.display = "block";
+          fcv.style.left = `${fp.x - fw / 2}px`;
+          fcv.style.top  = `${fp.y - Math.round(fh * ANCHOR)}px`;
+        } else if (fcv) {
+          fcv.style.display = "none";
+        }
 
         // Near-prof check (lab only)
         if (sc === "lab") {
@@ -1526,6 +1639,29 @@ export function WalkDemo({ characterId = "kael" }: { characterId?: CharId } = {}
             />
           )}
 
+          {/* Rowan — professor's disciple (only when you are not playing Rowan) */}
+          {scene === "lab" && rowanInLab && (
+            <>
+              <canvas
+                ref={rowanLabCanvasRef}
+                style={{
+                  position: "absolute",
+                  imageRendering: "auto",
+                  pointerEvents: "none",
+                  left: PROF.x + 78 - 34,
+                  top:  PROF.y + 6 - 51,
+                }}
+              />
+              <div style={{
+                position:"absolute",
+                left: PROF.x + 78 - 14, top: PROF.y + 6 - 78,
+                color:"#cdbce8", fontSize:8, fontWeight:800,
+                letterSpacing:1, pointerEvents:"none",
+                textShadow:"0 0 4px #000,0 0 8px #000",
+              }}>ROWAN</div>
+            </>
+          )}
+
           {/* Lab door glow on overworld */}
           {scene === "overworld" && (
             <div style={{
@@ -1640,7 +1776,24 @@ export function WalkDemo({ characterId = "kael" }: { characterId?: CharId } = {}
                 color:"#f8d8b0", fontSize:8, fontWeight:800,
                 letterSpacing:1, pointerEvents:"none",
                 textShadow:"0 0 4px #000,0 0 8px #000",
-              }}>JESS</div>
+              }}>{partnerName.toUpperCase()}</div>
+              {kaelAtHome && (
+                <>
+                  <canvas ref={kaelHomeCanvasRef} style={{
+                    position:"absolute",
+                    imageRendering:"auto", pointerEvents:"none",
+                    left: JESS_POS.x + 70 - 34,
+                    top:  JESS_POS.y + 4 - 51,
+                  }}/>
+                  <div style={{
+                    position:"absolute",
+                    left: JESS_POS.x + 70 - 16, top: JESS_POS.y + 4 - 80,
+                    color:"#f8d8b0", fontSize:8, fontWeight:800,
+                    letterSpacing:1, pointerEvents:"none",
+                    textShadow:"0 0 4px #000,0 0 8px #000",
+                  }}>KAEL</div>
+                </>
+              )}
             </>
           )}
 
@@ -1706,7 +1859,7 @@ export function WalkDemo({ characterId = "kael" }: { characterId?: CharId } = {}
               {profRoute2Done && !wyvruntCaught && (
                 <>
                   <img
-                    src="/__mockup/images/wyvrunt.png"
+                    src="/__mockup/images/wyvrunt_front_idle.png"
                     alt="Wyvrunt"
                     style={{
                       position:"absolute",
@@ -1754,7 +1907,7 @@ export function WalkDemo({ characterId = "kael" }: { characterId?: CharId } = {}
                 color:"#f8d8b0", fontSize:8, fontWeight:800,
                 letterSpacing:1, pointerEvents:"none",
                 textShadow:"0 0 4px #000,0 0 8px #000",
-              }}>JESS</div>
+              }}>{partnerName.toUpperCase()}</div>
             </>
           )}
 
@@ -1853,6 +2006,14 @@ export function WalkDemo({ characterId = "kael" }: { characterId?: CharId } = {}
             background:"radial-gradient(ellipse,rgba(0,0,0,0.6)0%,transparent 75%)",
             pointerEvents:"none",
             left: px - 18, top: py + 2,
+          }}/>
+
+          {/* Wyvrunt follower — trails the player once bonded (Pokémon-Yellow style) */}
+          <canvas ref={wyvFollowRef} style={{
+            position:"absolute",
+            imageRendering:"auto", pointerEvents:"none",
+            display:"none",
+            left: px - SPRITE_PX/2, top: py - topOff,
           }}/>
 
           {/* Player sprite — no CSS height; canvas buffer height controls display so portrait sprites aren't squashed */}
@@ -2260,7 +2421,7 @@ export function WalkDemo({ characterId = "kael" }: { characterId?: CharId } = {}
                   background:"#120602", border:"1px solid rgba(240,160,80,0.4)" }}
               />
               <span style={{ color:"#f0b070", fontWeight:700, fontSize:13, letterSpacing:1 }}>
-                JESS
+                {partnerName.toUpperCase()}
               </span>
             </div>
             <p style={{ color:"#e8dcc8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>
@@ -2303,7 +2464,7 @@ export function WalkDemo({ characterId = "kael" }: { characterId?: CharId } = {}
                   background:"#120602", border:"1px solid rgba(240,160,80,0.4)" }}
               />
               <span style={{ color:"#f0b070", fontWeight:700, fontSize:13, letterSpacing:1 }}>
-                JESS
+                {partnerName.toUpperCase()}
               </span>
             </div>
             <p style={{ color:"#e8dcc8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>
@@ -2450,6 +2611,17 @@ export function WalkDemo({ characterId = "kael" }: { characterId?: CharId } = {}
                     } else if (phase === "scripted_caught") {
                       setWyvruntCaught(true);
                       addCaughtMon(WYVRUNT_SPEC);
+                      // Seed the follower beside the player so it activates in-place
+                      breadcrumbsRef.current   = [];
+                      followPosRef.current     = {
+                        x: worldPos.current.x,
+                        y: worldPos.current.y + 24,
+                      };
+                      followAnimRef.current    = "idle_down";
+                      followLastDirRef.current = "idle_down";
+                      followFrameRef.current   = 0;
+                      followFlipRef.current    = false;
+                      followLastSrc.current    = "";
                       setPhase("walk");
                     } else {
                       advanceDialog(phase);
