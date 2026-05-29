@@ -384,6 +384,26 @@ export function BattleScene({
   const playerExtra =
     playerKo ? " translateY(20px) rotate(-12deg)" : "";
 
+  // Ritual-circle anchor points, measured as % of the arena image (1536×1024).
+  // green = hero (Keeper), red = player Tayanari, yellow = wild, purple = opponent
+  // Keeper (only present in keeper battles — empty in wild zones like Route 1).
+  const POS = {
+    hero:   { x: 10,   y: 76 },
+    mon:    { x: 25.5, y: 60.5 },
+    wild:   { x: 70,   y: 61 },
+    keeper: { x: 87.5, y: 76 },
+  };
+  // Stand a sprite (sized as % of arena width) with its feet on a circle centre.
+  const standOn = (
+    p: { x: number; y: number }, widthPct: number, z: number, anchor = 85,
+  ): React.CSSProperties => ({
+    position: "absolute",
+    left: `${p.x}%`, top: `${p.y}%`,
+    width: `${widthPct}%`, aspectRatio: "1",
+    transform: `translate(-50%, -${anchor}%)`,
+    zIndex: z,
+  });
+
   return (
     <div style={{
       position:"absolute", inset:0,
@@ -391,14 +411,28 @@ export function BattleScene({
       display:"flex", flexDirection:"column",
       overflow:"hidden",
     }}>
-      {/* Battle stage */}
+      {/* Battle stage — letterbox container with a blurred atmospheric backdrop */}
       <div style={{
         position:"relative", flex:1, minHeight:0,
-        backgroundImage:"url(/__mockup/images/forest-arena.png)",
-        backgroundSize:"cover", backgroundPosition:"center",
-        backgroundColor:"#142010",
+        backgroundColor:"#0c1408",
         overflow:"hidden",
       }}>
+        {/* Blurred backdrop fills the letterbox bands above/below the arena */}
+        <div style={{
+          position:"absolute", inset:0,
+          backgroundImage:"url(/__mockup/images/forest-arena.png)",
+          backgroundSize:"cover", backgroundPosition:"center",
+          filter:"blur(14px) brightness(0.45)",
+          transform:"scale(1.12)",
+        }}/>
+        {/* Arena — exact image aspect so the four ritual circles map 1:1 (no crop) */}
+        <div style={{
+          position:"absolute", left:0, right:0, top:"50%",
+          transform:"translateY(-50%)",
+          width:"100%", aspectRatio:"1536 / 1024",
+          backgroundImage:"url(/__mockup/images/forest-arena.png)",
+          backgroundSize:"cover", backgroundPosition:"center",
+        }}>
         {/* Wild HP plate (top-left) */}
         <div style={hpPlateStyle("left")}>
           <div style={{ display:"flex", alignItems:"baseline", gap:6, marginBottom:4 }}>
@@ -437,54 +471,55 @@ export function BattleScene({
         </div>
 
         {/* Wild sprite — top-right */}
-        <div style={{
-          position:"absolute", right:"6%", top:"12%",
-          width:"42%", maxWidth:200, aspectRatio:"1",
-          animation: intro ? "introFloat 1.1s ease-out" : (wildShake || "none"),
-          opacity: wildAbsorbed ? 0 : (wildHp === 0 ? 0.3 : 1),
-          transition:"opacity 0.45s",
-        }}>
-          <img src={wild.wildImg} alt={wild.name} style={{
-            width:"100%", height:"100%", objectFit:"contain",
-            // Wild faces WEST (left). Native left-facing => no flip; native right => scaleX(-1).
-            transform: (wildFlip + wildExtra).trim() || "none",
-            transformOrigin:"center center",
-            transition:"transform 0.45s ease-in, opacity 0.45s",
-            filter:"drop-shadow(0 6px 8px rgba(0,0,0,0.5))",
-          }}/>
+        <div style={standOn(POS.wild, 26, 3, 80)}>
+          <div style={{
+            width:"100%", height:"100%",
+            animation: intro ? "introFloat 1.1s ease-out" : (wildShake || "none"),
+            opacity: wildAbsorbed ? 0 : (wildHp === 0 ? 0.3 : 1),
+            transition:"opacity 0.45s",
+          }}>
+            <img src={wild.wildImg} alt={wild.name} style={{
+              width:"100%", height:"100%", objectFit:"contain",
+              // Wild faces WEST (left). Native left-facing => no flip; native right => scaleX(-1).
+              transform: (wildFlip + wildExtra).trim() || "none",
+              transformOrigin:"center center",
+              transition:"transform 0.45s ease-in, opacity 0.45s",
+              filter:"drop-shadow(0 6px 8px rgba(0,0,0,0.5))",
+            }}/>
+          </div>
         </div>
 
-        {/* Side-view stage: Keeper + Tayanari on LEFT facing RIGHT, wild on RIGHT facing LEFT */}
-        {/* Keeper — side-facing, left edge of stage */}
-        <div style={{
-          position:"absolute", left:"3%", bottom:"18%",
-          width:"24%", maxWidth:110, aspectRatio:"1",
-          animation: intro ? "introSlide 1.1s ease-out" : "none",
-          zIndex:2,
-        }}>
-          <img src="/__mockup/images/walk_side_1.png" alt="Keeper" style={{
-            width:"100%", height:"100%", objectFit:"contain",
-            filter:"drop-shadow(0 6px 8px rgba(0,0,0,0.5))",
-            imageRendering:"auto",
-          }}/>
+        {/* Side-view stage: Keeper (green) + Tayanari (red) face EAST; wild (yellow) faces WEST */}
+        {/* Hero / Keeper — green ritual circle, facing east */}
+        <div style={standOn(POS.hero, 15, 4, 84)}>
+          <div style={{
+            width:"100%", height:"100%",
+            animation: intro ? "introSlide 1.1s ease-out" : "none",
+          }}>
+            <img src="/__mockup/images/walk_side_1.png" alt="Keeper" style={{
+              width:"100%", height:"100%", objectFit:"contain",
+              filter:"drop-shadow(0 6px 8px rgba(0,0,0,0.5))",
+              imageRendering:"auto",
+            }}/>
+          </div>
         </div>
 
-        {/* Player Tayanari — to the right of Keeper, same ground line, facing right */}
-        <div style={{
-          position:"absolute", left:"22%", bottom:"16%",
-          width:"38%", maxWidth:190, aspectRatio:"1",
-          animation: intro ? "introSlide 1.1s ease-out" : (playerShake || "none"),
-          animationDelay: intro ? "0.15s" : undefined,
-          zIndex:3,
-        }}>
-          <img src={starter.img} alt={starter.name} style={{
-            width:"100%", height:"100%", objectFit:"contain",
-            // Keeper-side mon faces EAST (right). Native right-facing sprite => no flip; native left => scaleX(-1).
-            transform: (playerFlip + playerExtra).trim() || "none",
-            transformOrigin:"center center",
-            transition:"transform 0.45s ease-in, opacity 0.45s",
-            filter:"drop-shadow(0 6px 8px rgba(0,0,0,0.5))",
-          }}/>
+        {/* Player Tayanari — red ritual circle, facing east toward the wild */}
+        <div style={standOn(POS.mon, 24, 3, 80)}>
+          <div style={{
+            width:"100%", height:"100%",
+            animation: intro ? "introSlide 1.1s ease-out" : (playerShake || "none"),
+            animationDelay: intro ? "0.15s" : undefined,
+          }}>
+            <img src={starter.img} alt={starter.name} style={{
+              width:"100%", height:"100%", objectFit:"contain",
+              // Keeper-side mon faces EAST (right). Native right-facing sprite => no flip; native left => scaleX(-1).
+              transform: (playerFlip + playerExtra).trim() || "none",
+              transformOrigin:"center center",
+              transition:"transform 0.45s ease-in, opacity 0.45s",
+              filter:"drop-shadow(0 6px 8px rgba(0,0,0,0.5))",
+            }}/>
+          </div>
         </div>
 
         {/* ── FX OVERLAY ──────────────────────────────────────────────── */}
@@ -496,8 +531,8 @@ export function BattleScene({
             <div style={{
               position:"absolute",
               ...(attackFx.from === "player"
-                ? { left:"32%", top:"42%" }
-                : { right:"24%", top:"32%" }),
+                ? { left:"24%", top:"54%" }
+                : { right:"29%", top:"54%" }),
               width:80, height:6, borderRadius:3,
               background:`linear-gradient(90deg, transparent, ${attackFx.color}, #ffffff, ${attackFx.color}, transparent)`,
               filter:`drop-shadow(0 0 10px ${attackFx.color})`,
@@ -507,8 +542,8 @@ export function BattleScene({
             <div style={{
               position:"absolute",
               ...(attackFx.from === "player"
-                ? { right:"18%", top:"22%" }
-                : { left:"30%", bottom:"32%" }),
+                ? { right:"29%", top:"54%" }
+                : { left:"22%", top:"56%" }),
               width:70, height:70,
               borderRadius:"50%",
               background:`radial-gradient(circle, #ffffff 0%, ${attackFx.color} 30%, transparent 72%)`,
@@ -524,8 +559,8 @@ export function BattleScene({
           <div key={`dmg-${dmgFx.id}`} style={{
             position:"absolute",
             ...(dmgFx.at === "wild"
-              ? { right:"22%", top:"18%" }
-              : { left:"34%", bottom:"36%" }),
+              ? { right:"29%", top:"50%" }
+              : { left:"22%", top:"50%" }),
             color:"#ff5040", fontSize:30, fontWeight:900,
             textShadow:"0 0 6px #000, 2px 2px 0 #500, 0 0 14px #ff2020",
             pointerEvents:"none", zIndex:6,
@@ -537,7 +572,7 @@ export function BattleScene({
         {/* Heal motes */}
         {auxFx?.kind === "heal" && (
           <div key={`aux-${auxFx.id}`} style={{
-            position:"absolute", left:"22%", bottom:"14%",
+            position:"absolute", left:"15%", top:"46%",
             width:160, height:140, pointerEvents:"none", zIndex:5,
           }}>
             {Array.from({ length: 8 }).map((_, i) => (
@@ -556,7 +591,7 @@ export function BattleScene({
         {/* Rune pulse ring */}
         {auxFx?.kind === "rune" && (
           <div key={`aux-${auxFx.id}`} style={{
-            position:"absolute", left:"42%", bottom:"22%",
+            position:"absolute", left:"23.5%", top:"54%",
             width:90, height:90, borderRadius:"50%",
             border:`3px solid ${auxFx.color || "#80ffc0"}`,
             boxShadow:`0 0 14px ${auxFx.color || "#80ffc0"}`,
@@ -580,7 +615,7 @@ export function BattleScene({
         {/* Feint label */}
         {auxFx?.kind === "feint" && (
           <div key={`aux-${auxFx.id}`} style={{
-            position:"absolute", right:"14%", top:"18%",
+            position:"absolute", right:"24%", top:"46%",
             color:"#a8d8ff", fontSize:15, fontWeight:900,
             textShadow:"0 0 8px #000, 0 0 12px #4080ff",
             letterSpacing:2,
@@ -594,7 +629,7 @@ export function BattleScene({
           <div key={`shell-${shellFx.id}-${shellFx.phase}`} style={{
             position:"absolute",
             // Lands at wild's centroid for wobble/resolve
-            right:"22%", top:"30%",
+            right:"27%", top:"50%",
             width:46, height:46,
             pointerEvents:"none", zIndex:7,
             animation:
@@ -637,7 +672,8 @@ export function BattleScene({
             </div>
           </div>
         )}
-      </div>
+        </div>{/* arena */}
+      </div>{/* stage */}
 
       {/* Log + menu */}
       <div style={{
