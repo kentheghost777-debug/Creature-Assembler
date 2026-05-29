@@ -127,8 +127,8 @@ const R2 = { w: 1024, h: 1536 };
 const R2_SPAWN     = { x: 290, y: 1180 };   // red cross — west-side path entry
 const PROF_R2_POS  = { x: 470, y: 1040 };   // yellow X — prof at signpost
 const WYV_R2_POS   = { x: 620, y: 780 };    // wyvrunt appears north of prof
-// Return-to-overworld trigger (west edge, near the small fence on the red-cross side)
-const R2_RETURN_OW: Rect    = [0,  1100,  30, 1300];
+// Return-to-overworld trigger (west edge — aligned with the carved gap in the left forest mass)
+const R2_RETURN_OW: Rect    = [0,  1120,  40, 1240];
 // Locked future-content beats — show a "blocked"/"locked" toast
 const R2_NORTH_BLOCKED: Rect = [520,   0, 780,  40]; // cliff stairs (top-right)
 const R2_SOUTH_BLOCKED: Rect = [360, 1510, 600,1536]; // south continuation
@@ -145,16 +145,17 @@ const R2_BLOCKED: Rect[] = [
   [220,  60,  520, 300],
   [520,  60,  860, 360],
   [860, 220,  990, 700],
-  [0,   800,  200,1500],
+  [0,   800,  200,1120],  // left forest — upper
+  [0,  1240,  200,1500],  // left forest — lower (gap y=1120–1240 is the west return path to overworld)
   [600, 900,  990,1500],
   // locked house body
   [780, 720,  920, 860],
 ];
 
 // East overworld exit → Route 2 (opens only after wife intercept)
-const OW_EAST_EXIT: Rect = [1100, 400, 1124, 470];
-// Wife intercepts on the south road just east of Ellio's
-const JESS_PATH_POS = { x: 470, y: 815 };
+const OW_EAST_EXIT: Rect = [1080, 600, 1124, 690]; // east-edge gap (x1<=1094 so it's inside the player X clamp world.w-30)
+// Wife intercepts on the open central plaza (reachable open ground, not inside any building body)
+const JESS_PATH_POS = { x: 430, y: 500 };
 
 const RARITY_BASE: Record<MonRarity, number> = {
   common: 55, uncommon: 30, rare: 11, ultra: 3.5, apex: 0.5,
@@ -211,7 +212,8 @@ const OW_BLOCKED: Rect[] = [
   [0,    0,   155,  900],  // left forest
   [155,  0,   214,   85],  // NW top strip (left of Route-1)
   [327,  0,  1124,   85],  // top border (right of Route-1 gap)
-  [978,  85, 1124,  900],  // right forest
+  [978,  85, 1124,  600],  // right forest — upper
+  [978, 690, 1124,  900],  // right forest — lower (gap y=600–690 is the east path to Route 2)
   [0,   865, 1124,  900],  // southern boundary
 
   // ── NORTH ZONE FILLS (close corridors between top border and buildings) ─────
@@ -919,7 +921,7 @@ export function WalkDemo() {
 
         // Door triggers
         if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_ROUTE1_EXIT)) {
-          if (!starter) {
+          if (!starterRefArc.current) {
             // Starter gate — block entry until player picks one from Prof Irwyn
             worldPos.current.y = OW_ROUTE1_EXIT[3] + 20;
             setShowStarterGate(true);
@@ -943,7 +945,7 @@ export function WalkDemo() {
             window.setTimeout(() => setEastGateNotif(false), 1800);
           }
         } else if (sc === "route2" && inRect(worldPos.current.x, worldPos.current.y, R2_RETURN_OW)) {
-          transitionTo("overworld", 1085, 432);
+          transitionTo("overworld", 1080, 645);
         } else if (sc === "route2" && inRect(worldPos.current.x, worldPos.current.y, R2_NORTH_BLOCKED)) {
           worldPos.current.y = R2_NORTH_BLOCKED[3] + 20;
           setLockedDoorNotif("The cliff stairs are sealed for now.");
@@ -1618,6 +1620,79 @@ export function WalkDemo() {
             </>
           )}
 
+          {/* Prof Irwyn + Wyvrunt on Route 2 */}
+          {scene === "route2" && (
+            <>
+              <canvas ref={profR2CanvasRef} style={{
+                position:"absolute",
+                imageRendering:"auto", pointerEvents:"none",
+                left: PROF_R2_POS.x - 36,
+                top:  PROF_R2_POS.y - 54,
+              }}/>
+              <div style={{
+                position:"absolute",
+                left: PROF_R2_POS.x - 30, top: PROF_R2_POS.y - 82,
+                color:"#ffe0a0", fontSize:8, fontWeight:800,
+                letterSpacing:1, pointerEvents:"none",
+                textShadow:"0 0 4px #000,0 0 8px #000",
+              }}>PROF. IRWYN</div>
+
+              {/* Wyvrunt overworld sprite — appears only after prof's talk, until caught */}
+              {profRoute2Done && !wyvruntCaught && (
+                <>
+                  <img
+                    src="/__mockup/images/wyvrunt.png"
+                    alt="Wyvrunt"
+                    style={{
+                      position:"absolute",
+                      left: WYV_R2_POS.x - 38, top: WYV_R2_POS.y - 52,
+                      width:76, height:76, objectFit:"contain",
+                      pointerEvents:"none",
+                      filter:"drop-shadow(0 0 12px rgba(255,200,80,0.7)) drop-shadow(0 0 4px rgba(255,255,255,0.6))",
+                      animation:"pulse 1.8s ease-in-out infinite",
+                    }}
+                  />
+                  <div style={{
+                    position:"absolute",
+                    left: WYV_R2_POS.x - 32, top: WYV_R2_POS.y - 80,
+                    color:"#ffd060", fontSize:9, fontWeight:900,
+                    letterSpacing:1, pointerEvents:"none",
+                    textShadow:"0 0 6px #ffa030,0 0 12px #ff8020,0 0 3px #000",
+                  }}>WYVRUNT <span style={{ color:"#ffe080" }}>☯</span></div>
+                </>
+              )}
+
+              {/* Locked house door glow */}
+              <div style={{
+                position:"absolute",
+                left:(R2_LOCKED_DOOR[0]+R2_LOCKED_DOOR[2])/2 - 22, top:R2_LOCKED_DOOR[3] - 8,
+                width:44, height:14, borderRadius:"50%",
+                background:"radial-gradient(ellipse,rgba(200,150,120,0.45)0%,transparent 80%)",
+                animation:"pulse 1.6s ease-in-out infinite",
+                pointerEvents:"none",
+              }}/>
+            </>
+          )}
+
+          {/* Wife on the south town path (overworld) — during intercept only */}
+          {scene === "overworld" && wifeOnPath && (
+            <>
+              <canvas ref={jessPathCanvasRef} style={{
+                position:"absolute",
+                imageRendering:"auto", pointerEvents:"none",
+                left: JESS_PATH_POS.x - 34,
+                top:  JESS_PATH_POS.y - 51,
+              }}/>
+              <div style={{
+                position:"absolute",
+                left: JESS_PATH_POS.x - 16, top: JESS_PATH_POS.y - 80,
+                color:"#f8d8b0", fontSize:8, fontWeight:800,
+                letterSpacing:1, pointerEvents:"none",
+                textShadow:"0 0 4px #000,0 0 8px #000",
+              }}>JESS</div>
+            </>
+          )}
+
           {/* Shell item inside Maya's home */}
           {scene === "maya" && !shellsCollected && (
             <>
@@ -2145,6 +2220,208 @@ export function WalkDemo() {
                 }}
               >{phase === "jess_d3" ? "OK" : "Next ▶"}</button>
             </div>
+          </div>
+        )}
+
+        {/* ── JESS PATH DIALOG (town intercept) ────────────────────────── */}
+        {(phase === "jess_path_d1" || phase === "jess_path_d2") && (
+          <div style={{
+            position:"absolute", bottom:0, left:0, right:0,
+            background:"linear-gradient(to top,rgba(18,8,3,0.97),rgba(24,10,4,0.93))",
+            borderTop:"2px solid rgba(240,160,80,0.55)",
+            padding:"10px 14px 14px",
+            zIndex:20,
+          }}>
+            <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+              <canvas ref={jessPathPortraitRef}
+                style={{ width:44, height:44, borderRadius:8,
+                  background:"#120602", border:"1px solid rgba(240,160,80,0.4)" }}
+              />
+              <span style={{ color:"#f0b070", fontWeight:700, fontSize:13, letterSpacing:1 }}>
+                JESS
+              </span>
+            </div>
+            <p style={{ color:"#e8dcc8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>
+              {LINES[phase]}
+            </p>
+            <div style={{ display:"flex", justifyContent:"flex-end" }}>
+              <button
+                onClick={() => {
+                  if (phase === "jess_path_d2") {
+                    // Fade out, wife heads home, east path unlocks
+                    fadingRef.current = true; setFading(true);
+                    window.setTimeout(() => {
+                      setWifeOnPath(false);
+                      setWifeIntercepted(true);
+                      setPhase("walk");
+                      window.setTimeout(() => { fadingRef.current = false; setFading(false); }, 450);
+                    }, 450);
+                  } else {
+                    advanceDialog(phase);
+                  }
+                }}
+                style={{
+                  background:"rgba(240,160,80,0.15)",
+                  border:"1px solid rgba(240,160,80,0.5)",
+                  color:"#f0b070", padding:"6px 20px",
+                  borderRadius:8, fontSize:13, fontWeight:700,
+                  cursor:"pointer",
+                }}
+              >{phase === "jess_path_d2" ? "OK" : "Next ▶"}</button>
+            </div>
+          </div>
+        )}
+
+        {/* ── PROF IRWYN — ROUTE 2 DIALOG ──────────────────────────────── */}
+        {(phase === "prof2_d1" || phase === "prof2_d2" || phase === "prof2_d3" || phase === "prof2_d4") && (
+          <div style={{
+            position:"absolute", bottom:0, left:0, right:0,
+            background:"linear-gradient(to top,rgba(20,12,2,0.97),rgba(26,16,4,0.93))",
+            borderTop:"2px solid rgba(240,200,90,0.6)",
+            padding:"10px 14px 14px",
+            zIndex:20,
+          }}>
+            <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+              <canvas ref={profR2PortraitRef}
+                style={{ width:44, height:44, borderRadius:8,
+                  background:"#140c02", border:"1px solid rgba(240,200,90,0.4)" }}
+              />
+              <span style={{ color:"#f0d070", fontWeight:700, fontSize:13, letterSpacing:1 }}>
+                PROF. IRWYN
+              </span>
+            </div>
+            <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>
+              {LINES[phase]}
+            </p>
+            <div style={{ display:"flex", justifyContent:"flex-end" }}>
+              <button
+                onClick={() => {
+                  if (phase === "prof2_d3") {
+                    setHasObsidianRealmShell(true);
+                    advanceDialog(phase);
+                  } else if (phase === "prof2_d4") {
+                    setPhase("walk");
+                    setProfRoute2Done(true);
+                  } else {
+                    advanceDialog(phase);
+                  }
+                }}
+                style={{
+                  background:"rgba(240,200,90,0.15)",
+                  border:"1px solid rgba(240,200,90,0.5)",
+                  color:"#f0d070", padding:"6px 20px",
+                  borderRadius:8, fontSize:13, fontWeight:700,
+                  cursor:"pointer",
+                }}
+              >{phase === "prof2_d3" ? "Take the Shell ☯" : phase === "prof2_d4" ? "OK" : "Next ▶"}</button>
+            </div>
+          </div>
+        )}
+
+        {/* ── SCRIPTED WYVRUNT CATCH ───────────────────────────────────── */}
+        {(phase === "scripted_t1" || phase === "scripted_t2" || phase === "scripted_throw" || phase === "scripted_caught") && (
+          <>
+            {/* Floating Wyvrunt above the dialog */}
+            <div style={{
+              position:"absolute", left:"50%", top:"20%",
+              transform:"translateX(-50%)",
+              width:150, textAlign:"center", zIndex:25, pointerEvents:"none",
+            }}>
+              <img
+                src="/__mockup/images/wyvrunt.png"
+                alt="Wyvrunt"
+                style={{
+                  width:140, height:140, objectFit:"contain",
+                  filter:"drop-shadow(0 0 16px rgba(255,200,80,0.75)) drop-shadow(0 0 6px rgba(255,255,255,0.6))",
+                  animation: phase === "scripted_throw" ? "pulse 0.6s ease-in-out infinite" : "pulse 1.8s ease-in-out infinite",
+                }}
+              />
+              <div style={{
+                marginTop:-4, color:"#ffd060", fontSize:13, fontWeight:900, letterSpacing:1,
+                textShadow:"0 0 6px #ffa030,0 0 12px #ff8020,0 0 3px #000",
+              }}>WYVRUNT <span style={{ color:"#ffe080" }}>☯</span>
+                <div style={{ fontSize:8, fontWeight:700, letterSpacing:1.5, color:"#ffbe60", marginTop:2 }}>
+                  CHAOS · APEX
+                </div>
+              </div>
+            </div>
+
+            {/* Catch flash overlay during throw / caught */}
+            {(phase === "scripted_throw" || phase === "scripted_caught") && (
+              <div style={{
+                position:"absolute", inset:0, zIndex:24, pointerEvents:"none",
+                background: phase === "scripted_caught"
+                  ? "radial-gradient(circle at 50% 28%, rgba(255,225,130,0.7) 0%, transparent 62%)"
+                  : "radial-gradient(circle at 50% 28%, rgba(255,180,80,0.3) 0%, transparent 70%)",
+                animation:"pulse 0.9s ease-in-out infinite",
+              }}/>
+            )}
+
+            {/* Prof narration dialog */}
+            <div style={{
+              position:"absolute", bottom:0, left:0, right:0,
+              background:"linear-gradient(to top,rgba(20,12,2,0.97),rgba(26,16,4,0.93))",
+              borderTop:"2px solid rgba(240,200,90,0.6)",
+              padding:"10px 14px 14px",
+              zIndex:26,
+            }}>
+              <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+                <canvas ref={profR2PortraitRef}
+                  style={{ width:44, height:44, borderRadius:8,
+                    background:"#140c02", border:"1px solid rgba(240,200,90,0.4)" }}
+                />
+                <span style={{ color:"#f0d070", fontWeight:700, fontSize:13, letterSpacing:1 }}>
+                  PROF. IRWYN
+                </span>
+              </div>
+              <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>
+                {LINES[phase]}
+              </p>
+              <div style={{ display:"flex", justifyContent:"flex-end" }}>
+                <button
+                  onClick={() => {
+                    if (phase === "scripted_throw") {
+                      window.setTimeout(() => setPhase("scripted_caught"), 650);
+                    } else if (phase === "scripted_caught") {
+                      setWyvruntCaught(true);
+                      setCaughtParty(p => [...p, WYVRUNT_SPEC]);
+                      setPhase("walk");
+                    } else {
+                      advanceDialog(phase);
+                    }
+                  }}
+                  style={{
+                    background:"rgba(240,200,90,0.18)",
+                    border:"1px solid rgba(240,200,90,0.55)",
+                    color:"#f5d878", padding:"6px 18px",
+                    borderRadius:8, fontSize:13, fontWeight:700,
+                    cursor:"pointer",
+                  }}
+                >{
+                  phase === "scripted_throw" ? "Throw Obsidianeye Shell ☯"
+                  : phase === "scripted_caught" ? "OK"
+                  : "Next ▶"
+                }</button>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* ── EAST GATE / LOCKED NOTICES ───────────────────────────────── */}
+        {(eastGateNotif || lockedDoorNotif) && (
+          <div style={{
+            position:"absolute", top:"44%", left:"50%",
+            transform:"translate(-50%,-50%)",
+            background:"rgba(8,6,3,0.94)",
+            border:"1.5px solid rgba(240,200,90,0.55)",
+            borderRadius:12, padding:"10px 18px",
+            color:"#f0d8a0", fontSize:12, fontWeight:600,
+            zIndex:60, pointerEvents:"none", textAlign:"center", maxWidth:260,
+            boxShadow:"0 4px 20px rgba(0,0,0,0.5)",
+          }}>
+            {eastGateNotif
+              ? "A quiet pull holds you back — better not head east just yet."
+              : lockedDoorNotif}
           </div>
         )}
 
