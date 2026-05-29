@@ -1706,7 +1706,7 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
         });
       }, 1200);
     }
-  }, [transitionTo, starter, healingRuneEquipped, starterLevel, starterXp, starterMoves, addCaughtMon]);
+  }, [transitionTo, starter, healingRuneEquipped, starterLevel, starterXp, starterMoves, addCaughtMon, role]);
 
   // ── Battle scene — full takeover when scene === "battle" ───────────────────
   if (scene === "battle" && wildEncounter && starter) {
@@ -1722,7 +1722,6 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
           catchMult={role.catchMult}
           shellsCount={shellCount}
           onConsumeShell={() => setShellCount(c => Math.max(0, c - 1))}
-          onConsumeRune={() => {}}
           onEnd={handleBattleEnd}
         />
         {battleNotif && (

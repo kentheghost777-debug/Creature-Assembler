@@ -100,7 +100,6 @@ type Props = {
   /** Sprite for the opposing Keeper (faces west). Defaults to Rowan's side art. */
   keeperImg?: string;
   onConsumeShell: () => void;
-  onConsumeRune: () => void;
   onEnd: (r: BattleResult) => void;
 };
 
@@ -119,7 +118,7 @@ export function BattleScene({
   wild, starter, starterLevel, starterStats, hasResonanceStone, healingRuneEquipped,
   catchMult = 1, shellsCount,
   opponentKind = "wild", keeperName = "Keeper", keeperImg = "/__mockup/images/rowan_side_1.png",
-  onConsumeShell, onConsumeRune, onEnd,
+  onConsumeShell, onEnd,
 }: Props) {
   const isKeeper = opponentKind === "keeper";
   const playerMaxHp = starterStats.hp;

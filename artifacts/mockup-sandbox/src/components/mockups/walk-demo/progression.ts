@@ -21,7 +21,8 @@
 export type Element =
   | "Nature"      | "Volcanic"   | "Oceanic"    | "Frostformed"
   | "Stormproven" | "Earthbound" | "Skyborne"   | "Spirit"
-  | "Mind"        | "Alchemy"    | "Abyss"      | "Armored";
+  | "Mind"        | "Alchemy"    | "Abyss"      | "Armored"
+  | "Chaos";
 
 export const ELEMENT_COLOR: Record<Element, string> = {
   Nature:      "#5ac070",
@@ -36,6 +37,7 @@ export const ELEMENT_COLOR: Record<Element, string> = {
   Alchemy:     "#90c060",
   Abyss:       "#604080",
   Armored:     "#909098",
+  Chaos:       "#9b4dff",
 };
 
 // ── Shells ─────────────────────────────────────────────────────────────────
