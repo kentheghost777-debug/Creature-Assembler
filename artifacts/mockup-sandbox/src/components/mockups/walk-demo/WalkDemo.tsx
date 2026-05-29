@@ -921,8 +921,8 @@ export function WalkDemo() {
 
         // Door triggers
         if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_ROUTE1_EXIT)) {
-          if (!starterRefArc.current) {
-            // Starter gate — block entry until player picks one from Prof Irwyn
+          if (!starterRefArc.current || !allTownItemsRef.current) {
+            // Route 1 gate — need a starter AND all town errands done
             worldPos.current.y = OW_ROUTE1_EXIT[3] + 20;
             setShowStarterGate(true);
           } else {
@@ -3467,11 +3467,35 @@ export function WalkDemo() {
                 ⚠ ROUTE BLOCKED ⚠
               </div>
               <div style={{ color:"#f0d890", fontSize:13, lineHeight:1.5 }}>
-                The trail beyond Primeria is wild ground. You need a Tayanari at your side first.
+                The trail beyond Primeria is wild ground. Finish what the town needs from you first.
               </div>
-              <div style={{ color:"#a89070", fontSize:11, marginTop:8, fontStyle:"italic" }}>
-                Head to Prof. Irwyn's Lab to choose your first.
-              </div>
+              {(() => {
+                const reqs = [
+                  { ok: !!starter,                       label: "Choose a Tayanari at Prof. Irwyn's Lab" },
+                  { ok: shellsCollected,                 label: "Maya — gather the Weathered Realm Shells" },
+                  { ok: hasHealingRune,                  label: "Jay — receive the Obsidian Healing Rune" },
+                  { ok: hasResonanceStone,               label: "Ellio — receive the Resonance Stone" },
+                  { ok: hasHearthberries && hasSatchel,  label: "Lia — collect the Hearthberries & Satchel" },
+                ];
+                return (
+                  <div style={{ textAlign:"left", marginTop:12, display:"flex", flexDirection:"column", gap:6 }}>
+                    {reqs.map((r, i) => (
+                      <div key={i} style={{
+                        display:"flex", alignItems:"flex-start", gap:8,
+                        fontSize:11.5, lineHeight:1.4,
+                        color: r.ok ? "#86c878" : "#d8b486",
+                      }}>
+                        <span style={{ flexShrink:0, fontWeight:900, color: r.ok ? "#86c878" : "#9a7a4a" }}>
+                          {r.ok ? "✓" : "○"}
+                        </span>
+                        <span style={{ textDecoration: r.ok ? "line-through" : "none", opacity: r.ok ? 0.7 : 1 }}>
+                          {r.label}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
               <button
                 onClick={() => setShowStarterGate(false)}
                 style={{
