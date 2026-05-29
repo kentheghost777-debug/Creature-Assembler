@@ -484,15 +484,15 @@ const CHAR_FRAMES: Record<CharId, Record<string, string[]>> = {
 // Wyvrunt follower frame set (Pokémon-Yellow style trailing companion).
 const WYV_FRAMES = dirFrames("wyvrunt");
 
-const ALL_FRAME_SRCS: string[] = Object.values(CHAR_FRAMES)
-  .flatMap(set => Object.values(set).flat());
-
 // Sprites have transparent backgrounds. Normalise to displayW so all frames
 // maintain their natural aspect ratio rather than being squashed into a square.
 function drawSprite(
   canvas: HTMLCanvasElement, src: string, flipX: boolean, displayW = SPRITE_PX
 ): boolean {
-  const img = imgCache[src];
+  // Load on demand (cheap no-op if already cached). This makes every sprite
+  // self-loading so we don't have to eagerly preload the whole asset set —
+  // critical on mobile Safari, which blanks images past a decoded-memory ceiling.
+  const img = loadImg(src);
   if (!img?.complete || !img.naturalWidth) return false;
   const W = displayW;
   const H = Math.round(W * img.naturalHeight / img.naturalWidth);
@@ -815,37 +815,20 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
   ); // resume exact spot, else start inside Player Home (matches OW→home enter spawn)
   const cam        = useRef({ x: 0, y: 0 });
 
-  // Preload everything
+  // Preload only the small, continuously-needed sprite frames: the playing
+  // character's own walk/idle frames plus the Wyvrunt follower frames. Everything
+  // else loads on demand — scene maps via their per-scene <img> tags (which the
+  // browser frees when you leave the scene), NPC sprites via drawSprite's lazy
+  // loadImg, and battle/dialog art via plain <img> tags. This keeps only a small
+  // set of images decoded at any moment, which is what mobile Safari needs: it
+  // blanks images (black map, no sprite) once total decoded memory is exceeded,
+  // and eagerly preloading the full ~135MB asset set blew straight past that.
   useEffect(() => {
     [
-      ...ALL_FRAME_SRCS,
-      "/__mockup/images/overworld-map.png",
-      "/__mockup/images/prof-lab-interior.png",
-      "/__mockup/images/prof-irwyn-sprite.png",
-      "/__mockup/images/maya-home-interior.png",
-      "/__mockup/images/maya-sprite.png",
-      "/__mockup/images/jay-home-interior.png",
-      "/__mockup/images/jay-sprite.png",
-      "/__mockup/images/player-home-interior.png",
-      "/__mockup/images/jess-sprite.png",
-      "/__mockup/images/ellio-home-interior.png",
-      "/__mockup/images/ellio-sprite.png",
-      "/__mockup/images/resonance-stone.png",
-      "/__mockup/images/lia.png",
-      "/__mockup/images/lia-home.png",
-      "/__mockup/images/cindrax.png",
-      "/__mockup/images/hearthberry.png",
-      "/__mockup/images/keepers-satchel.png",
-      "/__mockup/images/weathered-shell.png",
-      "/__mockup/images/worn-realm-shell.png",
-      "/__mockup/images/forest-arena.png",
-      ...STARTERS.map(s => s.img),
-      ...BESTIARY.flatMap(m => [m.wildImg, m.playerImg]),
-      WYVRUNT_SPEC.wildImg,
+      ...Object.values(CHAR_FRAMES[characterId] ?? {}).flat(),
       ...Object.values(WYV_FRAMES).flat(), // follower frames
-      "/__mockup/images/route2-map.png",
     ].forEach(loadImg);
-  }, []);
+  }, [characterId]);
 
   useEffect(() => { heldRef.current = held; },      [held]);
   useEffect(() => { wifeOnPathRef.current      = wifeOnPath; },      [wifeOnPath]);
