@@ -112,6 +112,8 @@ type Props = {
   keeperName?: string;
   /** Sprite for the opposing Keeper (faces west). Defaults to Rowan's side art. */
   keeperImg?: string;
+  /** Player's own hero sprite (faces east). Defaults to the generic walker. */
+  heroImg?: string;
   onConsumeShell: () => void;
   onEnd: (r: BattleResult) => void;
 };
@@ -131,6 +133,7 @@ export function BattleScene({
   wild, starter, starterLevel, starterStats, starterMoves, hasResonanceStone, healingRuneEquipped,
   catchMult = 1, shellsCount,
   opponentKind = "wild", keeperName = "Keeper", keeperImg = "/__mockup/images/rowan_side_1.png",
+  heroImg = "/__mockup/images/walk_side_1.png",
   onConsumeShell, onEnd,
 }: Props) {
   const isKeeper = opponentKind === "keeper";
@@ -662,7 +665,10 @@ export function BattleScene({
             }}>{RARITY_LABEL[wild.rarity]}</span>
           </div>
           <HpBar hp={wildHp} max={wild.maxHp} />
-          <div style={{ color:"#a8c0d0", fontSize:9, marginTop:2 }}>{wild.type}</div>
+          <div style={{ display:"flex", justifyContent:"space-between", marginTop:2 }}>
+            <span style={{ color:"#a8c0d0", fontSize:9 }}>{wild.type}</span>
+            <span style={{ color:"#c8c8c8", fontSize:9, fontWeight:700 }}>{wildHp}/{wild.maxHp}</span>
+          </div>
         </div>
 
         {/* Player HP plate (bottom-right) */}
@@ -672,7 +678,10 @@ export function BattleScene({
             <span style={{ color:"#aaa", fontSize:9 }}>Lv.{starterLevel}</span>
           </div>
           <HpBar hp={playerHp} max={playerMaxHp} />
-          <div style={{ color: starter.color, fontSize:9, marginTop:2 }}>{starter.type}</div>
+          <div style={{ display:"flex", justifyContent:"space-between", marginTop:2 }}>
+            <span style={{ color: starter.color, fontSize:9 }}>{starter.type}</span>
+            <span style={{ color:"#c8c8c8", fontSize:9, fontWeight:700 }}>{playerHp}/{playerMaxHp}</span>
+          </div>
         </div>
 
         {/* Wild sprite — top-right */}
@@ -716,7 +725,7 @@ export function BattleScene({
             width:"100%", height:"100%",
             animation: intro ? "introSlide 1.1s ease-out" : "none",
           }}>
-            <img src="/__mockup/images/walk_side_1.png" alt="Keeper" style={{
+            <img src={heroImg} alt="Keeper" style={{
               width:"100%", height:"100%", objectFit:"contain",
               filter:"drop-shadow(0 6px 8px rgba(0,0,0,0.5))",
               imageRendering:"auto",
@@ -1039,17 +1048,15 @@ export function BattleScene({
         ) : (
           <div style={{
             display:"grid",
-            gridTemplateColumns:"repeat(4, 1fr)",
+            gridTemplateColumns:"repeat(3, 1fr)",
             gap:5, marginTop:8,
           }}>
-            <BattleBtn label="Moves"    sub="select"        disabled={busy} onClick={() => setMenu("moves")}/>
+            <BattleBtn label="Moves"    sub="select"         disabled={busy} onClick={() => setMenu("moves")}/>
             <BattleBtn label="Resonate" sub={hasResonanceStone ? `${resBar}/15` : "locked"} disabled={busy || !hasResonanceStone || resBar < 15} onClick={onResonate}/>
             <BattleBtn label="Set Shell" sub={isKeeper ? "bonded" : `×${shellsCount}`} disabled={busy || isKeeper || shellsCount <= 0} onClick={onShell}/>
             <BattleBtn label="Heal"     sub={healCd > 0 ? `CD ${healCd}` : "50%"} disabled={busy || healCd > 0} onClick={onHeal}/>
             <BattleBtn label="Rune"     sub={healingRuneEquipped ? `×${runeUses}` : "—"} disabled={busy || !healingRuneEquipped || runeUses <= 0} onClick={onRune}/>
             <BattleBtn label="Flee"     sub={isKeeper ? "locked" : "70%"} disabled={busy || isKeeper} onClick={onFlee}/>
-            <BattleBtn label="Bag"      sub="soon"          disabled placeholder onClick={() => {}}/>
-            <BattleBtn label="—"        sub=""              disabled placeholder onClick={() => {}}/>
           </div>
         )}
       </div>

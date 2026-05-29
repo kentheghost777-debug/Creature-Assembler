@@ -631,6 +631,8 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
 
   // Active character's animation frame set (stable for the session).
   const charFrames = CHAR_FRAMES[characterId] ?? CHAR_FRAMES.kael;
+  // Character-specific side sprite for the battle arena (each character has a full sprite set).
+  const heroSideImg = `/__mockup/images/${characterId}_side_1.png`;
 
   // ── Role / spawn swap ──────────────────────────────────────────────────────
   // The spouse waiting at home is whichever of Kael/Jess you are NOT playing
@@ -1811,6 +1813,7 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
           healingRuneEquipped={healingRuneEquipped}
           catchMult={role.catchMult}
           shellsCount={shellCount}
+          heroImg={heroSideImg}
           onConsumeShell={() => setShellCount(c => Math.max(0, c - 1))}
           onEnd={handleBattleEnd}
         />
@@ -3446,11 +3449,37 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
                             paddingBottom:2,
                           }}>{starter.type.toUpperCase()}</div>
                           <div style={{ color:"#826040", fontSize:11, marginTop:5 }}>
-                            Level&nbsp;1&emsp;·&emsp;HP 50 / 50
+                            Lv.{starterLevel}&emsp;·&emsp;HP {starterStats.hp}
                           </div>
-                          <div style={{ color:"#6a50a0", fontSize:9, fontWeight:800, marginTop:4, letterSpacing:0.5 }}>
-                            ◈ Obsidianeye Shell{healingRuneEquipped ? "  ·  ✦ Healing Rune" : ""}
+                          {/* XP progress bar */}
+                          <div style={{ display:"flex", alignItems:"center", gap:6, marginTop:6 }}>
+                            <div style={{ flex:1, height:4, background:"rgba(100,64,20,0.18)", borderRadius:2, overflow:"hidden" }}>
+                              <div style={{
+                                height:"100%", borderRadius:2,
+                                background:"linear-gradient(90deg,#c8a030,#e8c860)",
+                                width:`${Math.min(100, (starterXp / Math.max(1, starterLevel * 10 + 10)) * 100)}%`,
+                                transition:"width 0.6s",
+                              }}/>
+                            </div>
+                            <span style={{ fontSize:8, color:"#9a7840", fontWeight:700, flexShrink:0, letterSpacing:0.3 }}>
+                              {starterXp}/{starterLevel * 10 + 10} XP
+                            </span>
                           </div>
+                          {/* Stat row */}
+                          <div style={{ display:"flex", gap:10, marginTop:7 }}>
+                            {(["atk","def","spd"] as const).map(k => (
+                              <div key={k} style={{ display:"flex", flexDirection:"column", alignItems:"center", minWidth:28 }}>
+                                <span style={{ fontSize:7.5, color:"#7a5c28", fontWeight:800, letterSpacing:1.2 }}>{k.toUpperCase()}</span>
+                                <span style={{ fontSize:12, color:"#2a1206", fontWeight:800, lineHeight:1.1 }}>{starterStats[k]}</span>
+                              </div>
+                            ))}
+                          </div>
+                          {/* Equipment line — only shown when something is equipped */}
+                          {(resonanceStoneEquipped || healingRuneEquipped) && (
+                            <div style={{ color:"#6a50a0", fontSize:9, fontWeight:800, marginTop:5, letterSpacing:0.5 }}>
+                              {resonanceStoneEquipped && "◈ Resonance Stone"}{resonanceStoneEquipped && healingRuneEquipped ? "  ·  " : ""}{healingRuneEquipped && "✦ Healing Rune"}
+                            </div>
+                          )}
                         </div>
                         <div style={{
                           color:"#9a7040", fontSize:10, fontWeight:700,
