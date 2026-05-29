@@ -7,19 +7,19 @@ type Screen = "studio" | "dedication" | "title" | "menu" | "intro" | "char_revea
 const CHARACTERS: { id: CharId; name: string; tag: string; sprite: string; desc: string; stats: [string, string][] }[] = [
   {
     id: "kinju", name: "Kinju", tag: "Sunlit wanderer",
-    sprite: "./images/kael_front_idle.png",
+    sprite: "/__mockup/images/kael_front_idle.png",
     desc: "Born curious. Always at the edge of the known. When the world finally called your name — there was never any doubt.",
     stats: [["ORIGIN", "Primeria Village"], ["HEART", "Wanderlust"], ["CALL", "Horizon"]],
   },
   {
     id: "jess", name: "Jess", tag: "Wildheart roamer",
-    sprite: "./images/jess_front_idle.png",
+    sprite: "/__mockup/images/jess_front_idle.png",
     desc: "Born to the living world. You speak in the language of creatures, silence, and instinct — without ever saying a word.",
     stats: [["ORIGIN", "Primeria Village"], ["HEART", "Wildborn"], ["CALL", "The Living Land"]],
   },
   {
     id: "rowan", name: "Rowan", tag: "Seasoned traveler",
-    sprite: "./images/rowan_front_idle.png",
+    sprite: "/__mockup/images/rowan_front_idle.png",
     desc: "Born to understand. Every question leads to the next. For you, the Trial is not a beginning — it is a continuation.",
     stats: [["ORIGIN", "Primeria Village"], ["HEART", "Discovery"], ["CALL", "The Unknown"]],
   },
@@ -56,6 +56,15 @@ export default function GameLauncher() {
   const [savedGame, setSavedGame] = useState(() => hasSave());
   const [characterId, setCharacterId] = useState<CharId>("kinju");
   const [roleId, setRoleId] = useState<RoleId>("keeper");
+  const [vw, setVw] = useState(() => window.innerWidth);
+
+  useEffect(() => {
+    const onResize = () => setVw(window.innerWidth);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  const isMobile = vw <= 520;
 
   const fadeTo = useCallback((next: Screen, ms = 380) => {
     setFading(true);
@@ -239,7 +248,7 @@ export default function GameLauncher() {
           }}
         >
           <img
-            src="./images/title-bg.png"
+            src="/__mockup/images/title-bg.png"
             alt="Primeria"
             loading="eager"
             decoding="async"
@@ -314,7 +323,7 @@ export default function GameLauncher() {
           animation: "glFadeIn 0.6s ease forwards",
         }}>
           {/* Dim bg */}
-          <img src="./images/title-bg.png" alt="" loading="eager" decoding="async" style={{
+          <img src="/__mockup/images/title-bg.png" alt="" loading="eager" decoding="async" style={{
             position: "absolute", inset: 0, width: "100%", height: "100%",
             objectFit: "cover", objectPosition: "center 28%",
             opacity: 0.09, pointerEvents: "none",
@@ -373,16 +382,16 @@ export default function GameLauncher() {
             overflow: "hidden",
           }}>
             <img
-              src="./images/hero-art.png"
+              src="/__mockup/images/hero-art.png"
               alt="Hero"
               style={{
                 position: "absolute", bottom: 0, right: "0%",
-                height: "93%", objectFit: "contain", objectPosition: "bottom center",
+                height: "min(93%, 480px)", objectFit: "contain", objectPosition: "bottom center",
                 filter: "drop-shadow(-4px 0 32px rgba(240,180,40,0.12))",
               }}
             />
             <img
-              src="./images/title-tayanari.png"
+              src="/__mockup/images/title-tayanari.png"
               alt="Tayanari"
               style={{
                 position: "absolute", bottom: 0, left: "4%",
@@ -435,7 +444,7 @@ export default function GameLauncher() {
           }}>
             {/* Prof art */}
             <img
-              src="./images/prof-art.png"
+              src="/__mockup/images/prof-art.png"
               alt="Prof. Irwyn"
               style={{
                 height: "66%", objectFit: "contain", objectPosition: "bottom",
@@ -506,139 +515,184 @@ export default function GameLauncher() {
       )}
 
       {/* ── CHARACTER REVEAL ───────────────────────────────────────── */}
-      {screen === "char_reveal" && (
-        <div style={{
-          width: "100%", height: "100%",
-          background: "#050302",
-          display: "flex", position: "relative", overflow: "hidden",
-          animation: "glFadeIn 0.8s ease forwards",
-        }}>
-          {/* Ambient glow behind hero */}
-          <div style={{
-            position: "absolute", right: "10%", top: "15%",
-            width: "55%", height: "80%", borderRadius: "50%",
-            background: "radial-gradient(ellipse,rgba(240,180,40,0.07) 0%,transparent 68%)",
-            pointerEvents: "none",
-          }} />
-          {/* Left vertical rule */}
-          <div style={{
-            position: "absolute", left: "46%", top: "12%", bottom: "12%",
-            width: 1, background: "linear-gradient(to bottom,transparent,rgba(240,200,60,0.15),transparent)",
-            pointerEvents: "none",
-          }} />
-
-          {/* Left info panel */}
-          <div style={{
-            position: "relative", zIndex: 2,
-            width: "46%", display: "flex", flexDirection: "column",
-            justifyContent: "center", padding: "0 0 0 9%",
-          }}>
-            <div style={{ color: "#4a3818", fontSize: 8, letterSpacing: 4, marginBottom: 14 }}>
-              YOUR CHARACTER
-            </div>
-
-            <div style={{
-              color: "#f0d060", fontSize: 28, fontWeight: 900,
-              letterSpacing: 3, lineHeight: 1.05,
-              textShadow: "0 0 22px rgba(240,200,60,0.22)",
-            }}>THE<br />KEEPER</div>
-
-            <div style={{ width: 46, height: 1, background: "rgba(240,200,60,0.22)", margin: "20px 0" }} />
-
-            <div style={{
-              color: "#c8bca0", fontSize: 11, lineHeight: 1.85,
-              fontWeight: 300, maxWidth: 170,
-            }}>
-              {(CHARACTERS.find(c => c.id === characterId) ?? CHARACTERS[0]).desc}
-            </div>
-
-            <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 7 }}>
-              {(CHARACTERS.find(c => c.id === characterId) ?? CHARACTERS[0]).stats.map(([k, v]) => (
-                <div key={k} style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                  <div style={{ color: "#3a2c14", fontSize: 7.5, letterSpacing: 2, width: 52 }}>{k}</div>
-                  <div style={{ color: "#9a7c40", fontSize: 10, fontWeight: 600 }}>{v}</div>
-                </div>
-              ))}
-            </div>
-
-            {/* Character picker */}
-            <div style={{ marginTop: 22 }}>
-              <div style={{ color: "#4a3818", fontSize: 8, letterSpacing: 3, marginBottom: 9 }}>
-                CHOOSE YOUR LOOK
-              </div>
-              <div style={{ display: "flex", gap: 9 }}>
-                {CHARACTERS.map(c => {
-                  const active = characterId === c.id;
-                  return (
-                    <button
-                      key={c.id}
-                      onClick={() => setCharacterId(c.id)}
-                      style={{
-                        display: "flex", flexDirection: "column", alignItems: "center",
-                        width: 78, padding: "8px 4px 7px", gap: 4, cursor: "pointer",
-                        background: active ? "rgba(240,200,60,0.12)" : "rgba(255,255,255,0.02)",
-                        border: active ? "1.5px solid rgba(240,200,60,0.6)" : "1px solid rgba(240,200,60,0.16)",
-                        borderRadius: 10,
-                        boxShadow: active ? "0 0 16px rgba(240,200,60,0.12)" : "none",
-                        transition: "all 0.18s",
-                      }}
-                    >
-                      <img
-                        src={c.sprite}
-                        alt={c.name}
-                        style={{
-                          height: 48, objectFit: "contain",
-                          imageRendering: "pixelated",
-                          filter: active ? "none" : "grayscale(0.5) opacity(0.7)",
-                        }}
-                      />
-                      <div style={{
-                        color: active ? "#f0d060" : "#8a7440",
-                        fontSize: 10, fontWeight: 800, letterSpacing: 1,
-                      }}>{c.name}</div>
-                      <div style={{ color: "#6a5424", fontSize: 7, letterSpacing: 0.4 }}>{c.tag}</div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <button
-              onClick={() => { if (!fading) beginJourney(); }}
-              style={{
-                marginTop: 24, width: 178, padding: "11px 0",
-                background: "rgba(240,200,60,0.12)",
-                border: "1.5px solid rgba(240,200,60,0.48)",
-                borderRadius: 10, color: "#f0d060",
-                fontSize: 11, fontWeight: 800, letterSpacing: 2.5,
-                textTransform: "uppercase", cursor: "pointer",
-                boxShadow: "0 0 20px rgba(240,200,60,0.07)",
-                transition: "background 0.2s, border-color 0.2s",
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = "rgba(240,200,60,0.2)"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "rgba(240,200,60,0.12)"; }}
-            >ENTER PRIMERIA →</button>
+      {screen === "char_reveal" && (() => {
+        const activeChar = CHARACTERS.find(c => c.id === characterId) ?? CHARACTERS[0];
+        const CharPicker = () => (
+          <div style={{ display: "flex", gap: isMobile ? 7 : 9, flexWrap: "nowrap" }}>
+            {CHARACTERS.map(c => {
+              const active = characterId === c.id;
+              return (
+                <button
+                  key={c.id}
+                  onClick={() => setCharacterId(c.id)}
+                  style={{
+                    display: "flex", flexDirection: "column", alignItems: "center",
+                    flex: isMobile ? 1 : undefined,
+                    width: isMobile ? undefined : 78,
+                    padding: "8px 4px 7px", gap: 4, cursor: "pointer",
+                    background: active ? "rgba(240,200,60,0.12)" : "rgba(255,255,255,0.02)",
+                    border: active ? "1.5px solid rgba(240,200,60,0.6)" : "1px solid rgba(240,200,60,0.16)",
+                    borderRadius: 10,
+                    boxShadow: active ? "0 0 16px rgba(240,200,60,0.12)" : "none",
+                    transition: "all 0.18s",
+                  }}
+                >
+                  <img src={c.sprite} alt={c.name} style={{
+                    height: 48, objectFit: "contain",
+                    imageRendering: "pixelated",
+                    filter: active ? "none" : "grayscale(0.5) opacity(0.7)",
+                  }} />
+                  <div style={{ color: active ? "#f0d060" : "#8a7440", fontSize: 10, fontWeight: 800, letterSpacing: 1 }}>{c.name}</div>
+                  <div style={{ color: "#6a5424", fontSize: 7, letterSpacing: 0.4 }}>{c.tag}</div>
+                </button>
+              );
+            })}
           </div>
+        );
 
-          {/* Right: hero art (Rowan) or chosen sprite (Kael) */}
+        if (isMobile) {
+          return (
+            <div style={{
+              width: "100%", height: "100%",
+              background: "#050302",
+              display: "flex", flexDirection: "column",
+              overflowY: "auto", overflowX: "hidden",
+              animation: "glFadeIn 0.8s ease forwards",
+            }}>
+              {/* Character art — top, fixed height */}
+              <div style={{
+                width: "100%", height: 260, flexShrink: 0,
+                position: "relative", display: "flex",
+                alignItems: "flex-end", justifyContent: "center",
+                overflow: "hidden",
+              }}>
+                <div style={{
+                  position: "absolute", inset: 0,
+                  background: "radial-gradient(ellipse at 50% 80%,rgba(240,180,40,0.09) 0%,transparent 70%)",
+                  pointerEvents: "none",
+                }} />
+                <img
+                  src={activeChar.sprite}
+                  alt={activeChar.name}
+                  style={{
+                    height: "92%", objectFit: "contain", objectPosition: "bottom center",
+                    imageRendering: "pixelated",
+                    filter: "drop-shadow(0 0 28px rgba(240,180,40,0.22))",
+                  }}
+                />
+              </div>
+
+              {/* Info below */}
+              <div style={{ padding: "16px 20px 32px", display: "flex", flexDirection: "column", gap: 0 }}>
+                <div style={{ color: "#4a3818", fontSize: 8, letterSpacing: 4, marginBottom: 10 }}>YOUR CHARACTER</div>
+                <div style={{
+                  color: "#f0d060", fontSize: 26, fontWeight: 900, letterSpacing: 3, lineHeight: 1.05,
+                  textShadow: "0 0 22px rgba(240,200,60,0.22)",
+                }}>THE<br />KEEPER</div>
+                <div style={{ width: 46, height: 1, background: "rgba(240,200,60,0.22)", margin: "14px 0" }} />
+                <div style={{ color: "#c8bca0", fontSize: 12, lineHeight: 1.75, fontWeight: 300, marginBottom: 14 }}>
+                  {activeChar.desc}
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 7, marginBottom: 20 }}>
+                  {activeChar.stats.map(([k, v]) => (
+                    <div key={k} style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                      <div style={{ color: "#3a2c14", fontSize: 7.5, letterSpacing: 2, width: 52 }}>{k}</div>
+                      <div style={{ color: "#9a7c40", fontSize: 10, fontWeight: 600 }}>{v}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ color: "#4a3818", fontSize: 8, letterSpacing: 3, marginBottom: 9 }}>CHOOSE YOUR LOOK</div>
+                <CharPicker />
+                <button
+                  onClick={() => { if (!fading) beginJourney(); }}
+                  style={{
+                    marginTop: 20, width: "100%", padding: "13px 0",
+                    background: "rgba(240,200,60,0.12)",
+                    border: "1.5px solid rgba(240,200,60,0.48)",
+                    borderRadius: 10, color: "#f0d060",
+                    fontSize: 12, fontWeight: 800, letterSpacing: 2.5,
+                    textTransform: "uppercase", cursor: "pointer",
+                  }}
+                >ENTER PRIMERIA →</button>
+              </div>
+            </div>
+          );
+        }
+
+        return (
           <div style={{
-            position: "absolute", zIndex: 2,
-            right: 0, top: 0, bottom: 0, width: "58%",
-            display: "flex", alignItems: "flex-end",
-            justifyContent: "center", overflow: "hidden",
+            width: "100%", height: "100%",
+            background: "#050302",
+            display: "flex", position: "relative", overflow: "hidden",
+            animation: "glFadeIn 0.8s ease forwards",
           }}>
-            {characterId === "rowan" ? (
-              <img
-                src="./images/hero-art.png"
-                alt="Your Keeper"
+            {/* Ambient glow */}
+            <div style={{
+              position: "absolute", right: "10%", top: "15%",
+              width: "55%", height: "80%", borderRadius: "50%",
+              background: "radial-gradient(ellipse,rgba(240,180,40,0.07) 0%,transparent 68%)",
+              pointerEvents: "none",
+            }} />
+            {/* Divider rule */}
+            <div style={{
+              position: "absolute", left: "46%", top: "12%", bottom: "12%",
+              width: 1, background: "linear-gradient(to bottom,transparent,rgba(240,200,60,0.15),transparent)",
+              pointerEvents: "none",
+            }} />
+
+            {/* Left info panel */}
+            <div style={{
+              position: "relative", zIndex: 2,
+              width: "46%", display: "flex", flexDirection: "column",
+              justifyContent: "center", padding: "0 0 0 9%",
+            }}>
+              <div style={{ color: "#4a3818", fontSize: 8, letterSpacing: 4, marginBottom: 14 }}>YOUR CHARACTER</div>
+              <div style={{
+                color: "#f0d060", fontSize: 28, fontWeight: 900, letterSpacing: 3, lineHeight: 1.05,
+                textShadow: "0 0 22px rgba(240,200,60,0.22)",
+              }}>THE<br />KEEPER</div>
+              <div style={{ width: 46, height: 1, background: "rgba(240,200,60,0.22)", margin: "20px 0" }} />
+              <div style={{ color: "#c8bca0", fontSize: 11, lineHeight: 1.85, fontWeight: 300, maxWidth: 170 }}>
+                {activeChar.desc}
+              </div>
+              <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 7 }}>
+                {activeChar.stats.map(([k, v]) => (
+                  <div key={k} style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                    <div style={{ color: "#3a2c14", fontSize: 7.5, letterSpacing: 2, width: 52 }}>{k}</div>
+                    <div style={{ color: "#9a7c40", fontSize: 10, fontWeight: 600 }}>{v}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ marginTop: 22 }}>
+                <div style={{ color: "#4a3818", fontSize: 8, letterSpacing: 3, marginBottom: 9 }}>CHOOSE YOUR LOOK</div>
+                <CharPicker />
+              </div>
+              <button
+                onClick={() => { if (!fading) beginJourney(); }}
                 style={{
-                  height: "96%", objectFit: "contain", objectPosition: "bottom center",
-                  filter: "drop-shadow(-2px 0 36px rgba(240,180,40,0.16))",
+                  marginTop: 24, width: 178, padding: "11px 0",
+                  background: "rgba(240,200,60,0.12)",
+                  border: "1.5px solid rgba(240,200,60,0.48)",
+                  borderRadius: 10, color: "#f0d060",
+                  fontSize: 11, fontWeight: 800, letterSpacing: 2.5,
+                  textTransform: "uppercase", cursor: "pointer",
+                  boxShadow: "0 0 20px rgba(240,200,60,0.07)",
+                  transition: "background 0.2s, border-color 0.2s",
                 }}
-              />
-            ) : (
+                onMouseEnter={e => { e.currentTarget.style.background = "rgba(240,200,60,0.2)"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "rgba(240,200,60,0.12)"; }}
+              >ENTER PRIMERIA →</button>
+            </div>
+
+            {/* Right: character art */}
+            <div style={{
+              position: "absolute", zIndex: 2,
+              right: 0, top: 0, bottom: 0, width: "58%",
+              display: "flex", alignItems: "flex-end",
+              justifyContent: "center", overflow: "hidden",
+            }}>
               <img
-                src={(CHARACTERS.find(c => c.id === characterId) ?? CHARACTERS[0]).sprite}
+                src={activeChar.sprite}
                 alt="Your Keeper"
                 style={{
                   height: "74%", objectFit: "contain", objectPosition: "bottom center",
@@ -646,10 +700,10 @@ export default function GameLauncher() {
                   filter: "drop-shadow(-2px 0 36px rgba(240,180,40,0.18))",
                 }}
               />
-            )}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ── GLOBAL FADE OVERLAY ────────────────────────────────────── */}
       <div style={{
