@@ -1,5 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { ELEMENT_COLOR } from "./progression";
+import {
+  type Move, getMove, asElement, computeDamage, effectiveness, effLabel,
+  defaultActiveMoves, wildCombatStats, wildLevelFor,
+} from "./moves";
+import { MoveFx, MOVE_FX_KEYFRAMES } from "./battleFx";
+
+// Last-resort move when every active move is out of PP.
+const STRUGGLE: Move = {
+  id: "struggle", name: "Struggle", category: "damage", power: 5,
+  accuracy: 100, pp: 99, anim: "glitch", desc: "A desperate flail.",
+};
 
 // Maps a mon's type string (which may or may not be a catalogued Element)
 // to a usable accent color. Falls back to warm gold for unknown types.
@@ -87,6 +98,8 @@ type Props = {
   starter: StarterSpec;
   starterLevel: number;
   starterStats: StarterStats;
+  /** Active move loadout (≤4 move ids) the player brought into battle. */
+  starterMoves: string[];
   hasResonanceStone: boolean;
   healingRuneEquipped: boolean;
   /** Role boon: capture odds multiplier (Hopeful path raises it). Defaults to 1. */
@@ -109,13 +122,13 @@ function xpFor(wild: MonSpec, caught: boolean): number {
   return caught ? Math.round(base * 1.10) : base;
 }
 
-type Menu = "root" | "shellConfirm" | "ended";
+type Menu = "root" | "moves" | "shellConfirm" | "ended";
 
 const BTN_BG    = "linear-gradient(180deg, rgba(60,40,20,0.92), rgba(36,22,10,0.92))";
 const BTN_BG_HI = "linear-gradient(180deg, rgba(90,62,30,0.96), rgba(56,36,16,0.96))";
 
 export function BattleScene({
-  wild, starter, starterLevel, starterStats, hasResonanceStone, healingRuneEquipped,
+  wild, starter, starterLevel, starterStats, starterMoves, hasResonanceStone, healingRuneEquipped,
   catchMult = 1, shellsCount,
   opponentKind = "wild", keeperName = "Keeper", keeperImg = "/__mockup/images/rowan_side_1.png",
   onConsumeShell, onEnd,
@@ -155,6 +168,65 @@ export function BattleScene({
   const fxIdRef = useRef(1);
   const nextFxId = () => ++fxIdRef.current;
 
+  // ── Move system: derived combatants ───────────────────────────────────
+  const playerEl = asElement(starter.type);
+  const wildEl   = asElement(wild.type);
+  const wildStats = wildCombatStats(wild.baseDmg, wild.rarity);
+  const wildLevel = isKeeper ? Math.max(5, starterLevel) : wildLevelFor(wild.rarity);
+
+  // Player's active loadout (fall back to a sensible default, then Struggle).
+  const playerMoves: Move[] = (() => {
+    const resolved = starterMoves.map(getMove).filter((m): m is Move => !!m);
+    if (resolved.length) return resolved.slice(0, 4);
+    if (playerEl) {
+      const def = defaultActiveMoves(playerEl, starterLevel).map(getMove).filter((m): m is Move => !!m);
+      if (def.length) return def;
+    }
+    return [STRUGGLE];
+  })();
+  // Wild's loadout derived from its element + notional level.
+  const wildMoves: Move[] = (() => {
+    if (wildEl) {
+      const ids = defaultActiveMoves(wildEl, wildLevel);
+      const ms = ids.map(getMove).filter((m): m is Move => !!m);
+      if (ms.length) return ms;
+    }
+    // Unknown element: a single neutral strike scaled off baseDmg.
+    return [{
+      id: "wild_strike", name: `${wild.type} Strike`, category: "damage",
+      power: Math.round((wild.baseDmg[0] + wild.baseDmg[1]) / 2) + 4,
+      accuracy: 100, pp: 99, anim: "glitch", desc: "A wild strike.",
+    }];
+  })();
+
+  // PP pools. Player PP is stateful (drives the move menu); wild PP rides a ref.
+  const [playerPp, setPlayerPp] = useState<Record<string, number>>(() => {
+    const o: Record<string, number> = {};
+    for (const m of playerMoves) o[m.id] = m.pp;
+    return o;
+  });
+  const wildPpRef = useRef<Record<string, number>>({});
+  const wildPpInit = useRef(false);
+  if (!wildPpInit.current) {
+    wildPpInit.current = true;
+    for (const m of wildMoves) wildPpRef.current[m.id] = m.pp;
+  }
+
+  // Battle-long stat buffs (Sharpen / Bulwark). Refs mirror state so delayed
+  // turn callbacks always read the latest values.
+  type Buffs = { pAtk: number; pDef: number; wAtk: number; wDef: number };
+  const [buffs, setBuffs] = useState<Buffs>({ pAtk: 0, pDef: 0, wAtk: 0, wDef: 0 });
+  const buffsRef = useRef(buffs);
+  useEffect(() => { buffsRef.current = buffs; }, [buffs]);
+
+  // HP refs (latest values for delayed AI/KO logic).
+  const wildHpRef   = useRef(wild.maxHp);
+  const playerHpRef = useRef(playerMaxHp);
+
+  // Move animation overlay.
+  type MoveFxState = { anim: Move["anim"]; color: string; from: "player" | "wild"; category: Move["category"]; id: number };
+  const [moveFx, setMoveFx] = useState<MoveFxState | null>(null);
+
   useEffect(() => {
     const t1 = window.setTimeout(() => { setIntro(false); setBusy(false); }, 1100);
     // Summon bloom lingers a touch past the intro float, then clears.
@@ -178,9 +250,9 @@ export function BattleScene({
     setAttackFx({ from, color, id });
     later(() => setAttackFx(curr => (curr?.id === id ? null : curr)), 750);
   }
-  function showDmg(at: "player" | "wild", value: number) {
+  function showDmg(at: "player" | "wild", value: number, crit = false) {
     const id = nextFxId();
-    setDmgFx({ at, value, id });
+    setDmgFx({ at, value, crit, id });
     later(() => setDmgFx(curr => (curr?.id === id ? null : curr)), 950);
   }
   function triggerAux(
@@ -190,30 +262,96 @@ export function BattleScene({
     setAuxFx({ kind, color, at, id });
     later(() => setAuxFx(curr => (curr?.id === id ? null : curr)), ms);
   }
-
-  function dmgRange(base: [number, number], starterBonus = 0): number {
-    const [lo, hi] = base;
-    return Math.max(1, Math.floor(lo + Math.random() * (hi - lo + 1)) + starterBonus);
+  function triggerMove(
+    anim: Move["anim"], color: string, from: "player" | "wild", category: Move["category"],
+  ) {
+    const id = nextFxId();
+    setMoveFx({ anim, color, from, category, id });
+    later(() => setMoveFx(curr => (curr?.id === id ? null : curr)), 1100);
   }
 
+  // Effective stats after battle-long buffs.
+  function pAtk() { return starterStats.atk + buffsRef.current.pAtk; }
+  function pDef() { return starterStats.def + buffsRef.current.pDef; }
+  function wAtk() { return wildStats.atk + buffsRef.current.wAtk; }
+  function wDef() { return wildStats.def + buffsRef.current.wDef; }
+
+  // ── Wild AI: choose a move ──────────────────────────────────────────────
+  function pickWildMove(): Move {
+    const usable = wildMoves.filter(m => (wildPpRef.current[m.id] ?? 0) > 0);
+    if (usable.length === 0) return STRUGGLE;
+    const lowHp = wildHpRef.current < wild.maxHp * 0.4;
+    const heals = usable.filter(m => m.category === "heal");
+    if (lowHp && heals.length && Math.random() < 0.5) return heals[0];
+    const support = usable.filter(m => m.category === "buff" || m.category === "shield");
+    const dmg = usable.filter(m => m.category === "damage");
+    if (dmg.length === 0) return support[0] ?? usable[0];
+    if (support.length && buffsRef.current.wAtk < 6 && Math.random() < 0.18) {
+      return support[Math.floor(Math.random() * support.length)];
+    }
+    // Prefer the strongest / most effective damage move (with a little noise).
+    let best = dmg[0], bestScore = -Infinity;
+    for (const m of dmg) {
+      const eff = m.element && playerEl ? effectiveness(m.element, playerEl) : 1;
+      const score = m.power * eff + Math.random() * 3;
+      if (score > bestScore) { bestScore = score; best = m; }
+    }
+    return best;
+  }
+
+  // ── Wild's turn ─────────────────────────────────────────────────────────
   function wildTurn(afterCb?: () => void) {
     later(() => {
-      // Defense soaks 1 dmg per 2 def points, min 1 dmg
-      const raw = dmgRange(wild.baseDmg);
-      const dmg = Math.max(1, raw - Math.floor(starterStats.def / 2));
-      triggerAttack("wild", typeColor(wild.type));
-      // Apply HP/log/shake/dmg-number all at the impact moment so the bar
-      // tick, log line, and visuals land on the same frame.
+      const move = pickWildMove();
+      if (move.id !== STRUGGLE.id) {
+        wildPpRef.current[move.id] = Math.max(0, (wildPpRef.current[move.id] ?? 0) - 1);
+      }
+      const color = wildEl ? typeColor(wild.type) : "#ffe080";
+
+      // Utility moves — wild heals or buffs itself, no damage to player.
+      if (move.category !== "damage") {
+        triggerMove(move.anim, color, "wild", move.category);
+        if (move.category === "heal" && move.heal) {
+          const heal = Math.floor(wild.maxHp * move.heal);
+          setWildHp(hp => { const n = Math.min(wild.maxHp, hp + heal); wildHpRef.current = n; return n; });
+          setLog(`${wild.name} uses ${move.name} — recovers ${heal} HP!`);
+        } else if (move.category === "buff" && move.atkBuff) {
+          setBuffs(b => ({ ...b, wAtk: b.wAtk + move.atkBuff! }));
+          setLog(`${wild.name} uses ${move.name} — its attack rises!`);
+        } else if (move.category === "shield" && move.defBuff) {
+          setBuffs(b => ({ ...b, wDef: b.wDef + move.defBuff! }));
+          setLog(`${wild.name} uses ${move.name} — its defense rises!`);
+        }
+        later(() => { setHealCd(c => Math.max(0, c - 1)); setBusy(false); afterCb?.(); }, 760);
+        return;
+      }
+
+      // Accuracy check.
+      if (Math.random() * 100 > move.accuracy) {
+        setLog(`${wild.name} uses ${move.name} — but it missed!`);
+        later(() => { setHealCd(c => Math.max(0, c - 1)); setBusy(false); afterCb?.(); }, 700);
+        return;
+      }
+
+      const stab = !!move.element && move.element === wildEl;
+      const eff  = move.element && playerEl ? effectiveness(move.element, playerEl) : 1;
+      const { dmg, crit } = computeDamage({
+        power: move.power, attackerAtk: wAtk(), defenderDef: pDef(), stab, effectiveness: eff,
+      });
+      triggerMove(move.anim, color, "wild", "damage");
+
       later(() => {
         setShake("player");
-        showDmg("player", dmg);
-        setLog(`${wild.name} hits for ${dmg}!`);
+        showDmg("player", dmg, crit);
+        const tag = effLabel(eff);
+        setLog(`${wild.name} uses ${move.name}!${crit ? " A critical hit!" : ""}${tag ? " " + tag : ""}`);
         setResBar(b => Math.min(15, b + 5));
-      }, 300);
-      later(() => setShake(null), 520);
+      }, 380);
+      later(() => setShake(null), 600);
       later(() => {
         setPlayerHp(hp => {
           const next = Math.max(0, hp - dmg);
+          playerHpRef.current = next;
           if (next === 0) {
             later(() => {
               setLog(`${starter.name} fainted…`);
@@ -228,20 +366,21 @@ export function BattleScene({
           }
           return next;
         });
-      }, 300);
+      }, 380);
     }, 560);
   }
 
-  function playerHit(dmg: number, msg: string, afterCb?: () => void) {
+  function playerHit(dmg: number, msg: string, crit = false, eff = 1, afterCb?: () => void) {
     setBusy(true);
-    // Sync HP / log / shake / damage number to the impact frame (~300ms in)
-    later(() => setShake(null), 520);
+    later(() => setShake(null), 600);
     later(() => {
       setShake("wild");
-      showDmg("wild", dmg);
-      setLog(msg);
+      showDmg("wild", dmg, crit);
+      const tag = effLabel(eff);
+      setLog(`${msg}${crit ? " A critical hit!" : ""}${tag ? " " + tag : ""}`);
       setWildHp(hp => {
         const next = Math.max(0, hp - dmg);
+        wildHpRef.current = next;
         setResBar(b => Math.min(15, b + 5));
         if (next === 0) {
           const xp = xpFor(wild, false);
@@ -257,27 +396,56 @@ export function BattleScene({
         }
         return next;
       });
-    }, 300);
+    }, 380);
   }
 
-  function onFight() {
+  // ── Player picks a move ─────────────────────────────────────────────────
+  function onMove(move: Move) {
     if (busy) return;
+    setMenu("root");
     setBusy(true);
-    triggerAttack("player", typeColor(starter.type));
-    // 10% chance the wild slips the strike entirely
-    if (Math.random() < 0.10) {
+    const color = move.element ? typeColor(move.element) : typeColor(starter.type);
+    if (move.id !== STRUGGLE.id) {
+      setPlayerPp(p => ({ ...p, [move.id]: Math.max(0, (p[move.id] ?? 0) - 1) }));
+    }
+
+    // Utility — heal / buff / shield the player, then the wild acts.
+    if (move.category !== "damage") {
+      triggerMove(move.anim, color, "player", move.category);
+      if (move.category === "heal" && move.heal) {
+        const heal = Math.floor(playerMaxHp * move.heal);
+        setPlayerHp(hp => { const n = Math.min(playerMaxHp, hp + heal); playerHpRef.current = n; return n; });
+        setLog(`${starter.name} uses ${move.name} — recovers ${heal} HP!`);
+      } else if (move.category === "buff" && move.atkBuff) {
+        setBuffs(b => ({ ...b, pAtk: b.pAtk + move.atkBuff! }));
+        setLog(`${starter.name} uses ${move.name} — Attack rose!`);
+      } else if (move.category === "shield" && move.defBuff) {
+        setBuffs(b => ({ ...b, pDef: b.pDef + move.defBuff! }));
+        setLog(`${starter.name} uses ${move.name} — Defense rose!`);
+      }
+      later(() => wildTurn(), 760);
+      return;
+    }
+
+    // Damage — accuracy check (a miss reads as the wild feinting away).
+    triggerMove(move.anim, color, "player", "damage");
+    if (Math.random() * 100 > move.accuracy) {
       later(() => {
         triggerAux("feint", undefined, "wild", 750);
         setFeinting(true);
         later(() => setFeinting(false), 600);
-        setLog(`${wild.name} feinted away — the strike missed!`);
+        setLog(`${starter.name} uses ${move.name} — ${wild.name} feinted away!`);
         later(() => wildTurn(), 650);
-      }, 320);
+      }, 360);
       return;
     }
-    // Damage scales off atk: roll [atk, atk+5] with a small variance bonus
-    const dmg = dmgRange([starterStats.atk, starterStats.atk + 5], Math.floor(Math.random() * 2));
-    later(() => playerHit(dmg, `${starter.name} attacks for ${dmg}!`), 280);
+
+    const stab = !!move.element && move.element === playerEl;
+    const eff  = move.element && wildEl ? effectiveness(move.element, wildEl) : 1;
+    const { dmg, crit } = computeDamage({
+      power: move.power, attackerAtk: pAtk(), defenderDef: wDef(), stab, effectiveness: eff,
+    });
+    later(() => playerHit(dmg, `${starter.name} uses ${move.name}!`, crit, eff), 140);
   }
 
   function onHeal() {
@@ -601,6 +769,12 @@ export function BattleScene({
             <SummonBurst x={POS.wild.x} y={POS.wild.y - 8} color={typeColor(wild.type)} delay={0}/>
           </div>
         )}
+        {/* Move animation (elemental projectile / utility aura) */}
+        {moveFx && (
+          <div key={`mv-${moveFx.id}`} style={{ position:"absolute", inset:0, pointerEvents:"none", zIndex:6 }}>
+            <MoveFx anim={moveFx.anim} color={moveFx.color} from={moveFx.from} category={moveFx.category} />
+          </div>
+        )}
         {/* Attack streak + impact burst */}
         {attackFx && (
           <div key={`atk-${attackFx.id}`} style={{
@@ -660,8 +834,11 @@ export function BattleScene({
             ...(dmgFx.at === "wild"
               ? { right:"29%", top:"50%" }
               : { left:"22%", top:"50%" }),
-            color:"#ff5040", fontSize:30, fontWeight:900,
-            textShadow:"0 0 6px #000, 2px 2px 0 #500, 0 0 14px #ff2020",
+            color: dmgFx.crit ? "#ffd040" : "#ff5040",
+            fontSize: dmgFx.crit ? 38 : 30, fontWeight:900,
+            textShadow: dmgFx.crit
+              ? "0 0 6px #000, 2px 2px 0 #804000, 0 0 16px #ffb020"
+              : "0 0 6px #000, 2px 2px 0 #500, 0 0 14px #ff2020",
             pointerEvents:"none", zIndex:6,
             animation:"dmgFloat 0.9s ease-out forwards",
             letterSpacing:1,
@@ -830,13 +1007,42 @@ export function BattleScene({
               Cancel
             </button>
           </div>
+        ) : menu === "moves" ? (
+          <div style={{
+            display:"grid",
+            gridTemplateColumns:"repeat(2, 1fr)",
+            gap:5, marginTop:8,
+          }}>
+            {playerMoves.map(m => {
+              const pp = playerPp[m.id] ?? 0;
+              const out = pp <= 0;
+              return (
+                <MoveBtn
+                  key={m.id}
+                  move={m}
+                  pp={pp}
+                  eff={m.category === "damage" && m.element && wildEl ? effectiveness(m.element, wildEl) : 1}
+                  disabled={busy || out}
+                  onClick={() => onMove(out ? STRUGGLE : m)}
+                />
+              );
+            })}
+            {playerMoves.every(m => (playerPp[m.id] ?? 0) <= 0) && (
+              <MoveBtn move={STRUGGLE} pp={99} eff={1} disabled={busy} onClick={() => onMove(STRUGGLE)} />
+            )}
+            <button onClick={() => setMenu("root")} style={{
+              gridColumn:"1 / -1", padding:"8px",
+              background:BTN_BG, border:"1.5px solid rgba(180,130,60,0.45)",
+              borderRadius:7, color:"#f0d890", fontSize:11, fontWeight:800, cursor:"pointer",
+            }}>← Back</button>
+          </div>
         ) : (
           <div style={{
             display:"grid",
             gridTemplateColumns:"repeat(4, 1fr)",
             gap:5, marginTop:8,
           }}>
-            <BattleBtn label="Fight"    sub="atk"           disabled={busy} onClick={onFight}/>
+            <BattleBtn label="Moves"    sub="select"        disabled={busy} onClick={() => setMenu("moves")}/>
             <BattleBtn label="Resonate" sub={hasResonanceStone ? `${resBar}/15` : "locked"} disabled={busy || !hasResonanceStone || resBar < 15} onClick={onResonate}/>
             <BattleBtn label="Set Shell" sub={isKeeper ? "bonded" : `×${shellsCount}`} disabled={busy || isKeeper || shellsCount <= 0} onClick={onShell}/>
             <BattleBtn label="Heal"     sub={healCd > 0 ? `CD ${healCd}` : "50%"} disabled={busy || healCd > 0} onClick={onHeal}/>
@@ -966,6 +1172,7 @@ export function BattleScene({
           30%  { transform: scale(1.25) rotate(180deg); filter: drop-shadow(0 0 18px #ff6040) brightness(1.5); }
           100% { transform: scale(0) rotate(540deg);    opacity: 0; }
         }
+        ${MOVE_FX_KEYFRAMES}
       `}</style>
     </div>
   );
@@ -1073,6 +1280,55 @@ function BattleBtn({
     >
       <span>{label}</span>
       {sub && <span style={{ fontSize:9, fontWeight:600, opacity:0.75 }}>{sub}</span>}
+    </button>
+  );
+}
+
+// In-battle move button — shows name, element/category tag, PP, and an
+// effectiveness hint vs. the current opponent.
+function MoveBtn({
+  move, pp, eff, disabled, onClick,
+}: { move: Move; pp: number; eff: number; disabled?: boolean; onClick: () => void }) {
+  const accent =
+    move.category === "damage"
+      ? (move.element ? typeColor(move.element) : "#ffe080")
+      : move.category === "heal" ? "#80ff90"
+      : move.category === "buff" ? "#ff9060"
+      : "#80b8ff";
+  const tag =
+    move.category === "damage" ? (move.element ?? "Neutral")
+    : move.category === "heal" ? "Heal"
+    : move.category === "buff" ? "Attack ↑" : "Defense ↑";
+  const effHint = move.category === "damage" && eff !== 1
+    ? (eff >= 2 ? "▲ strong" : "▼ weak") : "";
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      style={{
+        padding:"7px 9px", textAlign:"left",
+        background: disabled ? BTN_BG : BTN_BG_HI,
+        border:`1.5px solid ${accent}88`,
+        borderLeft:`4px solid ${accent}`,
+        borderRadius:7,
+        color: disabled ? "#9a8458" : "#f4dca0",
+        cursor: disabled ? "default" : "pointer",
+        opacity: disabled ? 0.6 : 1,
+        display:"flex", flexDirection:"column", gap:2, minHeight:46,
+      }}
+    >
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", gap:6 }}>
+        <span style={{ fontSize:12, fontWeight:800 }}>{move.name}</span>
+        <span style={{ fontSize:9, fontWeight:700, opacity:0.7 }}>PP {pp >= 99 ? "∞" : pp}</span>
+      </div>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", gap:6 }}>
+        <span style={{ fontSize:9, fontWeight:700, color: accent }}>{tag}</span>
+        {effHint && (
+          <span style={{ fontSize:9, fontWeight:800, color: eff >= 2 ? "#7dff8a" : "#ff8a7a" }}>
+            {effHint}
+          </span>
+        )}
+      </div>
     </button>
   );
 }

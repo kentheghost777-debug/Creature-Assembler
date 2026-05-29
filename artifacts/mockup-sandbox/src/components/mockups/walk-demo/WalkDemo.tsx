@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { BattleScene, RARITY_COLOR, type MonSpec, type MonRarity, type BattleResult, type StarterStats } from "./BattleScene";
 import { SHELLS, ELEMENT_COLOR } from "./progression";
+import {
+  getMove, moveName, asElement,
+  learnedMoveIds, movesLearnedAt, defaultActiveMoves, sanitizeActiveMoves,
+  type Move,
+} from "./moves";
 import { type CharId, type RoleId, type PartySave, type WorldSave, ROLES, readSave, updateParty, updateWorld, updateRole, roleDef } from "./save";
 
 // ── Level-up reward generation ────────────────────────────────────────────
@@ -22,11 +27,89 @@ function rollLevelUpGains(): Partial<Record<StatKey, number>> {
   return gains;
 }
 
-// Element move names — placeholders; user will replace later.
-const MOVE_NAMES = ["Strike", "Flare", "Surge", "Howl", "Pulse", "Crescent", "Maelstrom", "Dirge"];
-function newMoveFor(type: string, existing: string[]): string {
-  const idx = existing.length % MOVE_NAMES.length;
-  return `${type} ${MOVE_NAMES[idx]}`;
+// ── Out-of-battle move manager ────────────────────────────────────────────
+// Lets the player choose which (up to 4) of their learned moves are active in
+// battle. Rendered inside the party tab of the journal. Pure UI — parent owns
+// the active-move id list and persists it.
+function MoveManager({
+  element, level, active, onChange,
+}: { element: string; level: number; active: string[]; onChange: (next: string[]) => void }) {
+  const el = asElement(element);
+  if (!el) return null;
+  const learned = learnedMoveIds(el, level);
+  const activeValid = active.filter(id => learned.includes(id));
+
+  const toggle = (id: string) => {
+    if (activeValid.includes(id)) {
+      if (activeValid.length <= 1) return;            // always keep ≥1 active
+      onChange(activeValid.filter(x => x !== id));
+    } else {
+      if (activeValid.length >= 4) return;            // 4 active slots max
+      onChange([...activeValid, id]);
+    }
+  };
+
+  const tagFor = (m: Move) =>
+    m.category === "damage" ? (m.element ?? "Neutral")
+    : m.category === "heal" ? "Heal"
+    : m.category === "buff" ? "Attack ↑" : "Defense ↑";
+  const accentFor = (m: Move) =>
+    m.category === "damage"
+      ? (m.element ? ELEMENT_COLOR[m.element] : "#caa050")
+      : m.category === "heal" ? "#4aa860"
+      : m.category === "buff" ? "#c06030" : "#3a78c0";
+
+  return (
+    <div style={{ padding:"4px 2px 12px", borderBottom:"1px dashed rgba(100,64,20,0.28)" }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", marginBottom:7 }}>
+        <span style={{ fontSize:10, fontWeight:900, letterSpacing:1.6, color:"#8a5c22" }}>MOVES</span>
+        <span style={{ fontSize:9.5, fontWeight:700, color:"#a07848" }}>
+          {activeValid.length}/4 active · tap to {activeValid.length >= 4 ? "swap" : "equip"}
+        </span>
+      </div>
+      <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+        {learned.map(id => {
+          const m = getMove(id);
+          if (!m) return null;
+          const on = activeValid.includes(id);
+          const accent = accentFor(m);
+          return (
+            <button
+              key={id}
+              onClick={() => toggle(id)}
+              style={{
+                display:"flex", alignItems:"center", gap:9, width:"100%",
+                padding:"7px 9px", textAlign:"left", cursor:"pointer",
+                borderRadius:8,
+                background: on ? `${accent}1c` : "rgba(100,64,20,0.04)",
+                border: on ? `1.5px solid ${accent}` : "1px solid rgba(100,64,20,0.18)",
+                borderLeft: `4px solid ${on ? accent : "rgba(100,64,20,0.18)"}`,
+              }}
+            >
+              <span style={{
+                width:16, height:16, borderRadius:5, flexShrink:0,
+                display:"flex", alignItems:"center", justifyContent:"center",
+                fontSize:11, fontWeight:900,
+                background: on ? accent : "transparent",
+                border: on ? "none" : "1.5px solid rgba(100,64,20,0.3)",
+                color:"#fff",
+              }}>{on ? "✓" : ""}</span>
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ color:"#2a1206", fontWeight:800, fontSize:12.5 }}>{m.name}</div>
+                <div style={{ color:"#8a6a40", fontSize:9, marginTop:1 }}>{m.desc}</div>
+              </div>
+              <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:2, flexShrink:0 }}>
+                <span style={{ fontSize:9, fontWeight:800, color: accent }}>{tagFor(m)}</span>
+                <span style={{ fontSize:8.5, fontWeight:700, color:"#a07848" }}>
+                  {m.category === "damage" ? `PWR ${m.power}` : `PP ${m.pp}`}
+                </span>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 // ── World sizes (pixels) ────────────────────────────────────────────────────
@@ -652,6 +735,18 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
       shells: shellCount,
     });
   }, [starter, starterLevel, starterXp, starterStats, starterMoves, caughtParty, storageBox, shellCount]);
+
+  // One-time migration: older saves stored cosmetic move name-strings. Once the
+  // starter (and thus its element) is known, normalise the active list to valid
+  // learnset move ids, filling from the default loadout when none survive.
+  const movesMigrated = useRef(false);
+  useEffect(() => {
+    if (movesMigrated.current || !starter) return;
+    const el = asElement(starter.type);
+    if (!el) return;
+    movesMigrated.current = true;
+    setStarterMoves(cur => sanitizeActiveMoves(el, starterLevel, cur));
+  }, [starter, starterLevel]);
 
   // ── World persistence (resume exactly where you left off) ──────────────────
   // We keep a live snapshot of every quest flag + the current scene, then write
@@ -1436,7 +1531,8 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
     setStarterLevel(5);
     setStarterXp(0);
     setStarterStats({ hp: 40, atk: 6, def: 4, spd: 5 });
-    setStarterMoves([`${s.type} ${MOVE_NAMES[0]}`]); // L5 starts with one element move
+    const el = asElement(s.type);
+    setStarterMoves(el ? defaultActiveMoves(el, 5) : []); // L5 starter loadout from learnset
     setPhase("d3");
     setSelected(null);
   }, [selected]);
@@ -1636,11 +1732,17 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
       for (const k of Object.keys(g) as StatKey[]) {
         totalGains[k] = (totalGains[k] ?? 0) + (g[k] ?? 0);
       }
-      // Learn a new move every 3 levels (L8, L11, L14, ...)
-      if (newLevel % 3 === 0) {
-        const m = newMoveFor(starter?.type ?? "Element", workingMoves);
-        workingMoves.push(m);
-        newMoves.push(m);
+      // Learn real moves from this element's learnset at the levels they unlock.
+      const lvEl = asElement(starter?.type ?? "");
+      if (lvEl) {
+        for (const id of movesLearnedAt(lvEl, newLevel)) {
+          newMoves.push(moveName(id));
+          // Auto-equip into a free active slot; otherwise it waits in the
+          // learned pool for the player to swap in via the move manager.
+          if (workingMoves.length < 4 && !workingMoves.includes(id)) {
+            workingMoves.push(id);
+          }
+        }
       }
       threshold = newLevel * 10 + 10;
     }
@@ -1704,6 +1806,7 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
           starter={starter}
           starterLevel={starterLevel}
           starterStats={starterStats}
+          starterMoves={starterMoves}
           hasResonanceStone={resonanceStoneEquipped}
           healingRuneEquipped={healingRuneEquipped}
           catchMult={role.catchMult}
@@ -2091,6 +2194,10 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
                 const onCd = !!hotspotCd[i];
                 const rarity = dist?.mon.rarity;
                 const ringColor = rarity ? RARITY_COLOR[rarity] : "transparent";
+                // Tint the core glow with the lurking mon's element so each
+                // disturbance reads as "something <element> is here".
+                const distEl = dist ? asElement(dist.mon.type) : null;
+                const elColor = distEl ? ELEMENT_COLOR[distEl] : ringColor;
                 const drama = rarity === "apex" ? 1 : rarity === "ultra" ? 0.8 : rarity === "rare" ? 0.55 : rarity === "uncommon" ? 0.4 : rarity === "common" ? 0.25 : 0.15;
                 return (
                   <button
@@ -2102,10 +2209,10 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
                       width: h.r * 2, height: h.r * 2,
                       borderRadius:"50%",
                       background: dist
-                        ? `radial-gradient(circle, ${ringColor}66 0%, ${ringColor}22 55%, transparent 78%)`
+                        ? `radial-gradient(circle, ${elColor}88 0%, ${elColor}33 42%, ${ringColor}1c 64%, transparent 80%)`
                         : "transparent",
                       border: dist ? `2px solid ${ringColor}` : "2px dashed rgba(180,160,80,0.18)",
-                      boxShadow: dist ? `0 0 ${20 + drama * 30}px ${ringColor}99` : "none",
+                      boxShadow: dist ? `0 0 ${20 + drama * 30}px ${ringColor}99, inset 0 0 ${10 + drama * 16}px ${elColor}66` : "none",
                       animation: dist ? `disturb${rarity === "apex" || rarity === "ultra" ? "Big" : "Sml"} ${rarity === "apex" ? "1.0s" : rarity === "ultra" ? "1.2s" : "1.5s"} ease-in-out infinite` : undefined,
                       cursor:"pointer",
                       padding:0,
@@ -2114,6 +2221,43 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
                     }}
                     aria-label={dist ? `disturbance-${rarity}` : `inspect-${h.kind}`}
                   />
+                );
+              })}
+
+              {/* Orbiting element motes — a cheap "magical" flourish (one rotating
+                  wrapper per disturbance; the dots are static children so only a
+                  single transform animates). Skipped for the lowest tier. */}
+              {Object.entries(activeDisturbances).map(([k, d]) => {
+                if (d.mon.rarity === "common") return null;
+                const h = R1_HOTSPOTS[Number(k)];
+                const el = asElement(d.mon.type);
+                const c = el ? ELEMENT_COLOR[el] : RARITY_COLOR[d.mon.rarity];
+                const motes = d.mon.rarity === "apex" || d.mon.rarity === "ultra" ? 4 : 3;
+                const ringR = h.r + 6;
+                const spin = d.mon.rarity === "apex" ? "3.2s" : d.mon.rarity === "ultra" ? "4s" : "5.5s";
+                return (
+                  <div key={`motes-${k}`} style={{
+                    position:"absolute",
+                    left: h.x - ringR, top: h.y - ringR,
+                    width: ringR * 2, height: ringR * 2,
+                    pointerEvents:"none",
+                    animation: `runeSpin ${spin} linear infinite`,
+                    zIndex: 5,
+                  }}>
+                    {Array.from({ length: motes }).map((_, m) => {
+                      const ang = (m / motes) * Math.PI * 2;
+                      const dx = ringR + Math.cos(ang) * ringR - 3;
+                      const dy = ringR + Math.sin(ang) * ringR - 3;
+                      return (
+                        <div key={m} style={{
+                          position:"absolute", left: dx, top: dy,
+                          width: 6, height: 6, borderRadius:"50%",
+                          background: c,
+                          boxShadow: `0 0 6px ${c}, 0 0 10px ${c}aa`,
+                        }}/>
+                      );
+                    })}
+                  </div>
                 );
               })}
 
@@ -3322,6 +3466,16 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
                       }}>— No companion yet. Speak with the Professor. —</div>
                     )}
 
+                    {/* ── Move manager (rearrange the active 4 from the learned pool) ── */}
+                    {starter && (
+                      <MoveManager
+                        element={starter.type}
+                        level={starterLevel}
+                        active={starterMoves}
+                        onChange={setStarterMoves}
+                      />
+                    )}
+
                     {/* ── Player (Keeper) equipment row ── */}
                     <div style={{
                       display:"flex", alignItems:"center", gap:13,
@@ -4319,6 +4473,7 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
         @keyframes disturbSml  { 0%,100%{transform:scale(1)} 50%{transform:scale(1.07)} }
         @keyframes disturbBig  { 0%,100%{transform:scale(1) rotate(0deg)} 50%{transform:scale(1.18) rotate(2deg)} }
         @keyframes pillarPulse { 0%,100%{opacity:.55} 50%{opacity:1} }
+        @keyframes runeSpin    { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
         @keyframes floatUp     { 0%{opacity:0;transform:translate(-50%,0)} 15%{opacity:1} 100%{opacity:0;transform:translate(-50%,-40px)} }
         @keyframes notifPop    { 0%{opacity:0;transform:translate(-50%,-50%) scale(0.85)} 25%{opacity:1;transform:translate(-50%,-50%) scale(1.05)} 100%{opacity:1;transform:translate(-50%,-50%) scale(1)} }
       `}</style>

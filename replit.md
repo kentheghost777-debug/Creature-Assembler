@@ -26,8 +26,10 @@ _Replace the heading above with the project's name, and this line with one sente
   - `GameLauncher.tsx` — title/menu/intro/character-reveal flow → mounts the game (role/path is now declared in-game at the lab, not here)
   - `WalkDemo.tsx` — overworld engine (scenes, movement, doors, NPCs, quests, inventory UI)
   - `BattleScene.tsx` — turn-based battle + capture + XP
-  - `progression.ts` — XP curve, moves, SHELLS/RUNES item data, element colors
-  - `save.ts` — localStorage save (key `primeria_v2`): `PartySave` + `WorldSave`
+  - `progression.ts` — XP curve, SHELLS/RUNES item data, element colors
+  - `moves.ts` — combat data + pure math: `MOVES` catalog (per-element damage tiers + utility heal/sharpen/bulwark), validated `STRONG_AGAINST` type chart, `effectiveness`, `computeDamage` (STAB/eff/crit/defense soak, ±15% variance), learnsets (`learnedMoveIds`/`movesLearnedAt`/`defaultActiveMoves`/`sanitizeActiveMoves`), wild stat/level helpers
+  - `battleFx.tsx` — `<MoveFx>` per-element/utility battle animations + `MOVE_FX_KEYFRAMES` (mobile-light: transform/opacity, ≤10 particles)
+  - `save.ts` — localStorage save (key `primeria_v2`): `PartySave` + `WorldSave`. `PartySave.moves` stores active move IDs (max 4); old cosmetic name-strings are migrated via `sanitizeActiveMoves` on load
   - `STANDALONE_BUILD.md` — exact steps to package a downloadable web/APK/desktop build
 - Game images: `artifacts/mockup-sandbox/public/images/` (referenced as `/__mockup/images/...`)
 - Play it at preview path `/preview/walk-demo/GameLauncher`
