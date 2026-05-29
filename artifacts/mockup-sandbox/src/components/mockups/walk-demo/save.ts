@@ -69,6 +69,10 @@ export function roleDef(id: RoleId): RoleDef {
 
 export type PartySave = {
   starterId: string | null;
+  /** When the starter has evolved, stores the evolved form's identity so the
+   *  correct name + sprite is restored on resume. The base spec (type/color)
+   *  is always read from the STARTERS table via starterId. */
+  starterFormOverride?: { id: string; name: string; img: string } | null;
   level: number;
   xp: number;
   stats: StarterStats;

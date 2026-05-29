@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { BattleScene, RARITY_COLOR, type MonSpec, type MonRarity, type BattleResult, type StarterStats } from "./BattleScene";
+import { BattleScene, RARITY_COLOR, type MonSpec, type MonRarity, type BattleResult, type StarterStats, type StarterSpec } from "./BattleScene";
+import { EvoScene } from "./EvoScene";
 import { SHELLS, ELEMENT_COLOR } from "./progression";
 import {
   getMove, moveName, asElement,
@@ -133,6 +134,36 @@ const STARTERS = [
   { id: "foxin",      name: "Foxin",      type: "Spirit",       color: "#60a070", img: "/__mockup/images/vixgrim.png" },
 ] as const;
 type StarterId = typeof STARTERS[number]["id"];
+
+// ── Evolution ────────────────────────────────────────────────────────────────
+// TODO: Replace placeholder names + imgs with final evolved-form assets once provided.
+//       Drop each evo sprite at /__mockup/images/<name>.png and run background-removal.
+// TODO: Set EVO_BG_IMG to "/__mockup/images/evo-bg.png" once the evo background is ready.
+const EVO_BG_IMG: string | undefined = undefined;
+
+const EVO_TABLE: Array<{ from: string; atLevel: number; to: StarterSpec }> = [
+  { from:"burg",        atLevel:14, to:{ id:"burg_2",       name:"Burg·II",        type:"Frostformed",  color:"#7ddeff", img:"/__mockup/images/frostbite-baby.png"  } },
+  { from:"burg_2",      atLevel:30, to:{ id:"burg_3",       name:"Burg·III",       type:"Frostformed",  color:"#7ddeff", img:"/__mockup/images/frostbite-baby.png"  } },
+  { from:"pebble",      atLevel:14, to:{ id:"pebble_2",     name:"Pebble·II",      type:"Earthbound",   color:"#c8a020", img:"/__mockup/images/grrountain-baby.png" } },
+  { from:"pebble_2",    atLevel:30, to:{ id:"pebble_3",     name:"Pebble·III",     type:"Earthbound",   color:"#c8a020", img:"/__mockup/images/grrountain-baby.png" } },
+  { from:"peachi",      atLevel:14, to:{ id:"peachi_2",     name:"Pea-chi·II",     type:"Nature",       color:"#50c040", img:"/__mockup/images/leafkit.png"          } },
+  { from:"peachi_2",    atLevel:30, to:{ id:"peachi_3",     name:"Pea-chi·III",    type:"Nature",       color:"#50c040", img:"/__mockup/images/leafkit.png"          } },
+  { from:"cerepup",     atLevel:14, to:{ id:"cerepup_2",    name:"Cerepup·II",     type:"Volcanic",     color:"#ff6020", img:"/__mockup/images/emberfox.png"         } },
+  { from:"cerepup_2",   atLevel:30, to:{ id:"cerepup_3",    name:"Cerepup·III",    type:"Volcanic",     color:"#ff6020", img:"/__mockup/images/emberfox.png"         } },
+  { from:"cunbubble",   atLevel:14, to:{ id:"cunbubble_2",  name:"Cun-bubble·II",  type:"Oceanic",      color:"#3080ff", img:"/__mockup/images/phantorch.png"        } },
+  { from:"cunbubble_2", atLevel:30, to:{ id:"cunbubble_3",  name:"Cun-bubble·III", type:"Oceanic",      color:"#3080ff", img:"/__mockup/images/phantorch.png"        } },
+  { from:"shockit",     atLevel:14, to:{ id:"shockit_2",    name:"Shockit·II",     type:"Stormproven",  color:"#ffd000", img:"/__mockup/images/voltfang.png"         } },
+  { from:"shockit_2",   atLevel:30, to:{ id:"shockit_3",    name:"Shockit·III",    type:"Stormproven",  color:"#ffd000", img:"/__mockup/images/voltfang.png"         } },
+  { from:"mentyke",     atLevel:14, to:{ id:"mentyke_2",    name:"Mentyke·II",     type:"Mind",         color:"#c080ff", img:"/__mockup/images/lumacorn.png"         } },
+  { from:"mentyke_2",   atLevel:30, to:{ id:"mentyke_3",    name:"Mentyke·III",    type:"Mind",         color:"#c080ff", img:"/__mockup/images/lumacorn.png"         } },
+  { from:"foxin",       atLevel:14, to:{ id:"foxin_2",      name:"Foxin·II",       type:"Spirit",       color:"#60a070", img:"/__mockup/images/vixgrim.png"          } },
+  { from:"foxin_2",     atLevel:30, to:{ id:"foxin_3",      name:"Foxin·III",      type:"Spirit",       color:"#60a070", img:"/__mockup/images/vixgrim.png"          } },
+];
+
+/** Returns the StarterSpec the starter evolves into when it reaches exactly `atLevel`. */
+function evoAt(currentId: string, atLevel: number): StarterSpec | null {
+  return EVO_TABLE.find(e => e.from === currentId && e.atLevel === atLevel)?.to ?? null;
+}
 
 // ── Dialog phases ───────────────────────────────────────────────────────────
 type Phase = "walk" | "d1" | "d2" | "pick" | "d3" | "role_pick" | "d4" | "d5"
@@ -659,9 +690,14 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
   const [pickupNotif,      setPickupNotif]      = useState(false);
   const [selected,         setSelected]         = useState<StarterId | null>(null);
   const [roleSel,          setRoleSel]          = useState<RoleId | null>(null);
-  const [starter,          setStarter]          = useState<typeof STARTERS[number] | null>(
-    () => STARTERS.find(s => s.id === savedParty?.starterId) ?? null
-  );
+  const [starter,          setStarter]          = useState<StarterSpec | null>(() => {
+    const base = STARTERS.find(s => s.id === savedParty?.starterId) ?? null;
+    if (!base) return null;
+    // Restore evolved form: base gives type/color, override patches name + sprite.
+    const ov = savedParty?.starterFormOverride;
+    if (ov) return { ...base, id: ov.id, name: ov.name, img: ov.img };
+    return base;
+  });
   const [showJournal,      setShowJournal]      = useState(false);
   const [journalTab,       setJournalTab]       = useState<"party"|"storage"|"shells"|"bag">("party");
   const [interactPos,      setInteractPos]      = useState({ sx: 0, sy: 0 });
@@ -726,8 +762,26 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
 
   // Persist party progress whenever it changes (resumed via Continue).
   useEffect(() => {
+    // Evolved starters: save the STARTERS base-id for type/color restore, plus an
+    // override for the evolved name + sprite. Walk EVO_TABLE backwards to find the root.
+    const isBase = !starter || STARTERS.some(s => s.id === starter.id);
+    const baseId: string | null = isBase
+      ? (starter?.id ?? null)
+      : (() => {
+          let id = starter!.id;
+          for (let i = 0; i < 4; i++) {
+            const e = EVO_TABLE.find(en => en.to.id === id);
+            if (!e) return id;
+            if (STARTERS.some(s => s.id === e.from)) return e.from;
+            id = e.from;
+          }
+          return id;
+        })();
     updateParty({
-      starterId: starter?.id ?? null,
+      starterId: baseId,
+      starterFormOverride: !isBase && starter
+        ? { id: starter.id, name: starter.name, img: starter.img }
+        : null,
       level: starterLevel,
       xp: starterXp,
       stats: starterStats,
@@ -852,6 +906,12 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
     newLevel: number;
     statGains: Partial<Record<StatKey, number>>;
     newMoves: string[];
+  } | null>(null);
+  const [pendingEvo,   setPendingEvo]   = useState<StarterSpec | null>(null);
+  const pendingEvoDataRef = useRef<{
+    outcome: string; xpGained: number; recovered: number; lostToBond: number;
+    levelUps: number; newLevel: number;
+    statGains: Partial<Record<StatKey, number>>; newMoves: string[];
   } | null>(null);
 
   const canvasRef          = useRef<HTMLCanvasElement>(null);
@@ -1748,6 +1808,16 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
       }
       threshold = newLevel * 10 + 10;
     }
+    // Check whether any level crossed in this battle triggers an evolution
+    let evoTarget: StarterSpec | null = null;
+    if (levelUps > 0 && starter) {
+      for (const evolvesAt of [14, 30]) {
+        if (evolvesAt > starterLevel && evolvesAt <= newLevel) {
+          const found = evoAt(starter.id, evolvesAt);
+          if (found) { evoTarget = found; break; }
+        }
+      }
+    }
     if (xpGained > 0) {
       setStarterXp(newXp);
       if (levelUps > 0) {
@@ -1788,14 +1858,17 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
     window.setTimeout(() => setBattleNotif(null), 2800);
     transitionTo("route1", returnX, returnY);
 
-    // Show post-battle report modal if there's anything to report (shells or xp)
-    if (thrown > 0 || xpGained > 0) {
-      window.setTimeout(() => {
-        setBattleReport({
-          outcome, xpGained, recovered, lostToBond: lostBond,
-          levelUps, newLevel, statGains: totalGains, newMoves,
-        });
-      }, 1200);
+    // Show battle report — if an evolution fires, queue it first; report follows after
+    const reportData = {
+      outcome, xpGained, recovered, lostToBond: lostBond,
+      levelUps, newLevel, statGains: totalGains, newMoves,
+    };
+    const evo = evoTarget;
+    if (evo && (thrown > 0 || xpGained > 0)) {
+      pendingEvoDataRef.current = reportData;
+      window.setTimeout(() => setPendingEvo(evo), 1000);
+    } else if (thrown > 0 || xpGained > 0) {
+      window.setTimeout(() => setBattleReport(reportData), 1200);
     }
   }, [transitionTo, starter, healingRuneEquipped, starterLevel, starterXp, starterMoves, addCaughtMon, role]);
 
@@ -4245,6 +4318,22 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
             <div style={{ color:"#f0d890", fontSize:14, fontWeight:900 }}>{battleNotif.title}</div>
             {battleNotif.sub && <div style={{ color:"#a89070", fontSize:10, marginTop:3, letterSpacing:1 }}>{battleNotif.sub}</div>}
           </div>
+        )}
+
+        {/* ── Evolution animation overlay (fixed, covers everything) ───── */}
+        {pendingEvo && starter && (
+          <EvoScene
+            preEvoSpec={starter}
+            postEvoSpec={pendingEvo}
+            evoBg={EVO_BG_IMG}
+            onComplete={(evolved) => {
+              setStarter(evolved);
+              setPendingEvo(null);
+              const rpt = pendingEvoDataRef.current;
+              pendingEvoDataRef.current = null;
+              if (rpt) window.setTimeout(() => setBattleReport(rpt), 400);
+            }}
+          />
         )}
 
         {/* Post-battle report — shell recovery + XP + level-up */}
