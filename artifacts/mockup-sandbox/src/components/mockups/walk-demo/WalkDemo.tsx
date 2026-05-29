@@ -426,20 +426,25 @@ const OW_PROF_DOOR: Rect = [498, 328, 580, 378]; // tight zone around lab door (
 // South gate (blue) connects back to town; north continues deeper (future)
 const R1_SOUTH_GATE: Rect = [418, 750, 582, 780]; // bottom-center exit → overworld
 const R1_BLOCKED: Rect[] = [
-  // ── OUTER FOREST BORDER (thin strips only) ───────────────────────────────
+  // ── OUTER FOREST BORDER ──────────────────────────────────────────────────
   [0,    0,  1024,   50],  // top forest strip
   [0,    0,    52,  780],  // left forest strip
   [972,  0,  1024,  780],  // right forest strip
   [0,   750,  418,  780],  // bottom — left of south gate
   [582, 750,  1024, 780],  // bottom — right of south gate
-  // ── POND / STREAM (water body only — bridge at x≈140–200 is walkable) ────
-  [52,  330,  138,  580],  // pond water body
-  // ── TOP STONE FENCE LINE (blocks passage into top forest) ────────────────
-  [52,   50,  285,  108],  // top-left fence/wall line
+  // ── POND / STREAM (bridge at x≈140–200 is walkable) ─────────────────────
+  [52,  330,  140,  580],  // pond water body
+  // ── TOP STONE FENCE / WALL LINE ──────────────────────────────────────────
+  [52,   50,  285,  108],  // top-left stone fence
+  [285,  50,  362,  118],  // top-center LEFT of stone steps (fills gap to steps)
+  [618,  50,  680,  118],  // top-center RIGHT of stone steps (fills gap to right wall)
   [680,  50,  972,  145],  // top-right rock wall + obelisk base
-  // ── RIGHT OBELISK PILLARS (narrow columns) ────────────────────────────────
-  [900,  145,  972,  320],  // tall right obelisk
+  // ── RIGHT OBELISK PILLARS ─────────────────────────────────────────────────
+  [900,  145,  972,  320],  // tall right obelisk (existing)
+  [822,  262,  892,  378],  // center-right shorter obelisk (clearly visible in image)
   [888,  430,  972,  530],  // lower-right rock cluster
+  // ── CENTRAL STANDING STONE (the prominent rune monument in map center) ────
+  [468,  325,  558,  442],  // central monolith + circular stone plinth
 ];
 
 const LAB_BLOCKED: Rect[] = [
@@ -521,20 +526,37 @@ const A3_SPAWN      = { x: 920, y: 380 };        // spawn near east entry
 const OW_AREA3_EXIT: Rect = [0,  290,  20, 360]; // left edge of OW forest gap
 const A3_RETURN_OW:  Rect = [960, 310, 1024, 450]; // east edge of Area 3
 const A3_BLOCKED: Rect[] = [
-  // Outer walls
-  [0,    0,  1024,   60],   // top wall
-  [0,    0,    60,  768],   // left wall
-  [0,  700,  1024,  768],   // bottom wall
-  [960,  0,  1024,  310],   // right wall — north (gap y=310-450 is the east exit)
-  [960, 450,  1024,  768],  // right wall — south
-  // Interior — ancient ruins and mystical trees
-  [100,  80,  280,  230],   // NW ruin cluster
-  [700,  80,  880,  210],   // NE ruin cluster
-  [60,  360,  210,  560],   // west tree mass
-  [380, 150,  620,  310],   // central ruin arch
-  [810, 320,  960,  520],   // east boulder (flanks the exit corridor)
-  [250, 450,  460,  640],   // SW ruins
-  [560, 400,  780,  590],   // SE tree cluster
+  // ── OUTER BORDER STRIPS ───────────────────────────────────────────────────
+  [0,    0,  1024,   55],  // top tree strip
+  [0,    0,    55,  768],  // left edge
+  [0,  660,  1024,  768],  // bottom edge
+  [960,  0,  1024,  322],  // right — north of east exit gap (y=322-440 open)
+  [960, 440,  1024,  768], // right — south of east exit gap
+
+  // ── LEFT TREE MASS (dense ancient forest) ────────────────────────────────
+  [55,   55,  195,  768],  // left forest column — full height
+
+  // ── UPPER CANOPY (trees above the ruin walls) ─────────────────────────────
+  [195,  55,  830,  175],  // canopy strip between tree masses
+
+  // ── NE / SE TREE CLUSTERS (right side outside exit corridor) ─────────────
+  [830,  55,  960,  322],  // NE tree cluster (upper right — matches right wall north block)
+  [830, 490,  960,  660],  // SE tree cluster (lower right)
+
+  // ── RUIN WALLS — LEFT SECTION ─────────────────────────────────────────────
+  // Wall x=195-345, y=175-510; doorway opening carved at y=340-430
+  [195, 175,  345,  340],  // left wall — upper
+  [195, 430,  345,  510],  // left wall — lower
+
+  // ── RUIN WALLS — TOP CONNECTING WALL ──────────────────────────────────────
+  // Central arch is decorative (trees block passage above); wall is solid.
+  [345, 175,  655,  280],  // top connecting wall
+
+  // ── RUIN WALLS — RIGHT SECTION ────────────────────────────────────────────
+  // Wall x=655-815, y=175-490; doorway opening carved at y=322-415
+  [655, 175,  815,  322],  // right wall — upper
+  [655, 415,  815,  490],  // right wall — lower
+  // gap y=322-415 is the right doorway (player passes through here from east entry)
 ];
 
 // ── Ellio's Home ─────────────────────────────────────────────────────────────
@@ -777,6 +799,8 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
   const [activeDisturbances, setActiveDisturbances] = useState<Record<number, { mon: MonSpec; expiresAt: number }>>({});
   const [hotspotCd,     setHotspotCd]     = useState<Record<number, number>>({});
   const [encounterFlash, setEncounterFlash] = useState<{ color: string; key: number } | null>(null);
+  // ── Dev: collision debug overlay (flip to false before shipping) ──────────
+  const DEV_COLLISIONS = false;
   const [checksStreak,  setChecksStreak]  = useState(() => savedWorld?.checksStreak ?? 0);
   const [floatMsg,      setFloatMsg]      = useState<{ x: number; y: number; text: string; key: number } | null>(null);
   const [showStarterGate, setShowStarterGate] = useState(false);
@@ -1980,6 +2004,29 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
             alt="map"
             style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit: scene === "overworld" ? "fill" : "cover" }}
           />
+
+          {/* Dev: collision zone visualiser */}
+          {DEV_COLLISIONS && (
+            (scene === "overworld" ? OW_BLOCKED :
+             scene === "route1"   ? R1_BLOCKED :
+             scene === "route2"   ? R2_BLOCKED :
+             scene === "area3"    ? A3_BLOCKED :
+             scene === "lab"      ? LAB_BLOCKED :
+             scene === "jay"      ? JAY_BLOCKED :
+             scene === "maya"     ? MAYA_BLOCKED :
+             scene === "lia"      ? LH_BLOCKED :
+             scene === "ellio"    ? EH_BLOCKED :
+             PH_BLOCKED
+            ).map(([x1,y1,x2,y2],i) => (
+              <div key={`dbg-${i}`} style={{
+                position:"absolute", left:x1, top:y1,
+                width:x2-x1, height:y2-y1,
+                background:"rgba(255,0,0,0.22)",
+                border:"1.5px solid rgba(255,60,60,0.85)",
+                pointerEvents:"none", zIndex:22,
+              }}/>
+            ))
+          )}
 
           {/* Prof Irwyn */}
           {scene === "lab" && (
