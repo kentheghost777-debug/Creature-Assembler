@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { BattleScene, RARITY_COLOR, type MonSpec, type MonRarity, type BattleResult, type StarterStats } from "./BattleScene";
 import { SHELLS, ELEMENT_COLOR } from "./progression";
-import { type CharId, type RoleId, type PartySave, readSave, updateParty, roleDef } from "./save";
+import { type CharId, type RoleId, type PartySave, type WorldSave, readSave, updateParty, updateWorld, roleDef } from "./save";
 
 // ── Level-up reward generation ────────────────────────────────────────────
 const STAT_KEYS = ["hp", "atk", "def", "spd"] as const;
@@ -518,8 +518,17 @@ const PARTY_CAP = 6;
 // ── Main component ──────────────────────────────────────────────────────────
 export function WalkDemo({ characterId = "kael", roleId = "keeper" }: { characterId?: CharId; roleId?: RoleId } = {}) {
   const role = roleDef(roleId);
-  // Hydrate persisted party once on mount (Continue resumes; New Game cleared it).
-  const savedParty = useRef<PartySave | null>(readSave()?.party ?? null).current;
+  // Hydrate persisted party + world once on mount (Continue resumes; New Game cleared both).
+  const savedSnap  = useRef(readSave()).current;
+  const savedParty = savedSnap?.party ?? null;
+  const savedWorld = savedSnap?.world ?? null;
+  // Sanitized resume target. We never resume *into* a battle (battle runtime
+  // isn't persisted), so a legacy save left mid-battle falls back to home.
+  const resume = (() => {
+    if (!savedWorld) return null;
+    if (savedWorld.scene === "battle") return { scene: "home" as Scene, x: 400, y: 670 };
+    return { scene: savedWorld.scene as Scene, x: savedWorld.posX, y: savedWorld.posY };
+  })();
 
   // Active character's animation frame set (stable for the session).
   const charFrames = CHAR_FRAMES[characterId] ?? CHAR_FRAMES.kael;
@@ -535,7 +544,7 @@ export function WalkDemo({ characterId = "kael", roleId = "keeper" }: { characte
   const rowanInLab    = characterId !== "rowan";   // Rowan is the lab disciple
   const kaelAtHome    = characterId === "rowan";    // extra figure at home
 
-  const [scene,       setScene]       = useState<Scene>("home");
+  const [scene,       setScene]       = useState<Scene>(() => resume?.scene ?? "home");
   const [phase,       setPhase]       = useState<Phase>("walk");
   const [fading,      setFading]      = useState(false);
   const [held,        setHeld]        = useState<string | null>(null);
@@ -543,7 +552,7 @@ export function WalkDemo({ characterId = "kael", roleId = "keeper" }: { characte
   const [nearMaya,         setNearMaya]         = useState(false);
   const [nearJay,          setNearJay]          = useState(false);
   const [nearShell,        setNearShell]        = useState(false);
-  const [shellsCollected,  setShellsCollected]  = useState(false);
+  const [shellsCollected,  setShellsCollected]  = useState(() => savedWorld?.shellsCollected ?? false);
   const [pickupNotif,      setPickupNotif]      = useState(false);
   const [selected,         setSelected]         = useState<StarterId | null>(null);
   const [starter,          setStarter]          = useState<typeof STARTERS[number] | null>(
@@ -557,36 +566,36 @@ export function WalkDemo({ characterId = "kael", roleId = "keeper" }: { characte
   const [shellInteractPos, setShellInteractPos] = useState({ sx: 0, sy: 0 });
   const [nearJess,               setNearJess]               = useState(false);
   const [jessInteractPos,        setJessInteractPos]        = useState({ sx: 0, sy: 0 });
-  const [hasHealingRune,         setHasHealingRune]         = useState(false);
-  const [healingRuneEquipped,    setHealingRuneEquipped]    = useState(false);
+  const [hasHealingRune,         setHasHealingRune]         = useState(() => savedWorld?.hasHealingRune ?? false);
+  const [healingRuneEquipped,    setHealingRuneEquipped]    = useState(() => savedWorld?.healingRuneEquipped ?? false);
   const [runeNotif,              setRuneNotif]              = useState(false);
   const [nearEllio,              setNearEllio]              = useState(false);
   const [ellioInteractPos,       setEllioInteractPos]       = useState({ sx: 0, sy: 0 });
-  const [hasResonanceStone,      setHasResonanceStone]      = useState(false);
-  const [resonanceStoneEquipped, setResonanceStoneEquipped] = useState(false);
+  const [hasResonanceStone,      setHasResonanceStone]      = useState(() => savedWorld?.hasResonanceStone ?? false);
+  const [resonanceStoneEquipped, setResonanceStoneEquipped] = useState(() => savedWorld?.resonanceStoneEquipped ?? false);
   const [resonanceNotif,         setResonanceNotif]         = useState(false);
   // ── Quest-done guards — hide ! bubble once each NPC arc is finished ─────────
-  const [jessDone,       setJessDone]       = useState(false);
-  const [jayDone,        setJayDone]        = useState(false);
-  const [mayaInitDone,   setMayaInitDone]   = useState(false); // after first convo (d4)
-  const [mayaDone,       setMayaDone]       = useState(false); // after post-shell convo (post3)
-  const [ellioDone,      setEllioDone]      = useState(false);
+  const [jessDone,       setJessDone]       = useState(() => savedWorld?.jessDone ?? false);
+  const [jayDone,        setJayDone]        = useState(() => savedWorld?.jayDone ?? false);
+  const [mayaInitDone,   setMayaInitDone]   = useState(() => savedWorld?.mayaInitDone ?? false); // after first convo (d4)
+  const [mayaDone,       setMayaDone]       = useState(() => savedWorld?.mayaDone ?? false); // after post-shell convo (post3)
+  const [ellioDone,      setEllioDone]      = useState(() => savedWorld?.ellioDone ?? false);
   const [nearLia,          setNearLia]          = useState(false);
   const [liaInteractPos,   setLiaInteractPos]   = useState({ sx: 0, sy: 0 });
-  const [liaDone,          setLiaDone]          = useState(false);
-  const [hasHearthberries, setHasHearthberries] = useState(false);
-  const [hasSatchel,       setHasSatchel]       = useState(false);
+  const [liaDone,          setLiaDone]          = useState(() => savedWorld?.liaDone ?? false);
+  const [hasHearthberries, setHasHearthberries] = useState(() => savedWorld?.hasHearthberries ?? false);
+  const [hasSatchel,       setHasSatchel]       = useState(() => savedWorld?.hasSatchel ?? false);
   const [liaItemsNotif,    setLiaItemsNotif]    = useState(false);
   // ── Route 2 / Wyvrunt arc ────────────────────────────────────────────────
-  const [route1Visited,        setRoute1Visited]        = useState(false);
-  const [wifeOnPath,           setWifeOnPath]           = useState(false);
-  const [wifeIntercepted,      setWifeIntercepted]      = useState(false);
-  const [route2Greeted,        setRoute2Greeted]        = useState(false);
-  const [profRoute2Done,       setProfRoute2Done]       = useState(false);
+  const [route1Visited,        setRoute1Visited]        = useState(() => savedWorld?.route1Visited ?? false);
+  const [wifeOnPath,           setWifeOnPath]           = useState(() => savedWorld?.wifeOnPath ?? false);
+  const [wifeIntercepted,      setWifeIntercepted]      = useState(() => savedWorld?.wifeIntercepted ?? false);
+  const [route2Greeted,        setRoute2Greeted]        = useState(() => savedWorld?.route2Greeted ?? false);
+  const [profRoute2Done,       setProfRoute2Done]       = useState(() => savedWorld?.profRoute2Done ?? false);
   const [nearProfR2,           setNearProfR2]           = useState(false);
   const [profR2InteractPos,    setProfR2InteractPos]    = useState({ sx: 0, sy: 0 });
-  const [hasObsidianRealmShell, setHasObsidianRealmShell] = useState(false);
-  const [wyvruntCaught,        setWyvruntCaught]        = useState(false);
+  const [hasObsidianRealmShell, setHasObsidianRealmShell] = useState(() => savedWorld?.hasObsidianRealmShell ?? false);
+  const [wyvruntCaught,        setWyvruntCaught]        = useState(() => savedWorld?.wyvruntCaught ?? false);
   const [nearWyvrunt,          setNearWyvrunt]          = useState(false);
   const [eastGateNotif,        setEastGateNotif]        = useState(false);
   const [lockedDoorNotif,      setLockedDoorNotif]      = useState<string | null>(null);
@@ -598,7 +607,7 @@ export function WalkDemo({ characterId = "kael", roleId = "keeper" }: { characte
   const [storageBox,    setStorageBox]    = useState<MonSpec[]>(() => savedParty?.box ?? []);
   const [activeDisturbances, setActiveDisturbances] = useState<Record<number, { mon: MonSpec; expiresAt: number }>>({});
   const [hotspotCd,     setHotspotCd]     = useState<Record<number, number>>({});
-  const [checksStreak,  setChecksStreak]  = useState(0);
+  const [checksStreak,  setChecksStreak]  = useState(() => savedWorld?.checksStreak ?? 0);
   const [floatMsg,      setFloatMsg]      = useState<{ x: number; y: number; text: string; key: number } | null>(null);
   const [showStarterGate, setShowStarterGate] = useState(false);
   const [battleNotif,   setBattleNotif]   = useState<{ title: string; sub: string } | null>(null);
@@ -621,6 +630,75 @@ export function WalkDemo({ characterId = "kael", roleId = "keeper" }: { characte
       shells: shellCount,
     });
   }, [starter, starterLevel, starterXp, starterStats, starterMoves, caughtParty, storageBox, shellCount]);
+
+  // ── World persistence (resume exactly where you left off) ──────────────────
+  // We keep a live snapshot of every quest flag + the current scene, then write
+  // it to the save together with the player's world position. The effect below
+  // refreshes the snapshot (and saves) whenever any flag/scene changes; the game
+  // loop additionally throttles position saves while walking.
+  // Latest *walkable* location (never "battle") — this is what we resume into.
+  // It's kept current by the game loop + transitionTo, so a save taken during a
+  // battle still restores the player to the spot they triggered it from.
+  const lastSafeRef = useRef<{ scene: Scene; x: number; y: number }>({
+    scene: resume?.scene ?? "home",
+    x: resume?.x ?? 400,
+    y: resume?.y ?? 670,
+  });
+  // Live snapshot of the quest flags (scene + position come from lastSafeRef).
+  const worldSnapRef = useRef<Omit<WorldSave, "scene" | "posX" | "posY">>({
+    shellsCollected, hasHealingRune, healingRuneEquipped,
+    hasResonanceStone, resonanceStoneEquipped, hasHearthberries, hasSatchel,
+    jessDone, jayDone, mayaInitDone, mayaDone, ellioDone, liaDone,
+    route1Visited, wifeOnPath, wifeIntercepted, route2Greeted, profRoute2Done,
+    hasObsidianRealmShell, wyvruntCaught, checksStreak,
+  });
+  const persistWorld = useCallback(() => {
+    const safe = lastSafeRef.current;
+    updateWorld({
+      ...worldSnapRef.current,
+      scene: safe.scene,
+      posX: Math.round(safe.x),
+      posY: Math.round(safe.y),
+    });
+  }, []);
+  const persistWorldRef = useRef(persistWorld);
+  useEffect(() => { persistWorldRef.current = persistWorld; }, [persistWorld]);
+  useEffect(() => {
+    worldSnapRef.current = {
+      shellsCollected, hasHealingRune, healingRuneEquipped,
+      hasResonanceStone, resonanceStoneEquipped, hasHearthberries, hasSatchel,
+      jessDone, jayDone, mayaInitDone, mayaDone, ellioDone, liaDone,
+      route1Visited, wifeOnPath, wifeIntercepted, route2Greeted, profRoute2Done,
+      hasObsidianRealmShell, wyvruntCaught, checksStreak,
+    };
+    persistWorld();
+  }, [
+    scene, shellsCollected, hasHealingRune, healingRuneEquipped,
+    hasResonanceStone, resonanceStoneEquipped, hasHearthberries, hasSatchel,
+    jessDone, jayDone, mayaInitDone, mayaDone, ellioDone, liaDone,
+    route1Visited, wifeOnPath, wifeIntercepted, route2Greeted, profRoute2Done,
+    hasObsidianRealmShell, wyvruntCaught, checksStreak, persistWorld,
+  ]);
+  // On resume with Wyvrunt already caught, seed the follower beside the player
+  // so it doesn't visibly fly in from the map origin on the first frame.
+  useEffect(() => {
+    if (savedWorld?.wyvruntCaught) {
+      followPosRef.current  = { x: worldPos.current.x, y: worldPos.current.y + 24 };
+      followAnimRef.current = "idle_down";
+    }
+  }, [savedWorld]);
+
+  // Final flush when leaving the page so the last few steps are never lost.
+  useEffect(() => {
+    const flush = () => persistWorldRef.current();
+    window.addEventListener("beforeunload", flush);
+    window.addEventListener("pagehide", flush);
+    return () => {
+      window.removeEventListener("beforeunload", flush);
+      window.removeEventListener("pagehide", flush);
+      flush();
+    };
+  }, []);
 
   // Fresh snapshot of in-party caught mons for the catch handler closure.
   const caughtPartyRef = useRef<MonSpec[]>(caughtParty);
@@ -692,7 +770,7 @@ export function WalkDemo({ characterId = "kael", roleId = "keeper" }: { characte
   const worldRef   = useRef<HTMLDivElement>(null);
   const vpRef      = useRef<HTMLDivElement>(null);
 
-  const sceneRef   = useRef<Scene>("home");
+  const sceneRef   = useRef<Scene>(resume?.scene ?? "home");
   const phaseRef   = useRef<Phase>("walk");
   const fadingRef  = useRef(false);
   const heldRef    = useRef<string | null>(null);
@@ -702,7 +780,9 @@ export function WalkDemo({ characterId = "kael", roleId = "keeper" }: { characte
   const frameRef   = useRef(0);
   const lastSrc    = useRef("");
   const lastFlip   = useRef(false);
-  const worldPos   = useRef({ x: 400, y: 670 }); // start inside Player Home (matches OW→home enter spawn)
+  const worldPos   = useRef(
+    resume ? { x: resume.x, y: resume.y } : { x: 400, y: 670 }
+  ); // resume exact spot, else start inside Player Home (matches OW→home enter spawn)
   const cam        = useRef({ x: 0, y: 0 });
 
   // Preload everything
@@ -1011,6 +1091,7 @@ export function WalkDemo({ characterId = "kael", roleId = "keeper" }: { characte
     fadingRef.current = true; setFading(true);
     setTimeout(() => {
       worldPos.current = { x: sx, y: sy };
+      if (next !== "battle") lastSafeRef.current = { scene: next, x: sx, y: sy };
       cam.current      = { x: 0, y: 0 };
       animRef.current  = "idle";
       frameRef.current = 0;
@@ -1030,6 +1111,7 @@ export function WalkDemo({ characterId = "kael", roleId = "keeper" }: { characte
   // Main game loop
   useEffect(() => {
     let raf: number;
+    let saveTick = 0; // throttles position writes while walking
     const loop = () => {
       if (!fadingRef.current && phaseRef.current === "walk" && sceneRef.current !== "battle") {
         const h       = heldRef.current;
@@ -1078,7 +1160,7 @@ export function WalkDemo({ characterId = "kael", roleId = "keeper" }: { characte
             window.setTimeout(() => setEastGateNotif(false), 1800);
           }
         } else if (sc === "route2" && inRect(worldPos.current.x, worldPos.current.y, R2_RETURN_OW)) {
-          transitionTo("overworld", 1080, 645);
+          transitionTo("overworld", 1050, 645);   // west of OW_EAST_EXIT so we don't instantly bounce back
         } else if (sc === "route2" && inRect(worldPos.current.x, worldPos.current.y, R2_NORTH_BLOCKED)) {
           worldPos.current.y = R2_NORTH_BLOCKED[3] + 20;
           setLockedDoorNotif("The cliff stairs are sealed for now.");
@@ -1115,6 +1197,17 @@ export function WalkDemo({ characterId = "kael", roleId = "keeper" }: { characte
           transitionTo("lia", 400, 670);        // enter Lia's Home — trigger on visible front door
         } else if (sc === "lia" && inRect(worldPos.current.x, worldPos.current.y, LIA_HOME_EXIT)) {
           transitionTo("overworld", 875, 830);  // exit onto south road, S of door
+        }
+
+        // Keep the resume point current, and throttle position saves while walking.
+        // Skip if a door trigger just started a fade, so we never capture a spot
+        // sitting on a transition trigger (which would re-fire on resume).
+        if (!fadingRef.current) {
+          lastSafeRef.current = { scene: sc, x: worldPos.current.x, y: worldPos.current.y };
+          if (h) {
+            saveTick++;
+            if (saveTick % 30 === 0) persistWorldRef.current();
+          }
         }
 
         // Flip / anim change
@@ -3257,7 +3350,7 @@ export function WalkDemo({ characterId = "kael", roleId = "keeper" }: { characte
                           }}/>
                           <div>
                             <div style={{ color:"#2a1206", fontWeight:800, fontSize:13 }}>Weathered Realm Shell</div>
-                            <div style={{ color:"#8a6030", fontSize:10, marginTop:2 }}>×24 · Catching Shell</div>
+                            <div style={{ color:"#8a6030", fontSize:10, marginTop:2 }}>×{shellCount} · Catching Shell</div>
                             <div style={{ color:"#4a6a30", fontSize:10, marginTop:2, fontWeight:700 }}>+10% XP to bonded Tayanari</div>
                           </div>
                         </div>
@@ -3435,6 +3528,15 @@ export function WalkDemo({ characterId = "kael", roleId = "keeper" }: { characte
                       }}>— Your bag is empty. —</div>
                     )}
 
+                    {/* ── Consumables ── */}
+                    {(shellsCollected || hasHearthberries) && (
+                      <div style={{
+                        color:"#9a6e2e", fontSize:9.5, fontWeight:900, letterSpacing:1.5,
+                        textTransform:"uppercase", padding:"8px 2px 2px",
+                        borderBottom:"1px solid rgba(120,80,30,0.18)", marginBottom:2,
+                      }}>Consumables</div>
+                    )}
+
                     {/* Weathered Realm Shells — consumable catching stack */}
                     {shellsCollected && (
                       <div style={{
@@ -3466,8 +3568,17 @@ export function WalkDemo({ characterId = "kael", roleId = "keeper" }: { characte
                           padding:"4px 12px", borderRadius:20,
                           border:"1px solid rgba(100,64,20,0.22)",
                           flexShrink:0,
-                        }}>×24</div>
+                        }}>×{shellCount}</div>
                       </div>
+                    )}
+
+                    {/* ── Relics ── (hidden once socketed/equipped) */}
+                    {((hasResonanceStone && !resonanceStoneEquipped) || (hasHealingRune && !healingRuneEquipped)) && (
+                      <div style={{
+                        color:"#4a6a9a", fontSize:9.5, fontWeight:900, letterSpacing:1.5,
+                        textTransform:"uppercase", padding:"10px 2px 2px",
+                        borderBottom:"1px solid rgba(80,120,170,0.18)", marginBottom:2,
+                      }}>Relics</div>
                     )}
 
                     {/* Resonance Stone — only shown when not equipped */}
@@ -3569,6 +3680,15 @@ export function WalkDemo({ characterId = "kael", roleId = "keeper" }: { characte
                       </div>
                     )}
 
+                    {/* ── Field Gear ── */}
+                    {hasSatchel && (
+                      <div style={{
+                        color:"#7a5a28", fontSize:9.5, fontWeight:900, letterSpacing:1.5,
+                        textTransform:"uppercase", padding:"10px 2px 2px",
+                        borderBottom:"1px solid rgba(140,100,40,0.18)", marginBottom:2,
+                      }}>Field Gear</div>
+                    )}
+
                     {/* Keeper's Satchel — from Lia */}
                     {hasSatchel && (
                       <div style={{
@@ -3601,12 +3721,13 @@ export function WalkDemo({ characterId = "kael", roleId = "keeper" }: { characte
                       </div>
                     )}
 
-                    {[1,2,3].map(n => (
+                    {/* Empty satchel slots — only meaningful once the Satchel is carried */}
+                    {hasSatchel && [1,2,3,4].map(n => (
                       <div key={n} style={{
                         padding:"11px 2px",
                         borderBottom:"1px dashed rgba(100,64,20,0.16)",
                         color:"#c8a87a", fontSize:11, fontStyle:"italic",
-                      }}>—</div>
+                      }}>— empty slot —</div>
                     ))}
                   </div>
                 )}

@@ -78,11 +78,48 @@ export type PartySave = {
   shells: number;
 };
 
+/**
+ * Snapshot of where the player physically is in the world plus every quest /
+ * progression flag. Persisting this is what lets a player close the game and
+ * resume in the exact same spot, mid-quest, on their next visit.
+ */
+export type WorldSave = {
+  scene: string;            // current scene id (overworld / route1 / home / ...)
+  posX: number;             // world-space position within that scene
+  posY: number;
+  // Town errands
+  shellsCollected: boolean;
+  hasHealingRune: boolean;
+  healingRuneEquipped: boolean;
+  hasResonanceStone: boolean;
+  resonanceStoneEquipped: boolean;
+  hasHearthberries: boolean;
+  hasSatchel: boolean;
+  // NPC arc completion (clears their "!" bubble)
+  jessDone: boolean;
+  jayDone: boolean;
+  mayaInitDone: boolean;
+  mayaDone: boolean;
+  ellioDone: boolean;
+  liaDone: boolean;
+  // Route 2 / Wyvrunt arc
+  route1Visited: boolean;
+  wifeOnPath: boolean;
+  wifeIntercepted: boolean;
+  route2Greeted: boolean;
+  profRoute2Done: boolean;
+  hasObsidianRealmShell: boolean;
+  wyvruntCaught: boolean;
+  // Encounter pacing
+  checksStreak: number;
+};
+
 export type SaveData = {
   ts: number;
   characterId: CharId;
   roleId: RoleId;
   party: PartySave | null;
+  world: WorldSave | null;
 };
 
 const SAVE_KEY = "primeria_v2";
@@ -111,6 +148,7 @@ export function readSave(): SaveData | null {
           ? data.roleId
           : "keeper",
       party: data.party ?? null,
+      world: data.world ?? null,
     };
   } catch {
     return null;
@@ -125,12 +163,12 @@ export function writeSave(data: SaveData): void {
   }
 }
 
-/** Begin a fresh game with the chosen character + declared role; clears any prior party. */
+/** Begin a fresh game with the chosen character + declared role; clears any prior party + world. */
 export function startNewSave(characterId: CharId, roleId: RoleId = "keeper"): void {
-  writeSave({ ts: Date.now(), characterId, roleId, party: null });
+  writeSave({ ts: Date.now(), characterId, roleId, party: null, world: null });
 }
 
-/** Persist party progress, preserving the stored character id + role. */
+/** Persist party progress, preserving the stored character id + role + world. */
 export function updateParty(party: PartySave): void {
   const cur = readSave();
   writeSave({
@@ -138,5 +176,18 @@ export function updateParty(party: PartySave): void {
     characterId: cur?.characterId ?? "kael",
     roleId: cur?.roleId ?? "keeper",
     party,
+    world: cur?.world ?? null,
+  });
+}
+
+/** Persist world position + quest flags, preserving the stored character/role/party. */
+export function updateWorld(world: WorldSave): void {
+  const cur = readSave();
+  writeSave({
+    ts: Date.now(),
+    characterId: cur?.characterId ?? "kael",
+    roleId: cur?.roleId ?? "keeper",
+    party: cur?.party ?? null,
+    world,
   });
 }
