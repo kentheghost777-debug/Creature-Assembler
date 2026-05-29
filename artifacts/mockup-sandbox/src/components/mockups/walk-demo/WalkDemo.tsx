@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { BattleScene, RARITY_COLOR, type MonSpec, type MonRarity, type BattleResult, type StarterStats, type StarterSpec } from "./BattleScene";
+import { BattleScene, RARITY_COLOR, sheetBgStyle, type SpriteSheet, type MonSpec, type MonRarity, type BattleResult, type StarterStats, type StarterSpec } from "./BattleScene";
 import { EvoScene } from "./EvoScene";
 import { SHELLS, ELEMENT_COLOR } from "./progression";
 import {
@@ -223,6 +223,13 @@ const BESTIARY: MonSpec[] = [
   { id:"peachi_w",  name:"Pea-chi",   type:"Nature",       rarity:"apex",
     wildImg:"/__mockup/images/peachi-wild-a.png",  playerImg:"/__mockup/images/peachi-wild-b.png",
     wildFaces:"left", playerFaces:"left", maxHp:80, baseDmg:[8,14] },
+  // Starter half — Route 1 (Volcanic/Storm — forest trail feel)
+  { id:"cerepup_w", name:"Cerepup",   type:"Volcanic",    rarity:"apex",
+    wildImg:"/__mockup/images/emberfox.png",        playerImg:"/__mockup/images/emberfox.png",
+    wildFaces:"left", playerFaces:"left", maxHp:82, baseDmg:[10,18] },
+  { id:"shockit_wa",name:"Shockit",   type:"Stormproven", rarity:"ultra",
+    wildImg:"/__mockup/images/voltfang.png",        playerImg:"/__mockup/images/voltfang.png",
+    wildFaces:"left", playerFaces:"left", maxHp:72, baseDmg:[9,16] },
 ];
 
 // ── Wyvrunt — unique scripted-encounter mon (Chaos type, loyal-only) ────────
@@ -242,6 +249,107 @@ const WYVRUNT_SPEC: MonSpec = {
   maxHp: 60,
   baseDmg: [9, 15], // +5 over other starter-tier ceilings; scripted fight ignores it anyway
 };
+
+// ── Area 3 sprite-sheet frame helpers ────────────────────────────────────────
+// Sheets (all background-removed PNGs in /images/):
+//  a3-wild-sheet.png  — 1024×1536  4 rows × 2 cols  frame 512×384
+//  a3-new-sheet.png   — 1536×1024  2 rows × 3 cols  frame 512×512
+//  a3-mid-sheet-m.png — 1122×1402  4 rows × 1 col   frame 1122×350
+//  a3-apex-sheet.png  — 1536×1024  2 rows × 2 cols  frame 768×512
+const _A3W = "/__mockup/images/a3-wild-sheet.png";
+const _A3N = "/__mockup/images/a3-new-sheet.png";
+const _A3M = "/__mockup/images/a3-mid-sheet-m.png";
+const _A3A = "/__mockup/images/a3-apex-sheet.png";
+const wldF = (c:number,r:number): SpriteSheet =>
+  ({ url:_A3W, x:c*512, y:r*384, w:512,  h:384, sheetW:1024, sheetH:1536 });
+const nwF  = (c:number,r:number): SpriteSheet =>
+  ({ url:_A3N, x:c*512, y:r*512, w:512,  h:512, sheetW:1536, sheetH:1024 });
+const mmF  = (r:number): SpriteSheet =>
+  ({ url:_A3M, x:0,     y:r*350, w:1122, h:350, sheetW:1122, sheetH:1402 });
+const apF  = (c:number,r:number): SpriteSheet =>
+  ({ url:_A3A, x:c*768, y:r*512, w:768,  h:512, sheetW:1536, sheetH:1024 });
+
+// ── Bestiary — Area 3 (Westwood Reaches) ─────────────────────────────────────
+const BESTIARY_A3: MonSpec[] = [
+  // ── COMMON ─────────────────────────────────────────────────────────────────
+  { id:"sprigget",    name:"Sprigget",   type:"Nature",     rarity:"common",
+    wildImg:"", playerImg:"", wildSheet:wldF(0,0), playerSheet:wldF(0,0),
+    wildFaces:"left", playerFaces:"left", maxHp:32, baseDmg:[4,8] },
+  { id:"ashcrawl",    name:"Ashcrawl",   type:"Volcanic",   rarity:"common",
+    wildImg:"", playerImg:"", wildSheet:wldF(1,0), playerSheet:wldF(1,0),
+    wildFaces:"left", playerFaces:"left", maxHp:35, baseDmg:[5,9] },
+  { id:"finwing",     name:"Finwing",    type:"Oceanic",    rarity:"common",
+    wildImg:"", playerImg:"", wildSheet:wldF(0,1), playerSheet:wldF(0,1),
+    wildFaces:"left", playerFaces:"left", maxHp:30, baseDmg:[4,8] },
+  { id:"stoneback",   name:"Stoneback",  type:"Earthbound", rarity:"common",
+    wildImg:"", playerImg:"", wildSheet:wldF(1,1), playerSheet:wldF(1,1),
+    wildFaces:"left", playerFaces:"left", maxHp:40, baseDmg:[4,7] },
+  // ── UNCOMMON ───────────────────────────────────────────────────────────────
+  { id:"driftpaw_f",  name:"Driftpaw",   type:"Skyborne",   rarity:"uncommon",
+    wildImg:"", playerImg:"", wildSheet:wldF(0,2), playerSheet:wldF(0,2),
+    wildFaces:"left", playerFaces:"left", maxHp:38, baseDmg:[5,10] },
+  { id:"driftpaw_m",  name:"Driftpaw",   type:"Skyborne",   rarity:"uncommon",
+    wildImg:"", playerImg:"", wildSheet:wldF(0,3), playerSheet:wldF(0,3),
+    wildFaces:"left", playerFaces:"left", maxHp:38, baseDmg:[5,10] },
+  { id:"stoneback_m", name:"Stoneback",  type:"Earthbound", rarity:"uncommon",
+    wildImg:"", playerImg:"", wildSheet:wldF(1,2), playerSheet:wldF(1,2),
+    wildFaces:"left", playerFaces:"left", maxHp:44, baseDmg:[4,8] },
+  { id:"gloomcap",    name:"Gloomcap",   type:"Abyss",      rarity:"uncommon",
+    wildImg:"", playerImg:"", wildSheet:wldF(1,3), playerSheet:wldF(1,3),
+    wildFaces:"left", playerFaces:"left", maxHp:36, baseDmg:[5,11] },
+  // ── RARE (A3-exclusive deep-wood spirits) ───────────────────────────────────
+  { id:"silkfae_m",   name:"Silkfae",    type:"Spirit",     rarity:"rare",
+    wildImg:"", playerImg:"", wildSheet:nwF(0,0), playerSheet:nwF(0,0),
+    wildFaces:"left", playerFaces:"left", maxHp:50, baseDmg:[6,12] },
+  { id:"silkfae_f",   name:"Silkfae",    type:"Spirit",     rarity:"rare",
+    wildImg:"", playerImg:"", wildSheet:nwF(0,1), playerSheet:nwF(0,1),
+    wildFaces:"left", playerFaces:"left", maxHp:50, baseDmg:[6,12] },
+  { id:"murkspine_m", name:"Murkspine",  type:"Abyss",      rarity:"rare",
+    wildImg:"", playerImg:"", wildSheet:nwF(1,0), playerSheet:nwF(1,0),
+    wildFaces:"left", playerFaces:"left", maxHp:54, baseDmg:[7,13] },
+  { id:"murkspine_f", name:"Murkspine",  type:"Abyss",      rarity:"rare",
+    wildImg:"", playerImg:"", wildSheet:nwF(1,1), playerSheet:nwF(1,1),
+    wildFaces:"left", playerFaces:"left", maxHp:54, baseDmg:[7,13] },
+  { id:"fernclaw_m",  name:"Fernclaw",   type:"Earthbound", rarity:"rare",
+    wildImg:"", playerImg:"", wildSheet:nwF(2,0), playerSheet:nwF(2,0),
+    wildFaces:"left", playerFaces:"left", maxHp:58, baseDmg:[7,14] },
+  { id:"fernclaw_f",  name:"Fernclaw",   type:"Earthbound", rarity:"rare",
+    wildImg:"", playerImg:"", wildSheet:nwF(2,1), playerSheet:nwF(2,1),
+    wildFaces:"left", playerFaces:"left", maxHp:58, baseDmg:[7,14] },
+  // ── ULTRA (mid-evolved forms) ───────────────────────────────────────────────
+  { id:"verdwulf",    name:"Verdwulf",   type:"Nature",     rarity:"ultra",
+    wildImg:"", playerImg:"", wildSheet:mmF(0), playerSheet:mmF(0),
+    wildFaces:"left", playerFaces:"left", maxHp:70, baseDmg:[9,15] },
+  { id:"scorchrex",   name:"Scorchrex",  type:"Volcanic",   rarity:"ultra",
+    wildImg:"", playerImg:"", wildSheet:mmF(1), playerSheet:mmF(1),
+    wildFaces:"left", playerFaces:"left", maxHp:75, baseDmg:[10,17] },
+  { id:"tidalfang",   name:"Tidalfang",  type:"Oceanic",    rarity:"ultra",
+    wildImg:"", playerImg:"", wildSheet:mmF(2), playerSheet:mmF(2),
+    wildFaces:"left", playerFaces:"left", maxHp:68, baseDmg:[9,15] },
+  { id:"aetherwing",  name:"Aetherwing", type:"Skyborne",   rarity:"ultra",
+    wildImg:"", playerImg:"", wildSheet:mmF(3), playerSheet:mmF(3),
+    wildFaces:"left", playerFaces:"left", maxHp:65, baseDmg:[9,14] },
+  // ── APEX (unique A3 + starter second-half split) ────────────────────────────
+  { id:"verdanthos",  name:"Verdanthos", type:"Nature",     rarity:"apex",
+    wildImg:"", playerImg:"", wildSheet:apF(0,0), playerSheet:apF(0,0),
+    wildFaces:"left", playerFaces:"left", maxHp:100, baseDmg:[12,20] },
+  { id:"voidtide",    name:"Voidtide",   type:"Abyss",      rarity:"apex",
+    wildImg:"", playerImg:"", wildSheet:apF(1,0), playerSheet:apF(1,0),
+    wildFaces:"left", playerFaces:"left", maxHp:95, baseDmg:[11,19] },
+  // Starter half — Area 3 (Oceanic/Earthbound/Frostformed/Spirit — ruins vibes)
+  { id:"cunbubble_wa",name:"Cun-bubble", type:"Oceanic",    rarity:"apex",
+    wildImg:"/__mockup/images/phantorch.png",       playerImg:"/__mockup/images/phantorch.png",
+    wildFaces:"left", playerFaces:"left", maxHp:88, baseDmg:[10,18] },
+  { id:"pebble_wa",   name:"Pebble",     type:"Earthbound", rarity:"apex",
+    wildImg:"/__mockup/images/grrountain-baby.png", playerImg:"/__mockup/images/grrountain-baby.png",
+    wildFaces:"left", playerFaces:"left", maxHp:92, baseDmg:[10,16] },
+  { id:"burg_wa",     name:"Burg",       type:"Frostformed",rarity:"ultra",
+    wildImg:"/__mockup/images/frostbite-baby.png",  playerImg:"/__mockup/images/frostbite-baby.png",
+    wildFaces:"left", playerFaces:"left", maxHp:78, baseDmg:[9,17] },
+  { id:"foxin_wa",    name:"Foxin",      type:"Spirit",     rarity:"apex",
+    wildImg:"/__mockup/images/vixgrim.png",         playerImg:"/__mockup/images/vixgrim.png",
+    wildFaces:"left", playerFaces:"left", maxHp:88, baseDmg:[10,18] },
+];
 
 // ── Route 2 (east of Maya's home) ───────────────────────────────────────────
 // route2-map.png native 1024w × 1536h — vertical scrolling route, enter west.
@@ -302,9 +410,10 @@ function rollRarity(checksStreak: number): MonRarity {
   return "common";
 }
 
-function pickMon(rarity: MonRarity): MonSpec {
-  const pool = BESTIARY.filter(m => m.rarity === rarity);
-  return pool[Math.floor(Math.random() * pool.length)] ?? BESTIARY[0];
+function pickMonForScene(rarity: MonRarity, sc: string): MonSpec {
+  const list = sc === "area3" ? BESTIARY_A3 : BESTIARY;
+  const pool = list.filter(m => m.rarity === rarity);
+  return pool[Math.floor(Math.random() * pool.length)] ?? list[0];
 }
 
 // ── Route 1 disturbance hotspots (clickable bushes/rocks/trees in world-space)
@@ -318,6 +427,18 @@ const R1_HOTSPOTS: Hotspot[] = [
   { x: 240, y: 380, r: 38, kind: "tree" },
   { x: 580, y: 280, r: 40, kind: "bush" },
   { x: 760, y: 380, r: 38, kind: "bush" },
+];
+
+// ── Area 3 disturbance hotspots (ancient ruin courtyard + forest clearing) ───
+const A3_HOTSPOTS: Hotspot[] = [
+  { x: 500, y: 370, r: 40, kind: "rock" },   // center courtyard — rune stone
+  { x: 380, y: 420, r: 36, kind: "rock" },   // left courtyard near arch
+  { x: 620, y: 350, r: 36, kind: "rock" },   // right courtyard
+  { x: 430, y: 300, r: 36, kind: "bush" },   // near north arch entrance
+  { x: 280, y: 550, r: 38, kind: "bush" },   // lower-left clearing
+  { x: 550, y: 575, r: 40, kind: "bush" },   // lower center clearing
+  { x: 720, y: 545, r: 38, kind: "bush" },   // lower-right clearing
+  { x: 350, y: 465, r: 36, kind: "rock" },   // left ruin wall base
 ];
 
 const FLAVOR_TRACKS = [
@@ -1751,7 +1872,9 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
   useEffect(() => { checksStreakRef.current = checksStreak; },      [checksStreak]);
 
   useEffect(() => {
-    if (scene !== "route1") return;
+    if (scene !== "route1" && scene !== "area3") return;
+    setActiveDisturbances({});
+    const hotspots = scene === "area3" ? A3_HOTSPOTS : R1_HOTSPOTS;
     const id = window.setInterval(() => {
       const now = Date.now();
       const cur = activeDistRef.current;
@@ -1762,12 +1885,12 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
         if (d.expiresAt > now) nextActive[Number(k)] = d;
         else newCds[Number(k)] = now + 12000;
       }
-      const free = R1_HOTSPOTS.map((_, i) => i)
+      const free = hotspots.map((_, i) => i)
         .filter(i => !(i in nextActive) && (!cd[i] || cd[i] <= now) && !(i in newCds));
       if (Object.keys(nextActive).length < 4 && free.length > 0 && Math.random() < 0.75) {
         const idx = free[Math.floor(Math.random() * free.length)];
         const rarity = rollRarity(checksStreakRef.current);
-        nextActive[idx] = { mon: pickMon(rarity), expiresAt: now + 30000 };
+        nextActive[idx] = { mon: pickMonForScene(rarity, scene), expiresAt: now + 30000 };
       }
       setActiveDisturbances(nextActive);
       setHotspotCd(prev => {
@@ -2345,111 +2468,115 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
             </>
           )}
 
-          {/* Whisperroot Trail — south gate glow (world-space, visible through gate from road) */}
+          {/* Whisperroot Trail — south gate glow (route1 only) */}
           {scene === "route1" && (
-            <>
-              <div style={{
-                position:"absolute", left:460, top:742,
-                width:80, height:14, borderRadius:"50%",
-                background:"radial-gradient(ellipse,rgba(100,220,120,0.6)0%,transparent 80%)",
-                animation:"pulse 1.6s ease-in-out infinite",
-                pointerEvents:"none",
-              }}/>
-
-              {/* Disturbance hotspots — clickable bushes/rocks/trees */}
-              {R1_HOTSPOTS.map((h, i) => {
-                const dist = activeDisturbances[i];
-                const onCd = !!hotspotCd[i];
-                const rarity = dist?.mon.rarity;
-                const ringColor = rarity ? RARITY_COLOR[rarity] : "transparent";
-                // Tint the core glow with the lurking mon's element so each
-                // disturbance reads as "something <element> is here".
-                const distEl = dist ? asElement(dist.mon.type) : null;
-                const elColor = distEl ? ELEMENT_COLOR[distEl] : ringColor;
-                const drama = rarity === "apex" ? 1 : rarity === "ultra" ? 0.8 : rarity === "rare" ? 0.55 : rarity === "uncommon" ? 0.4 : rarity === "common" ? 0.25 : 0.15;
-                return (
-                  <button
-                    key={i}
-                    onClick={() => handleHotspotClick(i, h)}
-                    style={{
-                      position:"absolute",
-                      left: h.x - h.r, top: h.y - h.r,
-                      width: h.r * 2, height: h.r * 2,
-                      borderRadius:"50%",
-                      background: dist
-                        ? `radial-gradient(circle, ${elColor}88 0%, ${elColor}33 42%, ${ringColor}1c 64%, transparent 80%)`
-                        : "transparent",
-                      border: dist ? `2px solid ${ringColor}` : "2px dashed rgba(180,160,80,0.18)",
-                      boxShadow: dist ? `0 0 ${20 + drama * 30}px ${ringColor}99, inset 0 0 ${10 + drama * 16}px ${elColor}66` : "none",
-                      animation: dist ? `disturb${rarity === "apex" || rarity === "ultra" ? "Big" : "Sml"} ${rarity === "apex" ? "1.0s" : rarity === "ultra" ? "1.2s" : "1.5s"} ease-in-out infinite` : undefined,
-                      cursor:"pointer",
-                      padding:0,
-                      opacity: onCd ? 0.25 : 1,
-                      zIndex: 4,
-                    }}
-                    aria-label={dist ? `disturbance-${rarity}` : `inspect-${h.kind}`}
-                  />
-                );
-              })}
-
-              {/* Orbiting element motes — a cheap "magical" flourish (one rotating
-                  wrapper per disturbance; the dots are static children so only a
-                  single transform animates). Skipped for the lowest tier. */}
-              {Object.entries(activeDisturbances).map(([k, d]) => {
-                if (d.mon.rarity === "common") return null;
-                const h = R1_HOTSPOTS[Number(k)];
-                const el = asElement(d.mon.type);
-                const c = el ? ELEMENT_COLOR[el] : RARITY_COLOR[d.mon.rarity];
-                const motes = d.mon.rarity === "apex" || d.mon.rarity === "ultra" ? 4 : 3;
-                const ringR = h.r + 6;
-                const spin = d.mon.rarity === "apex" ? "3.2s" : d.mon.rarity === "ultra" ? "4s" : "5.5s";
-                return (
-                  <div key={`motes-${k}`} style={{
-                    position:"absolute",
-                    left: h.x - ringR, top: h.y - ringR,
-                    width: ringR * 2, height: ringR * 2,
-                    pointerEvents:"none",
-                    animation: `runeSpin ${spin} linear infinite`,
-                    zIndex: 5,
-                  }}>
-                    {Array.from({ length: motes }).map((_, m) => {
-                      const ang = (m / motes) * Math.PI * 2;
-                      const dx = ringR + Math.cos(ang) * ringR - 3;
-                      const dy = ringR + Math.sin(ang) * ringR - 3;
-                      return (
-                        <div key={m} style={{
-                          position:"absolute", left: dx, top: dy,
-                          width: 6, height: 6, borderRadius:"50%",
-                          background: c,
-                          boxShadow: `0 0 6px ${c}, 0 0 10px ${c}aa`,
-                        }}/>
-                      );
-                    })}
-                  </div>
-                );
-              })}
-
-              {/* Apex pillar fx overlay */}
-              {Object.entries(activeDisturbances).map(([k, d]) => {
-                if (d.mon.rarity !== "apex" && d.mon.rarity !== "ultra") return null;
-                const h = R1_HOTSPOTS[Number(k)];
-                const color = RARITY_COLOR[d.mon.rarity];
-                return (
-                  <div key={`pillar-${k}`} style={{
-                    position:"absolute",
-                    left: h.x - 18, top: h.y - 140,
-                    width: 36, height: 140,
-                    background: `linear-gradient(180deg, transparent 0%, ${color}88 60%, ${color}cc 100%)`,
-                    borderRadius:"40% 40% 50% 50% / 90% 90% 50% 50%",
-                    filter:"blur(4px)",
-                    pointerEvents:"none",
-                    animation: "pillarPulse 1.4s ease-in-out infinite",
-                    zIndex: 3,
-                  }}/>
-                );
-              })}
-            </>
+            <div style={{
+              position:"absolute", left:460, top:742,
+              width:80, height:14, borderRadius:"50%",
+              background:"radial-gradient(ellipse,rgba(100,220,120,0.6)0%,transparent 80%)",
+              animation:"pulse 1.6s ease-in-out infinite",
+              pointerEvents:"none",
+            }}/>
           )}
+
+          {/* Encounter zone hotspots — rendered in route1 and area3 */}
+          {(scene === "route1" || scene === "area3") && (() => {
+            const hs = scene === "area3" ? A3_HOTSPOTS : R1_HOTSPOTS;
+            return (
+              <>
+                {/* Disturbance hotspots — clickable bushes/rocks/stones */}
+                {hs.map((h, i) => {
+                  const dist = activeDisturbances[i];
+                  const onCd = !!hotspotCd[i];
+                  const rarity = dist?.mon.rarity;
+                  const ringColor = rarity ? RARITY_COLOR[rarity] : "transparent";
+                  const distEl = dist ? asElement(dist.mon.type) : null;
+                  const elColor = distEl ? ELEMENT_COLOR[distEl] : ringColor;
+                  const drama = rarity === "apex" ? 1 : rarity === "ultra" ? 0.8 : rarity === "rare" ? 0.55 : rarity === "uncommon" ? 0.4 : rarity === "common" ? 0.25 : 0.15;
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => handleHotspotClick(i, h)}
+                      style={{
+                        position:"absolute",
+                        left: h.x - h.r, top: h.y - h.r,
+                        width: h.r * 2, height: h.r * 2,
+                        borderRadius:"50%",
+                        background: dist
+                          ? `radial-gradient(circle, ${elColor}88 0%, ${elColor}33 42%, ${ringColor}1c 64%, transparent 80%)`
+                          : "transparent",
+                        border: dist ? `2px solid ${ringColor}` : "2px dashed rgba(180,160,80,0.18)",
+                        boxShadow: dist ? `0 0 ${20 + drama * 30}px ${ringColor}99, inset 0 0 ${10 + drama * 16}px ${elColor}66` : "none",
+                        animation: dist ? `disturb${rarity === "apex" || rarity === "ultra" ? "Big" : "Sml"} ${rarity === "apex" ? "1.0s" : rarity === "ultra" ? "1.2s" : "1.5s"} ease-in-out infinite` : undefined,
+                        cursor:"pointer",
+                        padding:0,
+                        opacity: onCd ? 0.25 : 1,
+                        zIndex: 4,
+                      }}
+                      aria-label={dist ? `disturbance-${rarity}` : `inspect-${h.kind}`}
+                    />
+                  );
+                })}
+
+                {/* Orbiting element motes (one rotating wrapper per disturbance, skipped for commons) */}
+                {Object.entries(activeDisturbances).map(([k, d]) => {
+                  if (d.mon.rarity === "common") return null;
+                  const h = hs[Number(k)];
+                  if (!h) return null;
+                  const el = asElement(d.mon.type);
+                  const c = el ? ELEMENT_COLOR[el] : RARITY_COLOR[d.mon.rarity];
+                  const motes = d.mon.rarity === "apex" || d.mon.rarity === "ultra" ? 4 : 3;
+                  const ringR = h.r + 6;
+                  const spin = d.mon.rarity === "apex" ? "3.2s" : d.mon.rarity === "ultra" ? "4s" : "5.5s";
+                  return (
+                    <div key={`motes-${k}`} style={{
+                      position:"absolute",
+                      left: h.x - ringR, top: h.y - ringR,
+                      width: ringR * 2, height: ringR * 2,
+                      pointerEvents:"none",
+                      animation: `runeSpin ${spin} linear infinite`,
+                      zIndex: 5,
+                    }}>
+                      {Array.from({ length: motes }).map((_, m) => {
+                        const ang = (m / motes) * Math.PI * 2;
+                        const dx = ringR + Math.cos(ang) * ringR - 3;
+                        const dy = ringR + Math.sin(ang) * ringR - 3;
+                        return (
+                          <div key={m} style={{
+                            position:"absolute", left: dx, top: dy,
+                            width: 6, height: 6, borderRadius:"50%",
+                            background: c,
+                            boxShadow: `0 0 6px ${c}, 0 0 10px ${c}aa`,
+                          }}/>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+
+                {/* Apex/ultra pillar fx */}
+                {Object.entries(activeDisturbances).map(([k, d]) => {
+                  if (d.mon.rarity !== "apex" && d.mon.rarity !== "ultra") return null;
+                  const h = hs[Number(k)];
+                  if (!h) return null;
+                  const color = RARITY_COLOR[d.mon.rarity];
+                  return (
+                    <div key={`pillar-${k}`} style={{
+                      position:"absolute",
+                      left: h.x - 18, top: h.y - 140,
+                      width: 36, height: 140,
+                      background: `linear-gradient(180deg, transparent 0%, ${color}88 60%, ${color}cc 100%)`,
+                      borderRadius:"40% 40% 50% 50% / 90% 90% 50% 50%",
+                      filter:"blur(4px)",
+                      pointerEvents:"none",
+                      animation: "pillarPulse 1.4s ease-in-out infinite",
+                      zIndex: 3,
+                    }}/>
+                  );
+                })}
+              </>
+            );
+          })()}
 
           {/* Ground shadow */}
           <div ref={shadowRef} style={{
@@ -3731,11 +3858,27 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
                         borderBottom:"1px dashed rgba(100,64,20,0.16)",
                         display:"flex", alignItems:"center", gap:13,
                       }}>
-                        <img src={mon.playerImg} alt={mon.name} style={{
-                          width:56, height:56, objectFit:"contain",
-                          background:"rgba(60,30,0,0.05)", borderRadius:8,
-                          mixBlendMode:"multiply", flexShrink:0,
-                        }}/>
+                        {mon.playerSheet ? (() => {
+                          const s = mon.playerSheet!;
+                          const SZ = 56;
+                          const sc = Math.min(SZ / s.w, SZ / s.h);
+                          const dW = Math.round(s.w * sc), dH = Math.round(s.h * sc);
+                          const iW = Math.round(s.sheetW * sc), iH = Math.round(s.sheetH * sc);
+                          const oX = Math.round(s.x * sc), oY = Math.round(s.y * sc);
+                          return (
+                            <div style={{ width:SZ, height:SZ, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, background:"rgba(60,30,0,0.05)", borderRadius:8 }}>
+                              <div style={{ width:dW, height:dH, overflow:"hidden", position:"relative", flexShrink:0 }}>
+                                <img src={s.url} alt="" style={{ position:"absolute", left:-oX, top:-oY, width:iW, height:iH, maxWidth:"none" }}/>
+                              </div>
+                            </div>
+                          );
+                        })() : (
+                          <img src={mon.playerImg} alt={mon.name} style={{
+                            width:56, height:56, objectFit:"contain",
+                            background:"rgba(60,30,0,0.05)", borderRadius:8,
+                            mixBlendMode:"multiply", flexShrink:0,
+                          }}/>
+                        )}
                         <div style={{ flex:1 }}>
                           <div style={{ color:"#2a1206", fontWeight:800, fontSize:14, letterSpacing:0.3 }}>
                             {mon.name}{mon.nameIcon ? ` ${mon.nameIcon}` : ""}
@@ -3815,11 +3958,27 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
                               border:"1px solid rgba(100,80,160,0.22)",
                               borderRadius:12,
                             }}>
-                              <img src={mon.playerImg} alt={mon.name} style={{
-                                width:54, height:54, objectFit:"contain",
-                                background:"rgba(60,30,0,0.04)", borderRadius:8,
-                                mixBlendMode:"multiply",
-                              }}/>
+                              {mon.playerSheet ? (() => {
+                                const s = mon.playerSheet!;
+                                const SZ = 54;
+                                const sc = Math.min(SZ / s.w, SZ / s.h);
+                                const dW = Math.round(s.w * sc), dH = Math.round(s.h * sc);
+                                const iW = Math.round(s.sheetW * sc), iH = Math.round(s.sheetH * sc);
+                                const oX = Math.round(s.x * sc), oY = Math.round(s.y * sc);
+                                return (
+                                  <div style={{ width:SZ, height:SZ, display:"flex", alignItems:"center", justifyContent:"center", background:"rgba(60,30,0,0.04)", borderRadius:8 }}>
+                                    <div style={{ width:dW, height:dH, overflow:"hidden", position:"relative", flexShrink:0 }}>
+                                      <img src={s.url} alt="" style={{ position:"absolute", left:-oX, top:-oY, width:iW, height:iH, maxWidth:"none" }}/>
+                                    </div>
+                                  </div>
+                                );
+                              })() : (
+                                <img src={mon.playerImg} alt={mon.name} style={{
+                                  width:54, height:54, objectFit:"contain",
+                                  background:"rgba(60,30,0,0.04)", borderRadius:8,
+                                  mixBlendMode:"multiply",
+                                }}/>
+                              )}
                               <div style={{ color:"#2a1206", fontWeight:800, fontSize:12, textAlign:"center" }}>
                                 {mon.name}{mon.nameIcon ? ` ${mon.nameIcon}` : ""}
                               </div>

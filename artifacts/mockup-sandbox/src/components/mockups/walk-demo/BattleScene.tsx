@@ -20,6 +20,34 @@ function typeColor(type: string): string {
 
 export type MonRarity = "common" | "uncommon" | "rare" | "ultra" | "apex";
 
+/** One frame clipped from a sprite sheet. */
+export type SpriteSheet = {
+  url: string;     // full sheet image URL
+  x: number;      // px offset of frame top-left
+  y: number;
+  w: number;      // frame width
+  h: number;      // frame height
+  sheetW: number; // total sheet width
+  sheetH: number; // total sheet height
+};
+
+/**
+ * CSS background properties that show exactly one frame of a sprite sheet,
+ * scaled to fill any container size (works at any CSS width/height).
+ */
+export function sheetBgStyle(s: SpriteSheet): React.CSSProperties {
+  const bsX = (s.sheetW / s.w) * 100;
+  const bsY = (s.sheetH / s.h) * 100;
+  const bpX = s.sheetW > s.w ? (s.x / (s.sheetW - s.w)) * 100 : 0;
+  const bpY = s.sheetH > s.h ? (s.y / (s.sheetH - s.h)) * 100 : 0;
+  return {
+    backgroundImage:    `url(${s.url})`,
+    backgroundRepeat:   "no-repeat",
+    backgroundSize:     `${bsX}% ${bsY}%`,
+    backgroundPosition: `${bpX}% ${bpY}%`,
+  };
+}
+
 export type MonSpec = {
   id: string;
   name: string;
@@ -34,6 +62,10 @@ export type MonSpec = {
   /** Optional glyph rendered after the name (e.g. "☯" for Wyvrunt) with
    *  a golden glow halo to mark a unique/loyal-only mon. */
   nameIcon?: string;
+  /** Sprite-sheet frame for the wild (enemy) battle display. Takes priority over wildImg. */
+  wildSheet?: SpriteSheet;
+  /** Sprite-sheet frame for the player's party display. Takes priority over playerImg. */
+  playerSheet?: SpriteSheet;
 };
 
 export type StarterSpec = {
@@ -696,7 +728,17 @@ export function BattleScene({
             transition:"opacity 0.45s",
           }}>
             {/* Feint afterimage — a translucent ghost that lingers where it stood */}
-            {feinting && (
+            {feinting && (wild.wildSheet ? (
+              <div aria-hidden style={{
+                position:"absolute", inset:0,
+                ...sheetBgStyle(wild.wildSheet),
+                transform: (wildFlip + wildExtra).trim() || "none",
+                transformOrigin:"center center",
+                filter:`drop-shadow(0 0 10px ${typeColor(wild.type)})`,
+                animation:"feintGhost 0.6s ease-out forwards",
+                pointerEvents:"none",
+              }}/>
+            ) : (
               <img src={wild.wildImg} alt="" aria-hidden style={{
                 position:"absolute", inset:0,
                 width:"100%", height:"100%", objectFit:"contain",
@@ -706,15 +748,25 @@ export function BattleScene({
                 animation:"feintGhost 0.6s ease-out forwards",
                 pointerEvents:"none",
               }}/>
+            ))}
+            {wild.wildSheet ? (
+              <div role="img" aria-label={wild.name} style={{
+                position:"absolute", inset:0,
+                ...sheetBgStyle(wild.wildSheet),
+                transform: (wildFlip + wildExtra).trim() || "none",
+                transformOrigin:"center center",
+                transition:"transform 0.45s ease-in",
+                filter:"drop-shadow(0 6px 8px rgba(0,0,0,0.5))",
+              }}/>
+            ) : (
+              <img src={wild.wildImg} alt={wild.name} style={{
+                width:"100%", height:"100%", objectFit:"contain",
+                transform: (wildFlip + wildExtra).trim() || "none",
+                transformOrigin:"center center",
+                transition:"transform 0.45s ease-in, opacity 0.45s",
+                filter:"drop-shadow(0 6px 8px rgba(0,0,0,0.5))",
+              }}/>
             )}
-            <img src={wild.wildImg} alt={wild.name} style={{
-              width:"100%", height:"100%", objectFit:"contain",
-              // Wild faces WEST (left). Native left-facing => no flip; native right => scaleX(-1).
-              transform: (wildFlip + wildExtra).trim() || "none",
-              transformOrigin:"center center",
-              transition:"transform 0.45s ease-in, opacity 0.45s",
-              filter:"drop-shadow(0 6px 8px rgba(0,0,0,0.5))",
-            }}/>
           </div>
         </div>
 
