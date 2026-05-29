@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/primeria/"
+title = "Primeria"
+version = "1.0.0"
+id = "artifacts/primeria"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/primeria/" ]
+localPort = 24976
+
+[services.development]
+run = "pnpm --filter @workspace/primeria run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/primeria", "run", "build" ]
+publicDir = "artifacts/primeria/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24976"
+BASE_PATH = "/primeria/"
