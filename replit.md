@@ -61,6 +61,10 @@ Primeria is a browser-native monster-tamer RPG where you explore ruins, bond wit
 
 - Always run `remove_image_background_tool` on every character/NPC sprite before using it in the game — all directions (front, back, side/profile). Sprites from AI generators have gradient backgrounds that break transparency tricks. Proper transparent PNGs are the only reliable fix.
 
+## Save button
+- 💾 SAVE button sits in the D-pad bar next to 🎒 Bag. Calls `persistWorldRef.current()` (force-flushes position + all quest flags). Party state auto-saves via its own useEffect on every stat/level/xp/party change — the button just gives player-visible confirmation.
+- `justSaved` state flips to `true` for 1.6 s, turning the button green with a ✓ / "SAVED" label. Transitions back to 💾 / "SAVE" automatically.
+
 ## Gotchas
 
 - Sprite images from AI generators have warm gradient backgrounds, NOT black. BFS/threshold pixel tricks do not reliably work. Always pre-process sprites with background removal first.

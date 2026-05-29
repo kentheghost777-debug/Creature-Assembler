@@ -981,6 +981,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const [floatMsg,      setFloatMsg]      = useState<{ x: number; y: number; text: string; key: number } | null>(null);
   const [showStarterGate, setShowStarterGate] = useState(false);
   const [battleNotif,   setBattleNotif]   = useState<{ title: string; sub: string } | null>(null);
+  const [justSaved,     setJustSaved]     = useState(false);
   // ── Starter progression ───────────────────────────────────────────────────
   const [starterLevel, setStarterLevel] = useState(() => savedParty?.level ?? 5);
   const [starterXp,    setStarterXp]    = useState(() => savedParty?.xp ?? 0);
@@ -5280,6 +5281,40 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             }}
             aria-label="SELECT — Bag"
           >🎒</button>
+
+          {/* ── SAVE BUTTON ──────────────────────────────────────── */}
+          <button
+            onClick={() => {
+              persistWorldRef.current();
+              setJustSaved(true);
+              window.setTimeout(() => setJustSaved(false), 1600);
+            }}
+            style={{
+              width:52, height:52, borderRadius:12,
+              background: justSaved ? "rgba(30,60,30,0.85)" : "rgba(14,34,14,0.75)",
+              border: justSaved
+                ? "1.5px solid rgba(80,200,80,0.75)"
+                : "1.5px solid rgba(80,160,80,0.45)",
+              color: justSaved ? "#80e880" : "#70b870",
+              fontSize: justSaved ? 18 : 20,
+              display:"flex", flexDirection:"column", alignItems:"center",
+              justifyContent:"center", gap:1,
+              cursor:"pointer", backdropFilter:"blur(6px)",
+              boxShadow: justSaved
+                ? "0 2px 12px rgba(80,200,80,0.35)"
+                : "0 2px 8px rgba(0,0,0,0.5)",
+              transition:"background 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s",
+            }}
+            aria-label="Save game"
+          >
+            {justSaved ? (
+              <span style={{ fontSize:16, fontWeight:900, lineHeight:1 }}>✓</span>
+            ) : "💾"}
+            <span style={{
+              fontSize:7, letterSpacing:0.5, fontWeight:700, lineHeight:1,
+              color: justSaved ? "#80e880" : "#507850",
+            }}>{justSaved ? "SAVED" : "SAVE"}</span>
+          </button>
         </div>
       </div>
 
