@@ -344,42 +344,51 @@ export default function GameLauncher() {
           {/* Left: options */}
           <div style={{
             position: "absolute", zIndex: 2,
-            left: 0, top: 0, bottom: 0, width: "50%",
+            left: 0, top: 0, bottom: 0,
+            width: isMobile ? "100%" : "50%",
             display: "flex", flexDirection: "column",
-            justifyContent: "center", padding: "0 0 0 10%",
+            justifyContent: "center",
+            padding: isMobile ? "0 36px" : "0 0 0 10%",
+            alignItems: isMobile ? "stretch" : undefined,
           }}>
-            <div style={{ color: "#f0d060", fontSize: 26, fontWeight: 900, letterSpacing: 5, textShadow: "0 0 20px rgba(240,200,60,0.3)" }}>
+            <div style={{
+              color: "#f0d060", fontSize: isMobile ? 28 : 26, fontWeight: 900,
+              letterSpacing: isMobile ? 4 : 5, textShadow: "0 0 20px rgba(240,200,60,0.3)",
+              textAlign: isMobile ? "center" : undefined,
+            }}>
               PRIMERIA
             </div>
-            <div style={{ color: "#6a5020", fontSize: 8, letterSpacing: 4, marginTop: 4 }}>
+            <div style={{ color: "#6a5020", fontSize: 8, letterSpacing: 4, marginTop: 4, textAlign: isMobile ? "center" : undefined }}>
               THE KEEPER'S TALE
             </div>
 
-            <div style={{ width: 44, height: 1, background: "rgba(240,200,60,0.18)", margin: "22px 0 30px" }} />
+            <div style={{ width: 44, height: 1, background: "rgba(240,200,60,0.18)", margin: "22px 0 30px", alignSelf: isMobile ? "center" : undefined }} />
 
             <MenuBtn
               label="NEW GAME"
               primary
               onClick={handleNewGame}
+              style={isMobile ? { width: "100%" } : undefined}
             />
             {savedGame && (
               <MenuBtn
                 label="CONTINUE"
                 onClick={handleContinue}
-                style={{ marginTop: 10 }}
+                style={isMobile ? { width: "100%", marginTop: 10 } : { marginTop: 10 }}
               />
             )}
 
-            <div style={{ marginTop: "auto", paddingBottom: 24, color: "#1e1810", fontSize: 8, letterSpacing: 1.5 }}>
+            <div style={{ marginTop: "auto", paddingBottom: 24, color: "#1e1810", fontSize: 8, letterSpacing: 1.5, textAlign: isMobile ? "center" : undefined }}>
               © PURESTORY GAMING STUDIOS
             </div>
           </div>
 
           {/* Right: hero + tayanari */}
           <div style={{
-            position: "absolute", zIndex: 2,
-            right: 0, top: 0, bottom: 0, width: "56%",
+            position: "absolute", zIndex: isMobile ? 1 : 2,
+            right: 0, top: 0, bottom: 0, width: isMobile ? "100%" : "56%",
             overflow: "hidden",
+            opacity: isMobile ? 0.14 : 1,
           }}>
             <img
               src="/__mockup/images/hero-art.png"
@@ -439,23 +448,31 @@ export default function GameLauncher() {
 
           {/* Main */}
           <div style={{
-            flex: 1, display: "flex", alignItems: "flex-end",
-            padding: "0 18px 0 14px", overflow: "hidden",
+            flex: 1, display: "flex",
+            flexDirection: isMobile ? "column" : "row",
+            alignItems: isMobile ? "stretch" : "flex-end",
+            padding: isMobile ? "8px 16px 0" : "0 18px 0 14px",
+            overflow: "hidden",
           }}>
             {/* Prof art */}
             <img
               src="/__mockup/images/prof-art.png"
               alt="Prof. Irwyn"
               style={{
-                height: "66%", objectFit: "contain", objectPosition: "bottom",
-                flexShrink: 0, marginRight: 14,
+                height: isMobile ? 130 : "66%",
+                objectFit: "contain",
+                objectPosition: isMobile ? "bottom center" : "bottom",
+                flexShrink: 0,
+                marginRight: isMobile ? 0 : 14,
+                marginBottom: isMobile ? 8 : undefined,
+                alignSelf: isMobile ? "center" : undefined,
                 filter: "drop-shadow(0 0 18px rgba(180,140,50,0.18))",
               }}
             />
 
             {/* Dialog card */}
             <div style={{
-              flex: 1, marginBottom: 36,
+              flex: 1, marginBottom: isMobile ? 8 : 36,
               background: "rgba(6,4,2,0.90)",
               border: "1px solid rgba(240,200,80,0.18)",
               borderRadius: 14,

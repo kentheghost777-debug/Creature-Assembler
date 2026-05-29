@@ -982,6 +982,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const [showStarterGate, setShowStarterGate] = useState(false);
   const [battleNotif,   setBattleNotif]   = useState<{ title: string; sub: string } | null>(null);
   const [justSaved,     setJustSaved]     = useState(false);
+  // isMobile: computed once — the game runs fullscreen and doesn't layout-shift on resize
+  const isMobile = window.innerWidth <= 520;
   // ── Starter progression ───────────────────────────────────────────────────
   const [starterLevel, setStarterLevel] = useState(() => savedParty?.level ?? 5);
   const [starterXp,    setStarterXp]    = useState(() => savedParty?.xp ?? 0);
@@ -4085,44 +4087,87 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               {/* Leather spine */}
               <div style={{
                 background:"linear-gradient(90deg,#1e0f06,#3d2010,#2c1608,#1e0f06)",
-                padding:"10px 16px 0",
-                display:"flex", alignItems:"flex-end", justifyContent:"space-between",
-                flexShrink:0, gap:10,
+                padding: isMobile ? "10px 12px 0" : "10px 16px 0",
+                display:"flex",
+                flexDirection: isMobile ? "column" : "row",
+                alignItems: isMobile ? "stretch" : "flex-end",
+                justifyContent:"space-between",
+                flexShrink:0, gap: isMobile ? 4 : 10,
               }}>
-                <span style={{
-                  color:"#c8a44a", fontSize:10, fontWeight:800,
-                  letterSpacing:3.5, textTransform:"uppercase",
-                  paddingBottom:10,
-                  textShadow:"0 1px 3px rgba(0,0,0,0.9)",
-                }}>Keeper's Journal</span>
+                {isMobile ? (
+                  <>
+                    {/* Mobile row 1: title + close */}
+                    <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", paddingBottom:4 }}>
+                      <span style={{
+                        color:"#c8a44a", fontSize:10, fontWeight:800,
+                        letterSpacing:2.5, textTransform:"uppercase",
+                        textShadow:"0 1px 3px rgba(0,0,0,0.9)",
+                      }}>Keeper's Journal</span>
+                      <button onClick={() => setShowJournal(false)} style={{
+                        width:26, height:26, borderRadius:"50%", flexShrink:0,
+                        background:"radial-gradient(circle at 38% 33%,#c0392b,#7b1c12)",
+                        border:"1.5px solid #3d0f0a",
+                        color:"#f5d5d0", fontSize:12, fontWeight:900,
+                        display:"flex", alignItems:"center", justifyContent:"center",
+                        cursor:"pointer",
+                        boxShadow:"0 2px 6px rgba(0,0,0,0.7)",
+                      }}>✕</button>
+                    </div>
+                    {/* Mobile row 2: tabs full width */}
+                    <div style={{ display:"flex", gap:3 }}>
+                      {(["party","storage","shells","bag"] as const).map(tab => (
+                        <button key={tab} onClick={() => setJournalTab(tab)} style={{
+                          flex:1, padding:"5px 4px 8px",
+                          background: journalTab === tab
+                            ? "linear-gradient(175deg,#f5e9cc,#ecdcb4)"
+                            : "rgba(0,0,0,0.30)",
+                          border:"none",
+                          borderRadius:"7px 7px 0 0",
+                          color: journalTab === tab ? "#3d1e04" : "#a08050",
+                          fontSize:10, fontWeight:800, letterSpacing:0.8,
+                          textTransform:"uppercase", cursor:"pointer",
+                        }}>{tab === "party" ? "Party" : tab === "storage" ? "Box" : tab === "shells" ? "Shells" : "Bag"}</button>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <span style={{
+                      color:"#c8a44a", fontSize:10, fontWeight:800,
+                      letterSpacing:3.5, textTransform:"uppercase",
+                      paddingBottom:10,
+                      textShadow:"0 1px 3px rgba(0,0,0,0.9)",
+                    }}>Keeper's Journal</span>
 
-                {/* Page tabs flush with bottom of spine */}
-                <div style={{ display:"flex", gap:3, alignSelf:"flex-end" }}>
-                  {(["party","storage","shells","bag"] as const).map(tab => (
-                    <button key={tab} onClick={() => setJournalTab(tab)} style={{
-                      padding:"5px 11px 8px",
-                      background: journalTab === tab
-                        ? "linear-gradient(175deg,#f5e9cc,#ecdcb4)"
-                        : "rgba(0,0,0,0.30)",
-                      border:"none",
-                      borderRadius:"7px 7px 0 0",
-                      color: journalTab === tab ? "#3d1e04" : "#a08050",
-                      fontSize:10, fontWeight:800, letterSpacing:1.2,
-                      textTransform:"uppercase", cursor:"pointer",
-                    }}>{tab === "party" ? "Party" : tab === "storage" ? "Box" : tab === "shells" ? "Shells" : "Bag"}</button>
-                  ))}
-                </div>
+                    {/* Page tabs flush with bottom of spine */}
+                    <div style={{ display:"flex", gap:3, alignSelf:"flex-end" }}>
+                      {(["party","storage","shells","bag"] as const).map(tab => (
+                        <button key={tab} onClick={() => setJournalTab(tab)} style={{
+                          padding:"5px 11px 8px",
+                          background: journalTab === tab
+                            ? "linear-gradient(175deg,#f5e9cc,#ecdcb4)"
+                            : "rgba(0,0,0,0.30)",
+                          border:"none",
+                          borderRadius:"7px 7px 0 0",
+                          color: journalTab === tab ? "#3d1e04" : "#a08050",
+                          fontSize:10, fontWeight:800, letterSpacing:1.2,
+                          textTransform:"uppercase", cursor:"pointer",
+                        }}>{tab === "party" ? "Party" : tab === "storage" ? "Box" : tab === "shells" ? "Shells" : "Bag"}</button>
+                      ))}
+                    </div>
 
-                {/* Wax-seal close */}
-                <button onClick={() => setShowJournal(false)} style={{
-                  width:26, height:26, borderRadius:"50%", flexShrink:0,
-                  background:"radial-gradient(circle at 38% 33%,#c0392b,#7b1c12)",
-                  border:"1.5px solid #3d0f0a",
-                  color:"#f5d5d0", fontSize:12, fontWeight:900,
-                  display:"flex", alignItems:"center", justifyContent:"center",
-                  cursor:"pointer", marginBottom:8,
-                  boxShadow:"0 2px 6px rgba(0,0,0,0.7)",
-                }}>✕</button>
+                    {/* Wax-seal close */}
+                    <button onClick={() => setShowJournal(false)} style={{
+                      width:26, height:26, borderRadius:"50%", flexShrink:0,
+                      background:"radial-gradient(circle at 38% 33%,#c0392b,#7b1c12)",
+                      border:"1.5px solid #3d0f0a",
+                      color:"#f5d5d0", fontSize:12, fontWeight:900,
+                      display:"flex", alignItems:"center", justifyContent:"center",
+                      cursor:"pointer", marginBottom:8,
+                      boxShadow:"0 2px 6px rgba(0,0,0,0.7)",
+                    }}>✕</button>
+                  </>
+                )}
               </div>
 
               {/* Parchment body */}

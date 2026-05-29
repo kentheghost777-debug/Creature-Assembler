@@ -1291,7 +1291,7 @@ export function BattleScene({
       background:"linear-gradient(180deg, rgba(28,20,10,0.94), rgba(14,8,4,0.94))",
       border:"1.5px solid rgba(180,130,60,0.5)",
       borderRadius:8,
-      minWidth:140,
+      minWidth:"min(140px, 42vw)",
       boxShadow:"0 2px 8px rgba(0,0,0,0.5)",
     };
   }
