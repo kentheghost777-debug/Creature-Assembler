@@ -496,8 +496,8 @@ const FLAVOR_TRACKS = [
 // ── Collision zones ─────────────────────────────────────────────────────────
 const OW_BLOCKED: Rect[] = [
   // ── OUTER BORDERS ──────────────────────────────────────────────────────────
-  [0,    0,   155,  290],  // left forest — north  (gap y=290-360 → Area 3 entrance)
-  [0,  360,   155,  900],  // left forest — south
+  [0,    0,   155,  400],  // left forest — north  (gap y=400-445 → Area 3 corridor at Jay's SW corner)
+  [0,  445,   155,  900],  // left forest — south
   [155,  0,   214,   85],  // NW top strip (left of Route-1)
   [327,  0,  1124,   85],  // top border (right of Route-1 gap)
   [978,  85, 1124,  600],  // right forest — upper
@@ -519,8 +519,7 @@ const OW_BLOCKED: Rect[] = [
 
   // ── JAY'S HOME — fence perimeter + body (south gate x 240–308) ─────────────
   [214, 225,  327,  400],  // building body
-  [160, 225,  214,  290],  // west fence — north  (gap y=290-360 → Area 3 corridor)
-  [160, 360,  214,  452],  // west fence — south
+  [160, 225,  214,  400],  // west fence — solid north-to-building-bottom (gap y=400-440 → Area 3 corridor)
   [327, 225,  335,  452],  // east fence (shrunk x=327–335 — opens Route-1 corridor east of Jay)
   [160, 440,  240,  452],  // south fence — left of gate
   [308, 440,  335,  452],  // south fence — right of gate (shrunk to match east fence)
@@ -535,7 +534,7 @@ const OW_BLOCKED: Rect[] = [
   // ── PLAYER HOME — fence perimeter + body (north gate x 532–602) ────────────
   [367, 590,  757,  820],  // building body — pushed south to leave a real yard
   [359, 537,  532,  547],  // north fence — left of gate  (was x1=340; trimmed for PH↔Elio south corridor)
-  [602, 537,  765,  547],  // north fence — right of gate (was x2=782; trimmed for PH↔Lia south corridor)
+  [602, 537,  750,  547],  // north fence — right of gate (x2 trimmed from 765→750 to widen PH↔Lia gap to 50px)
   // PH west fence REMOVED — Elio↔PH corridor now spans body-to-body (x=327–367, ~40 wide)
   // PH east fence REMOVED — PH↔Lia corridor now spans body-to-body (x=757–807, ~50 wide)
 
@@ -548,7 +547,7 @@ const OW_BLOCKED: Rect[] = [
 
   // ── LIA'S HOME — fence perimeter + body (north gate x 846–910) ─────────────
   [807, 565,  942,  780],  // building body
-  [789, 537,  846,  547],  // north fence — left of gate  (was x1=775; trimmed for PH↔Lia south corridor)
+  [800, 537,  846,  547],  // north fence — left of gate  (x1 pushed from 789→800 to widen PH↔Lia gap to 50px)
   [910, 537,  950,  547],  // north fence — right of gate (was x2=978; trimmed for east-side corridor x=950–978)
   // Lia west fence REMOVED — PH↔Lia corridor widened to body-to-body
   [942, 537,  950,  790],  // east fence (narrowed for east-side corridor x=950–978)
@@ -688,7 +687,7 @@ const JAY_BLOCKED: Rect[] = [
 // 1024×768 landscape map, east entry/exit at x≈960.
 const A3 = { w: 1024, h: 768 };
 const A3_SPAWN      = { x: 920, y: 380 };        // spawn near east entry
-const OW_AREA3_EXIT: Rect = [0,  290,  20, 360]; // left edge of OW forest gap
+const OW_AREA3_EXIT: Rect = [0,  398,  22, 447]; // left edge of OW — gap at Jay's SW corner (y=400-440 between building bottom and south fence)
 const A3_RETURN_OW:  Rect = [960, 310, 1024, 450]; // east edge of Area 3
 const A3_BLOCKED: Rect[] = [
   // ── OUTER BORDER STRIPS ───────────────────────────────────────────────────
@@ -727,7 +726,7 @@ const A3_BLOCKED: Rect[] = [
 // ── Ellio's Home ─────────────────────────────────────────────────────────────
 const EH = { w: 800, h: 800 };
 const ELLIO_POS = { x: 400, y: 350 };
-const OW_ELLIO_DOOR: Rect  = [155, 780, 215, 810]; // ON visible front door — left side of Ellio's south face (mailbox is on the RIGHT)
+const OW_ELLIO_DOOR: Rect  = [244, 778, 296, 808]; // ON visible front door — centered on Ellio south face (building x=214-327, y=780); requires "up" key (anti walk-by)
 const ELLIO_HOME_EXIT: Rect = [305, 725, 505, 790];
 const EH_BLOCKED: Rect[] = [
   [0, 0, 800, 60], [0, 0, 60, 800], [740, 0, 800, 800],
@@ -1615,7 +1614,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           setLockedDoorNotif("It's locked.");
           window.setTimeout(() => setLockedDoorNotif(null), 1600);
         } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_PROF_DOOR as Rect)) {
-          transitionTo("lab", 350, 590);
+          if (!starterRefArc.current && !allTownItemsRef.current) {
+            worldPos.current.y = (OW_PROF_DOOR as Rect)[3] + 20;
+            setLockedDoorNotif("Prof. Irwyn says: Say your goodbyes first — visit everyone in town before you take this step.");
+            window.setTimeout(() => setLockedDoorNotif(null), 2800);
+          } else {
+            transitionTo("lab", 350, 590);
+          }
         } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_MAYA_DOOR)) {
           transitionTo("maya", 400, 660);
         } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_JAY_DOOR)) {
@@ -1630,18 +1635,32 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           transitionTo("home", 400, 670);       // enter Player Home — trigger sits ON visible front door (south face); require UP key so east-west walk-by on the south road doesn't enter
         } else if (sc === "home" && inRect(worldPos.current.x, worldPos.current.y, PLAYER_HOME_EXIT)) {
           transitionTo("overworld", 575, 858);  // exit onto south road, S of door (door y=820–850); avoid landing inside trigger
-        } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_ELLIO_DOOR)) {
-          transitionTo("ellio", 400, 670);      // enter Ellio's Home — trigger on visible front door
+        } else if (sc === "overworld" && h === "up" && inRect(worldPos.current.x, worldPos.current.y, OW_ELLIO_DOOR)) {
+          transitionTo("ellio", 400, 670);      // enter Ellio's Home — require "up" key (anti walk-by)
         } else if (sc === "ellio" && inRect(worldPos.current.x, worldPos.current.y, ELLIO_HOME_EXIT)) {
-          transitionTo("overworld", 270, 830);  // exit onto south road, S of door
+          transitionTo("overworld", 270, 812);  // exit onto south road, S of door
         } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_LIA_DOOR)) {
           transitionTo("lia", 400, 670);        // enter Lia's Home — trigger on visible front door
         } else if (sc === "lia" && inRect(worldPos.current.x, worldPos.current.y, LIA_HOME_EXIT)) {
           transitionTo("overworld", 875, 830);  // exit onto south road, S of door
         } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_AREA3_EXIT)) {
-          transitionTo("area3", A3_SPAWN.x, A3_SPAWN.y);
+          if (!starterRefArc.current) {
+            worldPos.current.x = OW_AREA3_EXIT[2] + 30;
+            setLockedDoorNotif("You need a Tayanari companion before heading into Westwood Reaches.");
+            window.setTimeout(() => setLockedDoorNotif(null), 2400);
+          } else if (!route1VisitedRef.current) {
+            worldPos.current.x = OW_AREA3_EXIT[2] + 30;
+            setLockedDoorNotif("Explore Whisperroot Trail (north gate) before venturing west.");
+            window.setTimeout(() => setLockedDoorNotif(null), 2400);
+          } else if (!route2GreetedRef.current) {
+            worldPos.current.x = OW_AREA3_EXIT[2] + 30;
+            setLockedDoorNotif("Explore the Verdant Basin (east gate) first.");
+            window.setTimeout(() => setLockedDoorNotif(null), 2400);
+          } else {
+            transitionTo("area3", A3_SPAWN.x, A3_SPAWN.y);
+          }
         } else if (sc === "area3" && inRect(worldPos.current.x, worldPos.current.y, A3_RETURN_OW)) {
-          transitionTo("overworld", 50, 325);   // forest gap corridor — walk east to re-enter town
+          transitionTo("overworld", 170, 423);  // Jay's SW courtyard — walk east back into town
         }
 
         // Keep the resume point current, and throttle position saves while walking.

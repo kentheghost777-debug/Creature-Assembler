@@ -459,7 +459,7 @@ export default function GameLauncher() {
               src="/__mockup/images/prof-art.png"
               alt="Prof. Irwyn"
               style={{
-                height: isMobile ? 130 : "66%",
+                height: isMobile ? 130 : "min(66%, 440px)",
                 objectFit: "contain",
                 objectPosition: isMobile ? "bottom center" : "bottom",
                 flexShrink: 0,
@@ -712,7 +712,7 @@ export default function GameLauncher() {
                 src={activeChar.sprite}
                 alt="Your Keeper"
                 style={{
-                  height: "74%", objectFit: "contain", objectPosition: "bottom center",
+                  height: "min(74%, 400px)", objectFit: "contain", objectPosition: "bottom center",
                   imageRendering: "pixelated",
                   filter: "drop-shadow(-2px 0 36px rgba(240,180,40,0.18))",
                 }}

@@ -25,6 +25,10 @@ A monster-tamer RPG (Pokémon-style) built entirely in the browser — explore a
   - `WalkDemo.tsx` — overworld engine (scenes: overworld/home/lab/route1/route2/area3/maya/jay/ellio/lia, movement, doors, NPCs, quests, inventory UI).
     - Area 3 = Westwood Reaches (west of overworld via corridor at y≈290-360). Encounter transition flourish: element-tinted radial burst (`encounterFlash` state + `@keyframes encounterFlash`) fires on disturbance click before the battle fade.
     - `MoveManager` component lets the player rearrange their active 4 moves from the full learned pool in the party tab.
+    - **Progression gates**: Lab door → requires `allTownItems` (all 5 town errands done) before giving starter (bounce: "Say your goodbyes first"). Route 1 → requires `starter && allTownItems`. Route 2 → requires `wifeIntercepted` (triggers after Route 1 visit + all items). Area 3 → requires `starter && route1Visited && route2Greeted` (progressive toast messages).
+    - **Door positions**: Player home `[545,820,605,850]` + up-key; Lia `[890,780,950,810]`; Ellio `[244,778,296,808]` + up-key; Jay `[240,400,308,448]`; Maya `[895,383,960,445]`.
+    - **Area 3 corridor**: Gap in Jay's west fence at y=400-440 (building bottom to south fence). Left forest block `[0,0,155,400]` + `[0,445,155,900]` — gap at y=400-445. `OW_AREA3_EXIT=[0,398,22,447]`. Return spawn `(170, 423)` — Jay's SW courtyard.
+    - **PH↔Lia path widened**: PH north fence right trimmed to x=750, Lia north fence left starts at x=800 → 50px gap (was 24px).
     - **Wyvrunt evo chain**: WYVRUNT → WYRNAK (lv16) → WYRVAST (lv30) → AUREYVANT (wyrLoyalty≥80). Loyalty bar shown in party tab. WYV_FORMS array + wyvruntForm state + checkWyvForms() helper.
     - **Jay & Lia (Area 3 trainers)**: JAY_A3_POS/LIA_A3_POS, jayA3Team(wins)/liaA3Team(wins) build 4-tier progressive teams. Interact buttons show "!" (first time) / "↺" (rematch). handleTrainerEnd() callback handles XP, loyalty, form-evo, win counter.
     - **Level cap**: MAX_LEVEL=25 normally; wyvrunt chain (forms 0-2) cap=30; Aureyvant uncapped. Enforced in calcBattleXp() inner loop.
