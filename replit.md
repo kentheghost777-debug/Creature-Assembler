@@ -22,7 +22,15 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- Game "Primeria" (monster-tamer RPG): `artifacts/mockup-sandbox/src/components/mockups/walk-demo/`
+  - `GameLauncher.tsx` — title/menu/intro/character+oath flow → mounts the game
+  - `WalkDemo.tsx` — overworld engine (scenes, movement, doors, NPCs, quests, inventory UI)
+  - `BattleScene.tsx` — turn-based battle + capture + XP
+  - `progression.ts` — XP curve, moves, SHELLS/RUNES item data, element colors
+  - `save.ts` — localStorage save (key `primeria_v2`): `PartySave` + `WorldSave`
+  - `STANDALONE_BUILD.md` — exact steps to package a downloadable web/APK/desktop build
+- Game images: `artifacts/mockup-sandbox/public/images/` (referenced as `/__mockup/images/...`)
+- Play it at preview path `/preview/walk-demo/GameLauncher`
 
 ## Architecture decisions
 

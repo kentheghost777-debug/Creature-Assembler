@@ -524,9 +524,15 @@ export function WalkDemo({ characterId = "kael", roleId = "keeper" }: { characte
   const savedWorld = savedSnap?.world ?? null;
   // Sanitized resume target. We never resume *into* a battle (battle runtime
   // isn't persisted), so a legacy save left mid-battle falls back to home.
+  // Saves live in localStorage and could be malformed/tampered, so we validate
+  // the scene against the known walkable set and require finite coordinates;
+  // anything off falls back to the safe home spawn.
+  const WALKABLE_SCENES: Scene[] = ["overworld","lab","maya","jay","home","ellio","lia","route1","route2"];
   const resume = (() => {
     if (!savedWorld) return null;
-    if (savedWorld.scene === "battle") return { scene: "home" as Scene, x: 400, y: 670 };
+    const HOME = { scene: "home" as Scene, x: 400, y: 670 };
+    if (!WALKABLE_SCENES.includes(savedWorld.scene as Scene)) return HOME; // covers "battle" + junk
+    if (!Number.isFinite(savedWorld.posX) || !Number.isFinite(savedWorld.posY)) return HOME;
     return { scene: savedWorld.scene as Scene, x: savedWorld.posX, y: savedWorld.posY };
   })();
 
