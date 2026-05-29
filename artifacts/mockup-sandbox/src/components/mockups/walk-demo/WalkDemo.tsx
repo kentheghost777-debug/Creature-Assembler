@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { BattleScene, RARITY_COLOR, type MonSpec, type MonRarity, type BattleResult, type StarterStats } from "./BattleScene";
 import { SHELLS, ELEMENT_COLOR } from "./progression";
+import { type CharId, type PartySave, readSave, updateParty } from "./save";
 
 // ── Level-up reward generation ────────────────────────────────────────────
 const STAT_KEYS = ["hp", "atk", "def", "spd"] as const;
@@ -69,38 +70,38 @@ const BESTIARY: MonSpec[] = [
   // Commons (≈18% each within trail = 55% pool / 3)
   { id:"hatchick",  name:"Hatchick",  type:"Skyborne",     rarity:"common",
     wildImg:"/__mockup/images/hatchick-wild.png",  playerImg:"/__mockup/images/hatchick-player.png",
-    wildFaces:"left", playerFaces:"right", maxHp:24, baseDmg:[3,6] },
+    wildFaces:"left", playerFaces:"left", maxHp:24, baseDmg:[3,6] },
   { id:"loth",      name:"Loth",      type:"Nature",       rarity:"common",
     wildImg:"/__mockup/images/loth-wild.png",      playerImg:"/__mockup/images/loth-player.png",
-    wildFaces:"left", playerFaces:"right", maxHp:28, baseDmg:[3,7] },
+    wildFaces:"left", playerFaces:"left", maxHp:28, baseDmg:[3,7] },
   { id:"voltowl",   name:"Voltowl",   type:"Stormproven",  rarity:"common",
     wildImg:"/__mockup/images/voltowl-wild.png",   playerImg:"/__mockup/images/voltowl-player.png",
-    wildFaces:"left", playerFaces:"right", maxHp:26, baseDmg:[3,7] },
+    wildFaces:"left", playerFaces:"left", maxHp:26, baseDmg:[3,7] },
   // Uncommons
   { id:"stonub",    name:"Stonub",    type:"Volcanic",     rarity:"uncommon",
     wildImg:"/__mockup/images/stonub-wild.png",    playerImg:"/__mockup/images/stonub-player.png",
-    wildFaces:"left", playerFaces:"right", maxHp:34, baseDmg:[4,8] },
+    wildFaces:"left", playerFaces:"left", maxHp:34, baseDmg:[4,8] },
   { id:"potent",    name:"Potent",    type:"Alchemy",      rarity:"uncommon",
     wildImg:"/__mockup/images/potent-wild.png",    playerImg:"/__mockup/images/potent-player.png",
-    wildFaces:"left", playerFaces:"right", maxHp:30, baseDmg:[4,8] },
+    wildFaces:"left", playerFaces:"left", maxHp:30, baseDmg:[4,8] },
   { id:"scavencrow",name:"Scavencrow",type:"Abyss",        rarity:"uncommon",
     wildImg:"/__mockup/images/scavencrow-wild.png",playerImg:"/__mockup/images/scavencrow-player.png",
-    wildFaces:"left", playerFaces:"right", maxHp:32, baseDmg:[4,9] },
+    wildFaces:"left", playerFaces:"left", maxHp:32, baseDmg:[4,9] },
   // Rares
   { id:"ghosti",    name:"Ghosti",    type:"Spirit",       rarity:"rare",
     wildImg:"/__mockup/images/ghosti-wild.png",    playerImg:"/__mockup/images/ghosti-player.png",
-    wildFaces:"left", playerFaces:"right", maxHp:42, baseDmg:[5,10] },
+    wildFaces:"right", playerFaces:"right", maxHp:42, baseDmg:[5,10] },
   { id:"scalel",    name:"Scalel",    type:"Armored",      rarity:"rare",
     wildImg:"/__mockup/images/scalel-wild.png",    playerImg:"/__mockup/images/scalel-player.png",
-    wildFaces:"left", playerFaces:"right", maxHp:48, baseDmg:[5,10] },
+    wildFaces:"left", playerFaces:"left", maxHp:48, baseDmg:[5,10] },
   // Ultra
   { id:"mentyke_w", name:"Mentyke",   type:"Mind",         rarity:"ultra",
     wildImg:"/__mockup/images/mentyke-wild-a.png", playerImg:"/__mockup/images/mentyke-wild-b.png",
-    wildFaces:"left", playerFaces:"right", maxHp:58, baseDmg:[6,12] },
+    wildFaces:"left", playerFaces:"left", maxHp:58, baseDmg:[6,12] },
   // Apex
   { id:"peachi_w",  name:"Pea-chi",   type:"Nature",       rarity:"apex",
     wildImg:"/__mockup/images/peachi-wild-a.png",  playerImg:"/__mockup/images/peachi-wild-b.png",
-    wildFaces:"left", playerFaces:"right", maxHp:80, baseDmg:[8,14] },
+    wildFaces:"left", playerFaces:"left", maxHp:80, baseDmg:[8,14] },
 ];
 
 // ── Wyvrunt — unique scripted-encounter mon (Chaos type, loyal-only) ────────
@@ -116,7 +117,7 @@ const WYVRUNT_SPEC: MonSpec = {
   rarity: "apex",
   wildImg:   "/__mockup/images/wyvrunt.png",
   playerImg: "/__mockup/images/wyvrunt.png",
-  wildFaces: "left", playerFaces: "right",
+  wildFaces: "left", playerFaces: "left",
   maxHp: 60,
   baseDmg: [9, 15], // +5 over other starter-tier ceilings; scripted fight ignores it anyway
 };
@@ -449,15 +450,32 @@ function loadImg(src: string) {
   return imgCache[src];
 }
 
-const FRAMES: Record<string, string[]> = {
-  idle:       ["/__mockup/images/stand_front_3d.png"],  // only shown at game start
-  idle_up:    ["/__mockup/images/walk_back_1.png"],     // stopped, facing away
-  idle_side:  ["/__mockup/images/walk_side_1.png"],     // stopped, facing side
-  idle_down:  ["/__mockup/images/walk_idle.png"],       // stopped, facing forward
-  walk_side:  ["/__mockup/images/walk_side_1.png", "/__mockup/images/walk_side_2r.png"],
-  walk_up:    ["/__mockup/images/walk_back_1.png", "/__mockup/images/walk_back_2.png"],
-  walk_down:  ["/__mockup/images/walk_idle.png", "/__mockup/images/walk_front_1.png", "/__mockup/images/walk_front_2.png"],
+// Per-character animation frame sets. Side frames face RIGHT natively; the walk
+// loop mirrors them (flipX) when moving left. "kael" is the blonde default;
+// "rowan" is the original selectable character.
+const CHAR_FRAMES: Record<CharId, Record<string, string[]>> = {
+  kael: {
+    idle:       ["/__mockup/images/kael_front_idle.png"], // shown at game start
+    idle_up:    ["/__mockup/images/kael_back_idle.png"],  // stopped, facing away
+    idle_side:  ["/__mockup/images/kael_side_idle.png"],  // stopped, facing side
+    idle_down:  ["/__mockup/images/kael_front_idle.png"], // stopped, facing forward
+    walk_side:  ["/__mockup/images/kael_side_1.png", "/__mockup/images/kael_side_2.png"],
+    walk_up:    ["/__mockup/images/kael_back_1.png", "/__mockup/images/kael_back_2.png"],
+    walk_down:  ["/__mockup/images/kael_front_1.png", "/__mockup/images/kael_front_2.png"],
+  },
+  rowan: {
+    idle:       ["/__mockup/images/stand_front_3d.png"],  // portrait render — shrunk
+    idle_up:    ["/__mockup/images/walk_back_1.png"],
+    idle_side:  ["/__mockup/images/walk_side_1.png"],
+    idle_down:  ["/__mockup/images/walk_idle.png"],
+    walk_side:  ["/__mockup/images/walk_side_1.png", "/__mockup/images/walk_side_2r.png"],
+    walk_up:    ["/__mockup/images/walk_back_1.png", "/__mockup/images/walk_back_2.png"],
+    walk_down:  ["/__mockup/images/walk_idle.png", "/__mockup/images/walk_front_1.png", "/__mockup/images/walk_front_2.png"],
+  },
 };
+
+const ALL_FRAME_SRCS: string[] = Object.values(CHAR_FRAMES)
+  .flatMap(set => Object.values(set).flat());
 
 // Sprites have transparent backgrounds. Normalise to displayW so all frames
 // maintain their natural aspect ratio rather than being squashed into a square.
@@ -491,8 +509,17 @@ function dist(ax: number, ay: number, bx: number, by: number) {
 // ── Prof Irwyn NPC world position in lab ────────────────────────────────────
 const PROF = { x: 350, y: 268 }; // feet position in lab world
 
+// Party holds the starter (slot 1) plus up to PARTY_CAP-1 caught companions.
+const PARTY_CAP = 6;
+
 // ── Main component ──────────────────────────────────────────────────────────
-export function WalkDemo() {
+export function WalkDemo({ characterId = "kael" }: { characterId?: CharId } = {}) {
+  // Hydrate persisted party once on mount (Continue resumes; New Game cleared it).
+  const savedParty = useRef<PartySave | null>(readSave()?.party ?? null).current;
+
+  // Active character's animation frame set (stable for the session).
+  const charFrames = CHAR_FRAMES[characterId] ?? CHAR_FRAMES.kael;
+
   const [scene,       setScene]       = useState<Scene>("home");
   const [phase,       setPhase]       = useState<Phase>("walk");
   const [fading,      setFading]      = useState(false);
@@ -504,9 +531,11 @@ export function WalkDemo() {
   const [shellsCollected,  setShellsCollected]  = useState(false);
   const [pickupNotif,      setPickupNotif]      = useState(false);
   const [selected,         setSelected]         = useState<StarterId | null>(null);
-  const [starter,          setStarter]          = useState<typeof STARTERS[number] | null>(null);
+  const [starter,          setStarter]          = useState<typeof STARTERS[number] | null>(
+    () => STARTERS.find(s => s.id === savedParty?.starterId) ?? null
+  );
   const [showJournal,      setShowJournal]      = useState(false);
-  const [journalTab,       setJournalTab]       = useState<"party"|"shells"|"bag">("party");
+  const [journalTab,       setJournalTab]       = useState<"party"|"storage"|"shells"|"bag">("party");
   const [interactPos,      setInteractPos]      = useState({ sx: 0, sy: 0 });
   const [mayaInteractPos,  setMayaInteractPos]  = useState({ sx: 0, sy: 0 });
   const [jayInteractPos,   setJayInteractPos]   = useState({ sx: 0, sy: 0 });
@@ -548,9 +577,10 @@ export function WalkDemo() {
   const [lockedDoorNotif,      setLockedDoorNotif]      = useState<string | null>(null);
 
   // ── Encounter / battle state ────────────────────────────────────────────
-  const [shellCount,    setShellCount]    = useState(0);
+  const [shellCount,    setShellCount]    = useState(() => savedParty?.shells ?? 0);
   const [wildEncounter, setWildEncounter] = useState<MonSpec | null>(null);
-  const [caughtParty,   setCaughtParty]   = useState<MonSpec[]>([]);
+  const [caughtParty,   setCaughtParty]   = useState<MonSpec[]>(() => savedParty?.caught ?? []);
+  const [storageBox,    setStorageBox]    = useState<MonSpec[]>(() => savedParty?.box ?? []);
   const [activeDisturbances, setActiveDisturbances] = useState<Record<number, { mon: MonSpec; expiresAt: number }>>({});
   const [hotspotCd,     setHotspotCd]     = useState<Record<number, number>>({});
   const [checksStreak,  setChecksStreak]  = useState(0);
@@ -558,10 +588,40 @@ export function WalkDemo() {
   const [showStarterGate, setShowStarterGate] = useState(false);
   const [battleNotif,   setBattleNotif]   = useState<{ title: string; sub: string } | null>(null);
   // ── Starter progression ───────────────────────────────────────────────────
-  const [starterLevel, setStarterLevel] = useState(5);
-  const [starterXp,    setStarterXp]    = useState(0);
-  const [starterStats, setStarterStats] = useState<StarterStats>({ hp: 40, atk: 6, def: 4, spd: 5 });
-  const [starterMoves, setStarterMoves] = useState<string[]>([]);
+  const [starterLevel, setStarterLevel] = useState(() => savedParty?.level ?? 5);
+  const [starterXp,    setStarterXp]    = useState(() => savedParty?.xp ?? 0);
+  const [starterStats, setStarterStats] = useState<StarterStats>(() => savedParty?.stats ?? { hp: 40, atk: 6, def: 4, spd: 5 });
+  const [starterMoves, setStarterMoves] = useState<string[]>(() => savedParty?.moves ?? []);
+
+  // Persist party progress whenever it changes (resumed via Continue).
+  useEffect(() => {
+    updateParty({
+      starterId: starter?.id ?? null,
+      level: starterLevel,
+      xp: starterXp,
+      stats: starterStats,
+      moves: starterMoves,
+      caught: caughtParty,
+      box: storageBox,
+      shells: shellCount,
+    });
+  }, [starter, starterLevel, starterXp, starterStats, starterMoves, caughtParty, storageBox, shellCount]);
+
+  // Fresh snapshot of in-party caught mons for the catch handler closure.
+  const caughtPartyRef = useRef<MonSpec[]>(caughtParty);
+  useEffect(() => { caughtPartyRef.current = caughtParty; }, [caughtParty]);
+
+  // Single source of truth for adding a captured mon: respects the party cap,
+  // overflowing into the storage box. Returns true if the mon was boxed.
+  const addCaughtMon = useCallback((mon: MonSpec): boolean => {
+    if (caughtPartyRef.current.length >= PARTY_CAP - 1) {
+      setStorageBox(b => [...b, mon]);
+      return true;
+    }
+    setCaughtParty(p => [...p, mon]);
+    return false;
+  }, []);
+
   // Post-battle report modal (shell recovery + xp + level up)
   const [battleReport, setBattleReport] = useState<{
     outcome: string;
@@ -620,7 +680,7 @@ export function WalkDemo() {
   // Preload everything
   useEffect(() => {
     [
-      ...Object.values(FRAMES).flat(),
+      ...ALL_FRAME_SRCS,
       "/__mockup/images/overworld-map.png",
       "/__mockup/images/prof-lab-interior.png",
       "/__mockup/images/prof-irwyn-sprite.png",
@@ -859,19 +919,19 @@ export function WalkDemo() {
   const redraw = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const frames = FRAMES[animRef.current] || FRAMES.idle;
+    const frames = charFrames[animRef.current] || charFrames.idle;
     const src    = frames[frameRef.current] || frames[0];
     if (src === lastSrc.current && flipRef.current === lastFlip.current) return;
-    // stand_front_3d is a portrait 3D render — shrink it; directional idles use normal size
-    const displayW = (animRef.current === "idle") ? 60 : SPRITE_PX;
+    // stand_front_3d is a portrait 3D render — shrink it; all other frames use normal size
+    const displayW = src.includes("stand_front_3d") ? 60 : SPRITE_PX;
     const ok = drawSprite(canvas, src, flipRef.current, displayW);
     if (ok) { lastSrc.current = src; lastFlip.current = flipRef.current; }
-  }, []);
+  }, [charFrames]);
 
   // Frame ticker
   useEffect(() => {
     const id = setInterval(() => {
-      const frames = FRAMES[animRef.current] || FRAMES.idle;
+      const frames = charFrames[animRef.current] || charFrames.idle;
       frameRef.current = (frameRef.current + 1) % frames.length;
       redraw();
     }, 145);
@@ -1347,10 +1407,15 @@ export function WalkDemo() {
 
     let outcome: string;
     if (result.kind === "caught") {
-      setCaughtParty(p => [...p, result.mon]);
-      setBattleNotif({ title: `Bond formed — ${result.mon.name}!`, sub: "Joined your party · full heal" });
+      const toBox = addCaughtMon(result.mon);
+      if (toBox) {
+        setBattleNotif({ title: `Bond formed — ${result.mon.name}!`, sub: "Party full · sent to Storage Box" });
+        outcome = `${result.mon.name} bonded with you, but your party was full — it was sent to the Storage Box.`;
+      } else {
+        setBattleNotif({ title: `Bond formed — ${result.mon.name}!`, sub: "Joined your party · full heal" });
+        outcome = `${result.mon.name} bonded with you and joined the party!`;
+      }
       setChecksStreak(0);
-      outcome = `${result.mon.name} bonded with you and joined the party!`;
     } else if (result.kind === "ko") {
       setBattleNotif({ title: `${result.mon.name} fainted!`, sub: `+${xpGained} XP` });
       outcome = `${result.mon.name} fainted in the clash.`;
@@ -1375,7 +1440,7 @@ export function WalkDemo() {
         });
       }, 1200);
     }
-  }, [transitionTo, starter, healingRuneEquipped, starterLevel, starterXp, starterMoves]);
+  }, [transitionTo, starter, healingRuneEquipped, starterLevel, starterXp, starterMoves, addCaughtMon]);
 
   // ── Battle scene — full takeover when scene === "battle" ───────────────────
   if (scene === "battle" && wildEncounter && starter) {
@@ -2384,7 +2449,7 @@ export function WalkDemo() {
                       window.setTimeout(() => setPhase("scripted_caught"), 650);
                     } else if (phase === "scripted_caught") {
                       setWyvruntCaught(true);
-                      setCaughtParty(p => [...p, WYVRUNT_SPEC]);
+                      addCaughtMon(WYVRUNT_SPEC);
                       setPhase("walk");
                     } else {
                       advanceDialog(phase);
@@ -2643,18 +2708,18 @@ export function WalkDemo() {
 
                 {/* Page tabs flush with bottom of spine */}
                 <div style={{ display:"flex", gap:3, alignSelf:"flex-end" }}>
-                  {(["party","shells","bag"] as const).map(tab => (
+                  {(["party","storage","shells","bag"] as const).map(tab => (
                     <button key={tab} onClick={() => setJournalTab(tab)} style={{
-                      padding:"5px 12px 8px",
+                      padding:"5px 11px 8px",
                       background: journalTab === tab
                         ? "linear-gradient(175deg,#f5e9cc,#ecdcb4)"
                         : "rgba(0,0,0,0.30)",
                       border:"none",
                       borderRadius:"7px 7px 0 0",
                       color: journalTab === tab ? "#3d1e04" : "#a08050",
-                      fontSize:10, fontWeight:800, letterSpacing:1.5,
+                      fontSize:10, fontWeight:800, letterSpacing:1.2,
                       textTransform:"uppercase", cursor:"pointer",
-                    }}>{tab === "party" ? "Party" : tab === "shells" ? "Shells" : "Bag"}</button>
+                    }}>{tab === "party" ? "Party" : tab === "storage" ? "Box" : tab === "shells" ? "Shells" : "Bag"}</button>
                   ))}
                 </div>
 
@@ -2678,7 +2743,7 @@ export function WalkDemo() {
                   <span style={{
                     color:"#8a5c22", fontSize:9, fontWeight:800,
                     letterSpacing:2.5, textTransform:"uppercase",
-                  }}>{journalTab === "party" ? "Companions" : "Carried Items"}</span>
+                  }}>{journalTab === "party" ? "Companions" : journalTab === "storage" ? "Storage Box" : "Carried Items"}</span>
                   <div style={{ flex:1, height:1, background:"rgba(100,64,20,0.28)" }}/>
                 </div>
 
@@ -2781,8 +2846,56 @@ export function WalkDemo() {
                       )}
                     </div>
 
-                    {[2,3,4,5,6].map(n => (
-                      <div key={n} style={{
+                    {/* Caught companions (slots 2…PARTY_CAP) */}
+                    {caughtParty.map((mon, i) => (
+                      <div key={`${mon.id}-${i}`} style={{
+                        padding:"11px 2px",
+                        borderBottom:"1px dashed rgba(100,64,20,0.16)",
+                        display:"flex", alignItems:"center", gap:13,
+                      }}>
+                        <img src={mon.playerImg} alt={mon.name} style={{
+                          width:56, height:56, objectFit:"contain",
+                          background:"rgba(60,30,0,0.05)", borderRadius:8,
+                          mixBlendMode:"multiply", flexShrink:0,
+                        }}/>
+                        <div style={{ flex:1 }}>
+                          <div style={{ color:"#2a1206", fontWeight:800, fontSize:14, letterSpacing:0.3 }}>
+                            {mon.name}{mon.nameIcon ? ` ${mon.nameIcon}` : ""}
+                          </div>
+                          <div style={{
+                            display:"inline-block", marginTop:4,
+                            fontSize:8.5, fontWeight:800, letterSpacing:1.6,
+                            color:"#8a5c22", borderBottom:"1px solid rgba(100,64,20,0.35)",
+                            paddingBottom:2,
+                          }}>{mon.type.toUpperCase()}</div>
+                          <div style={{ color: RARITY_COLOR[mon.rarity], fontSize:9, fontWeight:800, marginTop:4, letterSpacing:0.5 }}>
+                            ◈ {mon.rarity.toUpperCase()}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setCaughtParty(p => p.filter((_, j) => j !== i));
+                            setStorageBox(b => [...b, mon]);
+                          }}
+                          style={{
+                            padding:"5px 10px", borderRadius:8, flexShrink:0,
+                            background:"rgba(100,64,20,0.08)",
+                            border:"1px solid rgba(100,64,20,0.30)",
+                            color:"#8a5c22", fontSize:9.5, fontWeight:800, cursor:"pointer",
+                          }}
+                        >→ Box</button>
+                        <div style={{
+                          color:"#9a7040", fontSize:10, fontWeight:700,
+                          background:"rgba(100,64,20,0.09)",
+                          padding:"3px 9px", borderRadius:20,
+                          border:"1px solid rgba(100,64,20,0.18)", flexShrink:0,
+                        }}>No. {i + 2}</div>
+                      </div>
+                    ))}
+
+                    {/* Remaining empty party slots */}
+                    {Array.from({ length: Math.max(0, PARTY_CAP - 1 - caughtParty.length) }).map((_, k) => (
+                      <div key={`empty-${k}`} style={{
                         padding:"11px 2px",
                         borderBottom:"1px dashed rgba(100,64,20,0.16)",
                         display:"flex", alignItems:"center", gap:13,
@@ -2794,10 +2907,68 @@ export function WalkDemo() {
                           flexShrink:0,
                         }}/>
                         <div style={{ color:"#c8a87a", fontSize:11, fontStyle:"italic" }}>
-                          Slot {n} — empty
+                          Slot {caughtParty.length + k + 2} — empty
                         </div>
                       </div>
                     ))}
+                  </div>
+                )}
+
+                {/* ── STORAGE BOX PAGE ─────────────────────────── */}
+                {journalTab === "storage" && (
+                  <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+                    <div style={{ color:"#9a7c50", fontSize:10, lineHeight:1.6, fontStyle:"italic", marginBottom:2 }}>
+                      Tayanari beyond your party of {PARTY_CAP} rest here at the lab.
+                      {" "}Withdraw one when a party slot is free.
+                    </div>
+                    {storageBox.length === 0 ? (
+                      <div style={{ textAlign:"center", padding:"26px 0", color:"#b09468", fontSize:12, fontStyle:"italic" }}>
+                        — The Storage Box is empty. —
+                      </div>
+                    ) : (
+                      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
+                        {storageBox.map((mon, i) => {
+                          const partyFull = caughtParty.length >= PARTY_CAP - 1;
+                          return (
+                            <div key={`${mon.id}-${i}`} style={{
+                              display:"flex", flexDirection:"column", alignItems:"center", gap:6,
+                              padding:"12px 8px",
+                              background:"rgba(50,35,90,0.05)",
+                              border:"1px solid rgba(100,80,160,0.22)",
+                              borderRadius:12,
+                            }}>
+                              <img src={mon.playerImg} alt={mon.name} style={{
+                                width:54, height:54, objectFit:"contain",
+                                background:"rgba(60,30,0,0.04)", borderRadius:8,
+                                mixBlendMode:"multiply",
+                              }}/>
+                              <div style={{ color:"#2a1206", fontWeight:800, fontSize:12, textAlign:"center" }}>
+                                {mon.name}{mon.nameIcon ? ` ${mon.nameIcon}` : ""}
+                              </div>
+                              <div style={{ color: RARITY_COLOR[mon.rarity], fontSize:8.5, fontWeight:800, letterSpacing:0.5 }}>
+                                ◈ {mon.rarity.toUpperCase()}
+                              </div>
+                              <button
+                                disabled={partyFull}
+                                onClick={() => {
+                                  if (caughtParty.length >= PARTY_CAP - 1) return;
+                                  setStorageBox(b => b.filter((_, j) => j !== i));
+                                  setCaughtParty(p => [...p, mon]);
+                                }}
+                                style={{
+                                  marginTop:2, padding:"5px 12px", borderRadius:8,
+                                  background: partyFull ? "rgba(100,64,20,0.05)" : "rgba(40,80,160,0.10)",
+                                  border: partyFull ? "1px solid rgba(100,64,20,0.16)" : "1px solid rgba(80,140,200,0.40)",
+                                  color: partyFull ? "#b8a888" : "#5090c0",
+                                  fontSize:9.5, fontWeight:800,
+                                  cursor: partyFull ? "not-allowed" : "pointer",
+                                }}
+                              >{partyFull ? "Party full" : "→ Party"}</button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 )}
 

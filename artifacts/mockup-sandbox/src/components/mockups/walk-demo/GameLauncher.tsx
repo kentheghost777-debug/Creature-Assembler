@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { WalkDemo } from "./WalkDemo";
-
-const SAVE_KEY = "primeria_v2";
-const checkSave = () => !!localStorage.getItem(SAVE_KEY);
-const createSave = () => localStorage.setItem(SAVE_KEY, JSON.stringify({ ts: Date.now() }));
+import { type CharId, hasSave, readSave, startNewSave } from "./save";
 
 type Screen = "studio" | "dedication" | "title" | "menu" | "intro" | "char_reveal" | "game";
+
+const CHARACTERS: { id: CharId; name: string; tag: string; sprite: string }[] = [
+  { id: "kael",  name: "Kael",  tag: "Sunlit wanderer",   sprite: "/__mockup/images/kael_front_idle.png" },
+  { id: "rowan", name: "Rowan", tag: "Seasoned traveler", sprite: "/__mockup/images/stand_front_3d.png" },
+];
 
 const INTRO_LINES = [
   "The world of Primeria is ancient. Its mountains breathe with elemental force, its rivers run with memory, and its wildlands stretch far beyond any map ever drawn. Scattered across every corner of this world... are Tayanari.",
@@ -18,7 +20,8 @@ export default function GameLauncher() {
   const [screen, setScreen]       = useState<Screen>("studio");
   const [introPhase, setIntroPhase] = useState(1);
   const [fading, setFading]       = useState(false);
-  const [savedGame, setSavedGame] = useState(() => checkSave());
+  const [savedGame, setSavedGame] = useState(() => hasSave());
+  const [characterId, setCharacterId] = useState<CharId>("kael");
 
   const fadeTo = useCallback((next: Screen, ms = 380) => {
     setFading(true);
@@ -50,13 +53,21 @@ export default function GameLauncher() {
   }, [screen, fadeTo]);
 
   const handleNewGame = () => {
-    createSave();
-    setSavedGame(true);
+    setCharacterId("kael");
     setIntroPhase(1);
     fadeTo("intro");
   };
 
-  const handleContinue = () => fadeTo("game");
+  const handleContinue = () => {
+    setCharacterId(readSave()?.characterId ?? "kael");
+    fadeTo("game");
+  };
+
+  const beginJourney = () => {
+    startNewSave(characterId);
+    setSavedGame(true);
+    fadeTo("game");
+  };
 
   const advanceIntro = () => {
     if (introPhase < INTRO_LINES.length) {
@@ -66,7 +77,7 @@ export default function GameLauncher() {
     }
   };
 
-  if (screen === "game") return <WalkDemo />;
+  if (screen === "game") return <WalkDemo characterId={characterId} />;
 
   return (
     <div style={{
@@ -514,10 +525,52 @@ export default function GameLauncher() {
               ))}
             </div>
 
+            {/* Character picker */}
+            <div style={{ marginTop: 22 }}>
+              <div style={{ color: "#4a3818", fontSize: 8, letterSpacing: 3, marginBottom: 9 }}>
+                CHOOSE YOUR LOOK
+              </div>
+              <div style={{ display: "flex", gap: 9 }}>
+                {CHARACTERS.map(c => {
+                  const active = characterId === c.id;
+                  return (
+                    <button
+                      key={c.id}
+                      onClick={() => setCharacterId(c.id)}
+                      style={{
+                        display: "flex", flexDirection: "column", alignItems: "center",
+                        width: 78, padding: "8px 4px 7px", gap: 4, cursor: "pointer",
+                        background: active ? "rgba(240,200,60,0.12)" : "rgba(255,255,255,0.02)",
+                        border: active ? "1.5px solid rgba(240,200,60,0.6)" : "1px solid rgba(240,200,60,0.16)",
+                        borderRadius: 10,
+                        boxShadow: active ? "0 0 16px rgba(240,200,60,0.12)" : "none",
+                        transition: "all 0.18s",
+                      }}
+                    >
+                      <img
+                        src={c.sprite}
+                        alt={c.name}
+                        style={{
+                          height: 48, objectFit: "contain",
+                          imageRendering: "pixelated",
+                          filter: active ? "none" : "grayscale(0.5) opacity(0.7)",
+                        }}
+                      />
+                      <div style={{
+                        color: active ? "#f0d060" : "#8a7440",
+                        fontSize: 10, fontWeight: 800, letterSpacing: 1,
+                      }}>{c.name}</div>
+                      <div style={{ color: "#6a5424", fontSize: 7, letterSpacing: 0.4 }}>{c.tag}</div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             <button
-              onClick={() => fadeTo("game")}
+              onClick={beginJourney}
               style={{
-                marginTop: 30, width: 158, padding: "11px 0",
+                marginTop: 24, width: 158, padding: "11px 0",
                 background: "rgba(240,200,60,0.12)",
                 border: "1.5px solid rgba(240,200,60,0.48)",
                 borderRadius: 10, color: "#f0d060",
@@ -531,21 +584,33 @@ export default function GameLauncher() {
             >BEGIN JOURNEY</button>
           </div>
 
-          {/* Right: hero art */}
+          {/* Right: hero art (Rowan) or chosen sprite (Kael) */}
           <div style={{
             position: "absolute", zIndex: 2,
             right: 0, top: 0, bottom: 0, width: "58%",
             display: "flex", alignItems: "flex-end",
             justifyContent: "center", overflow: "hidden",
           }}>
-            <img
-              src="/__mockup/images/hero-art.png"
-              alt="Your Keeper"
-              style={{
-                height: "96%", objectFit: "contain", objectPosition: "bottom center",
-                filter: "drop-shadow(-2px 0 36px rgba(240,180,40,0.16))",
-              }}
-            />
+            {characterId === "rowan" ? (
+              <img
+                src="/__mockup/images/hero-art.png"
+                alt="Your Keeper"
+                style={{
+                  height: "96%", objectFit: "contain", objectPosition: "bottom center",
+                  filter: "drop-shadow(-2px 0 36px rgba(240,180,40,0.16))",
+                }}
+              />
+            ) : (
+              <img
+                src="/__mockup/images/kael_front_idle.png"
+                alt="Your Keeper"
+                style={{
+                  height: "74%", objectFit: "contain", objectPosition: "bottom center",
+                  imageRendering: "pixelated",
+                  filter: "drop-shadow(-2px 0 36px rgba(240,180,40,0.18))",
+                }}
+              />
+            )}
           </div>
         </div>
       )}

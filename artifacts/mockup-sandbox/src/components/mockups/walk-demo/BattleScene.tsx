@@ -48,18 +48,18 @@ const RARITY_LABEL: Record<MonRarity, string> = {
 
 type Outcome = "trap" | "curious" | "critical" | "perfect";
 const SHELL_OUTCOMES: { kind: Outcome; weight: number; pct: number; flavor: string }[] = [
-  { kind: "trap",     weight: 55, pct: 0.87, flavor: "You set it down — the shell sits open like a trap." },
-  { kind: "curious",  weight: 30, pct: 0.92, flavor: "You toss the shell near it. Curiosity gets the better of it…" },
-  { kind: "critical", weight: 12, pct: 0.97, flavor: "Critical! The shell lands right beside it." },
+  { kind: "trap",     weight: 55, pct: 0.74, flavor: "You set it down — the shell sits open like a trap." },
+  { kind: "curious",  weight: 30, pct: 0.82, flavor: "You toss the shell near it. Curiosity gets the better of it…" },
+  { kind: "critical", weight: 12, pct: 0.91, flavor: "Critical! The shell lands right beside it." },
   { kind: "perfect",  weight:  3, pct: 1.00, flavor: "Perfect! The shell lands at its feet." },
 ];
 
 function rollOutcome(hpFrac: number): typeof SHELL_OUTCOMES[number] {
   // HP-band boosts critical/perfect odds the lower the mon is
   let bias = 0;
-  if (hpFrac < 0.30) bias = 18;
-  else if (hpFrac < 0.60) bias = 10;
-  else if (hpFrac < 0.90) bias = 4;
+  if (hpFrac < 0.30) bias = 12;
+  else if (hpFrac < 0.60) bias = 7;
+  else if (hpFrac < 0.90) bias = 3;
   const weights = SHELL_OUTCOMES.map((o, i) =>
     i >= 2 ? o.weight + bias : Math.max(o.weight - bias / 2, 1)
   );
@@ -365,10 +365,11 @@ export function BattleScene({
   }
 
   // ── render
-  const wildScaleX   = wild.wildFaces === "left"   ? 1 : -1; // we want wild facing left toward player
-  const playerScaleX = wild.playerFaces === "right" ? 1 : -1; // we want player-side facing right toward wild
-  // (Hatchick uses wild.png as "wild facing" — already correct in our naming convention.)
-  // Actually wildImg/playerImg are pre-assigned; we just trust the data here.
+  // wildFaces / playerFaces describe each sprite's NATIVE art orientation (same
+  // file orientation is reused for both sides). Wild stands on the RIGHT and must
+  // face LEFT (toward player); player mon stands on the LEFT and must face RIGHT.
+  const wildScaleX   = wild.wildFaces === "left"   ? 1 : -1; // flip when native faces right
+  const playerScaleX = wild.playerFaces === "right" ? 1 : -1; // flip when native faces left
   const wildShake   = shake === "wild"   ? "shakeFx 0.22s" : "none";
   const playerShake = shake === "player" ? "shakeFx 0.22s" : "none";
 
