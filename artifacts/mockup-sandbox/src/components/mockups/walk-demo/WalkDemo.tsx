@@ -139,7 +139,7 @@ type StarterId = typeof STARTERS[number]["id"];
 // TODO: Replace placeholder names + imgs with final evolved-form assets once provided.
 //       Drop each evo sprite at /__mockup/images/<name>.png and run background-removal.
 // TODO: Set EVO_BG_IMG to "/__mockup/images/evo-bg.png" once the evo background is ready.
-const EVO_BG_IMG: string | undefined = undefined;
+const EVO_BG_IMG: string | undefined = "/__mockup/images/evo-bg.png";
 
 const EVO_TABLE: Array<{ from: string; atLevel: number; to: StarterSpec }> = [
   { from:"burg",        atLevel:14, to:{ id:"burg_2",       name:"Burg·II",        type:"Frostformed",  color:"#7ddeff", img:"/__mockup/images/frostbite-baby.png"  } },
