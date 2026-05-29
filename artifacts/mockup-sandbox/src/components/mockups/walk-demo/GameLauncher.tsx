@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { WalkDemo } from "./WalkDemo";
-import { type CharId, type RoleId, ROLES, roleDef, hasSave, readSave, startNewSave } from "./save";
+import { type CharId, type RoleId, hasSave, readSave, startNewSave } from "./save";
 
-type Screen = "studio" | "dedication" | "title" | "menu" | "intro" | "char_reveal" | "oath" | "game";
+type Screen = "studio" | "dedication" | "title" | "menu" | "intro" | "char_reveal" | "game";
 
 const CHARACTERS: { id: CharId; name: string; tag: string; sprite: string }[] = [
   { id: "kael",  name: "Kael",  tag: "Sunlit wanderer",   sprite: "/__mockup/images/kael_front_idle.png" },
@@ -574,7 +574,7 @@ export default function GameLauncher() {
             </div>
 
             <button
-              onClick={() => { if (!fading) fadeTo("oath"); }}
+              onClick={() => { if (!fading) beginJourney(); }}
               style={{
                 marginTop: 24, width: 178, padding: "11px 0",
                 background: "rgba(240,200,60,0.12)",
@@ -587,7 +587,7 @@ export default function GameLauncher() {
               }}
               onMouseEnter={e => { e.currentTarget.style.background = "rgba(240,200,60,0.2)"; }}
               onMouseLeave={e => { e.currentTarget.style.background = "rgba(240,200,60,0.12)"; }}
-            >DECLARE YOUR PATH →</button>
+            >ENTER PRIMERIA →</button>
           </div>
 
           {/* Right: hero art (Rowan) or chosen sprite (Kael) */}
@@ -617,157 +617,6 @@ export default function GameLauncher() {
                 }}
               />
             )}
-          </div>
-        </div>
-      )}
-
-      {/* ── OATH / DECLARE YOUR PATH ───────────────────────────────── */}
-      {screen === "oath" && (
-        <div style={{
-          width: "100%", height: "100%",
-          background: "radial-gradient(ellipse at 50% 0%,#120b04 0%,#070402 60%,#040201 100%)",
-          display: "flex", flexDirection: "column",
-          alignItems: "center",
-          position: "relative", overflow: "hidden",
-          padding: "0 16px", boxSizing: "border-box",
-          animation: "glFadeIn 0.7s ease forwards",
-        }}>
-          {/* Ambient rune glow */}
-          <div style={{
-            position: "absolute", top: "-12%", left: "50%", transform: "translateX(-50%)",
-            width: 420, height: 420, borderRadius: "50%",
-            background: "radial-gradient(circle,rgba(240,190,60,0.10) 0%,transparent 65%)",
-            pointerEvents: "none",
-          }} />
-
-          {/* Header */}
-          <div style={{ textAlign: "center", marginTop: 30, flexShrink: 0, zIndex: 2 }}>
-            <div style={{
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 12,
-              marginBottom: 12,
-            }}>
-              <div style={{ width: 28, height: 1, background: "rgba(240,200,80,0.22)" }} />
-              <div style={{ color: "rgba(240,200,80,0.5)", fontSize: 11 }}>◈</div>
-              <div style={{ width: 28, height: 1, background: "rgba(240,200,80,0.22)" }} />
-            </div>
-            <div style={{
-              color: "#f0d060", fontSize: 21, fontWeight: 900,
-              letterSpacing: 4, textShadow: "0 0 22px rgba(240,200,60,0.25)",
-            }}>DECLARE YOUR PATH</div>
-            <div style={{
-              color: "#8a6a30", fontSize: 9, letterSpacing: 2, marginTop: 7,
-              maxWidth: 300, lineHeight: 1.6, fontStyle: "italic",
-            }}>
-              Before the Elders, every Trial-bearer names the calling they will
-              carry. Choose with your heart — it shapes the road ahead.
-            </div>
-          </div>
-
-          {/* Role cards */}
-          <div style={{
-            display: "flex", gap: 9, marginTop: 20, zIndex: 2,
-            width: "100%", maxWidth: 360, justifyContent: "center",
-          }}>
-            {ROLES.map(r => {
-              const active = roleId === r.id;
-              return (
-                <button
-                  key={r.id}
-                  onClick={() => setRoleId(r.id)}
-                  style={{
-                    flex: 1, maxWidth: 112,
-                    display: "flex", flexDirection: "column", alignItems: "center",
-                    padding: "14px 8px 13px", gap: 6, cursor: "pointer",
-                    background: active ? "rgba(240,200,60,0.13)" : "rgba(255,255,255,0.02)",
-                    border: active ? "1.5px solid rgba(240,200,60,0.62)" : "1px solid rgba(240,200,60,0.15)",
-                    borderRadius: 12,
-                    boxShadow: active ? "0 0 22px rgba(240,200,60,0.14)" : "none",
-                    transition: "all 0.18s",
-                  }}
-                >
-                  <div style={{
-                    fontSize: 26, lineHeight: 1,
-                    color: active ? "#f0d060" : "#7a6334",
-                    textShadow: active ? "0 0 16px rgba(240,200,60,0.45)" : "none",
-                  }}>{r.glyph}</div>
-                  <div style={{
-                    color: active ? "#f0d060" : "#9a8048",
-                    fontSize: 12, fontWeight: 800, letterSpacing: 1,
-                  }}>{r.name}</div>
-                  <div style={{
-                    color: active ? "#caa75a" : "#6a5630",
-                    fontSize: 8.5, fontWeight: 700, letterSpacing: 0.5,
-                    textAlign: "center",
-                  }}>{r.buffLabel}</div>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Selected role detail */}
-          <div style={{
-            marginTop: 18, zIndex: 2, width: "100%", maxWidth: 340,
-            background: "rgba(8,5,2,0.86)",
-            border: "1px solid rgba(240,200,80,0.18)",
-            borderRadius: 12, padding: "13px 15px",
-            boxShadow: "inset 0 1px 0 rgba(240,200,80,0.06)",
-          }}>
-            <div style={{
-              color: "#f0d060", fontSize: 13, fontWeight: 800,
-              letterSpacing: 1, marginBottom: 6,
-            }}>
-              {roleDef(roleId).glyph}  {roleDef(roleId).title}
-            </div>
-            <p style={{
-              color: "#cdbf9c", fontSize: 11, lineHeight: 1.65,
-              margin: "0 0 9px", fontStyle: "italic", fontWeight: 300,
-            }}>
-              {roleDef(roleId).calling}
-            </p>
-            <div style={{
-              display: "flex", alignItems: "center", gap: 8,
-              borderTop: "1px solid rgba(240,200,80,0.12)", paddingTop: 9,
-            }}>
-              <div style={{
-                color: "#7fd06a", fontSize: 8, fontWeight: 800,
-                letterSpacing: 1, textTransform: "uppercase",
-                border: "1px solid rgba(120,200,90,0.35)",
-                borderRadius: 5, padding: "3px 6px", flexShrink: 0,
-              }}>Boon</div>
-              <div style={{ color: "#bfe0a0", fontSize: 10, lineHeight: 1.5 }}>
-                {roleDef(roleId).buffDetail}
-              </div>
-            </div>
-          </div>
-
-          {/* Bottom actions */}
-          <div style={{
-            marginTop: "auto", marginBottom: 26, zIndex: 2,
-            display: "flex", flexDirection: "column", alignItems: "center", gap: 12,
-          }}>
-            <button
-              onClick={beginJourney}
-              style={{
-                width: 200, padding: "12px 0",
-                background: "rgba(240,200,60,0.14)",
-                border: "1.5px solid rgba(240,200,60,0.55)",
-                borderRadius: 10, color: "#f0d060",
-                fontSize: 12, fontWeight: 900, letterSpacing: 2.5,
-                textTransform: "uppercase", cursor: "pointer",
-                boxShadow: "0 0 24px rgba(240,200,60,0.1)",
-                transition: "background 0.2s",
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = "rgba(240,200,60,0.24)"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "rgba(240,200,60,0.14)"; }}
-            >Take the Oath</button>
-            <button
-              onClick={() => { if (!fading) fadeTo("char_reveal"); }}
-              style={{
-                background: "none", border: "none",
-                color: "#6a5630", fontSize: 9, letterSpacing: 1.5,
-                cursor: "pointer", textTransform: "uppercase",
-              }}
-            >◂ Back</button>
           </div>
         </div>
       )}

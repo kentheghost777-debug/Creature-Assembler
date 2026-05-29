@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { BattleScene, RARITY_COLOR, type MonSpec, type MonRarity, type BattleResult, type StarterStats } from "./BattleScene";
 import { SHELLS, ELEMENT_COLOR } from "./progression";
-import { type CharId, type RoleId, type PartySave, type WorldSave, readSave, updateParty, updateWorld, roleDef } from "./save";
+import { type CharId, type RoleId, type PartySave, type WorldSave, ROLES, readSave, updateParty, updateWorld, updateRole, roleDef } from "./save";
 
 // ── Level-up reward generation ────────────────────────────────────────────
 const STAT_KEYS = ["hp", "atk", "def", "spd"] as const;
@@ -52,7 +52,7 @@ const STARTERS = [
 type StarterId = typeof STARTERS[number]["id"];
 
 // ── Dialog phases ───────────────────────────────────────────────────────────
-type Phase = "walk" | "d1" | "d2" | "pick" | "d3" | "d4" | "d5"
+type Phase = "walk" | "d1" | "d2" | "pick" | "d3" | "role_pick" | "d4" | "d5"
            | "maya_d1" | "maya_d2" | "maya_d3" | "maya_d4"
            | "maya_post1" | "maya_post2" | "maya_post3"
            | "jay_d1"  | "jay_d2"  | "jay_d3"  | "jay_d4"  | "jay_d5"  | "jay_done"
@@ -61,7 +61,12 @@ type Phase = "walk" | "d1" | "d2" | "pick" | "d3" | "d4" | "d5"
            | "lia_d1"  | "lia_d2"  | "lia_d3"  | "lia_d4"  | "lia_d5"  | "lia_done"
            | "jess_path_d1" | "jess_path_d2"
            | "prof2_d1" | "prof2_d2" | "prof2_d3" | "prof2_d4"
-           | "scripted_t1" | "scripted_t2" | "scripted_throw" | "scripted_caught";
+           | "scripted_t1" | "scripted_t2" | "scripted_throw" | "scripted_caught"
+           // Ambient "always talkable" idle chats (set no flags, never gate quests)
+           | "prof_idle" | "jay_idle" | "maya_idle" | "maya_wait"
+           | "ellio_idle" | "lia_idle" | "jess_idle"
+           // Rowan — the professor's disciple who dreams of the Professor's seat
+           | "rowan_d1" | "rowan_d2" | "rowan_d3";
 type Scene = "overworld" | "lab" | "maya" | "jay" | "home" | "ellio" | "lia" | "route1" | "route2" | "battle";
 type Rect  = [number, number, number, number]; // x1 y1 x2 y2 world-px
 
@@ -516,7 +521,10 @@ const PROF = { x: 350, y: 268 }; // feet position in lab world
 const PARTY_CAP = 6;
 
 // ── Main component ──────────────────────────────────────────────────────────
-export function WalkDemo({ characterId = "kael", roleId = "keeper" }: { characterId?: CharId; roleId?: RoleId } = {}) {
+export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }: { characterId?: CharId; roleId?: RoleId } = {}) {
+  // The declared path is now chosen in the lab when you receive your starter, so
+  // roleId is live state (the prop is only the initial/resumed value).
+  const [roleId, setRoleId] = useState<RoleId>(roleIdProp);
   const role = roleDef(roleId);
   // Hydrate persisted party + world once on mount (Continue resumes; New Game cleared both).
   const savedSnap  = useRef(readSave()).current;
@@ -555,12 +563,15 @@ export function WalkDemo({ characterId = "kael", roleId = "keeper" }: { characte
   const [fading,      setFading]      = useState(false);
   const [held,        setHeld]        = useState<string | null>(null);
   const [nearProf,         setNearProf]         = useState(false);
+  const [nearRowan,        setNearRowan]        = useState(false);
+  const [rowanInteractPos, setRowanInteractPos] = useState({ sx: 0, sy: 0 });
   const [nearMaya,         setNearMaya]         = useState(false);
   const [nearJay,          setNearJay]          = useState(false);
   const [nearShell,        setNearShell]        = useState(false);
   const [shellsCollected,  setShellsCollected]  = useState(() => savedWorld?.shellsCollected ?? false);
   const [pickupNotif,      setPickupNotif]      = useState(false);
   const [selected,         setSelected]         = useState<StarterId | null>(null);
+  const [roleSel,          setRoleSel]          = useState<RoleId | null>(null);
   const [starter,          setStarter]          = useState<typeof STARTERS[number] | null>(
     () => STARTERS.find(s => s.id === savedParty?.starterId) ?? null
   );
@@ -602,6 +613,9 @@ export function WalkDemo({ characterId = "kael", roleId = "keeper" }: { characte
   const [profR2InteractPos,    setProfR2InteractPos]    = useState({ sx: 0, sy: 0 });
   const [hasObsidianRealmShell, setHasObsidianRealmShell] = useState(() => savedWorld?.hasObsidianRealmShell ?? false);
   const [wyvruntCaught,        setWyvruntCaught]        = useState(() => savedWorld?.wyvruntCaught ?? false);
+  // Role is declared in the lab at starter time. Older saves (pre-change) that
+  // already hold a starter are treated as having declared, so their badge shows.
+  const [roleChosen,           setRoleChosen]           = useState(() => savedWorld?.roleChosen ?? (savedParty?.starterId != null));
   const [nearWyvrunt,          setNearWyvrunt]          = useState(false);
   const [eastGateNotif,        setEastGateNotif]        = useState(false);
   const [lockedDoorNotif,      setLockedDoorNotif]      = useState<string | null>(null);
@@ -656,7 +670,7 @@ export function WalkDemo({ characterId = "kael", roleId = "keeper" }: { characte
     hasResonanceStone, resonanceStoneEquipped, hasHearthberries, hasSatchel,
     jessDone, jayDone, mayaInitDone, mayaDone, ellioDone, liaDone,
     route1Visited, wifeOnPath, wifeIntercepted, route2Greeted, profRoute2Done,
-    hasObsidianRealmShell, wyvruntCaught, checksStreak,
+    hasObsidianRealmShell, wyvruntCaught, roleChosen, checksStreak,
   });
   const persistWorld = useCallback(() => {
     const safe = lastSafeRef.current;
@@ -675,7 +689,7 @@ export function WalkDemo({ characterId = "kael", roleId = "keeper" }: { characte
       hasResonanceStone, resonanceStoneEquipped, hasHearthberries, hasSatchel,
       jessDone, jayDone, mayaInitDone, mayaDone, ellioDone, liaDone,
       route1Visited, wifeOnPath, wifeIntercepted, route2Greeted, profRoute2Done,
-      hasObsidianRealmShell, wyvruntCaught, checksStreak,
+      hasObsidianRealmShell, wyvruntCaught, roleChosen, checksStreak,
     };
     persistWorld();
   }, [
@@ -683,7 +697,7 @@ export function WalkDemo({ characterId = "kael", roleId = "keeper" }: { characte
     hasResonanceStone, resonanceStoneEquipped, hasHearthberries, hasSatchel,
     jessDone, jayDone, mayaInitDone, mayaDone, ellioDone, liaDone,
     route1Visited, wifeOnPath, wifeIntercepted, route2Greeted, profRoute2Done,
-    hasObsidianRealmShell, wyvruntCaught, checksStreak, persistWorld,
+    hasObsidianRealmShell, wyvruntCaught, roleChosen, checksStreak, persistWorld,
   ]);
   // On resume with Wyvrunt already caught, seed the follower beside the player
   // so it doesn't visibly fly in from the map origin on the first frame.
@@ -693,6 +707,14 @@ export function WalkDemo({ characterId = "kael", roleId = "keeper" }: { characte
       followAnimRef.current = "idle_down";
     }
   }, [savedWorld]);
+
+  // Resume-safe role guard: if a save already holds a starter but the path was
+  // never declared (e.g. reloaded mid-lab, between picking the starter and
+  // confirming the role), force the role picker so declaration stays reachable.
+  useEffect(() => {
+    if (savedParty?.starterId != null && !roleChosen) setPhase("role_pick");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Final flush when leaving the page so the last few steps are never lost.
   useEffect(() => {
@@ -1293,6 +1315,16 @@ export function WalkDemo({ characterId = "kael", roleId = "keeper" }: { characte
           const screenY = (py - cam.current.y - topOff - 28) * ZOOM;
           setNearProf(near);
           if (near) setInteractPos({ sx: screenX, sy: screenY });
+          // Near-Rowan check (lab disciple; only when you aren't playing Rowan)
+          if (rowanInLab) {
+            const dr = dist(px, py, PROF.x + 78, PROF.y + 6);
+            const nearR = dr < 110;
+            setNearRowan(nearR);
+            if (nearR) setRowanInteractPos({
+              sx: (px - cam.current.x) * ZOOM,
+              sy: (py - cam.current.y - topOff - 28) * ZOOM,
+            });
+          }
         }
         // Near-Maya check (overworld only)
         if (sc === "overworld") {
@@ -1401,6 +1433,11 @@ export function WalkDemo({ characterId = "kael", roleId = "keeper" }: { characte
       prof2_d1: "prof2_d2", prof2_d2: "prof2_d3", prof2_d3: "prof2_d4", prof2_d4: "walk",
       scripted_t1: "scripted_t2", scripted_t2: "scripted_throw",
       scripted_throw: "scripted_caught", scripted_caught: "walk",
+      // Ambient idle chats just close (no flags touched).
+      prof_idle: "walk", jay_idle: "walk", maya_idle: "walk", maya_wait: "walk",
+      ellio_idle: "walk", lia_idle: "walk", jess_idle: "walk",
+      // Rowan's three-line dream-of-becoming-professor chat.
+      rowan_d1: "rowan_d2", rowan_d2: "rowan_d3", rowan_d3: "walk",
     };
     const next = map[from];
     if (next) setPhase(next);
@@ -1489,6 +1526,20 @@ export function WalkDemo({ characterId = "kael", roleId = "keeper" }: { characte
     scripted_t2: "Its eyes soften — curiosity replacing caution. The yin-yang sigils on its scales flicker brighter. PROF: \"Now. The shell. It is ready.\"",
     scripted_throw: "You raise the Obsidianeye Realm Shell. Wyvrunt tilts its head — and waits.",
     scripted_caught: "The shell hums, drinks the light, and seals shut. Wyvrunt ☯ chose you. PROF: \"...Incredible. It bonded on the first try.\"",
+    // The lab role-pick uses a custom modal, not this dialog strip.
+    role_pick: "",
+    // ── Ambient idle chats (always available; set no flags) ──────────────────
+    prof_idle: "Still here? Good — a Keeper who lingers in a lab is a Keeper who asks questions, and questions are how the work gets done. Mind your partner's health out there, and come tell me everything you find. Every bond teaches me something new.",
+    jay_idle: "Don't get comfortable. I'm already plotting my route and I am NOT losing to you. ...But hey — watch your back out there. Can't beat you if some wild Tayanari gets you first.",
+    maya_wait: "Did you find them yet? My father's Weathered Realm Shells — they're inside, on the table by the window. Go on in and take them. He'd want them in a real Keeper's hands.",
+    maya_idle: "Out chasing bonds already? Good. My father always said a shell left in a drawer is just a pretty stone — it only means something once it's out in the world with you. Make him proud.",
+    ellio_idle: "Back so soon? The roads always pull you home for a minute, then push you right back out. When you've got stories worth trading, you know where to find me — I'll have stock worth your while.",
+    lia_idle: "You again. Draco remembers you, for what that's worth — he hasn't tried to singe you yet, so consider that high praise. Berries are in the basket if you run dry. Now stop loitering and go be impressive.",
+    jess_idle: "There's my heart. Don't mind me — I just like seeing your face before you wander off again. Eat the bread I packed, stay warm, and come home in one piece. That's all I ask.",
+    // ── Rowan — the professor's disciple, dreaming of the Professor's seat ────
+    rowan_d1: "Oh — hey! You're the one starting your Trial today. I'm Rowan, the Professor's disciple. I sweep these floors, log the specimens, and read every journal he leaves lying around. Twice.",
+    rowan_d2: "Everyone wants to be a Keeper. Not me. I want to be a Professor. I want the lab, the field notes, the whole maddening science of how Tayanari bond and why. Someday this seat is going to be mine.",
+    rowan_d3: "So do me a favor out there — see things. Strange things. The Tayanari nobody can explain. Then come back and tell me everything. One day I'll be the one handing a kid their first partner, and I want to be ready.",
   };
 
   // ── Encounter handlers & disturbance tick ──────────────────────────────────
@@ -2129,9 +2180,9 @@ export function WalkDemo({ characterId = "kael", roleId = "keeper" }: { characte
         </div>
 
         {/* ── INTERACT BUTTON — Prof ────────────────────────────────────── */}
-        {scene === "lab" && nearProf && phase === "walk" && !starter && (
+        {scene === "lab" && nearProf && phase === "walk" && (
           <button
-            onClick={() => setPhase("d1")}
+            onClick={() => setPhase(!starter ? "d1" : (!roleChosen ? "role_pick" : "prof_idle"))}
             style={{
               position:"absolute",
               left: interactPos.sx - 14,
@@ -2143,13 +2194,31 @@ export function WalkDemo({ characterId = "kael", roleId = "keeper" }: { characte
               cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite",
               zIndex:10,
             }}
-          >!</button>
+          >{(!starter || !roleChosen) ? "!" : "…"}</button>
+        )}
+
+        {/* ── INTERACT BUTTON — Rowan (lab disciple; always a chat) ──────── */}
+        {scene === "lab" && rowanInLab && nearRowan && phase === "walk" && (
+          <button
+            onClick={() => setPhase("rowan_d1")}
+            style={{
+              position:"absolute",
+              left: rowanInteractPos.sx - 14,
+              top:  rowanInteractPos.sy - 10,
+              width:28, height:28, borderRadius:"50%",
+              background:"#b8a0e0", border:"2px solid #fff",
+              color:"#1a1030", fontSize:16, fontWeight:900,
+              display:"flex", alignItems:"center", justifyContent:"center",
+              cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite",
+              zIndex:10,
+            }}
+          >…</button>
         )}
 
         {/* ── INTERACT BUTTON — Jay ─────────────────────────────────────── */}
-        {scene === "jay" && nearJay && phase === "walk" && !jayDone && (
+        {scene === "jay" && nearJay && phase === "walk" && (
           <button
-            onClick={() => setPhase(hasHealingRune ? "jay_done" : "jay_d1")}
+            onClick={() => setPhase(jayDone ? "jay_idle" : (hasHealingRune ? "jay_done" : "jay_d1"))}
             style={{
               position:"absolute",
               left: jayInteractPos.sx - 14,
@@ -2161,35 +2230,43 @@ export function WalkDemo({ characterId = "kael", roleId = "keeper" }: { characte
               cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite",
               zIndex:10,
             }}
-          >!</button>
+          >{jayDone ? "…" : "!"}</button>
         )}
 
         {/* ── INTERACT BUTTON — Maya ────────────────────────────────────── */}
-        {/* Green = first quest; amber = second quest (shells collected); hidden when both done */}
-        {scene === "overworld" && nearMaya && phase === "walk"
-          && !mayaDone && (shellsCollected || !mayaInitDone) && (
-          <button
-            onClick={() => setPhase(shellsCollected ? "maya_post1" : "maya_d1")}
-            style={{
-              position:"absolute",
-              left: mayaInteractPos.sx - 14,
-              top:  mayaInteractPos.sy - 10,
-              width:28, height:28, borderRadius:"50%",
-              background: shellsCollected ? "#f0c060" : "#80d0a0",
-              border:"2px solid #fff",
-              color: shellsCollected ? "#3a2000" : "#0a2018",
-              fontSize:16, fontWeight:900,
-              display:"flex", alignItems:"center", justifyContent:"center",
-              cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite",
-              zIndex:10,
-            }}
-          >!</button>
-        )}
+        {/* Green = first quest; amber = ready to hand over (shells collected);
+            grey "…" = waiting for you to fetch shells, or post-quest idle chat. */}
+        {scene === "overworld" && nearMaya && phase === "walk" && (() => {
+          const active = !mayaDone && (shellsCollected || !mayaInitDone);
+          const target = mayaDone
+            ? "maya_idle"
+            : active
+              ? (shellsCollected ? "maya_post1" : "maya_d1")
+              : "maya_wait"; // mayaInitDone but shells not yet collected
+          return (
+            <button
+              onClick={() => setPhase(target)}
+              style={{
+                position:"absolute",
+                left: mayaInteractPos.sx - 14,
+                top:  mayaInteractPos.sy - 10,
+                width:28, height:28, borderRadius:"50%",
+                background: active ? (shellsCollected ? "#f0c060" : "#80d0a0") : "#b8b0a0",
+                border:"2px solid #fff",
+                color: active ? (shellsCollected ? "#3a2000" : "#0a2018") : "#201a10",
+                fontSize:16, fontWeight:900,
+                display:"flex", alignItems:"center", justifyContent:"center",
+                cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite",
+                zIndex:10,
+              }}
+            >{active ? "!" : "…"}</button>
+          );
+        })()}
 
         {/* ── INTERACT BUTTON — Ellio ───────────────────────────────────── */}
-        {scene === "ellio" && nearEllio && phase === "walk" && !ellioDone && (
+        {scene === "ellio" && nearEllio && phase === "walk" && (
           <button
-            onClick={() => setPhase(hasResonanceStone ? "ellio_done" : "ellio_d1")}
+            onClick={() => setPhase(ellioDone ? "ellio_idle" : (hasResonanceStone ? "ellio_done" : "ellio_d1"))}
             style={{
               position:"absolute",
               left: ellioInteractPos.sx - 14,
@@ -2200,13 +2277,13 @@ export function WalkDemo({ characterId = "kael", roleId = "keeper" }: { characte
               cursor:"pointer", zIndex:10,
               display:"flex", alignItems:"center", justifyContent:"center",
               animation:"bounce 0.7s ease-in-out infinite",
-            }}>!</button>
+            }}>{ellioDone ? "…" : "!"}</button>
         )}
 
         {/* ── INTERACT BUTTON — Lia ─────────────────────────────────────── */}
-        {scene === "lia" && nearLia && phase === "walk" && !liaDone && (
+        {scene === "lia" && nearLia && phase === "walk" && (
           <button
-            onClick={() => setPhase(hasHearthberries ? "lia_done" : "lia_d1")}
+            onClick={() => setPhase(liaDone ? "lia_idle" : (hasHearthberries ? "lia_done" : "lia_d1"))}
             style={{
               position:"absolute",
               left: liaInteractPos.sx - 14,
@@ -2217,13 +2294,13 @@ export function WalkDemo({ characterId = "kael", roleId = "keeper" }: { characte
               display:"flex", alignItems:"center", justifyContent:"center",
               cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite",
               zIndex:10,
-            }}>!</button>
+            }}>{liaDone ? "…" : "!"}</button>
         )}
 
         {/* ── INTERACT BUTTON — Jess ────────────────────────────────────── */}
-        {scene === "home" && nearJess && phase === "walk" && !jessDone && (
+        {scene === "home" && nearJess && phase === "walk" && (
           <button
-            onClick={() => setPhase("jess_d1")}
+            onClick={() => setPhase(jessDone ? "jess_idle" : "jess_d1")}
             style={{
               position:"absolute",
               left: jessInteractPos.sx - 14,
@@ -2235,7 +2312,7 @@ export function WalkDemo({ characterId = "kael", roleId = "keeper" }: { characte
               cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite",
               zIndex:10,
             }}
-          >!</button>
+          >{jessDone ? "…" : "!"}</button>
         )}
 
         {/* ── INTERACT BUTTON — Shell pickup ────────────────────────────── */}
@@ -2402,7 +2479,12 @@ export function WalkDemo({ characterId = "kael", roleId = "keeper" }: { characte
             </p>
             <div style={{ display:"flex", justifyContent:"flex-end" }}>
               <button
-                onClick={() => advanceDialog(phase)}
+                onClick={() => {
+                  // After "wonderful choice", the Professor asks you to declare
+                  // your path — open the role picker instead of going to d4.
+                  if (phase === "d3") setPhase("role_pick");
+                  else advanceDialog(phase);
+                }}
                 style={{
                   background:"rgba(240,208,50,0.15)",
                   border:"1px solid rgba(240,208,50,0.5)",
@@ -2869,6 +2951,52 @@ export function WalkDemo({ characterId = "kael", roleId = "keeper" }: { characte
           </div>
         )}
 
+        {/* ── AMBIENT CHAT BOX (idle NPC lines + Rowan's dream) ─────────── */}
+        {(phase === "prof_idle" || phase === "jay_idle" || phase === "maya_idle"
+          || phase === "maya_wait" || phase === "ellio_idle" || phase === "lia_idle"
+          || phase === "jess_idle" || phase === "rowan_d1" || phase === "rowan_d2"
+          || phase === "rowan_d3") && (() => {
+          const speaker =
+            phase === "prof_idle" ? { name: "PROF. IRWYN", color: "#f0d060" } :
+            phase === "jay_idle" ? { name: "JAY", color: "#6090e0" } :
+            (phase === "maya_idle" || phase === "maya_wait") ? { name: "MAYA", color: "#80d0a0" } :
+            phase === "ellio_idle" ? { name: "ELLIO", color: "#a8e878" } :
+            phase === "lia_idle" ? { name: "LIA", color: "#ff7a44" } :
+            phase === "jess_idle" ? { name: "JESS", color: "#f0a050" } :
+            { name: "ROWAN", color: "#b8a0e0" };
+          const more = phase === "rowan_d1" || phase === "rowan_d2";
+          return (
+            <div style={{
+              position:"absolute", bottom:0, left:0, right:0,
+              background:"linear-gradient(to top,rgba(4,8,18,0.97),rgba(6,10,24,0.93))",
+              borderTop:`2px solid ${speaker.color}80`,
+              padding:"10px 14px 14px",
+              zIndex:20,
+            }}>
+              <div style={{ marginBottom:8 }}>
+                <span style={{ color:speaker.color, fontWeight:700, fontSize:13, letterSpacing:1 }}>
+                  {speaker.name}
+                </span>
+              </div>
+              <p style={{ color:"#e8dcc8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>
+                {LINES[phase]}
+              </p>
+              <div style={{ display:"flex", justifyContent:"flex-end" }}>
+                <button
+                  onClick={() => advanceDialog(phase)}
+                  style={{
+                    background:`${speaker.color}26`,
+                    border:`1px solid ${speaker.color}80`,
+                    color:speaker.color, padding:"6px 20px",
+                    borderRadius:8, fontSize:13, fontWeight:700,
+                    cursor:"pointer",
+                  }}
+                >{more ? "Next ▶" : "OK"}</button>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* ── STARTER PICKER ───────────────────────────────────────────── */}
         {phase === "pick" && (
           <div style={{
@@ -2942,6 +3070,91 @@ export function WalkDemo({ characterId = "kael", roleId = "keeper" }: { characte
                   transition:"background 0.2s",
                 }}
               >CHOOSE PARTNER</button>
+            </div>
+          </div>
+        )}
+
+        {/* ── ROLE PICKER (declared in the lab, after the starter) ──────── */}
+        {phase === "role_pick" && (
+          <div style={{
+            position:"absolute", inset:0,
+            background:"rgba(5,3,1,0.96)",
+            display:"flex", flexDirection:"column",
+            zIndex:30, overflowY:"auto",
+          }}>
+            {/* Header */}
+            <div style={{
+              padding:"14px 16px 8px",
+              borderBottom:"1px solid rgba(240,208,80,0.25)",
+              flexShrink:0,
+            }}>
+              <div style={{ color:"#f0d060", fontWeight:800, fontSize:14, letterSpacing:1.5, textTransform:"uppercase" }}>
+                Declare Your Path
+              </div>
+              <div style={{ color:"#a09070", fontSize:11, marginTop:2 }}>
+                Prof. Irwyn: "Every Keeper walks their own road. Which is yours?"
+              </div>
+            </div>
+
+            {/* Role cards */}
+            <div style={{
+              display:"flex", flexDirection:"column",
+              gap:10, padding:12, flex:1,
+            }}>
+              {ROLES.map(r => {
+                const isSel = roleSel === r.id;
+                return (
+                  <button
+                    key={r.id}
+                    onClick={() => setRoleSel(r.id)}
+                    style={{
+                      background: isSel ? "rgba(240,208,80,0.16)" : "rgba(20,14,6,0.9)",
+                      border: `2px solid ${isSel ? "#f0d060" : "rgba(255,255,255,0.1)"}`,
+                      borderRadius:12,
+                      padding:"12px 14px",
+                      display:"flex", alignItems:"flex-start", gap:12,
+                      cursor:"pointer", textAlign:"left",
+                      transition:"border-color 0.15s, background 0.15s",
+                    }}
+                  >
+                    <span style={{ color:"#f0d060", fontSize:26, lineHeight:1, flexShrink:0 }}>{r.glyph}</span>
+                    <span style={{ display:"flex", flexDirection:"column", gap:3 }}>
+                      <span style={{ color:"#e8dcc8", fontWeight:800, fontSize:13, letterSpacing:0.5 }}>{r.title}</span>
+                      <span style={{ color:"#a09070", fontSize:11, lineHeight:1.4 }}>{r.calling}</span>
+                      <span style={{
+                        marginTop:2, alignSelf:"flex-start",
+                        fontSize:10, fontWeight:700, letterSpacing:0.5,
+                        color:"#7be0a0",
+                        background:"rgba(123,224,160,0.12)",
+                        padding:"2px 8px", borderRadius:20,
+                      }}>{r.buffLabel}</span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Confirm button */}
+            <div style={{ padding:"10px 16px 16px", flexShrink:0 }}>
+              <button
+                onClick={() => {
+                  if (!roleSel) return;
+                  setRoleId(roleSel);
+                  updateRole(roleSel);
+                  setRoleChosen(true);
+                  setPhase("d4");
+                }}
+                disabled={!roleSel}
+                style={{
+                  width:"100%", padding:"12px",
+                  background: roleSel ? "#c8a030" : "#2a2010",
+                  color: roleSel ? "#1a0c00" : "#604820",
+                  border:"none", borderRadius:12,
+                  fontSize:14, fontWeight:800, letterSpacing:1,
+                  cursor: roleSel ? "pointer" : "default",
+                  transition:"background 0.2s",
+                }}
+              >DECLARE PATH</button>
             </div>
           </div>
         )}
@@ -3761,7 +3974,8 @@ export function WalkDemo({ characterId = "kael", roleId = "keeper" }: { characte
           {scene === "overworld" ? "Primeria Village" : scene === "lab" ? "Prof. Irwyn's Lab" : scene === "maya" ? "Maya's Home" : scene === "jay" ? "Jay's Home" : scene === "ellio" ? "Ellio's Home" : scene === "lia" ? "Lia's Home" : scene === "route1" ? "Whisperroot Trail" : scene === "route2" ? "Route 2 — Eastern Path" : scene === "battle" ? "Battle" : "Your Home"}
         </div>
 
-        {/* Role badge — declared path + active boon */}
+        {/* Role badge — declared path + active boon (hidden until declared) */}
+        {roleChosen && (
         <div style={{
           position:"absolute", top:8, left:8,
           display:"flex", alignItems:"center", gap:6,
@@ -3775,6 +3989,7 @@ export function WalkDemo({ characterId = "kael", roleId = "keeper" }: { characte
           <span style={{ width:1, height:11, background:"rgba(240,208,96,0.22)" }} />
           <span style={{ color:"#9fd07a", fontSize:8.5, fontWeight:700, letterSpacing:0.3 }}>{role.buffLabel}</span>
         </div>
+        )}
 
         {/* Float message (flavor text on dormant hotspot click) */}
         {floatMsg && (

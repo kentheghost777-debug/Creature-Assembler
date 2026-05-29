@@ -110,6 +110,9 @@ export type WorldSave = {
   profRoute2Done: boolean;
   hasObsidianRealmShell: boolean;
   wyvruntCaught: boolean;
+  // Declared path — chosen in the lab when you receive your starter (not at
+  // character creation). Until then the role badge stays hidden.
+  roleChosen: boolean;
   // Encounter pacing
   checksStreak: number;
 };
@@ -189,5 +192,17 @@ export function updateWorld(world: WorldSave): void {
     roleId: cur?.roleId ?? "keeper",
     party: cur?.party ?? null,
     world,
+  });
+}
+
+/** Persist the declared role (chosen in the lab), preserving character/party/world. */
+export function updateRole(roleId: RoleId): void {
+  const cur = readSave();
+  writeSave({
+    ts: Date.now(),
+    characterId: cur?.characterId ?? "kael",
+    roleId,
+    party: cur?.party ?? null,
+    world: cur?.world ?? null,
   });
 }

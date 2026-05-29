@@ -23,7 +23,7 @@ _Replace the heading above with the project's name, and this line with one sente
 ## Where things live
 
 - Game "Primeria" (monster-tamer RPG): `artifacts/mockup-sandbox/src/components/mockups/walk-demo/`
-  - `GameLauncher.tsx` — title/menu/intro/character+oath flow → mounts the game
+  - `GameLauncher.tsx` — title/menu/intro/character-reveal flow → mounts the game (role/path is now declared in-game at the lab, not here)
   - `WalkDemo.tsx` — overworld engine (scenes, movement, doors, NPCs, quests, inventory UI)
   - `BattleScene.tsx` — turn-based battle + capture + XP
   - `progression.ts` — XP curve, moves, SHELLS/RUNES item data, element colors
