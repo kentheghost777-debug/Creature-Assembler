@@ -125,6 +125,9 @@ export type WorldSave = {
   roleChosen: boolean;
   // Encounter pacing
   checksStreak: number;
+  // Cleminus / demo end
+  cleminusMet: boolean;   // Jerbs has appeared and introduced himself
+  demoComplete: boolean;  // player received Trial Cards + saw demo end screen
 };
 
 export type SaveData = {

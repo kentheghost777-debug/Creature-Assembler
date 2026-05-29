@@ -196,7 +196,12 @@ type Phase = "walk" | "d1" | "d2" | "pick" | "d3" | "role_pick" | "d4" | "d5"
            | "jay_a3_win" | "jay_a3_lose" | "jay_a3_idle"
            // Area 3 — Lia trainer battle (4-tier progressive, repeatable)
            | "lia_a3_d1" | "lia_a3_d2" | "lia_a3_d3" | "lia_a3_battle"
-           | "lia_a3_win" | "lia_a3_lose" | "lia_a3_idle";
+           | "lia_a3_win" | "lia_a3_lose" | "lia_a3_idle"
+           // Cleminus "Jerbs" — the demo-ending mystery NPC in Area 3 far west
+           | "jerbs_appear" | "jerbs_d1" | "jerbs_d2" | "jerbs_d3"
+           | "jerbs_cards" | "jerbs_d4" | "jerbs_remind"
+           | "jerbs_return_d1" | "jerbs_return_d2" | "jerbs_a3_idle"
+           | "demo_end";
 type Scene = "overworld" | "lab" | "maya" | "jay" | "home" | "ellio" | "lia" | "route1" | "route2" | "area3" | "battle";
 type Rect  = [number, number, number, number]; // x1 y1 x2 y2 world-px
 
@@ -697,6 +702,15 @@ const A3 = { w: 1024, h: 768 };
 const A3_SPAWN      = { x: 920, y: 380 };        // spawn near east entry
 const OW_AREA3_EXIT: Rect = [0,  398,  22, 447]; // left edge of OW — gap at Jay's SW corner (y=400-440 between building bottom and south fence)
 const A3_RETURN_OW:  Rect = [960, 310, 1024, 450]; // east edge of Area 3
+// Cleminus "Jerbs" — west ruin corridor, opposite side from town entry
+// At y=380, x=235 is inside the doorway gap (y=340-430) between the two left ruin wall pieces.
+const JERBS_POS = { x: 235, y: 380 };
+// Jerbeen sprite sheet: 1024×1536, 5 cols × 3 rows, each frame ~205×512
+const JERBS_SW = 1024; const JERBS_SH = 1536;
+const JERBS_FW = Math.floor(JERBS_SW / 5); const JERBS_FH = Math.floor(JERBS_SH / 3);
+// Portal sprite sheet: 1536×1024, 5 cols × 2 rows, each frame ~307×512
+const PORTAL_SW = 1536; const PORTAL_SH = 1024;
+const PORTAL_FW = Math.floor(PORTAL_SW / 5); const PORTAL_FH = Math.floor(PORTAL_SH / 2);
 const A3_BLOCKED: Rect[] = [
   // ── OUTER BORDER STRIPS ───────────────────────────────────────────────────
   [0,    0,  1024,   55],  // top tree strip
@@ -967,6 +981,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const [jayA3InteractPos,     setJayA3InteractPos]     = useState({ sx: 0, sy: 0 });
   const [nearLiaA3,            setNearLiaA3]            = useState(false);
   const [liaA3InteractPos,     setLiaA3InteractPos]     = useState({ sx: 0, sy: 0 });
+  const [cleminusMet,          setCleminusMet]          = useState(() => savedWorld?.cleminusMet ?? false);
+  const [demoComplete,         setDemoComplete]         = useState(() => savedWorld?.demoComplete ?? false);
+  const [nearJerbs,            setNearJerbs]            = useState(false);
+  const [jerbsInteractPos,     setJerbsInteractPos]     = useState({ sx: 0, sy: 0 });
+  const [portalFrame,          setPortalFrame]          = useState(0);
+  const [portalOpen,           setPortalOpen]           = useState(false);
+  const [showCardIndex,        setShowCardIndex]        = useState(0); // 0=keeper, 1=elder
   // Role is declared in the lab at starter time. Older saves (pre-change) that
   // already hold a starter are treated as having declared, so their badge shows.
   const [roleChosen,           setRoleChosen]           = useState(() => savedWorld?.roleChosen ?? (savedParty?.starterId != null));
@@ -1062,6 +1083,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     route1Visited, wifeOnPath, wifeIntercepted, route2Greeted, profRoute2Done,
     hasObsidianRealmShell, wyvruntCaught, wyvruntForm, wyrLoyalty,
     jayA3Wins, liaA3Wins, roleChosen, checksStreak,
+    cleminusMet, demoComplete,
   });
   const persistWorld = useCallback(() => {
     const safe = lastSafeRef.current;
@@ -1082,6 +1104,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       route1Visited, wifeOnPath, wifeIntercepted, route2Greeted, profRoute2Done,
       hasObsidianRealmShell, wyvruntCaught, wyvruntForm, wyrLoyalty,
       jayA3Wins, liaA3Wins, roleChosen, checksStreak,
+      cleminusMet, demoComplete,
     };
     persistWorld();
   }, [
@@ -1090,7 +1113,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     jessDone, jayDone, mayaInitDone, mayaDone, ellioDone, liaDone,
     route1Visited, wifeOnPath, wifeIntercepted, route2Greeted, profRoute2Done,
     hasObsidianRealmShell, wyvruntCaught, wyvruntForm, wyrLoyalty,
-    jayA3Wins, liaA3Wins, roleChosen, checksStreak, persistWorld,
+    jayA3Wins, liaA3Wins, roleChosen, checksStreak,
+    cleminusMet, demoComplete, persistWorld,
   ]);
   // On resume with Wyvrunt already caught, seed the follower beside the player
   // so it doesn't visibly fly in from the map origin on the first frame.
@@ -1186,6 +1210,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const jessPathPortraitRef= useRef<HTMLCanvasElement>(null);
   const jayA3CanvasRef     = useRef<HTMLCanvasElement>(null);
   const liaA3CanvasRef     = useRef<HTMLCanvasElement>(null);
+  const jerbsCanvasRef     = useRef<HTMLCanvasElement>(null);
   // Refs synced from arc state so the game-loop closure stays fresh
   const wifeOnPathRef       = useRef(false);
   const wifeInterceptedRef  = useRef(false);
@@ -1238,7 +1263,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       ellio:     ["./images/ellio_front_idle.png"],
       home:      ["./images/jess_front_idle.png", "./images/kael_front_idle.png"],
       lia:       ["./images/lia_front_idle.png", "./images/cindrax.png"],
-      area3:     ["./images/jay_front_idle.png", "./images/lia_front_idle.png"],
+      area3:     ["./images/jay_front_idle.png", "./images/lia_front_idle.png",
+                  "./images/jerbs_sprite.png", "./images/jerbs_portal.png"],
     };
     (sceneNPCs[scene] ?? []).forEach(loadImg);
   }, [scene]);
@@ -1251,6 +1277,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   useEffect(() => { wyvruntCaughtRef.current   = wyvruntCaught; },   [wyvruntCaught]);
   useEffect(() => { route1VisitedRef.current   = route1Visited; },   [route1Visited]);
   useEffect(() => { starterRefArc.current      = !!starter; },       [starter]);
+  const cleminusMetRef = useRef(cleminusMet);
+  useEffect(() => { cleminusMetRef.current = cleminusMet; }, [cleminusMet]);
   useEffect(() => {
     allTownItemsRef.current = shellsCollected && hasHealingRune && hasResonanceStone && hasHearthberries && hasSatchel;
   }, [shellsCollected, hasHealingRune, hasResonanceStone, hasHearthberries, hasSatchel]);
@@ -1498,6 +1526,36 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     tryDraw();
   }, [scene]);
 
+  // Draw Jerbs (Cleminus) in Area 3 — row 1 (front-facing), col 2 of the jerbeen sheet
+  useEffect(() => {
+    if (scene !== "area3") return;
+    const src = "./images/jerbs_sprite.png";
+    const tryDraw = () => {
+      const c = jerbsCanvasRef.current;
+      if (!c) return;
+      const img = imgCache[src];
+      if (!img?.complete || img.naturalWidth === 0) { setTimeout(tryDraw, 150); return; }
+      const fw = Math.floor(img.naturalWidth / 5);
+      const fh = Math.floor(img.naturalHeight / 3);
+      c.width = 56; c.height = 112;
+      const ctx = c.getContext("2d")!;
+      ctx.clearRect(0, 0, 56, 112);
+      // col 2, row 1 = clearest front-standing pose
+      ctx.drawImage(img, fw * 2, fh * 1, fw, fh, 0, 0, 56, 112);
+    };
+    loadImg(src);
+    tryDraw();
+  }, [scene]);
+
+  // Portal frame animation — cycles while portalOpen
+  useEffect(() => {
+    if (!portalOpen) { setPortalFrame(0); return; }
+    const iv = window.setInterval(() => {
+      setPortalFrame(f => (f + 1) % 10);
+    }, 120);
+    return () => clearInterval(iv);
+  }, [portalOpen]);
+
   // Draw wife portrait for jess_path_ dialogue phases
   useEffect(() => {
     if (!phase.startsWith("jess_path_")) return;
@@ -1683,6 +1741,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           }
         } else if (sc === "area3" && inRect(worldPos.current.x, worldPos.current.y, A3_RETURN_OW)) {
           transitionTo("overworld", 170, 423);  // Jay's SW courtyard — walk east back into town
+        } else if (sc === "area3" && worldPos.current.x < 215 && phaseRef.current === "walk") {
+          // Far-west ruin corridor — Jerbs appears the first time here
+          worldPos.current.x = 215;
+          if (!cleminusMetRef.current) {
+            setPortalOpen(true);
+            setPhase("jerbs_appear");
+          }
         }
 
         // Keep the resume point current, and throttle position saves while walking.
@@ -1840,16 +1905,21 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           setNearLia(near);
           if (near) setLiaInteractPos({ sx: screenX, sy: screenY });
         }
-        // Near-Jay/Lia check (Area 3 — trainer battles)
+        // Near-Jay/Lia/Jerbs check (Area 3 — trainer battles + demo NPC)
         if (sc === "area3") {
-          const djay = dist(px, py, JAY_A3_POS.x, JAY_A3_POS.y);
-          const dlia = dist(px, py, LIA_A3_POS.x, LIA_A3_POS.y);
+          const djay  = dist(px, py, JAY_A3_POS.x, JAY_A3_POS.y);
+          const dlia  = dist(px, py, LIA_A3_POS.x, LIA_A3_POS.y);
+          const djerbs = dist(px, py, JERBS_POS.x, JERBS_POS.y);
           const screenX = (px - cam.current.x) * ZOOM;
           const screenY = (py - cam.current.y - topOff - 28) * ZOOM;
           setNearJayA3(djay < 120);
           if (djay < 120) setJayA3InteractPos({ sx: screenX, sy: screenY });
           setNearLiaA3(dlia < 120);
           if (dlia < 120) setLiaA3InteractPos({ sx: screenX, sy: screenY });
+          // Jerbs is approachable only after his portal intro
+          const jerbs_near = cleminusMetRef.current && djerbs < 110;
+          setNearJerbs(jerbs_near);
+          if (jerbs_near) setJerbsInteractPos({ sx: screenX, sy: screenY });
         }
         // Near-wife on south town path (overworld, while she's there)
         if (sc === "overworld" && wifeOnPathRef.current) {
@@ -1912,6 +1982,17 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       jay_a3_win: "walk", jay_a3_lose: "walk", jay_a3_idle: "walk",
       lia_a3_d1: "lia_a3_d2", lia_a3_d2: "lia_a3_d3", lia_a3_d3: "lia_a3_battle",
       lia_a3_win: "walk", lia_a3_lose: "walk", lia_a3_idle: "walk",
+      // Cleminus "Jerbs"
+      jerbs_appear: "jerbs_d1",
+      jerbs_d1: "jerbs_d2", jerbs_d2: "jerbs_d3",
+      jerbs_d3: "jerbs_remind",    // default — JSX overrides to jerbs_cards when beatBoth
+      jerbs_cards: "jerbs_d4",
+      jerbs_d4: "demo_end",
+      jerbs_remind: "walk",
+      jerbs_return_d1: "jerbs_return_d2",
+      jerbs_return_d2: "jerbs_cards",
+      jerbs_a3_idle: "walk",
+      demo_end: "walk",
     };
     const next = map[from];
     if (next) setPhase(next);
@@ -2041,6 +2122,18 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     lia_a3_win: "That was a real fight. Draco doesn't give that look to just anyone — the one that says he's already looking forward to next time. I haven't felt that in a while. You pushed us somewhere we needed to go. Come back when you're ready. We'll be here.",
     lia_a3_lose: "That's the gap — not in heart, in the read. You're doing the right things wrong. Come back and we'll find out if you've fixed it. Draco and I aren't going soft while we wait.",
     lia_a3_idle: "Draco started sleeping outside — won't come in even when it rains. I've stopped asking him to. He's telling me something about this place that I don't have words for yet. How's your team handling it?",
+    // ── Cleminus "Jerbs" — clandestine jerbeen, far-west ruin corridor ─────
+    jerbs_appear: "W H O A. That was — that was SOMETHING. The third corridor is always the strangest. Note to self: do not take the third corridor. ...Oh. OH. There's someone here.",
+    jerbs_d1: "A Keeper. An ACTUAL Keeper — I can feel the resonance from here. It's like a bell someone rang right in the middle of my chest. Come here — come HERE — don't just stand there at the edge looking alarmed!",
+    jerbs_d2: "Cleminus. Jerbeen. Traveler, by habit. Elder, by — well. We'll get there. Most call me Jerbs. I have crossed fourteen realms, two collapsed timelines, and a mountain range that does not appear on any map I have ever read. I followed a resonance trail here. I do not normally tumble directly in front of strangers. Usually I land somewhere quieter.",
+    jerbs_d3: "I have been looking for you. Specifically you. The trail led to these ruins and it does not lie. But — I'm reading the local resonance here — there are two Keepers nearby whose battles haven't resolved yet. Jay and Lia. Have you faced them both?",
+    jerbs_cards: "",
+    jerbs_d4: "Good. Then it is time. These are your credentials. The Keeper Trial Card — official, licensed, signed by me, which means it's signed by someone who knows what they're signing. And this one: the Elder Trial Card. You're not ready for what it means yet. But you will be. More is coming, Keeper. So. Much. More.",
+    jerbs_remind: "Then go find them. Both of them — Jay is west of the main corridor, Lia further east. Battle them properly. They are worth your full attention. When you have, come back to this exact spot. I'll be right here. I am very, very good at waiting. I have been alive for... quite a long while.",
+    jerbs_return_d1: "There you are! I told you I'd wait. Very productively — I've been cataloguing the ruin acoustics. Did you know this stone hums at two frequencies simultaneously? Anyway — you found Jay and Lia. I felt the moment those battles concluded. The resonance settled, like a chord finally resolving. Are you ready?",
+    jerbs_return_d2: "Good. Then it is time. Here — your Keeper Trial Card and your Elder Trial Card. More is coming, Keeper. More than you can currently imagine. Keep walking.",
+    jerbs_a3_idle: "The ruins talk, if you listen long enough. I've been listening for a very long time. Some days I think they're almost ready to say something new.",
+    demo_end: "",
   };
 
   // ── Encounter handlers & disturbance tick ──────────────────────────────────
@@ -2778,6 +2871,33 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                 letterSpacing:1, pointerEvents:"none",
                 textShadow:"0 0 4px #000,0 0 8px #000",
               }}>LIA</div>
+              {/* Jerbs — portal animation + jerbeen sprite */}
+              {portalOpen && (
+                <div style={{
+                  position:"absolute", pointerEvents:"none", zIndex:4,
+                  left: JERBS_POS.x - 72, top: JERBS_POS.y - 200,
+                  width:140, height:230,
+                  backgroundImage:"url(./images/jerbs_portal.png)",
+                  backgroundSize:"700px 460px",
+                  backgroundPosition:`${-(portalFrame % 5) * 140}px ${-Math.floor(portalFrame / 5) * 230}px`,
+                  backgroundRepeat:"no-repeat",
+                }}/>
+              )}
+              {(cleminusMet || portalOpen) && (
+                <canvas ref={jerbsCanvasRef} style={{
+                  position:"absolute", imageRendering:"auto", pointerEvents:"none", zIndex:5,
+                  left: JERBS_POS.x - 28, top: JERBS_POS.y - 112,
+                }}/>
+              )}
+              {cleminusMet && (
+                <div style={{
+                  position:"absolute", zIndex:6,
+                  left: JERBS_POS.x - 14, top: JERBS_POS.y - 130,
+                  color:"#e8b840", fontSize:8, fontWeight:800,
+                  letterSpacing:1, pointerEvents:"none",
+                  textShadow:"0 0 4px #000,0 0 8px #000",
+                }}>JERBS</div>
+              )}
             </>
           )}
 
@@ -3097,6 +3217,28 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               zIndex:10,
             }}
           >{liaA3Wins > 0 ? "↺" : "!"}</button>
+        )}
+
+        {/* ── INTERACT BUTTON — Jerbs (Area 3 demo NPC) ───────────────── */}
+        {scene === "area3" && nearJerbs && phase === "walk" && (
+          <button
+            onClick={() => {
+              const beatBoth = jayA3Wins > 0 && liaA3Wins > 0;
+              if (demoComplete) setPhase("jerbs_a3_idle");
+              else if (beatBoth) setPhase("jerbs_return_d1");
+              else setPhase("jerbs_remind");
+            }}
+            style={{
+              position:"absolute",
+              left: jerbsInteractPos.sx - 14, top: jerbsInteractPos.sy - 10,
+              width:28, height:28, borderRadius:"50%",
+              background:"#c8a030", border:"2px solid #fff",
+              color:"#1a0c00", fontSize:16, fontWeight:900,
+              display:"flex", alignItems:"center", justifyContent:"center",
+              cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite",
+              zIndex:10,
+            }}
+          >{demoComplete ? "…" : (jayA3Wins > 0 && liaA3Wins > 0) ? "!" : "?"}</button>
         )}
 
         {/* ── INTERACT BUTTON — Jess ────────────────────────────────────── */}
@@ -3902,11 +4044,177 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           </div>
         )}
 
+        {/* ── JERBS DIALOG BOX ──────────────────────────────────────────── */}
+        {(phase === "jerbs_appear" || phase === "jerbs_d1" || phase === "jerbs_d2"
+          || phase === "jerbs_d3" || phase === "jerbs_d4"
+          || phase === "jerbs_remind" || phase === "jerbs_return_d1" || phase === "jerbs_return_d2") && (
+          <div style={{
+            position:"absolute", bottom:0, left:0, right:0,
+            background:"linear-gradient(to top,rgba(8,5,2,0.97),rgba(18,11,3,0.93))",
+            borderTop:"2px solid rgba(190,140,40,0.6)",
+            padding:"10px 14px 14px",
+            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out",
+          }}>
+            <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+              {/* Jerbs portrait — jerbeen sprite sheet clip, row 1 col 2 */}
+              <div style={{
+                width:36, height:60, borderRadius:6, overflow:"hidden", flexShrink:0,
+                border:"1px solid rgba(190,140,40,0.4)",
+                backgroundImage:"url(./images/jerbs_sprite.png)",
+                backgroundSize:`${36 * 5}px auto`,
+                backgroundPosition:`${-36 * 2}px ${-Math.round(36 * JERBS_FH / JERBS_FW)}px`,
+                backgroundRepeat:"no-repeat",
+              }}/>
+              <div>
+                <span style={{ color:"#e8b840", fontWeight:700, fontSize:13, letterSpacing:1 }}>JERBS</span>
+                <div style={{ color:"#7a6020", fontSize:9, fontWeight:600, letterSpacing:0.8 }}>
+                  Clandestine Jerbeen · Traveler
+                </div>
+              </div>
+            </div>
+            <p style={{ color:"#e8dcc8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>
+              {LINES[phase]}
+            </p>
+            <div style={{ display:"flex", justifyContent:"flex-end" }}>
+              {phase === "jerbs_appear" ? (
+                <button
+                  onClick={() => { setPortalOpen(false); setCleminusMet(true); setPhase("jerbs_d1"); }}
+                  style={{ background:"rgba(190,140,40,0.15)", border:"1px solid rgba(190,140,40,0.5)",
+                    color:"#e8b840", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}
+                >Next ▶</button>
+              ) : phase === "jerbs_remind" ? (
+                <button
+                  onClick={() => { setCleminusMet(true); setPhase("walk"); }}
+                  style={{ background:"rgba(190,140,40,0.15)", border:"1px solid rgba(190,140,40,0.5)",
+                    color:"#e8b840", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}
+                >OK</button>
+              ) : (phase === "jerbs_d3" || phase === "jerbs_return_d2") ? (
+                <button
+                  onClick={() => {
+                    if (jayA3Wins > 0 && liaA3Wins > 0) {
+                      setShowCardIndex(0);
+                      setPhase("jerbs_cards");
+                    } else {
+                      setCleminusMet(true);
+                      setPhase("jerbs_remind");
+                    }
+                  }}
+                  style={{ background:"rgba(190,140,40,0.15)", border:"1px solid rgba(190,140,40,0.5)",
+                    color:"#e8b840", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}
+                >Next ▶</button>
+              ) : (
+                <button onClick={() => advanceDialog(phase)}
+                  style={{ background:"rgba(190,140,40,0.15)", border:"1px solid rgba(190,140,40,0.5)",
+                    color:"#e8b840", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}
+                >Next ▶</button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── JERBS TRIAL CARDS OVERLAY ─────────────────────────────────── */}
+        {phase === "jerbs_cards" && (
+          <div style={{
+            position:"absolute", inset:0,
+            background:"rgba(4,2,0,0.94)",
+            display:"flex", flexDirection:"column", alignItems:"center",
+            justifyContent:"center", zIndex:30, gap:10, overflow:"hidden",
+          }}>
+            <div style={{ color:"#e8b840", fontSize:12, fontWeight:700, letterSpacing:2, marginBottom:2, textAlign:"center" }}>
+              JERBS: "Here. Your credentials. Official. Signed."
+            </div>
+            <div style={{
+              display:"flex", gap:14, alignItems:"flex-start", justifyContent:"center",
+              maxWidth:"100%", padding:"0 8px",
+            }}>
+              {/* Keeper Trial Card with player sprite */}
+              <div style={{ position:"relative", width:180, flexShrink:0 }}>
+                <img src="./images/keeper_trial_card.png"
+                  style={{ width:180, display:"block", borderRadius:4 }} alt="Keeper Trial Card"/>
+                {/* Player sprite in photo slot */}
+                <img
+                  src={`./images/${CHAR_IMG_KEY[characterId]}_front_idle.png`}
+                  style={{
+                    position:"absolute",
+                    left: Math.round(88 * 180 / 1024),
+                    top:  Math.round(233 * 180 / 1024),
+                    width: Math.round(283 * 180 / 1024),
+                    height: Math.round(320 * 180 / 1024),
+                    objectFit:"cover", objectPosition:"center top",
+                    mixBlendMode:"multiply",
+                  }}
+                  alt=""
+                />
+              </div>
+              {/* Elder Trial Card */}
+              <div style={{ position:"relative", width:180, flexShrink:0 }}>
+                <img src="./images/elder_trial_card.png"
+                  style={{ width:180, display:"block", borderRadius:4 }} alt="Elder Trial Card"/>
+              </div>
+            </div>
+            <button
+              onClick={() => setPhase("jerbs_d4")}
+              style={{
+                marginTop:8,
+                background:"linear-gradient(135deg,rgba(190,140,40,0.22),rgba(120,90,20,0.22))",
+                border:"2px solid rgba(190,140,40,0.7)",
+                color:"#e8b840", padding:"10px 28px",
+                borderRadius:12, fontSize:13, fontWeight:800,
+                cursor:"pointer", letterSpacing:1,
+              }}
+            >Accept Trial Licenses ✦</button>
+          </div>
+        )}
+
+        {/* ── DEMO COMPLETE SCREEN ──────────────────────────────────────── */}
+        {phase === "demo_end" && (
+          <div style={{
+            position:"absolute", inset:0,
+            background:"#000",
+            display:"flex", flexDirection:"column", alignItems:"center",
+            justifyContent:"flex-start", zIndex:40, overflowY:"auto",
+          }}>
+            <img
+              src="./images/demo_complete.png"
+              style={{ width:"100%", maxWidth:480, display:"block" }}
+              alt="Demo Complete"
+            />
+            <div style={{
+              display:"flex", flexDirection:"column", alignItems:"center", gap:10,
+              padding:"16px 16px 32px", width:"100%",
+            }}>
+              <button
+                onClick={() => { setDemoComplete(true); setPhase("jerbs_a3_idle"); }}
+                style={{
+                  background:"linear-gradient(135deg,rgba(80,120,220,0.22),rgba(60,90,180,0.22))",
+                  border:"2px solid rgba(100,140,240,0.65)",
+                  color:"#a0c0f8", padding:"10px 28px",
+                  borderRadius:12, fontSize:13, fontWeight:800,
+                  cursor:"pointer", letterSpacing:1, width:"100%", maxWidth:320,
+                }}
+              >Continue Exploring ▶</button>
+              <button
+                onClick={() => {
+                  setDemoComplete(true);
+                  // Show thank-you screen momentarily then walk
+                  setPhase("walk");
+                }}
+                style={{
+                  background:"transparent", border:"1px solid rgba(255,255,255,0.18)",
+                  color:"rgba(255,255,255,0.45)", padding:"8px 20px",
+                  borderRadius:10, fontSize:11, cursor:"pointer",
+                }}
+              >Thank You for Playing ♡</button>
+            </div>
+          </div>
+        )}
+
         {/* ── AMBIENT CHAT BOX (idle NPC lines + Rowan's dream) ─────────── */}
         {(phase === "prof_idle" || phase === "jay_idle" || phase === "maya_idle"
           || phase === "maya_wait" || phase === "ellio_idle" || phase === "lia_idle"
           || phase === "jess_idle" || phase === "rowan_d1" || phase === "rowan_d2"
-          || phase === "rowan_d3" || phase === "jay_a3_idle" || phase === "lia_a3_idle") && (() => {
+          || phase === "rowan_d3" || phase === "jay_a3_idle" || phase === "lia_a3_idle"
+          || phase === "jerbs_a3_idle") && (() => {
           const speaker =
             phase === "prof_idle" ? { name: "PROF. IRWYN", color: "#f0d060" } :
             (phase === "jay_idle" || phase === "jay_a3_idle") ? { name: "JAY", color: "#6090e0" } :
@@ -3914,6 +4222,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             phase === "ellio_idle" ? { name: "ELLIO", color: "#a8e878" } :
             (phase === "lia_idle" || phase === "lia_a3_idle") ? { name: "LIA", color: "#ff7a44" } :
             phase === "jess_idle" ? { name: "JESS", color: "#f0a050" } :
+            phase === "jerbs_a3_idle" ? { name: "JERBS", color: "#e8b840" } :
             { name: "ROWAN", color: "#b8a0e0" };
           const more = phase === "rowan_d1" || phase === "rowan_d2";
           return (

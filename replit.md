@@ -41,7 +41,12 @@ A monster-tamer RPG (Pokémon-style) built entirely in the browser — explore a
   - `progression.ts` — XP curve, SHELLS/RUNES item data, element colors
   - `moves.ts` — combat data + pure math: `MOVES` catalog (per-element damage tiers + utility heal/sharpen/bulwark), validated `STRONG_AGAINST` type chart, `effectiveness`, `computeDamage` (STAB/eff/crit/defense soak, ±15% variance), learnsets (`learnedMoveIds`/`movesLearnedAt`/`defaultActiveMoves`/`sanitizeActiveMoves`), wild stat/level helpers
   - `battleFx.tsx` — `<MoveFx>` per-element/utility battle animations + `MOVE_FX_KEYFRAMES` (mobile-light: transform/opacity, ≤10 particles)
-  - `save.ts` — localStorage save (key `primeria_v2`): `PartySave` + `WorldSave`. WorldSave includes: `wyvruntForm`, `wyrLoyalty`, `jayA3Wins`, `liaA3Wins`. `PartySave.moves` stores active move IDs (max 4); migrated by `sanitizeActiveMoves` on load.
+  - `save.ts` — localStorage save (key `primeria_v2`): `PartySave` + `WorldSave`. WorldSave includes: `wyvruntForm`, `wyrLoyalty`, `jayA3Wins`, `liaA3Wins`, `cleminusMet`, `demoComplete`. `PartySave.moves` stores active move IDs (max 4); migrated by `sanitizeActiveMoves` on load.
+    - **Cleminus "Jerbs"** — demo-end mystery NPC. Jerbeen elder who appears via portal at the far-west ruin corridor (JERBS_POS={x:235,y:380}, trigger x<215 in area3). Phases: `jerbs_appear → jerbs_d1/d2/d3 → jerbs_cards (overlay) → jerbs_d4 → demo_end`. Branch at jerbs_d3: if jayA3Wins>0 && liaA3Wins>0 → cards; else → jerbs_remind. `cleminusMet` persists his NPC in world; `demoComplete` marks playthrough finished.
+    - **Trial Cards overlay** (phase `jerbs_cards`) — fullscreen black overlay showing Keeper Trial Card + Elder Trial Card side by side. Player front-idle sprite composited into photo slot of Keeper card (slot at ≈x:88,y:233,w:283,h:320 on 1024px card → scaled to 180px display width). Accept Licenses → `jerbs_d4`.
+    - **Demo Complete screen** (phase `demo_end`) — fullscreen overlay with `demo_complete.png`. "Continue Exploring" → `setDemoComplete(true)`, returns to world as `jerbs_a3_idle`. "Thank You" → walk.
+    - **Portal animation** — `jerbs_portal.png` (1536×1024, 5 cols×2 rows, 10 frames at 120ms/frame). CSS background-position step: size 700×460px, position -(frame%5)×140 / -floor(frame/5)×230. Loops via `setInterval` while `portalOpen`.
+    - **Jerbs sprite** — `jerbs_sprite.png` (1024×1536, 5 cols×3 rows). Canvas draws col 2, row 1 (front-standing). Dialog portrait: CSS background-size 180px auto, backgroundPosition -72px / -90px.
   - `STANDALONE_BUILD.md` — exact steps to package a downloadable web/APK/desktop build
 - Game images: `artifacts/mockup-sandbox/public/images/` (referenced as `/__mockup/images/...`)
 - Play it at preview path `/preview/walk-demo/GameLauncher`
@@ -56,6 +61,8 @@ A monster-tamer RPG (Pokémon-style) built entirely in the browser — explore a
 - **Trainer battles** — trainerEncounter state `{ trainer:"jay"|"lia", name, team, levels }` is set in the "Battle!" dialog button handler; scene transitions to "battle"; the trainer-battle render block checks `scene==="battle" && trainerEncounter` (checked before wild battle block). `handleTrainerEnd` caps jayA3Wins/liaA3Wins at 3 (tier ceiling).
 - **Wyvrunt loyalty** — wyrLoyalty: 0–100. Gains: +3 trainer win / +3 wild ko-win / +2 catch / +5 quest (manual). Form 0→1 at lv16, 1→2 at lv30, 2→3 at loyalty≥80. checkWyvForms() reads wyvruntForm from closure (stale-safe since it's in the same render as the battle callbacks).
 - **Evo level gates** — EVO_TABLE uses `atLevel:16` for tier-1 evolutions (previously 14). checkStarterEvo checks `[16, 30]`.
+- **Jerbs trigger** — fires when `worldPos.x < 215` in area3 while phase==="walk" and `!cleminusMetRef.current`. Locks player at x=215, sets `portalOpen=true`, phase→`jerbs_appear`. After the intro dialogue Next click: `portalOpen=false`, `cleminusMet=true`, chain continues. On return (cleminusMet=true), nearJerbs check (dist<110) shows interact button: "?" if !beatBoth, "!" if beatBoth && !demoComplete, "…" if demoComplete.
+- **Jerbs ambient** — `jerbs_a3_idle` handled by the ambient chat box (speaker `{name:"JERBS", color:"#e8b840"}`). `showCardIndex` state available for future card-by-card reveal (currently unused; both cards shown simultaneously).
 
 ## Product
 
