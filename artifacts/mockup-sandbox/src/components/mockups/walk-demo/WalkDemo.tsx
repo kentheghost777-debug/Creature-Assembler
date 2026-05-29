@@ -65,6 +65,8 @@ type Phase = "walk" | "d1" | "d2" | "pick" | "d3" | "role_pick" | "d4" | "d5"
            // Ambient "always talkable" idle chats (set no flags, never gate quests)
            | "prof_idle" | "jay_idle" | "maya_idle" | "maya_wait"
            | "ellio_idle" | "lia_idle" | "jess_idle"
+           // Prof Irwyn Realm Shell resupply (repeatable, after Route 2 / Wyvrunt quest)
+           | "prof_shells" | "prof_shells_got"
            // Rowan — the professor's disciple who dreams of the Professor's seat
            | "rowan_d1" | "rowan_d2" | "rowan_d3";
 type Scene = "overworld" | "lab" | "maya" | "jay" | "home" | "ellio" | "lia" | "route1" | "route2" | "battle";
@@ -1530,6 +1532,8 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
     role_pick: "",
     // ── Ambient idle chats (always available; set no flags) ──────────────────
     prof_idle: "Still here? Good — a Keeper who lingers in a lab is a Keeper who asks questions, and questions are how the work gets done. Mind your partner's health out there, and come tell me everything you find. Every bond teaches me something new.",
+    prof_shells: "Heading back out? The lab keeps a steady store of Realm Shells — bonding takes patience, and patience takes supplies. Take a handful, and come back whenever you run low.",
+    prof_shells_got: "There — ten fresh Realm Shells. Set them well; the wilds are patient, and so should you be. Off you go, Keeper.",
     jay_idle: "Don't get comfortable. I'm already plotting my route and I am NOT losing to you. ...But hey — watch your back out there. Can't beat you if some wild Tayanari gets you first.",
     maya_wait: "Did you find them yet? My father's Weathered Realm Shells — they're inside, on the table by the window. Go on in and take them. He'd want them in a real Keeper's hands.",
     maya_idle: "Out chasing bonds already? Good. My father always said a shell left in a drawer is just a pretty stone — it only means something once it's out in the world with you. Make him proud.",
@@ -2181,7 +2185,12 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
         {/* ── INTERACT BUTTON — Prof ────────────────────────────────────── */}
         {scene === "lab" && nearProf && phase === "walk" && (
           <button
-            onClick={() => setPhase(!starter ? "d1" : (!roleChosen ? "role_pick" : "prof_idle"))}
+            onClick={() => setPhase(
+              !starter ? "d1"
+              : !roleChosen ? "role_pick"
+              : wyvruntCaught ? "prof_shells"
+              : "prof_idle"
+            )}
             style={{
               position:"absolute",
               left: interactPos.sx - 14,
@@ -2724,6 +2733,57 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
                   cursor:"pointer",
                 }}
               >{phase === "prof2_d3" ? "Take the Shell ☯" : phase === "prof2_d4" ? "OK" : "Next ▶"}</button>
+            </div>
+          </div>
+        )}
+
+        {/* ── PROF IRWYN — Realm Shell resupply (repeatable, post-Route 2) ─── */}
+        {(phase === "prof_shells" || phase === "prof_shells_got") && (
+          <div style={{
+            position:"absolute", bottom:0, left:0, right:0,
+            background:"linear-gradient(to top,rgba(20,12,2,0.97),rgba(26,16,4,0.93))",
+            borderTop:"2px solid rgba(240,200,90,0.6)",
+            padding:"10px 14px 14px",
+            zIndex:20,
+          }}>
+            <div style={{ marginBottom:8 }}>
+              <span style={{ color:"#f0d070", fontWeight:700, fontSize:13, letterSpacing:1 }}>
+                PROF. IRWYN
+              </span>
+            </div>
+            <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>
+              {LINES[phase]}
+            </p>
+            <div style={{ display:"flex", justifyContent:"flex-end", gap:8 }}>
+              {phase === "prof_shells" && (
+                <button
+                  onClick={() => setPhase("prof_idle")}
+                  style={{
+                    background:"transparent",
+                    border:"1px solid rgba(240,200,90,0.3)",
+                    color:"#c8b888", padding:"6px 16px",
+                    borderRadius:8, fontSize:13, fontWeight:600,
+                    cursor:"pointer",
+                  }}
+                >Just talk</button>
+              )}
+              <button
+                onClick={() => {
+                  if (phase === "prof_shells") {
+                    setShellCount(c => c + 10);
+                    setPhase("prof_shells_got");
+                  } else {
+                    setPhase("walk");
+                  }
+                }}
+                style={{
+                  background:"rgba(240,200,90,0.15)",
+                  border:"1px solid rgba(240,200,90,0.5)",
+                  color:"#f0d070", padding:"6px 20px",
+                  borderRadius:8, fontSize:13, fontWeight:700,
+                  cursor:"pointer",
+                }}
+              >{phase === "prof_shells" ? "Take Shells ☯" : "OK"}</button>
             </div>
           </div>
         )}
