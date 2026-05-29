@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { BattleScene, RARITY_COLOR, type MonSpec, type MonRarity, type BattleResult, type StarterStats } from "./BattleScene";
 import { SHELLS, ELEMENT_COLOR } from "./progression";
-import { type CharId, type PartySave, readSave, updateParty } from "./save";
+import { type CharId, type RoleId, type PartySave, readSave, updateParty, roleDef } from "./save";
 
 // ── Level-up reward generation ────────────────────────────────────────────
 const STAT_KEYS = ["hp", "atk", "def", "spd"] as const;
@@ -516,7 +516,8 @@ const PROF = { x: 350, y: 268 }; // feet position in lab world
 const PARTY_CAP = 6;
 
 // ── Main component ──────────────────────────────────────────────────────────
-export function WalkDemo({ characterId = "kael" }: { characterId?: CharId } = {}) {
+export function WalkDemo({ characterId = "kael", roleId = "keeper" }: { characterId?: CharId; roleId?: RoleId } = {}) {
+  const role = roleDef(roleId);
   // Hydrate persisted party once on mount (Continue resumes; New Game cleared it).
   const savedParty = useRef<PartySave | null>(readSave()?.party ?? null).current;
 
@@ -1479,7 +1480,9 @@ export function WalkDemo({ characterId = "kael" }: { characterId?: CharId } = {}
     if (recovered > 0) setShellCount(c => c + recovered);
 
     // XP + level-up math (gentle curve: level × 10, +2 per level — not skyrocket, not grindy)
-    const xpGained = (result.kind === "caught" || result.kind === "ko") ? result.xpGained : 0;
+    // Keeper's boon: bond XP is multiplied by the declared role's xpMult.
+    const rawXp = (result.kind === "caught" || result.kind === "ko") ? result.xpGained : 0;
+    const xpGained = rawXp > 0 ? Math.round(rawXp * role.xpMult) : 0;
     let newLevel  = starterLevel;
     let newXp     = starterXp + xpGained;
     let levelUps  = 0;
@@ -1566,6 +1569,7 @@ export function WalkDemo({ characterId = "kael" }: { characterId?: CharId } = {}
           starterStats={starterStats}
           hasResonanceStone={resonanceStoneEquipped}
           healingRuneEquipped={healingRuneEquipped}
+          catchMult={role.catchMult}
           shellsCount={shellCount}
           onConsumeShell={() => setShellCount(c => Math.max(0, c - 1))}
           onConsumeRune={() => {}}
@@ -3628,6 +3632,21 @@ export function WalkDemo({ characterId = "kael" }: { characterId?: CharId } = {}
           textTransform:"uppercase", zIndex:5,
         }}>
           {scene === "overworld" ? "Primeria Village" : scene === "lab" ? "Prof. Irwyn's Lab" : scene === "maya" ? "Maya's Home" : scene === "jay" ? "Jay's Home" : scene === "ellio" ? "Ellio's Home" : scene === "lia" ? "Lia's Home" : scene === "route1" ? "Whisperroot Trail" : scene === "route2" ? "Route 2 — Eastern Path" : scene === "battle" ? "Battle" : "Your Home"}
+        </div>
+
+        {/* Role badge — declared path + active boon */}
+        <div style={{
+          position:"absolute", top:8, left:8,
+          display:"flex", alignItems:"center", gap:6,
+          background:"rgba(0,0,0,0.6)", backdropFilter:"blur(6px)",
+          padding:"4px 10px 4px 8px", borderRadius:18,
+          border:"1px solid rgba(240,208,96,0.28)", pointerEvents:"none",
+          zIndex:5,
+        }}>
+          <span style={{ color:"#f0d060", fontSize:12, lineHeight:1 }}>{role.glyph}</span>
+          <span style={{ color:"#e8d8a8", fontSize:10, fontWeight:800, letterSpacing:0.6 }}>{role.name}</span>
+          <span style={{ width:1, height:11, background:"rgba(240,208,96,0.22)" }} />
+          <span style={{ color:"#9fd07a", fontSize:8.5, fontWeight:700, letterSpacing:0.3 }}>{role.buffLabel}</span>
         </div>
 
         {/* Float message (flavor text on dormant hotspot click) */}

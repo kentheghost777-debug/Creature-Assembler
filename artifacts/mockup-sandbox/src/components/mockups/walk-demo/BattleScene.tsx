@@ -87,6 +87,8 @@ type Props = {
   starterStats: StarterStats;
   hasResonanceStone: boolean;
   healingRuneEquipped: boolean;
+  /** Role boon: capture odds multiplier (Hopeful path raises it). Defaults to 1. */
+  catchMult?: number;
   shellsCount: number;
   onConsumeShell: () => void;
   onConsumeRune: () => void;
@@ -106,7 +108,7 @@ const BTN_BG_HI = "linear-gradient(180deg, rgba(90,62,30,0.96), rgba(56,36,16,0.
 
 export function BattleScene({
   wild, starter, starterLevel, starterStats, hasResonanceStone, healingRuneEquipped,
-  shellsCount, onConsumeShell, onConsumeRune, onEnd,
+  catchMult = 1, shellsCount, onConsumeShell, onConsumeRune, onEnd,
 }: Props) {
   const playerMaxHp = starterStats.hp;
   const [playerHp, setPlayerHp]   = useState(playerMaxHp);
@@ -340,7 +342,9 @@ export function BattleScene({
     later(() => setShellFx({ phase: "wobble", id: seqId }), 600);
 
     later(() => {
-      const caught = Math.random() < outcome.pct;
+      // Hopeful's boon: capture odds scaled by catchMult, clamped to a sure thing.
+      const catchPct = Math.min(1, outcome.pct * catchMult);
+      const caught = Math.random() < catchPct;
       if (caught) {
         setShellFx({ phase: "caught", id: seqId });
         const xp = xpFor(wild, true);
