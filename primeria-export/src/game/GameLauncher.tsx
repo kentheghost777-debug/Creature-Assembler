@@ -7,19 +7,19 @@ type Screen = "studio" | "dedication" | "title" | "menu" | "intro" | "char_revea
 const CHARACTERS: { id: CharId; name: string; tag: string; sprite: string; desc: string; stats: [string, string][] }[] = [
   {
     id: "kinju", name: "Kinju", tag: "Sunlit wanderer",
-    sprite: "/__mockup/images/kael_front_idle.png",
+    sprite: "./images/kael_front_idle.png",
     desc: "Born curious. Always at the edge of the known. When the world finally called your name — there was never any doubt.",
     stats: [["ORIGIN", "Primeria Village"], ["HEART", "Wanderlust"], ["CALL", "Horizon"]],
   },
   {
     id: "jess", name: "Jess", tag: "Wildheart roamer",
-    sprite: "/__mockup/images/jess_front_idle.png",
+    sprite: "./images/jess_front_idle.png",
     desc: "Born to the living world. You speak in the language of creatures, silence, and instinct — without ever saying a word.",
     stats: [["ORIGIN", "Primeria Village"], ["HEART", "Wildborn"], ["CALL", "The Living Land"]],
   },
   {
     id: "rowan", name: "Rowan", tag: "Seasoned traveler",
-    sprite: "/__mockup/images/rowan_front_idle.png",
+    sprite: "./images/rowan_front_idle.png",
     desc: "Born to understand. Every question leads to the next. For you, the Trial is not a beginning — it is a continuation.",
     stats: [["ORIGIN", "Primeria Village"], ["HEART", "Discovery"], ["CALL", "The Unknown"]],
   },
@@ -239,7 +239,7 @@ export default function GameLauncher() {
           }}
         >
           <img
-            src="/__mockup/images/title-bg.png"
+            src="./images/title-bg.png"
             alt="Primeria"
             loading="eager"
             decoding="async"
@@ -314,7 +314,7 @@ export default function GameLauncher() {
           animation: "glFadeIn 0.6s ease forwards",
         }}>
           {/* Dim bg */}
-          <img src="/__mockup/images/title-bg.png" alt="" loading="eager" decoding="async" style={{
+          <img src="./images/title-bg.png" alt="" loading="eager" decoding="async" style={{
             position: "absolute", inset: 0, width: "100%", height: "100%",
             objectFit: "cover", objectPosition: "center 28%",
             opacity: 0.09, pointerEvents: "none",
@@ -373,7 +373,7 @@ export default function GameLauncher() {
             overflow: "hidden",
           }}>
             <img
-              src="/__mockup/images/hero-art.png"
+              src="./images/hero-art.png"
               alt="Hero"
               style={{
                 position: "absolute", bottom: 0, right: "0%",
@@ -382,7 +382,7 @@ export default function GameLauncher() {
               }}
             />
             <img
-              src="/__mockup/images/title-tayanari.png"
+              src="./images/title-tayanari.png"
               alt="Tayanari"
               style={{
                 position: "absolute", bottom: 0, left: "4%",
@@ -435,7 +435,7 @@ export default function GameLauncher() {
           }}>
             {/* Prof art */}
             <img
-              src="/__mockup/images/prof-art.png"
+              src="./images/prof-art.png"
               alt="Prof. Irwyn"
               style={{
                 height: "66%", objectFit: "contain", objectPosition: "bottom",
@@ -629,7 +629,7 @@ export default function GameLauncher() {
           }}>
             {characterId === "rowan" ? (
               <img
-                src="/__mockup/images/hero-art.png"
+                src="./images/hero-art.png"
                 alt="Your Keeper"
                 style={{
                   height: "96%", objectFit: "contain", objectPosition: "bottom center",

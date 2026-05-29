@@ -99,7 +99,7 @@ export function EvoScene({ preEvoSpec, postEvoSpec, evoBg, onComplete }: Props) 
            Full-height, horizontally centered behind everything.
            Background was removed → golden beam on transparent.          */}
       <img
-        src="/__mockup/images/evo-beam.png"
+        src="./images/evo-beam.png"
         alt=""
         style={{
           position: "absolute",

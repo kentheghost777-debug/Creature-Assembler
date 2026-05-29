@@ -47,3 +47,9 @@ id = "hj9mwcgl1Uv9QQTG9g6KL"
 uri = "file://kinju_walk_demo.tar.gz"
 type = "unspecified"
 title = "Kinju Walk Demo"
+
+[[outputs]]
+id = "dAy7ehIEfpr-nOFV9B7td"
+uri = "file://primeria-game.tar.gz"
+type = "unspecified"
+title = "Primeria — Offline Game (tar.gz)"

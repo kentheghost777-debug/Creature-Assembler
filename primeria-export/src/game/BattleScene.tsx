@@ -170,8 +170,8 @@ const BTN_BG_HI = "linear-gradient(180deg, rgba(90,62,30,0.96), rgba(56,36,16,0.
 export function BattleScene({
   wild, starter, starterLevel, starterStats, starterMoves, hasResonanceStone, healingRuneEquipped,
   catchMult = 1, shellsCount,
-  opponentKind = "wild", keeperName = "Keeper", keeperImg = "/__mockup/images/rowan_side_1.png",
-  heroImg = "/__mockup/images/walk_side_1.png",
+  opponentKind = "wild", keeperName = "Keeper", keeperImg = "./images/rowan_side_1.png",
+  heroImg = "./images/walk_side_1.png",
   keeperTeam, keeperMonLevels,
   onConsumeShell, onEnd,
 }: Props) {
@@ -704,7 +704,7 @@ export function BattleScene({
         {/* Blurred backdrop fills the letterbox bands above/below the arena */}
         <div style={{
           position:"absolute", inset:0,
-          backgroundImage:"url(/__mockup/images/forest-arena.png)",
+          backgroundImage:"url(./images/forest-arena.png)",
           backgroundSize:"cover", backgroundPosition:"center",
           filter:"blur(14px) brightness(0.45)",
           transform:"scale(1.12)",
@@ -714,7 +714,7 @@ export function BattleScene({
           position:"absolute", left:0, right:0, top:"50%",
           transform:"translateY(-50%)",
           width:"100%", aspectRatio:"1536 / 1024",
-          backgroundImage:"url(/__mockup/images/forest-arena.png)",
+          backgroundImage:"url(./images/forest-arena.png)",
           backgroundSize:"cover", backgroundPosition:"center",
         }}>
         {/* Wild HP plate (top-left) */}
@@ -1032,7 +1032,7 @@ export function BattleScene({
                 shellFx.phase === "caught" ? "shellCaught 0.75s ease-out forwards" :
                                               "shellBreak 0.7s ease-out forwards",
             }}>
-              <img src="/__mockup/images/weathered-shell.png" alt="" style={{
+              <img src="./images/weathered-shell.png" alt="" style={{
                 width:"100%", height:"100%", objectFit:"contain",
                 filter:"drop-shadow(0 0 12px rgba(200,160,90,0.85))",
               }}/>

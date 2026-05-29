@@ -124,40 +124,40 @@ const ANCHOR    = 0.75; // fraction of sprite above anchor point
 
 // ── Tayanari starter data ───────────────────────────────────────────────────
 const STARTERS = [
-  { id: "burg",       name: "Burg",       type: "Frostformed",  color: "#7ddeff", img: "/__mockup/images/frostbite-baby.png" },
-  { id: "pebble",     name: "Pebble",     type: "Earthbound",   color: "#c8a020", img: "/__mockup/images/grrountain-baby.png" },
-  { id: "peachi",     name: "Pea-chi",    type: "Nature",       color: "#50c040", img: "/__mockup/images/leafkit.png" },
-  { id: "cerepup",    name: "Cerepup",    type: "Volcanic",     color: "#ff6020", img: "/__mockup/images/emberfox.png" },
-  { id: "cunbubble",  name: "Cun-bubble", type: "Oceanic",      color: "#3080ff", img: "/__mockup/images/phantorch.png" },
-  { id: "shockit",    name: "Shockit",    type: "Stormproven",  color: "#ffd000", img: "/__mockup/images/voltfang.png" },
-  { id: "mentyke",    name: "Mentyke",    type: "Mind",         color: "#c080ff", img: "/__mockup/images/lumacorn.png" },
-  { id: "foxin",      name: "Foxin",      type: "Spirit",       color: "#60a070", img: "/__mockup/images/vixgrim.png" },
+  { id: "burg",       name: "Burg",       type: "Frostformed",  color: "#7ddeff", img: "./images/frostbite-baby.png" },
+  { id: "pebble",     name: "Pebble",     type: "Earthbound",   color: "#c8a020", img: "./images/grrountain-baby.png" },
+  { id: "peachi",     name: "Pea-chi",    type: "Nature",       color: "#50c040", img: "./images/leafkit.png" },
+  { id: "cerepup",    name: "Cerepup",    type: "Volcanic",     color: "#ff6020", img: "./images/emberfox.png" },
+  { id: "cunbubble",  name: "Cun-bubble", type: "Oceanic",      color: "#3080ff", img: "./images/phantorch.png" },
+  { id: "shockit",    name: "Shockit",    type: "Stormproven",  color: "#ffd000", img: "./images/voltfang.png" },
+  { id: "mentyke",    name: "Mentyke",    type: "Mind",         color: "#c080ff", img: "./images/lumacorn.png" },
+  { id: "foxin",      name: "Foxin",      type: "Spirit",       color: "#60a070", img: "./images/vixgrim.png" },
 ] as const;
 type StarterId = typeof STARTERS[number]["id"];
 
 // ── Evolution ────────────────────────────────────────────────────────────────
 // TODO: Replace placeholder names + imgs with final evolved-form assets once provided.
-//       Drop each evo sprite at /__mockup/images/<name>.png and run background-removal.
-// TODO: Set EVO_BG_IMG to "/__mockup/images/evo-bg.png" once the evo background is ready.
-const EVO_BG_IMG: string | undefined = "/__mockup/images/evo-bg.png";
+//       Drop each evo sprite at ./images/<name>.png and run background-removal.
+// TODO: Set EVO_BG_IMG to "./images/evo-bg.png" once the evo background is ready.
+const EVO_BG_IMG: string | undefined = "./images/evo-bg.png";
 
 const EVO_TABLE: Array<{ from: string; atLevel: number; to: StarterSpec }> = [
-  { from:"burg",        atLevel:16, to:{ id:"burg_2",       name:"Burg·II",        type:"Frostformed",  color:"#7ddeff", img:"/__mockup/images/frostbite-baby.png"  } },
-  { from:"burg_2",      atLevel:30, to:{ id:"burg_3",       name:"Burg·III",       type:"Frostformed",  color:"#7ddeff", img:"/__mockup/images/frostbite-baby.png"  } },
-  { from:"pebble",      atLevel:16, to:{ id:"pebble_2",     name:"Pebble·II",      type:"Earthbound",   color:"#c8a020", img:"/__mockup/images/grrountain-baby.png" } },
-  { from:"pebble_2",    atLevel:30, to:{ id:"pebble_3",     name:"Pebble·III",     type:"Earthbound",   color:"#c8a020", img:"/__mockup/images/grrountain-baby.png" } },
-  { from:"peachi",      atLevel:16, to:{ id:"peachi_2",     name:"Pea-chi·II",     type:"Nature",       color:"#50c040", img:"/__mockup/images/leafkit.png"          } },
-  { from:"peachi_2",    atLevel:30, to:{ id:"peachi_3",     name:"Pea-chi·III",    type:"Nature",       color:"#50c040", img:"/__mockup/images/leafkit.png"          } },
-  { from:"cerepup",     atLevel:16, to:{ id:"cerepup_2",    name:"Cerepup·II",     type:"Volcanic",     color:"#ff6020", img:"/__mockup/images/emberfox.png"         } },
-  { from:"cerepup_2",   atLevel:30, to:{ id:"cerepup_3",    name:"Cerepup·III",    type:"Volcanic",     color:"#ff6020", img:"/__mockup/images/emberfox.png"         } },
-  { from:"cunbubble",   atLevel:16, to:{ id:"cunbubble_2",  name:"Cun-bubble·II",  type:"Oceanic",      color:"#3080ff", img:"/__mockup/images/phantorch.png"        } },
-  { from:"cunbubble_2", atLevel:30, to:{ id:"cunbubble_3",  name:"Cun-bubble·III", type:"Oceanic",      color:"#3080ff", img:"/__mockup/images/phantorch.png"        } },
-  { from:"shockit",     atLevel:16, to:{ id:"shockit_2",    name:"Shockit·II",     type:"Stormproven",  color:"#ffd000", img:"/__mockup/images/voltfang.png"         } },
-  { from:"shockit_2",   atLevel:30, to:{ id:"shockit_3",    name:"Shockit·III",    type:"Stormproven",  color:"#ffd000", img:"/__mockup/images/voltfang.png"         } },
-  { from:"mentyke",     atLevel:16, to:{ id:"mentyke_2",    name:"Mentyke·II",     type:"Mind",         color:"#c080ff", img:"/__mockup/images/lumacorn.png"         } },
-  { from:"mentyke_2",   atLevel:30, to:{ id:"mentyke_3",    name:"Mentyke·III",    type:"Mind",         color:"#c080ff", img:"/__mockup/images/lumacorn.png"         } },
-  { from:"foxin",       atLevel:16, to:{ id:"foxin_2",      name:"Foxin·II",       type:"Spirit",       color:"#60a070", img:"/__mockup/images/vixgrim.png"          } },
-  { from:"foxin_2",     atLevel:30, to:{ id:"foxin_3",      name:"Foxin·III",      type:"Spirit",       color:"#60a070", img:"/__mockup/images/vixgrim.png"          } },
+  { from:"burg",        atLevel:16, to:{ id:"burg_2",       name:"Burg·II",        type:"Frostformed",  color:"#7ddeff", img:"./images/frostbite-baby.png"  } },
+  { from:"burg_2",      atLevel:30, to:{ id:"burg_3",       name:"Burg·III",       type:"Frostformed",  color:"#7ddeff", img:"./images/frostbite-baby.png"  } },
+  { from:"pebble",      atLevel:16, to:{ id:"pebble_2",     name:"Pebble·II",      type:"Earthbound",   color:"#c8a020", img:"./images/grrountain-baby.png" } },
+  { from:"pebble_2",    atLevel:30, to:{ id:"pebble_3",     name:"Pebble·III",     type:"Earthbound",   color:"#c8a020", img:"./images/grrountain-baby.png" } },
+  { from:"peachi",      atLevel:16, to:{ id:"peachi_2",     name:"Pea-chi·II",     type:"Nature",       color:"#50c040", img:"./images/leafkit.png"          } },
+  { from:"peachi_2",    atLevel:30, to:{ id:"peachi_3",     name:"Pea-chi·III",    type:"Nature",       color:"#50c040", img:"./images/leafkit.png"          } },
+  { from:"cerepup",     atLevel:16, to:{ id:"cerepup_2",    name:"Cerepup·II",     type:"Volcanic",     color:"#ff6020", img:"./images/emberfox.png"         } },
+  { from:"cerepup_2",   atLevel:30, to:{ id:"cerepup_3",    name:"Cerepup·III",    type:"Volcanic",     color:"#ff6020", img:"./images/emberfox.png"         } },
+  { from:"cunbubble",   atLevel:16, to:{ id:"cunbubble_2",  name:"Cun-bubble·II",  type:"Oceanic",      color:"#3080ff", img:"./images/phantorch.png"        } },
+  { from:"cunbubble_2", atLevel:30, to:{ id:"cunbubble_3",  name:"Cun-bubble·III", type:"Oceanic",      color:"#3080ff", img:"./images/phantorch.png"        } },
+  { from:"shockit",     atLevel:16, to:{ id:"shockit_2",    name:"Shockit·II",     type:"Stormproven",  color:"#ffd000", img:"./images/voltfang.png"         } },
+  { from:"shockit_2",   atLevel:30, to:{ id:"shockit_3",    name:"Shockit·III",    type:"Stormproven",  color:"#ffd000", img:"./images/voltfang.png"         } },
+  { from:"mentyke",     atLevel:16, to:{ id:"mentyke_2",    name:"Mentyke·II",     type:"Mind",         color:"#c080ff", img:"./images/lumacorn.png"         } },
+  { from:"mentyke_2",   atLevel:30, to:{ id:"mentyke_3",    name:"Mentyke·III",    type:"Mind",         color:"#c080ff", img:"./images/lumacorn.png"         } },
+  { from:"foxin",       atLevel:16, to:{ id:"foxin_2",      name:"Foxin·II",       type:"Spirit",       color:"#60a070", img:"./images/vixgrim.png"          } },
+  { from:"foxin_2",     atLevel:30, to:{ id:"foxin_3",      name:"Foxin·III",      type:"Spirit",       color:"#60a070", img:"./images/vixgrim.png"          } },
 ];
 
 /** Returns the StarterSpec the starter evolves into when it reaches exactly `atLevel`. */
@@ -196,45 +196,45 @@ type Rect  = [number, number, number, number]; // x1 y1 x2 y2 world-px
 const BESTIARY: MonSpec[] = [
   // Commons (≈18% each within trail = 55% pool / 3)
   { id:"hatchick",  name:"Hatchick",  type:"Skyborne",     rarity:"common",
-    wildImg:"/__mockup/images/hatchick-wild.png",  playerImg:"/__mockup/images/hatchick-player.png",
+    wildImg:"./images/hatchick-wild.png",  playerImg:"./images/hatchick-player.png",
     wildFaces:"left", playerFaces:"left", maxHp:24, baseDmg:[3,6] },
   { id:"loth",      name:"Loth",      type:"Nature",       rarity:"common",
-    wildImg:"/__mockup/images/loth-wild.png",      playerImg:"/__mockup/images/loth-player.png",
+    wildImg:"./images/loth-wild.png",      playerImg:"./images/loth-player.png",
     wildFaces:"left", playerFaces:"left", maxHp:28, baseDmg:[3,7] },
   { id:"voltowl",   name:"Voltowl",   type:"Stormproven",  rarity:"common",
-    wildImg:"/__mockup/images/voltowl-wild.png",   playerImg:"/__mockup/images/voltowl-player.png",
+    wildImg:"./images/voltowl-wild.png",   playerImg:"./images/voltowl-player.png",
     wildFaces:"left", playerFaces:"left", maxHp:26, baseDmg:[3,7] },
   // Uncommons
   { id:"stonub",    name:"Stonub",    type:"Volcanic",     rarity:"uncommon",
-    wildImg:"/__mockup/images/stonub-wild.png",    playerImg:"/__mockup/images/stonub-player.png",
+    wildImg:"./images/stonub-wild.png",    playerImg:"./images/stonub-player.png",
     wildFaces:"left", playerFaces:"left", maxHp:34, baseDmg:[4,8] },
   { id:"potent",    name:"Potent",    type:"Alchemy",      rarity:"uncommon",
-    wildImg:"/__mockup/images/potent-wild.png",    playerImg:"/__mockup/images/potent-player.png",
+    wildImg:"./images/potent-wild.png",    playerImg:"./images/potent-player.png",
     wildFaces:"left", playerFaces:"left", maxHp:30, baseDmg:[4,8] },
   { id:"scavencrow",name:"Scavencrow",type:"Abyss",        rarity:"uncommon",
-    wildImg:"/__mockup/images/scavencrow-wild.png",playerImg:"/__mockup/images/scavencrow-player.png",
+    wildImg:"./images/scavencrow-wild.png",playerImg:"./images/scavencrow-player.png",
     wildFaces:"left", playerFaces:"left", maxHp:32, baseDmg:[4,9] },
   // Rares
   { id:"ghosti",    name:"Ghosti",    type:"Spirit",       rarity:"rare",
-    wildImg:"/__mockup/images/ghosti-wild.png",    playerImg:"/__mockup/images/ghosti-player.png",
+    wildImg:"./images/ghosti-wild.png",    playerImg:"./images/ghosti-player.png",
     wildFaces:"right", playerFaces:"right", maxHp:42, baseDmg:[5,10] },
   { id:"scalel",    name:"Scalel",    type:"Armored",      rarity:"rare",
-    wildImg:"/__mockup/images/scalel-wild.png",    playerImg:"/__mockup/images/scalel-player.png",
+    wildImg:"./images/scalel-wild.png",    playerImg:"./images/scalel-player.png",
     wildFaces:"left", playerFaces:"left", maxHp:48, baseDmg:[5,10] },
   // Ultra
   { id:"mentyke_w", name:"Mentyke",   type:"Mind",         rarity:"ultra",
-    wildImg:"/__mockup/images/mentyke-wild-a.png", playerImg:"/__mockup/images/mentyke-wild-b.png",
+    wildImg:"./images/mentyke-wild-a.png", playerImg:"./images/mentyke-wild-b.png",
     wildFaces:"left", playerFaces:"left", maxHp:58, baseDmg:[6,12] },
   // Apex
   { id:"peachi_w",  name:"Pea-chi",   type:"Nature",       rarity:"apex",
-    wildImg:"/__mockup/images/peachi-wild-a.png",  playerImg:"/__mockup/images/peachi-wild-b.png",
+    wildImg:"./images/peachi-wild-a.png",  playerImg:"./images/peachi-wild-b.png",
     wildFaces:"left", playerFaces:"left", maxHp:80, baseDmg:[8,14] },
   // Starter half — Route 1 (Volcanic/Storm — forest trail feel)
   { id:"cerepup_w", name:"Cerepup",   type:"Volcanic",    rarity:"apex",
-    wildImg:"/__mockup/images/emberfox.png",        playerImg:"/__mockup/images/emberfox.png",
+    wildImg:"./images/emberfox.png",        playerImg:"./images/emberfox.png",
     wildFaces:"left", playerFaces:"left", maxHp:82, baseDmg:[10,18] },
   { id:"shockit_wa",name:"Shockit",   type:"Stormproven", rarity:"ultra",
-    wildImg:"/__mockup/images/voltfang.png",        playerImg:"/__mockup/images/voltfang.png",
+    wildImg:"./images/voltfang.png",        playerImg:"./images/voltfang.png",
     wildFaces:"left", playerFaces:"left", maxHp:72, baseDmg:[9,16] },
 ];
 
@@ -249,8 +249,8 @@ const WYVRUNT_SPEC: MonSpec = {
   nameIcon: "☯",
   type: "Chaos",
   rarity: "apex",
-  wildImg:   "/__mockup/images/wyvrunt.png",
-  playerImg: "/__mockup/images/wyvrunt.png",
+  wildImg:   "./images/wyvrunt.png",
+  playerImg: "./images/wyvrunt.png",
   wildFaces: "left", playerFaces: "right",
   maxHp: 60,
   baseDmg: [9, 15], // +5 over other starter-tier ceilings; scripted fight ignores it anyway
@@ -258,23 +258,23 @@ const WYVRUNT_SPEC: MonSpec = {
 
 // ── Wyvrunt evolution chain forms (loyalty + level gated) ───────────────────
 // Forms 0-2 cap at lv30 (when wyvruntCaught). Form 3 (Aureyvant) has no cap.
-const WYRNAK_SPEC:    MonSpec = { ...WYVRUNT_SPEC, id:"wyrnak",    name:"Wyrnak",    nameIcon:"☯", wildImg:"/__mockup/images/wyrnak.png",    playerImg:"/__mockup/images/wyrnak.png",    maxHp:80,  baseDmg:[11,18] };
-const WYRVAST_SPEC:   MonSpec = { ...WYVRUNT_SPEC, id:"wyrvast",   name:"Wyrvast",   nameIcon:"☯", wildImg:"/__mockup/images/wyrvast.png",   playerImg:"/__mockup/images/wyrvast.png",   maxHp:100, baseDmg:[13,22] };
-const AUREYVANT_SPEC: MonSpec = { ...WYVRUNT_SPEC, id:"aureyvant", name:"Aureyvant", nameIcon:"✦", wildImg:"/__mockup/images/aureyvant.png", playerImg:"/__mockup/images/aureyvant.png", maxHp:120, baseDmg:[16,26] };
+const WYRNAK_SPEC:    MonSpec = { ...WYVRUNT_SPEC, id:"wyrnak",    name:"Wyrnak",    nameIcon:"☯", wildImg:"./images/wyrnak.png",    playerImg:"./images/wyrnak.png",    maxHp:80,  baseDmg:[11,18] };
+const WYRVAST_SPEC:   MonSpec = { ...WYVRUNT_SPEC, id:"wyrvast",   name:"Wyrvast",   nameIcon:"☯", wildImg:"./images/wyrvast.png",   playerImg:"./images/wyrvast.png",   maxHp:100, baseDmg:[13,22] };
+const AUREYVANT_SPEC: MonSpec = { ...WYVRUNT_SPEC, id:"aureyvant", name:"Aureyvant", nameIcon:"✦", wildImg:"./images/aureyvant.png", playerImg:"./images/aureyvant.png", maxHp:120, baseDmg:[16,26] };
 const WYV_FORMS: MonSpec[] = [WYVRUNT_SPEC, WYRNAK_SPEC, WYRVAST_SPEC, AUREYVANT_SPEC];
 
 // ── Area 3 trainer battle MonSpecs ───────────────────────────────────────────
 // Jay's team (Spirit-type Foxin as anchor + escalating support). We reuse
 // wild/player images already loaded for the bestiary — no new assets needed.
-const TR_FOXIN:  MonSpec = { id:"tr_foxin",  name:"Foxin",    type:"Spirit",    rarity:"uncommon", wildImg:"/__mockup/images/vixgrim.png",          playerImg:"/__mockup/images/vixgrim.png",          wildFaces:"left", playerFaces:"left", maxHp:58,  baseDmg:[6,12] };
-const TR_STONUB: MonSpec = { id:"tr_stonub", name:"Stonub",   type:"Volcanic",  rarity:"uncommon", wildImg:"/__mockup/images/stonub-wild.png",       playerImg:"/__mockup/images/stonub-player.png",    wildFaces:"left", playerFaces:"left", maxHp:66,  baseDmg:[7,13] };
-const TR_SAVEN:  MonSpec = { id:"tr_saven",  name:"Scavencrow",type:"Abyss",    rarity:"uncommon", wildImg:"/__mockup/images/scavencrow-wild.png",   playerImg:"/__mockup/images/scavencrow-player.png",wildFaces:"left", playerFaces:"left", maxHp:62,  baseDmg:[7,14] };
-const TR_MENTY:  MonSpec = { id:"tr_menty",  name:"Mentyke",  type:"Mind",      rarity:"ultra",    wildImg:"/__mockup/images/mentyke-wild-a.png",    playerImg:"/__mockup/images/mentyke-wild-b.png",   wildFaces:"left", playerFaces:"left", maxHp:80,  baseDmg:[8,16] };
+const TR_FOXIN:  MonSpec = { id:"tr_foxin",  name:"Foxin",    type:"Spirit",    rarity:"uncommon", wildImg:"./images/vixgrim.png",          playerImg:"./images/vixgrim.png",          wildFaces:"left", playerFaces:"left", maxHp:58,  baseDmg:[6,12] };
+const TR_STONUB: MonSpec = { id:"tr_stonub", name:"Stonub",   type:"Volcanic",  rarity:"uncommon", wildImg:"./images/stonub-wild.png",       playerImg:"./images/stonub-player.png",    wildFaces:"left", playerFaces:"left", maxHp:66,  baseDmg:[7,13] };
+const TR_SAVEN:  MonSpec = { id:"tr_saven",  name:"Scavencrow",type:"Abyss",    rarity:"uncommon", wildImg:"./images/scavencrow-wild.png",   playerImg:"./images/scavencrow-player.png",wildFaces:"left", playerFaces:"left", maxHp:62,  baseDmg:[7,14] };
+const TR_MENTY:  MonSpec = { id:"tr_menty",  name:"Mentyke",  type:"Mind",      rarity:"ultra",    wildImg:"./images/mentyke-wild-a.png",    playerImg:"./images/mentyke-wild-b.png",   wildFaces:"left", playerFaces:"left", maxHp:80,  baseDmg:[8,16] };
 // Lia's team (Oceanic Cunbubble as anchor + Nature/Storm support).
-const TR_CUNB:   MonSpec = { id:"tr_cunb",   name:"Cunbubble",type:"Oceanic",   rarity:"uncommon", wildImg:"/__mockup/images/phantorch.png",          playerImg:"/__mockup/images/phantorch.png",         wildFaces:"left", playerFaces:"left", maxHp:58,  baseDmg:[6,12] };
-const TR_DRIFT:  MonSpec = { id:"tr_drift",  name:"Driftpaw", type:"Skyborne",  rarity:"uncommon", wildImg:"/__mockup/images/vixgrim.png",            playerImg:"/__mockup/images/vixgrim.png",           wildFaces:"left", playerFaces:"left", maxHp:56,  baseDmg:[6,11] };
-const TR_SPRIG:  MonSpec = { id:"tr_sprig",  name:"Sprigget", type:"Nature",    rarity:"common",   wildImg:"", playerImg:"",                          wildSheet:{ url:"/__mockup/images/a3-wild-sheet.png", x:0, y:0, w:512, h:384, sheetW:1024, sheetH:1536 }, playerSheet:{ url:"/__mockup/images/a3-wild-sheet.png", x:0, y:0, w:512, h:384, sheetW:1024, sheetH:1536 }, wildFaces:"left", playerFaces:"left", maxHp:52, baseDmg:[5,10] };
-const TR_MURK:   MonSpec = { id:"tr_murk",   name:"Murkspine",type:"Abyss",    rarity:"rare",     wildImg:"", playerImg:"",                          wildSheet:{ url:"/__mockup/images/a3-new-sheet.png", x:512, y:0, w:512, h:512, sheetW:1536, sheetH:1024 }, playerSheet:{ url:"/__mockup/images/a3-new-sheet.png", x:512, y:0, w:512, h:512, sheetW:1536, sheetH:1024 }, wildFaces:"left", playerFaces:"left", maxHp:78, baseDmg:[8,15] };
+const TR_CUNB:   MonSpec = { id:"tr_cunb",   name:"Cunbubble",type:"Oceanic",   rarity:"uncommon", wildImg:"./images/phantorch.png",          playerImg:"./images/phantorch.png",         wildFaces:"left", playerFaces:"left", maxHp:58,  baseDmg:[6,12] };
+const TR_DRIFT:  MonSpec = { id:"tr_drift",  name:"Driftpaw", type:"Skyborne",  rarity:"uncommon", wildImg:"./images/vixgrim.png",            playerImg:"./images/vixgrim.png",           wildFaces:"left", playerFaces:"left", maxHp:56,  baseDmg:[6,11] };
+const TR_SPRIG:  MonSpec = { id:"tr_sprig",  name:"Sprigget", type:"Nature",    rarity:"common",   wildImg:"", playerImg:"",                          wildSheet:{ url:"./images/a3-wild-sheet.png", x:0, y:0, w:512, h:384, sheetW:1024, sheetH:1536 }, playerSheet:{ url:"./images/a3-wild-sheet.png", x:0, y:0, w:512, h:384, sheetW:1024, sheetH:1536 }, wildFaces:"left", playerFaces:"left", maxHp:52, baseDmg:[5,10] };
+const TR_MURK:   MonSpec = { id:"tr_murk",   name:"Murkspine",type:"Abyss",    rarity:"rare",     wildImg:"", playerImg:"",                          wildSheet:{ url:"./images/a3-new-sheet.png", x:512, y:0, w:512, h:512, sheetW:1536, sheetH:1024 }, playerSheet:{ url:"./images/a3-new-sheet.png", x:512, y:0, w:512, h:512, sheetW:1536, sheetH:1024 }, wildFaces:"left", playerFaces:"left", maxHp:78, baseDmg:[8,15] };
 
 type TrainerTier = { team: MonSpec[]; levels: number[] };
 function jayA3Team(wins: number): TrainerTier {
@@ -300,10 +300,10 @@ const LIA_A3_POS = { x: 670, y: 540 };
 //  a3-new-sheet.png   — 1536×1024  2 rows × 3 cols  frame 512×512
 //  a3-mid-sheet-m.png — 1122×1402  4 rows × 1 col   frame 1122×350
 //  a3-apex-sheet.png  — 1536×1024  2 rows × 2 cols  frame 768×512
-const _A3W = "/__mockup/images/a3-wild-sheet.png";
-const _A3N = "/__mockup/images/a3-new-sheet.png";
-const _A3M = "/__mockup/images/a3-mid-sheet-m.png";
-const _A3A = "/__mockup/images/a3-apex-sheet.png";
+const _A3W = "./images/a3-wild-sheet.png";
+const _A3N = "./images/a3-new-sheet.png";
+const _A3M = "./images/a3-mid-sheet-m.png";
+const _A3A = "./images/a3-apex-sheet.png";
 const wldF = (c:number,r:number): SpriteSheet =>
   ({ url:_A3W, x:c*512, y:r*384, w:512,  h:384, sheetW:1024, sheetH:1536 });
 const nwF  = (c:number,r:number): SpriteSheet =>
@@ -382,16 +382,16 @@ const BESTIARY_A3: MonSpec[] = [
     wildFaces:"left", playerFaces:"left", maxHp:95, baseDmg:[11,19] },
   // Starter half — Area 3 (Oceanic/Earthbound/Frostformed/Spirit — ruins vibes)
   { id:"cunbubble_wa",name:"Cun-bubble", type:"Oceanic",    rarity:"apex",
-    wildImg:"/__mockup/images/phantorch.png",       playerImg:"/__mockup/images/phantorch.png",
+    wildImg:"./images/phantorch.png",       playerImg:"./images/phantorch.png",
     wildFaces:"left", playerFaces:"left", maxHp:88, baseDmg:[10,18] },
   { id:"pebble_wa",   name:"Pebble",     type:"Earthbound", rarity:"apex",
-    wildImg:"/__mockup/images/grrountain-baby.png", playerImg:"/__mockup/images/grrountain-baby.png",
+    wildImg:"./images/grrountain-baby.png", playerImg:"./images/grrountain-baby.png",
     wildFaces:"left", playerFaces:"left", maxHp:92, baseDmg:[10,16] },
   { id:"burg_wa",     name:"Burg",       type:"Frostformed",rarity:"ultra",
-    wildImg:"/__mockup/images/frostbite-baby.png",  playerImg:"/__mockup/images/frostbite-baby.png",
+    wildImg:"./images/frostbite-baby.png",  playerImg:"./images/frostbite-baby.png",
     wildFaces:"left", playerFaces:"left", maxHp:78, baseDmg:[9,17] },
   { id:"foxin_wa",    name:"Foxin",      type:"Spirit",     rarity:"apex",
-    wildImg:"/__mockup/images/vixgrim.png",         playerImg:"/__mockup/images/vixgrim.png",
+    wildImg:"./images/vixgrim.png",         playerImg:"./images/vixgrim.png",
     wildFaces:"left", playerFaces:"left", maxHp:88, baseDmg:[10,18] },
 ];
 
@@ -789,7 +789,7 @@ function loadImg(src: string) {
 // has a neutral idle plus a 6-frame walk cycle, all sliced from the character's
 // sprite sheet and normalised to a shared bottom-anchored canvas.
 function dirFrames(c: string): Record<string, string[]> {
-  const p = (n: string) => `/__mockup/images/${c}_${n}.png`;
+  const p = (n: string) => `./images/${c}_${n}.png`;
   const cycle = (dir: string) => [1, 2, 3, 4, 5, 6].map(i => p(`${dir}_${i}`));
   return {
     idle:       [p("front_idle")], // shown at game start, facing forward
@@ -878,7 +878,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   // Active character's animation frame set (stable for the session).
   const charFrames = CHAR_FRAMES[characterId] ?? CHAR_FRAMES.kinju;
   // Character-specific side sprite for the battle arena (each character has a full sprite set).
-  const heroSideImg = `/__mockup/images/${CHAR_IMG_KEY[characterId]}_side_1.png`;
+  const heroSideImg = `./images/${CHAR_IMG_KEY[characterId]}_side_1.png`;
 
   // ── Role / spawn swap ──────────────────────────────────────────────────────
   // The spouse waiting at home is whichever of Kinju/Jess you are NOT playing
@@ -887,7 +887,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   // at home alongside Jess.
   const partnerId: CharId = characterId === "jess" ? "kinju" : "jess";
   const partnerName  = partnerId === "kinju" ? "Kinju" : "Jess";
-  const partnerSprite = `/__mockup/images/${CHAR_IMG_KEY[partnerId]}_front_idle.png`;
+  const partnerSprite = `./images/${CHAR_IMG_KEY[partnerId]}_front_idle.png`;
   const rowanInLab    = characterId !== "rowan";   // Rowan is the lab disciple
   const kaelAtHome    = characterId === "rowan";    // extra figure at home
 
@@ -1223,13 +1223,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   // Preload NPC sprites for the current scene on entry to prevent pop-in
   useEffect(() => {
     const sceneNPCs: Partial<Record<Scene, string[]>> = {
-      lab:       ["/__mockup/images/prof-irwyn-sprite.png", "/__mockup/images/rowan_front_idle.png"],
-      overworld: ["/__mockup/images/maya-sprite.png"],
-      jay:       ["/__mockup/images/jay_front_idle.png"],
-      ellio:     ["/__mockup/images/ellio_front_idle.png"],
-      home:      ["/__mockup/images/jess_front_idle.png", "/__mockup/images/kael_front_idle.png"],
-      lia:       ["/__mockup/images/lia_front_idle.png", "/__mockup/images/cindrax.png"],
-      area3:     ["/__mockup/images/jay_front_idle.png", "/__mockup/images/lia_front_idle.png"],
+      lab:       ["./images/prof-irwyn-sprite.png", "./images/rowan_front_idle.png"],
+      overworld: ["./images/maya-sprite.png"],
+      jay:       ["./images/jay_front_idle.png"],
+      ellio:     ["./images/ellio_front_idle.png"],
+      home:      ["./images/jess_front_idle.png", "./images/kael_front_idle.png"],
+      lia:       ["./images/lia_front_idle.png", "./images/cindrax.png"],
+      area3:     ["./images/jay_front_idle.png", "./images/lia_front_idle.png"],
     };
     (sceneNPCs[scene] ?? []).forEach(loadImg);
   }, [scene]);
@@ -1251,7 +1251,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   // Draw Prof Irwyn world sprite via canvas (proper transparency, no blend-mode)
   useEffect(() => {
     if (scene !== "lab") return;
-    const src = "/__mockup/images/prof-irwyn-sprite.png";
+    const src = "./images/prof-irwyn-sprite.png";
     const tryDraw = () => {
       const c = profCanvasRef.current;
       if (!c) return;
@@ -1263,7 +1263,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   // Draw Maya world sprite
   useEffect(() => {
     if (scene !== "overworld") return;
-    const src = "/__mockup/images/maya-sprite.png";
+    const src = "./images/maya-sprite.png";
     const tryDraw = () => {
       const c = mayaCanvasRef.current;
       if (!c) return;
@@ -1275,7 +1275,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   // Draw Jay world sprite (inside jay scene)
   useEffect(() => {
     if (scene !== "jay") return;
-    const src = "/__mockup/images/jay_front_idle.png";
+    const src = "./images/jay_front_idle.png";
     const tryDraw = () => {
       const c = jayCanvasRef.current;
       if (!c) return;
@@ -1288,7 +1288,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   useEffect(() => {
     if (phase === "walk" || phase === "pick") return;
     if (phase.startsWith("maya_")) return;
-    const src = "/__mockup/images/prof-irwyn-sprite.png";
+    const src = "./images/prof-irwyn-sprite.png";
     const tryDraw = () => {
       const c = portraitCanvasRef.current;
       if (!c) return;
@@ -1300,7 +1300,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   // Draw Maya portrait in dialog box
   useEffect(() => {
     if (!phase.startsWith("maya_")) return;
-    const src = "/__mockup/images/maya-sprite.png";
+    const src = "./images/maya-sprite.png";
     const tryDraw = () => {
       const c = mayaPortraitRef.current;
       if (!c) return;
@@ -1312,7 +1312,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   // Draw Jay portrait in dialog box
   useEffect(() => {
     if (!phase.startsWith("jay_")) return;
-    const src = "/__mockup/images/jay_front_idle.png";
+    const src = "./images/jay_front_idle.png";
     const tryDraw = () => {
       const c = jayPortraitRef.current;
       if (!c) return;
@@ -1324,7 +1324,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   // Draw Ellio world sprite inside Ellio's home
   useEffect(() => {
     if (scene !== "ellio") return;
-    const src = "/__mockup/images/ellio-sprite.png";
+    const src = "./images/ellio-sprite.png";
     const tryDraw = () => {
       const c = ellioCanvasRef.current;
       if (!c) return;
@@ -1336,7 +1336,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   // Draw Ellio portrait in dialog box
   useEffect(() => {
     if (!phase.startsWith("ellio_")) return;
-    const src = "/__mockup/images/ellio-sprite.png";
+    const src = "./images/ellio-sprite.png";
     const tryDraw = () => {
       const c = ellioPortraitRef.current;
       if (!c) return;
@@ -1375,7 +1375,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     const tryDraw = () => {
       const c = rowanLabCanvasRef.current;
       if (!c) return;
-      if (!drawSprite(c, "/__mockup/images/rowan_front_idle.png", false, 78))
+      if (!drawSprite(c, "./images/rowan_front_idle.png", false, 78))
         setTimeout(tryDraw, 150);
     };
     tryDraw();
@@ -1387,7 +1387,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     const tryDraw = () => {
       const c = kaelHomeCanvasRef.current;
       if (!c) return;
-      if (!drawSprite(c, "/__mockup/images/kael_front_idle.png", false, 82))
+      if (!drawSprite(c, "./images/kael_front_idle.png", false, 82))
         setTimeout(tryDraw, 150);
     };
     tryDraw();
@@ -1396,7 +1396,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   // Draw Lia world sprite inside Lia's home
   useEffect(() => {
     if (scene !== "lia") return;
-    const src = "/__mockup/images/lia_front_idle.png";
+    const src = "./images/lia_front_idle.png";
     const tryDraw = () => {
       const c = liaCanvasRef.current;
       if (!c) return;
@@ -1408,7 +1408,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   // Draw Lia portrait in dialog box
   useEffect(() => {
     if (!phase.startsWith("lia_")) return;
-    const src = "/__mockup/images/lia_front_idle.png";
+    const src = "./images/lia_front_idle.png";
     const tryDraw = () => {
       const c = liaPortraitRef.current;
       if (!c) return;
@@ -1420,7 +1420,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   // Draw Prof Irwyn world sprite on Route 2
   useEffect(() => {
     if (scene !== "route2") return;
-    const src = "/__mockup/images/prof-irwyn-sprite.png";
+    const src = "./images/prof-irwyn-sprite.png";
     const tryDraw = () => {
       const c = profR2CanvasRef.current;
       if (!c) return;
@@ -1432,7 +1432,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   // Draw Prof Irwyn portrait for Route 2 dialogue + scripted catch phases
   useEffect(() => {
     if (!phase.startsWith("prof2_") && !phase.startsWith("scripted_")) return;
-    const src = "/__mockup/images/prof-irwyn-sprite.png";
+    const src = "./images/prof-irwyn-sprite.png";
     const tryDraw = () => {
       const c = profR2PortraitRef.current;
       if (!c) return;
@@ -1459,7 +1459,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     const tryDraw = () => {
       const c = jayA3CanvasRef.current;
       if (!c) return;
-      if (!drawSprite(c, "/__mockup/images/jay_front_idle.png", false, 68)) setTimeout(tryDraw, 150);
+      if (!drawSprite(c, "./images/jay_front_idle.png", false, 68)) setTimeout(tryDraw, 150);
     };
     tryDraw();
   }, [scene]);
@@ -1470,7 +1470,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     const tryDraw = () => {
       const c = liaA3CanvasRef.current;
       if (!c) return;
-      if (!drawSprite(c, "/__mockup/images/lia_front_idle.png", false, 68)) setTimeout(tryDraw, 150);
+      if (!drawSprite(c, "./images/lia_front_idle.png", false, 68)) setTimeout(tryDraw, 150);
     };
     tryDraw();
   }, [scene]);
@@ -2367,20 +2367,20 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           {/* Map background */}
           <img
             key={scene}
-            src={scene === "ellio" ? "/__mockup/images/ellio-home-interior.png"
-              : scene === "lia"    ? "/__mockup/images/lia-home.png"
-              : scene === "area3"  ? "/__mockup/images/area3-bg.png"
-              : scene === "route1" ? "/__mockup/images/route1-bg.png"
-              : scene === "route2" ? "/__mockup/images/route2-map.png"
+            src={scene === "ellio" ? "./images/ellio-home-interior.png"
+              : scene === "lia"    ? "./images/lia-home.png"
+              : scene === "area3"  ? "./images/area3-bg.png"
+              : scene === "route1" ? "./images/route1-bg.png"
+              : scene === "route2" ? "./images/route2-map.png"
               : scene === "overworld"
-              ? "/__mockup/images/overworld-map.png"
+              ? "./images/overworld-map.png"
               : scene === "lab"
-              ? "/__mockup/images/prof-lab-interior.png"
+              ? "./images/prof-lab-interior.png"
               : scene === "maya"
-              ? "/__mockup/images/maya-home-interior.png"
+              ? "./images/maya-home-interior.png"
               : scene === "jay"
-              ? "/__mockup/images/jay-home-interior.png"
-              : "/__mockup/images/player-home-interior.png"}
+              ? "./images/jay-home-interior.png"
+              : "./images/player-home-interior.png"}
             alt="map"
             loading="eager"
             decoding="async"
@@ -2608,7 +2608,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               }}>LIA</div>
               {/* Draco — Lia's nicknamed Wyvburn, resting beside her */}
               <img
-                src="/__mockup/images/cindrax.png"
+                src="./images/cindrax.png"
                 alt="Draco"
                 style={{
                   position:"absolute",
@@ -2652,7 +2652,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               {profRoute2Done && !wyvruntCaught && (
                 <>
                   <img
-                    src="/__mockup/images/wyvrunt_front_idle.png"
+                    src="./images/wyvrunt_front_idle.png"
                     alt="Wyvrunt"
                     style={{
                       position:"absolute",
@@ -2744,7 +2744,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                 animation:"pulse 1.4s ease-in-out infinite",
                 pointerEvents:"none",
               }}/>
-              <img src="/__mockup/images/weathered-shell.png" alt="Shell" style={{
+              <img src="./images/weathered-shell.png" alt="Shell" style={{
                 position:"absolute",
                 left: (MAYA_SHELL[0]+MAYA_SHELL[2])/2 - 22,
                 top:  (MAYA_SHELL[1]+MAYA_SHELL[3])/2 - 22,
@@ -3134,7 +3134,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             boxShadow:"0 4px 24px rgba(80,160,240,0.25)",
             animation:"notifPop 0.4s ease-out forwards",
           }}>
-            <img src="/__mockup/images/resonance-stone.png" alt="Resonance Stone" style={{
+            <img src="./images/resonance-stone.png" alt="Resonance Stone" style={{
               width:42, height:42, objectFit:"contain", flexShrink:0,
               filter:"drop-shadow(0 0 8px rgba(80,160,240,0.7))",
             }}/>
@@ -3166,14 +3166,14 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               Items Received!
             </div>
             <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-              <img src="/__mockup/images/hearthberry.png" alt="Hearthberry"
+              <img src="./images/hearthberry.png" alt="Hearthberry"
                 style={{ width:34, height:34, objectFit:"contain", flexShrink:0 }}/>
               <div style={{ color:"#e8dcc8", fontSize:12, fontWeight:600 }}>
                 Hearthberry ×10
               </div>
             </div>
             <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-              <img src="/__mockup/images/keepers-satchel.png" alt="Keeper's Satchel"
+              <img src="./images/keepers-satchel.png" alt="Keeper's Satchel"
                 style={{ width:34, height:34, objectFit:"contain", flexShrink:0 }}/>
               <div style={{ color:"#e8dcc8", fontSize:12, fontWeight:600 }}>
                 Keeper's Satchel ×1
@@ -3194,7 +3194,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             boxShadow:"0 4px 24px rgba(80,220,180,0.25)",
             animation:"notifPop 0.4s ease-out forwards",
           }}>
-            <img src="/__mockup/images/weathered-shell.png" alt=""
+            <img src="./images/weathered-shell.png" alt=""
               style={{ width:42, height:42, objectFit:"contain" }}/>
             <div>
               <div style={{ color:"#50dcc0", fontWeight:800, fontSize:13, letterSpacing:0.5 }}>
@@ -3543,7 +3543,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               width:150, textAlign:"center", zIndex:25, pointerEvents:"none",
             }}>
               <img
-                src="/__mockup/images/wyvrunt.png"
+                src="./images/wyvrunt.png"
                 alt="Wyvrunt"
                 style={{
                   width:140, height:140, objectFit:"contain",
@@ -4257,7 +4257,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                         </div>
                         {resonanceStoneEquipped && starter ? (
                           <div style={{ display:"flex", alignItems:"center", gap:6, marginTop:5 }}>
-                            <img src="/__mockup/images/resonance-stone.png" alt="Stone"
+                            <img src="./images/resonance-stone.png" alt="Stone"
                               style={{ width:16, height:16, objectFit:"contain" }}/>
                             <div style={{ color:"#60a0e0", fontSize:10, fontWeight:700 }}>
                               Resonance Stone · {starter.type} move · 10–20 dmg
@@ -4458,7 +4458,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                       }}>
                         {/* Shell header */}
                         <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:12 }}>
-                          <img src="/__mockup/images/obsidianeye-shell.png" alt="Obsidianeye Shell" style={{
+                          <img src="./images/obsidianeye-shell.png" alt="Obsidianeye Shell" style={{
                             width:48, height:48, objectFit:"contain", flexShrink:0,
                             filter:"drop-shadow(0 0 8px rgba(120,80,180,0.45))",
                           }}/>
@@ -4550,7 +4550,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                         borderRadius:14, padding:14,
                       }}>
                         <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:12 }}>
-                          <img src="/__mockup/images/weathered-shell.png" alt="Weathered Shell" style={{
+                          <img src="./images/weathered-shell.png" alt="Weathered Shell" style={{
                             width:44, height:44, objectFit:"contain",
                             flexShrink:0, mixBlendMode:"multiply",
                           }}/>
@@ -4608,7 +4608,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                         Each shape carries a story. Each pattern, a past.
                       </div>
                       <img
-                        src="/__mockup/images/shells-chart.png"
+                        src="./images/shells-chart.png"
                         alt="Primeria Shells chart"
                         style={{
                           width:"100%", height:"auto", borderRadius:10,
@@ -4750,7 +4750,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                         padding:"10px 2px 13px",
                         borderBottom:"1px dashed rgba(100,64,20,0.28)",
                       }}>
-                        <img src="/__mockup/images/weathered-shell.png" alt="Shell" style={{
+                        <img src="./images/weathered-shell.png" alt="Shell" style={{
                           width:50, height:50, objectFit:"contain",
                           flexShrink:0, mixBlendMode:"multiply",
                         }}/>
@@ -4794,7 +4794,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                         padding:"10px 2px 13px",
                         borderBottom:"1px dashed rgba(100,64,20,0.28)",
                       }}>
-                        <img src="/__mockup/images/resonance-stone.png" alt="Resonance Stone" style={{
+                        <img src="./images/resonance-stone.png" alt="Resonance Stone" style={{
                           width:48, height:48, objectFit:"contain", flexShrink:0,
                           filter:"drop-shadow(0 0 6px rgba(80,160,240,0.5))",
                         }}/>
@@ -4861,7 +4861,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                         padding:"10px 2px 13px",
                         borderBottom:"1px dashed rgba(100,64,20,0.28)",
                       }}>
-                        <img src="/__mockup/images/hearthberry.png" alt="Hearthberry" style={{
+                        <img src="./images/hearthberry.png" alt="Hearthberry" style={{
                           width:48, height:48, objectFit:"contain", flexShrink:0,
                           filter:"drop-shadow(0 0 5px rgba(255,100,40,0.45))",
                         }}/>
@@ -4902,7 +4902,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                         padding:"10px 2px 13px",
                         borderBottom:"1px dashed rgba(100,64,20,0.28)",
                       }}>
-                        <img src="/__mockup/images/keepers-satchel.png" alt="Keeper's Satchel" style={{
+                        <img src="./images/keepers-satchel.png" alt="Keeper's Satchel" style={{
                           width:48, height:48, objectFit:"contain", flexShrink:0,
                           filter:"drop-shadow(0 0 4px rgba(160,100,40,0.4))",
                         }}/>
