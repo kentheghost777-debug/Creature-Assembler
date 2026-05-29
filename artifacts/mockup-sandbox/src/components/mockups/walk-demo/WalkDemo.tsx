@@ -1219,6 +1219,20 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     ].forEach(loadImg);
   }, [characterId]);
 
+  // Preload NPC sprites for the current scene on entry to prevent pop-in
+  useEffect(() => {
+    const sceneNPCs: Partial<Record<Scene, string[]>> = {
+      lab:       ["/__mockup/images/prof-irwyn-sprite.png", "/__mockup/images/rowan_front_idle.png"],
+      overworld: ["/__mockup/images/maya-sprite.png"],
+      jay:       ["/__mockup/images/jay_front_idle.png"],
+      ellio:     ["/__mockup/images/ellio_front_idle.png"],
+      home:      ["/__mockup/images/jess_front_idle.png", "/__mockup/images/kael_front_idle.png"],
+      lia:       ["/__mockup/images/lia_front_idle.png", "/__mockup/images/cindrax.png"],
+      area3:     ["/__mockup/images/jay_front_idle.png", "/__mockup/images/lia_front_idle.png"],
+    };
+    (sceneNPCs[scene] ?? []).forEach(loadImg);
+  }, [scene]);
+
   useEffect(() => { heldRef.current = held; },      [held]);
   useEffect(() => { wifeOnPathRef.current      = wifeOnPath; },      [wifeOnPath]);
   useEffect(() => { wifeInterceptedRef.current = wifeIntercepted; }, [wifeIntercepted]);
@@ -1717,7 +1731,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           if (near) setInteractPos({ sx: screenX, sy: screenY });
           // Near-Rowan check (lab disciple; only when you aren't playing Rowan)
           if (rowanInLab) {
-            const dr = dist(px, py, PROF.x + 78, PROF.y + 6);
+            const dr = dist(px, py, PROF.x + 130, PROF.y + 6);
             const nearR = dr < 110;
             setNearRowan(nearR);
             if (nearR) setRowanInteractPos({
@@ -2335,7 +2349,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   }
 
   return (
-    <div style={{ width:"100vw", height:"100vh", background:"#060606", display:"flex", flexDirection:"column", overflow:"hidden" }}>
+    <div style={{ width:"100vw", height:"100vh", background:"#060606", display:"flex", flexDirection:"column", overflow:"hidden", userSelect:"none", WebkitUserSelect:"none", touchAction:"none", overscrollBehavior:"none" }}>
 
       {/* ── MAP VIEWPORT ─────────────────────────────────────────────────── */}
       <div ref={vpRef} style={{ flex:1, position:"relative", overflow:"hidden" }}>
@@ -2367,6 +2381,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               ? "/__mockup/images/jay-home-interior.png"
               : "/__mockup/images/player-home-interior.png"}
             alt="map"
+            loading="eager"
+            decoding="async"
             style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit: scene === "overworld" ? "fill" : "cover" }}
           />
 
@@ -2416,13 +2432,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                   position: "absolute",
                   imageRendering: "auto",
                   pointerEvents: "none",
-                  left: PROF.x + 78 - 34,
+                  left: PROF.x + 130 - 34,
                   top:  PROF.y + 6 - 51,
                 }}
               />
               <div style={{
                 position:"absolute",
-                left: PROF.x + 78 - 14, top: PROF.y + 6 - 78,
+                left: PROF.x + 130 - 14, top: PROF.y + 6 - 78,
                 color:"#cdbce8", fontSize:8, fontWeight:800,
                 letterSpacing:1, pointerEvents:"none",
                 textShadow:"0 0 4px #000,0 0 8px #000",
@@ -3078,13 +3094,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         {runeNotif && (
           <div style={{
             position:"absolute", top:"38%", left:"50%",
-            transform:"translate(-50%,-50%)",
             background:"rgba(4,12,4,0.96)",
             border:"1.5px solid rgba(80,200,80,0.65)",
             borderRadius:14, padding:"14px 20px",
             display:"flex", alignItems:"center", gap:14,
             zIndex:60, pointerEvents:"none",
             boxShadow:"0 4px 24px rgba(80,200,80,0.25)",
+            animation:"notifPop 0.4s ease-out forwards",
           }}>
             <div style={{
               width:42, height:42, borderRadius:8, flexShrink:0,
@@ -3109,13 +3125,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         {resonanceNotif && (
           <div style={{
             position:"absolute", top:"38%", left:"50%",
-            transform:"translate(-50%,-50%)",
             background:"rgba(4,14,4,0.97)",
             border:"1.5px solid rgba(80,180,240,0.65)",
             borderRadius:14, padding:"14px 20px",
             display:"flex", alignItems:"center", gap:14,
             zIndex:60, pointerEvents:"none",
             boxShadow:"0 4px 24px rgba(80,160,240,0.25)",
+            animation:"notifPop 0.4s ease-out forwards",
           }}>
             <img src="/__mockup/images/resonance-stone.png" alt="Resonance Stone" style={{
               width:42, height:42, objectFit:"contain", flexShrink:0,
@@ -3136,7 +3152,6 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         {liaItemsNotif && (
           <div style={{
             position:"absolute", top:"38%", left:"50%",
-            transform:"translate(-50%,-50%)",
             background:"rgba(18,6,2,0.97)",
             border:"1.5px solid rgba(255,120,60,0.65)",
             borderRadius:14, padding:"14px 18px",
@@ -3144,6 +3159,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             zIndex:60, pointerEvents:"none",
             boxShadow:"0 4px 24px rgba(255,100,40,0.25)",
             minWidth:210,
+            animation:"notifPop 0.4s ease-out forwards",
           }}>
             <div style={{ color:"#ff8855", fontWeight:800, fontSize:13, letterSpacing:0.5 }}>
               Items Received!
@@ -3169,13 +3185,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         {pickupNotif && (
           <div style={{
             position:"absolute", top:"38%", left:"50%",
-            transform:"translate(-50%,-50%)",
             background:"rgba(6,18,12,0.96)",
             border:"1.5px solid rgba(80,220,180,0.65)",
             borderRadius:14, padding:"14px 20px",
             display:"flex", alignItems:"center", gap:14,
             zIndex:60, pointerEvents:"none",
             boxShadow:"0 4px 24px rgba(80,220,180,0.25)",
+            animation:"notifPop 0.4s ease-out forwards",
           }}>
             <img src="/__mockup/images/weathered-shell.png" alt=""
               style={{ width:42, height:42, objectFit:"contain" }}/>
@@ -3197,7 +3213,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             background:"linear-gradient(to top,rgba(8,5,2,0.97),rgba(12,8,3,0.93))",
             borderTop:"2px solid rgba(240,208,80,0.5)",
             padding:"10px 14px 14px",
-            zIndex:20,
+            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out",
           }}>
             {/* Prof portrait + name */}
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
@@ -3240,7 +3256,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             background:"linear-gradient(to top,rgba(4,8,18,0.97),rgba(6,10,24,0.93))",
             borderTop:"2px solid rgba(80,130,220,0.55)",
             padding:"10px 14px 14px",
-            zIndex:20,
+            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out",
           }}>
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
               <canvas ref={jayPortraitRef}
@@ -3288,7 +3304,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             background:"linear-gradient(to top,rgba(4,12,8,0.97),rgba(6,16,10,0.93))",
             borderTop:"2px solid rgba(80,180,120,0.55)",
             padding:"10px 14px 14px",
-            zIndex:20,
+            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out",
           }}>
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
               <canvas ref={mayaPortraitRef}
@@ -3334,7 +3350,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             background:"linear-gradient(to top,rgba(18,8,3,0.97),rgba(24,10,4,0.93))",
             borderTop:"2px solid rgba(240,160,80,0.55)",
             padding:"10px 14px 14px",
-            zIndex:20,
+            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out",
           }}>
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
               <canvas ref={jessPortraitRef}
@@ -3377,7 +3393,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             background:"linear-gradient(to top,rgba(18,8,3,0.97),rgba(24,10,4,0.93))",
             borderTop:"2px solid rgba(240,160,80,0.55)",
             padding:"10px 14px 14px",
-            zIndex:20,
+            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out",
           }}>
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
               <canvas ref={jessPathPortraitRef}
@@ -3426,7 +3442,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             background:"linear-gradient(to top,rgba(20,12,2,0.97),rgba(26,16,4,0.93))",
             borderTop:"2px solid rgba(240,200,90,0.6)",
             padding:"10px 14px 14px",
-            zIndex:20,
+            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out",
           }}>
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
               <canvas ref={profR2PortraitRef}
@@ -3472,7 +3488,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             background:"linear-gradient(to top,rgba(20,12,2,0.97),rgba(26,16,4,0.93))",
             borderTop:"2px solid rgba(240,200,90,0.6)",
             padding:"10px 14px 14px",
-            zIndex:20,
+            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out",
           }}>
             <div style={{ marginBottom:8 }}>
               <span style={{ color:"#f0d070", fontWeight:700, fontSize:13, letterSpacing:1 }}>
@@ -3561,7 +3577,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               background:"linear-gradient(to top,rgba(20,12,2,0.97),rgba(26,16,4,0.93))",
               borderTop:"2px solid rgba(240,200,90,0.6)",
               padding:"10px 14px 14px",
-              zIndex:26,
+              zIndex:26, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out",
             }}>
               <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
                 <canvas ref={profR2PortraitRef}
@@ -3641,7 +3657,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             background:"linear-gradient(to top,rgba(4,14,4,0.97),rgba(6,18,6,0.93))",
             borderTop:"2px solid rgba(120,200,80,0.55)",
             padding:"10px 14px 14px",
-            zIndex:20,
+            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out",
           }}>
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
               <canvas ref={ellioPortraitRef}
@@ -3692,7 +3708,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             background:"linear-gradient(to top,rgba(18,5,2,0.97),rgba(24,7,3,0.93))",
             borderTop:"2px solid rgba(255,110,50,0.55)",
             padding:"10px 14px 14px",
-            zIndex:20,
+            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out",
           }}>
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
               <canvas ref={liaPortraitRef}
@@ -3746,7 +3762,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             background:"linear-gradient(to top,rgba(4,8,18,0.97),rgba(6,10,24,0.93))",
             borderTop:"2px solid rgba(80,130,220,0.55)",
             padding:"10px 14px 14px",
-            zIndex:20,
+            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out",
           }}>
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
               <canvas ref={jayPortraitRef}
@@ -3795,7 +3811,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             background:"linear-gradient(to top,rgba(18,5,2,0.97),rgba(24,7,3,0.93))",
             borderTop:"2px solid rgba(255,110,50,0.55)",
             padding:"10px 14px 14px",
-            zIndex:20,
+            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out",
           }}>
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
               <canvas ref={liaPortraitRef}
@@ -3856,7 +3872,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               background:"linear-gradient(to top,rgba(4,8,18,0.97),rgba(6,10,24,0.93))",
               borderTop:`2px solid ${speaker.color}80`,
               padding:"10px 14px 14px",
-              zIndex:20,
+              zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out",
             }}>
               <div style={{ marginBottom:8 }}>
                 <span style={{ color:speaker.color, fontWeight:700, fontSize:13, letterSpacing:1 }}>
@@ -5277,6 +5293,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         @keyframes floatUp     { 0%{opacity:0;transform:translate(-50%,0)} 15%{opacity:1} 100%{opacity:0;transform:translate(-50%,-40px)} }
         @keyframes notifPop    { 0%{opacity:0;transform:translate(-50%,-50%) scale(0.85)} 25%{opacity:1;transform:translate(-50%,-50%) scale(1.05)} 100%{opacity:1;transform:translate(-50%,-50%) scale(1)} }
         @keyframes encounterFlash { 0%{opacity:0;transform:scale(0.4)} 18%{opacity:1;transform:scale(1.04)} 55%{opacity:0.75} 100%{opacity:0;transform:scale(1.9)} }
+        @keyframes dialogIn        { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
       `}</style>
     </div>
   );

@@ -123,6 +123,8 @@ export default function GameLauncher() {
       background: "#000", overflow: "hidden",
       position: "relative",
       fontFamily: "'Segoe UI', system-ui, sans-serif",
+      userSelect: "none", WebkitUserSelect: "none",
+      touchAction: "none", overscrollBehavior: "none",
     }}>
 
       {/* ── STUDIO SPLASH ──────────────────────────────────────────── */}
@@ -239,6 +241,8 @@ export default function GameLauncher() {
           <img
             src="/__mockup/images/title-bg.png"
             alt="Primeria"
+            loading="eager"
+            decoding="async"
             style={{
               position: "absolute", inset: 0,
               width: "100%", height: "100%",
@@ -310,7 +314,7 @@ export default function GameLauncher() {
           animation: "glFadeIn 0.6s ease forwards",
         }}>
           {/* Dim bg */}
-          <img src="/__mockup/images/title-bg.png" alt="" style={{
+          <img src="/__mockup/images/title-bg.png" alt="" loading="eager" decoding="async" style={{
             position: "absolute", inset: 0, width: "100%", height: "100%",
             objectFit: "cover", objectPosition: "center 28%",
             opacity: 0.09, pointerEvents: "none",
