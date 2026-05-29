@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { WalkDemo } from "./WalkDemo";
 import { type CharId, type RoleId, hasSave, readSave, startNewSave } from "./save";
+import { playTrack, stopAll } from "./audioManager";
+
+const TITLE_TRACK = "./audio/primeria_title.mp3";
 
 type Screen = "studio" | "dedication" | "title" | "menu" | "intro" | "char_reveal" | "game";
 
@@ -240,7 +243,7 @@ export default function GameLauncher() {
       {/* ── TITLE SCREEN ───────────────────────────────────────────── */}
       {screen === "title" && (
         <div
-          onClick={() => { if (!fading) fadeTo("menu"); }}
+          onClick={() => { if (!fading) { playTrack(TITLE_TRACK); fadeTo("menu"); } }}
           style={{
             width: "100%", height: "100%",
             position: "relative", overflow: "hidden", cursor: "pointer",

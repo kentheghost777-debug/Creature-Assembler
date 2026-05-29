@@ -53,3 +53,39 @@ id = "dAy7ehIEfpr-nOFV9B7td"
 uri = "file://primeria-game.tar.gz"
 type = "unspecified"
 title = "Primeria — Offline Game (tar.gz)"
+
+[[outputs]]
+id = "0UBb9k5Zk2owRShtn79oA"
+uri = "file://attached_assets/generated_audio/primeria_title.mp3"
+type = "audio"
+title = "primeria_title"
+
+[[outputs]]
+id = "WFrVT16QXYpZMNBLDmAGd"
+uri = "file://attached_assets/generated_audio/primeria_town.mp3"
+type = "audio"
+title = "primeria_town"
+
+[[outputs]]
+id = "b0Y1gktHqUM7orRShtlNJ"
+uri = "file://attached_assets/generated_audio/primeria_battle.mp3"
+type = "audio"
+title = "primeria_battle"
+
+[[outputs]]
+id = "o_zpVv1osXzqsRjuz0DLp"
+uri = "file://attached_assets/generated_audio/primeria_route.mp3"
+type = "audio"
+title = "primeria_route"
+
+[[outputs]]
+id = "lR5cf7n8pFf-qcNHjw1Rp"
+uri = "file://attached_assets/generated_audio/primeria_victory.mp3"
+type = "audio"
+title = "primeria_victory"
+
+[[outputs]]
+id = "tG0QYY-wKYquV8146zwsU"
+uri = "file://attached_assets/generated_audio/primeria_catch.mp3"
+type = "audio"
+title = "primeria_catch"

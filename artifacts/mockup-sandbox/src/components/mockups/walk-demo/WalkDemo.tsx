@@ -8,6 +8,14 @@ import {
   type Move,
 } from "./moves";
 import { type CharId, type RoleId, type PartySave, type WorldSave, ROLES, readSave, updateParty, updateWorld, updateRole, roleDef } from "./save";
+import { playTrack, playJingle, stopAll } from "./audioManager";
+
+// ── Audio track paths ─────────────────────────────────────────────────────
+const TOWN_TRACK   = "/__mockup/audio/primeria_town.mp3";
+const BATTLE_TRACK = "/__mockup/audio/primeria_battle.mp3";
+const ROUTE_TRACK  = "/__mockup/audio/primeria_route.mp3";
+const WIN_JINGLE   = "/__mockup/audio/primeria_victory.mp3";
+const CATCH_JINGLE = "/__mockup/audio/primeria_catch.mp3";
 
 // ── Level-up reward generation ────────────────────────────────────────────
 const STAT_KEYS = ["hp", "atk", "def", "spd"] as const;
@@ -1249,6 +1257,20 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   useEffect(() => { phaseRef.current = phase; },    [phase]);
   useEffect(() => { sceneRef.current = scene; },    [scene]);
 
+  // ── Background music — changes with scene ─────────────────────────────
+  useEffect(() => {
+    if (scene === "battle") {
+      playTrack(BATTLE_TRACK);
+    } else if (scene === "route1" || scene === "route2" || scene === "area3") {
+      playTrack(ROUTE_TRACK);
+    } else {
+      playTrack(TOWN_TRACK);
+    }
+  }, [scene]);
+
+  // Stop all audio on unmount
+  useEffect(() => { return () => { stopAll(); }; }, []);
+
   // Draw Prof Irwyn world sprite via canvas (proper transparency, no blend-mode)
   useEffect(() => {
     if (scene !== "lab") return;
@@ -2203,6 +2225,10 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
 
     const evoTarget = checkStarterEvo(r.newLevel);
 
+    // Jingles
+    if (result.kind === "caught") playJingle(CATCH_JINGLE);
+    else if (result.kind === "ko") playJingle(WIN_JINGLE);
+
     let outcome: string;
     if (result.kind === "caught") {
       const toBox = addCaughtMon(result.mon);
@@ -2262,6 +2288,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     checkWyvForms(r.newLevel, loyaltyAfter);
 
     const evoTarget = checkStarterEvo(r.newLevel);
+
+    if (result.kind === "trainerWin") playJingle(WIN_JINGLE);
 
     if (result.kind === "trainerWin") {
       if (enc.trainer === "jay") setJayA3Wins(w => Math.min(3, w + 1));

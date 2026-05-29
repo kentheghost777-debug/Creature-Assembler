@@ -69,6 +69,15 @@ Primeria is a browser-native monster-tamer RPG where you explore ruins, bond wit
 - 💾 SAVE button sits in the D-pad bar next to 🎒 Bag. Calls `persistWorldRef.current()` (force-flushes position + all quest flags). Party state auto-saves via its own useEffect on every stat/level/xp/party change — the button just gives player-visible confirmation.
 - `justSaved` state flips to `true` for 1.6 s, turning the button green with a ✓ / "SAVED" label. Transitions back to 💾 / "SAVE" automatically.
 
+## Audio
+
+- `audioManager.ts` — singleton module (survives re-renders): `playTrack(src, vol)` crossfades looping BGM; `playJingle(src, vol)` ducks BGM, plays once, resumes; `stopAll()` fades everything out.
+- **Track map**: overworld/home/lab/npc scenes → `primeria_town.mp3`; route1/route2/area3 → `primeria_route.mp3`; battle scene → `primeria_battle.mp3`. Title/menu → `primeria_title.mp3` (starts on first title-screen tap in GameLauncher).
+- **Jingles**: catch → `primeria_catch.mp3`; KO win + trainer win → `primeria_victory.mp3`.
+- Audio files live in `public/audio/` in both artifacts (served as `/__mockup/audio/` in mockup-sandbox, `./audio/` in primeria).
+- Browser autoplay: music starts on first user gesture (title screen click). Calls before that fail silently and clear bgSrc so the next call retries.
+- **Sync note**: audioManager.ts is copied verbatim (no path replacement needed). WalkDemo/GameLauncher sed command: `'s|/__mockup/images/|./images/|g; s|/__mockup/audio/|./audio/|g'`.
+
 ## Gotchas
 
 - Sprite images from AI generators have warm gradient backgrounds, NOT black. BFS/threshold pixel tricks do not reliably work. Always pre-process sprites with background removal first.
