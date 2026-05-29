@@ -24,7 +24,7 @@ _Replace the heading above with the project's name, and this line with one sente
 
 - Game "Primeria" (monster-tamer RPG): `artifacts/mockup-sandbox/src/components/mockups/walk-demo/`
   - `GameLauncher.tsx` — title/menu/intro/character-reveal flow → mounts the game (role/path is now declared in-game at the lab, not here)
-  - `WalkDemo.tsx` — overworld engine (scenes, movement, doors, NPCs, quests, inventory UI)
+  - `WalkDemo.tsx` — overworld engine (scenes: overworld/home/lab/route1/area3, movement, doors, NPCs, quests, inventory UI). Area 3 = Westwood Reaches (west of overworld via corridor at y≈290-360). Encounter transition flourish: element-tinted radial burst (`encounterFlash` state + `@keyframes encounterFlash`) fires on disturbance click before the battle fade. `MoveManager` component (lines ~32-114) lets the player rearrange their active 4 moves from the full learned pool in the party tab.
   - `BattleScene.tsx` — turn-based battle + capture + XP
   - `progression.ts` — XP curve, SHELLS/RUNES item data, element colors
   - `moves.ts` — combat data + pure math: `MOVES` catalog (per-element damage tiers + utility heal/sharpen/bulwark), validated `STRONG_AGAINST` type chart, `effectiveness`, `computeDamage` (STAB/eff/crit/defense soak, ±15% variance), learnsets (`learnedMoveIds`/`movesLearnedAt`/`defaultActiveMoves`/`sanitizeActiveMoves`), wild stat/level helpers

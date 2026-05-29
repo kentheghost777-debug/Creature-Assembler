@@ -1,5 +1,46 @@
 uploads = []
-generated = []
+
+[[generated]]
+id = "qUYPgL4gMOzPfGYgPw-u3"
+uri = "file://artifacts/mockup-sandbox/public/images/jay_front_idle.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "-FMDz8WCpoG9I75_YM5Yh"
+uri = "file://artifacts/mockup-sandbox/public/images/jay_back_idle.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "Z6BljzOEeW-QvRkoTy9mL"
+uri = "file://artifacts/mockup-sandbox/public/images/jay_side_idle.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "0IlqPn6cGz9NAWCZ-Eg4T"
+uri = "file://artifacts/mockup-sandbox/public/images/lia_front_idle.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "THAsacd5Si8HSnn1BSW6Q"
+uri = "file://artifacts/mockup-sandbox/public/images/lia_back_idle.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "xqY9AeRTC64jEi3FqQ68X"
+uri = "file://artifacts/mockup-sandbox/public/images/lia_side_idle.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "jMv9QRYOuSbh4Gb_UkwkO"
+uri = "file://artifacts/mockup-sandbox/public/images/area3-bg.png"
+type = "image"
+title = "generated_image"
 
 [[outputs]]
 id = "hj9mwcgl1Uv9QQTG9g6KL"

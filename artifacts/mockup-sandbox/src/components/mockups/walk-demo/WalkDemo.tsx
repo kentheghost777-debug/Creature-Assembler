@@ -183,7 +183,7 @@ type Phase = "walk" | "d1" | "d2" | "pick" | "d3" | "role_pick" | "d4" | "d5"
            | "prof_shells" | "prof_shells_got"
            // Rowan — the professor's disciple who dreams of the Professor's seat
            | "rowan_d1" | "rowan_d2" | "rowan_d3";
-type Scene = "overworld" | "lab" | "maya" | "jay" | "home" | "ellio" | "lia" | "route1" | "route2" | "battle";
+type Scene = "overworld" | "lab" | "maya" | "jay" | "home" | "ellio" | "lia" | "route1" | "route2" | "area3" | "battle";
 type Rect  = [number, number, number, number]; // x1 y1 x2 y2 world-px
 
 // ── Bestiary (Route 1 encounter pool) ───────────────────────────────────────
@@ -331,7 +331,8 @@ const FLAVOR_TRACKS = [
 // ── Collision zones ─────────────────────────────────────────────────────────
 const OW_BLOCKED: Rect[] = [
   // ── OUTER BORDERS ──────────────────────────────────────────────────────────
-  [0,    0,   155,  900],  // left forest
+  [0,    0,   155,  290],  // left forest — north  (gap y=290-360 → Area 3 entrance)
+  [0,  360,   155,  900],  // left forest — south
   [155,  0,   214,   85],  // NW top strip (left of Route-1)
   [327,  0,  1124,   85],  // top border (right of Route-1 gap)
   [978,  85, 1124,  600],  // right forest — upper
@@ -353,7 +354,8 @@ const OW_BLOCKED: Rect[] = [
 
   // ── JAY'S HOME — fence perimeter + body (south gate x 240–308) ─────────────
   [214, 225,  327,  400],  // building body
-  [160, 225,  214,  452],  // west fence
+  [160, 225,  214,  290],  // west fence — north  (gap y=290-360 → Area 3 corridor)
+  [160, 360,  214,  452],  // west fence — south
   [327, 225,  335,  452],  // east fence (shrunk x=327–335 — opens Route-1 corridor east of Jay)
   [160, 440,  240,  452],  // south fence — left of gate
   [308, 440,  335,  452],  // south fence — right of gate (shrunk to match east fence)
@@ -511,6 +513,30 @@ const JAY_BLOCKED: Rect[] = [
   [455, 390,  735, 715],  // hanging gear + clothing rack + shelves + baskets
 ];
 
+// ── Area 3 — Westwood Reaches (west of Jay's compound, through the forest) ───
+// Enter from the overworld by walking west through the Jay fence + forest gap.
+// 1024×768 landscape map, east entry/exit at x≈960.
+const A3 = { w: 1024, h: 768 };
+const A3_SPAWN      = { x: 920, y: 380 };        // spawn near east entry
+const OW_AREA3_EXIT: Rect = [0,  290,  20, 360]; // left edge of OW forest gap
+const A3_RETURN_OW:  Rect = [960, 310, 1024, 450]; // east edge of Area 3
+const A3_BLOCKED: Rect[] = [
+  // Outer walls
+  [0,    0,  1024,   60],   // top wall
+  [0,    0,    60,  768],   // left wall
+  [0,  700,  1024,  768],   // bottom wall
+  [960,  0,  1024,  310],   // right wall — north (gap y=310-450 is the east exit)
+  [960, 450,  1024,  768],  // right wall — south
+  // Interior — ancient ruins and mystical trees
+  [100,  80,  280,  230],   // NW ruin cluster
+  [700,  80,  880,  210],   // NE ruin cluster
+  [60,  360,  210,  560],   // west tree mass
+  [380, 150,  620,  310],   // central ruin arch
+  [810, 320,  960,  520],   // east boulder (flanks the exit corridor)
+  [250, 450,  460,  640],   // SW ruins
+  [560, 400,  780,  590],   // SE tree cluster
+];
+
 // ── Ellio's Home ─────────────────────────────────────────────────────────────
 const EH = { w: 800, h: 800 };
 const ELLIO_POS = { x: 400, y: 350 };
@@ -651,7 +677,7 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
   // Saves live in localStorage and could be malformed/tampered, so we validate
   // the scene against the known walkable set and require finite coordinates;
   // anything off falls back to the safe home spawn.
-  const WALKABLE_SCENES: Scene[] = ["overworld","lab","maya","jay","home","ellio","lia","route1","route2"];
+  const WALKABLE_SCENES: Scene[] = ["overworld","lab","maya","jay","home","ellio","lia","route1","route2","area3"];
   const resume = (() => {
     if (!savedWorld) return null;
     const HOME = { scene: "home" as Scene, x: 400, y: 670 };
@@ -750,6 +776,7 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
   const [storageBox,    setStorageBox]    = useState<MonSpec[]>(() => savedParty?.box ?? []);
   const [activeDisturbances, setActiveDisturbances] = useState<Record<number, { mon: MonSpec; expiresAt: number }>>({});
   const [hotspotCd,     setHotspotCd]     = useState<Record<number, number>>({});
+  const [encounterFlash, setEncounterFlash] = useState<{ color: string; key: number } | null>(null);
   const [checksStreak,  setChecksStreak]  = useState(() => savedWorld?.checksStreak ?? 0);
   const [floatMsg,      setFloatMsg]      = useState<{ x: number; y: number; text: string; key: number } | null>(null);
   const [showStarterGate, setShowStarterGate] = useState(false);
@@ -1028,7 +1055,7 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
   // Draw Jay world sprite (inside jay scene)
   useEffect(() => {
     if (scene !== "jay") return;
-    const src = "/__mockup/images/jay-sprite.png";
+    const src = "/__mockup/images/jay_front_idle.png";
     const tryDraw = () => {
       const c = jayCanvasRef.current;
       if (!c) return;
@@ -1065,7 +1092,7 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
   // Draw Jay portrait in dialog box
   useEffect(() => {
     if (!phase.startsWith("jay_")) return;
-    const src = "/__mockup/images/jay-sprite.png";
+    const src = "/__mockup/images/jay_front_idle.png";
     const tryDraw = () => {
       const c = jayPortraitRef.current;
       if (!c) return;
@@ -1149,7 +1176,7 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
   // Draw Lia world sprite inside Lia's home
   useEffect(() => {
     if (scene !== "lia") return;
-    const src = "/__mockup/images/lia.png";
+    const src = "/__mockup/images/lia_front_idle.png";
     const tryDraw = () => {
       const c = liaCanvasRef.current;
       if (!c) return;
@@ -1161,7 +1188,7 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
   // Draw Lia portrait in dialog box
   useEffect(() => {
     if (!phase.startsWith("lia_")) return;
-    const src = "/__mockup/images/lia.png";
+    const src = "/__mockup/images/lia_front_idle.png";
     const tryDraw = () => {
       const c = liaPortraitRef.current;
       if (!c) return;
@@ -1286,8 +1313,8 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
       if (!fadingRef.current && phaseRef.current === "walk" && sceneRef.current !== "battle") {
         const h       = heldRef.current;
         const sc      = sceneRef.current;
-        const world   = sc === "overworld" ? OW : sc === "lab" ? LB : sc === "route1" ? R1 : sc === "route2" ? R2 : sc === "maya" ? MY : sc === "jay" ? JY : sc === "ellio" ? EH : sc === "lia" ? LH : PH;
-        const zones   = sc === "overworld" ? OW_BLOCKED : sc === "lab" ? LAB_BLOCKED : sc === "route1" ? R1_BLOCKED : sc === "route2" ? R2_BLOCKED : sc === "maya" ? MAYA_BLOCKED : sc === "jay" ? JAY_BLOCKED : sc === "ellio" ? EH_BLOCKED : sc === "lia" ? LH_BLOCKED : PH_BLOCKED;
+        const world   = sc === "overworld" ? OW : sc === "lab" ? LB : sc === "route1" ? R1 : sc === "route2" ? R2 : sc === "area3" ? A3 : sc === "maya" ? MY : sc === "jay" ? JY : sc === "ellio" ? EH : sc === "lia" ? LH : PH;
+        const zones   = sc === "overworld" ? OW_BLOCKED : sc === "lab" ? LAB_BLOCKED : sc === "route1" ? R1_BLOCKED : sc === "route2" ? R2_BLOCKED : sc === "area3" ? A3_BLOCKED : sc === "maya" ? MAYA_BLOCKED : sc === "jay" ? JAY_BLOCKED : sc === "ellio" ? EH_BLOCKED : sc === "lia" ? LH_BLOCKED : PH_BLOCKED;
 
         let newAnim = lastDirRef.current; // stay in last-faced direction when idle
         let newFlip = flipRef.current;
@@ -1367,6 +1394,10 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
           transitionTo("lia", 400, 670);        // enter Lia's Home — trigger on visible front door
         } else if (sc === "lia" && inRect(worldPos.current.x, worldPos.current.y, LIA_HOME_EXIT)) {
           transitionTo("overworld", 875, 830);  // exit onto south road, S of door
+        } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_AREA3_EXIT)) {
+          transitionTo("area3", A3_SPAWN.x, A3_SPAWN.y);
+        } else if (sc === "area3" && inRect(worldPos.current.x, worldPos.current.y, A3_RETURN_OW)) {
+          transitionTo("overworld", 50, 325);   // forest gap corridor — walk east to re-enter town
         }
 
         // Keep the resume point current, and throttle position saves while walking.
@@ -1410,7 +1441,7 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
 
         // ── Wyvrunt follower (Pokémon-Yellow style trailing companion) ────────
         const followOn = wyvruntCaughtRef.current
-          && (sc === "overworld" || sc === "route1" || sc === "route2");
+          && (sc === "overworld" || sc === "route1" || sc === "route2" || sc === "area3");
         const fcv = wyvFollowRef.current;
         if (followOn && fcv) {
           const STEP = 26; // world-px spacing between breadcrumb trail points
@@ -1746,6 +1777,11 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
       setHotspotCd(prev => ({ ...prev, [idx]: Date.now() + 12000 }));
       setWildEncounter(dist.mon);
       if (dist.mon.rarity === "ultra" || dist.mon.rarity === "apex") setChecksStreak(0);
+      // Encounter flourish — element-tinted radial burst before the fade-to-battle
+      const distEl = asElement(dist.mon.type);
+      const flashCol = distEl ? ELEMENT_COLOR[distEl] : RARITY_COLOR[dist.mon.rarity];
+      setEncounterFlash({ color: flashCol, key: Date.now() });
+      window.setTimeout(() => setEncounterFlash(null), 650);
       setBattleNotif({ title: `Wild ${dist.mon.name} appears!`, sub: dist.mon.rarity.toUpperCase() });
       window.setTimeout(() => setBattleNotif(null), 1600);
       // Preserve current world position so we return to where we triggered
@@ -1918,8 +1954,8 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
         {/* World container — camera-scrolled + zoomed */}
         <div ref={worldRef} style={{
           position: "absolute",
-          width:  scene === "overworld" ? OW.w : scene === "lab" ? LB.w : scene === "route1" ? R1.w : scene === "route2" ? R2.w : scene === "maya" ? MY.w : scene === "jay" ? JY.w : scene === "ellio" ? EH.w : scene === "lia" ? LH.w : PH.w,
-          height: scene === "overworld" ? OW.h : scene === "lab" ? LB.h : scene === "route1" ? R1.h : scene === "route2" ? R2.h : scene === "maya" ? MY.h : scene === "jay" ? JY.h : scene === "ellio" ? EH.h : scene === "lia" ? LH.h : PH.h,
+          width:  scene === "overworld" ? OW.w : scene === "lab" ? LB.w : scene === "route1" ? R1.w : scene === "route2" ? R2.w : scene === "area3" ? A3.w : scene === "maya" ? MY.w : scene === "jay" ? JY.w : scene === "ellio" ? EH.w : scene === "lia" ? LH.w : PH.w,
+          height: scene === "overworld" ? OW.h : scene === "lab" ? LB.h : scene === "route1" ? R1.h : scene === "route2" ? R2.h : scene === "area3" ? A3.h : scene === "maya" ? MY.h : scene === "jay" ? JY.h : scene === "ellio" ? EH.h : scene === "lia" ? LH.h : PH.h,
           willChange: "transform",
           transformOrigin: "0 0",
           transform: `scale(${ZOOM}) translate(${-cam.current.x}px,${-cam.current.y}px)`,
@@ -1929,6 +1965,7 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
             key={scene}
             src={scene === "ellio" ? "/__mockup/images/ellio-home-interior.png"
               : scene === "lia"    ? "/__mockup/images/lia-home.png"
+              : scene === "area3"  ? "/__mockup/images/area3-bg.png"
               : scene === "route1" ? "/__mockup/images/route1-bg.png"
               : scene === "route2" ? "/__mockup/images/route2-map.png"
               : scene === "overworld"
@@ -2056,6 +2093,14 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
                 position:"absolute", left:898, top:788,
                 width:44, height:14, borderRadius:"50%",
                 background:"radial-gradient(ellipse,rgba(255,120,80,0.75)0%,transparent 80%)",
+                animation:"pulse 1.4s ease-in-out infinite",
+                pointerEvents:"none",
+              }}/>
+              {/* Area 3 west entrance glow — forest gap left of Jay's compound (trigger ~x=0–20, y=290–360) */}
+              <div style={{
+                position:"absolute", left:0, top:302,
+                width:26, height:52, borderRadius:"50%",
+                background:"radial-gradient(ellipse,rgba(180,80,255,0.9)0%,transparent 80%)",
                 animation:"pulse 1.4s ease-in-out infinite",
                 pointerEvents:"none",
               }}/>
@@ -4289,6 +4334,16 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
         </div>
         )}
 
+        {/* Encounter transition flourish — element-tinted radial burst on battle entry */}
+        {encounterFlash && (
+          <div key={encounterFlash.key} style={{
+            position:"absolute", inset:0, pointerEvents:"none", zIndex:48,
+            background:`radial-gradient(ellipse at 50% 52%, #fff 0%, ${encounterFlash.color} 30%, transparent 72%)`,
+            animation:"encounterFlash 0.6s ease-out forwards",
+            mixBlendMode:"screen",
+          }}/>
+        )}
+
         {/* Float message (flavor text on dormant hotspot click) */}
         {floatMsg && (
           <div key={floatMsg.key} style={{
@@ -4594,6 +4649,7 @@ export function WalkDemo({ characterId = "kael", roleId: roleIdProp = "keeper" }
         @keyframes runeSpin    { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
         @keyframes floatUp     { 0%{opacity:0;transform:translate(-50%,0)} 15%{opacity:1} 100%{opacity:0;transform:translate(-50%,-40px)} }
         @keyframes notifPop    { 0%{opacity:0;transform:translate(-50%,-50%) scale(0.85)} 25%{opacity:1;transform:translate(-50%,-50%) scale(1.05)} 100%{opacity:1;transform:translate(-50%,-50%) scale(1)} }
+        @keyframes encounterFlash { 0%{opacity:0;transform:scale(0.4)} 18%{opacity:1;transform:scale(1.04)} 55%{opacity:0.75} 100%{opacity:0;transform:scale(1.9)} }
       `}</style>
     </div>
   );
