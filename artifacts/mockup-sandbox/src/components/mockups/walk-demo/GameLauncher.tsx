@@ -161,16 +161,16 @@ export default function GameLauncher() {
             letterSpacing: 8, textTransform: "uppercase",
           }}>PURESTORY</div>
           <div style={{
-            color: "#6a5c40", fontSize: 8, fontWeight: 400,
+            color: "#a8956a", fontSize: 8, fontWeight: 400,
             letterSpacing: 5, marginTop: 5, textTransform: "uppercase",
           }}>GAMING STUDIOS</div>
           <div style={{
             width: 44, height: 1,
-            background: "rgba(240,208,80,0.2)", marginTop: 26,
+            background: "rgba(240,208,80,0.25)", marginTop: 26,
           }} />
           <div style={{
-            color: "#302818", fontSize: 8,
-            letterSpacing: 3, marginTop: 14,
+            color: "#8a7a58", fontSize: 9,
+            letterSpacing: 4, marginTop: 14,
           }}>PRESENTS</div>
         </div>
       )}
@@ -237,7 +237,7 @@ export default function GameLauncher() {
 
           <div style={{
             position: "absolute", bottom: 30,
-            color: "#302618", fontSize: 9, letterSpacing: 2.5,
+            color: "#a89060", fontSize: 10, letterSpacing: 2.5,
             animation: "glPulse 2.8s ease-in-out infinite",
           }}>TAP TO CONTINUE</div>
         </div>
@@ -291,11 +291,11 @@ export default function GameLauncher() {
               textShadow: "0 0 50px rgba(240,200,60,0.5), 0 4px 28px rgba(0,0,0,0.95), 0 0 100px rgba(240,180,40,0.2)",
             }}>PRIMERIA</div>
             <div style={{
-              color: "#b89040",
-              fontSize: "clamp(8px,1.8vw,11px)",
+              color: "#c8a84a",
+              fontSize: "clamp(11px,2.4vw,14px)",
               letterSpacing: "clamp(4px,1.5vw,7px)",
               marginTop: 9,
-              textShadow: "0 2px 10px rgba(0,0,0,0.95)",
+              textShadow: "0 2px 12px rgba(0,0,0,0.98)",
               textTransform: "uppercase",
             }}>The Keeper's Tale</div>
           </div>
@@ -315,7 +315,7 @@ export default function GameLauncher() {
           <div style={{
             position: "absolute", bottom: "4%",
             left: 0, right: 0, textAlign: "center",
-            color: "#2e2412", fontSize: 8, letterSpacing: 2,
+            color: "#6a5c38", fontSize: 8, letterSpacing: 2,
           }}>PURESTORY GAMING STUDIOS</div>
         </div>
       )}
@@ -563,10 +563,12 @@ export default function GameLauncher() {
                   <div style={{
                     width: "100%", aspectRatio: "3/4",
                     overflow: "hidden", borderRadius: 6, flexShrink: 0,
+                    background: "rgba(0,0,0,0.4)",
+                    display: "flex", alignItems: "flex-end", justifyContent: "center",
                   }}>
                     <img src={c.hdImg} alt={c.name} style={{
                       width: "100%", height: "100%",
-                      objectFit: "cover", objectPosition: "top center",
+                      objectFit: "contain", objectPosition: "bottom center",
                       filter: active ? "none" : "grayscale(0.55) opacity(0.55)",
                       transition: "filter 0.18s",
                     }} />
