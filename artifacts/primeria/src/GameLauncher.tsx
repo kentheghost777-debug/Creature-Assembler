@@ -119,7 +119,7 @@ export default function GameLauncher() {
 
   return (
     <div style={{
-      width: "100vw", height: "100vh",
+      width: "100vw", height: "100dvh",
       background: "#000", overflow: "hidden",
       position: "relative",
       fontFamily: "'Segoe UI', system-ui, sans-serif",

@@ -1,0 +1,28 @@
+{
+  "name": "Primeria",
+  "short_name": "Primeria",
+  "description": "Monster-tamer RPG — explore ruins, bond with Tayanari, evolve them, battle rival Keepers.",
+  "start_url": "./",
+  "display": "fullscreen",
+  "background_color": "#060606",
+  "theme_color": "#1a0a04",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
