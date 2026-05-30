@@ -590,29 +590,31 @@ export default function GameLauncher() {
               overflowY: "auto", overflowX: "hidden",
               animation: "glFadeIn 0.8s ease forwards",
             }}>
-              {/* Character art — top, fixed height */}
+              {/* Character art — responsive height so full portrait always shows */}
               <div style={{
-                width: "100%", height: 260, flexShrink: 0,
-                position: "relative", overflow: "hidden",
+                width: "100%",
+                height: "clamp(300px, 90vw, 420px)",
+                flexShrink: 0,
+                position: "relative",
               }}>
                 <div style={{
                   position: "absolute", inset: 0,
-                  background: "radial-gradient(ellipse at 50% 80%,rgba(240,180,40,0.09) 0%,transparent 70%)",
+                  background: "radial-gradient(ellipse at 50% 85%,rgba(240,180,40,0.09) 0%,transparent 70%)",
                   pointerEvents: "none",
                 }} />
-                {activeChar.id === "rowan" ? (
-                  <img src="./images/hero-art.png" alt="Rowan"
-                    style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 8, width: "100%", height: "calc(100% - 8px)", objectFit: "contain", objectPosition: "bottom center", filter: "drop-shadow(0 0 28px rgba(240,180,40,0.22))" }}
-                  />
-                ) : activeChar.id === "kinju" ? (
-                  <img src="./images/kinju.png" alt="Kinju"
-                    style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", objectPosition: "bottom center", filter: "drop-shadow(0 0 28px rgba(240,180,40,0.22))" }}
-                  />
-                ) : (
-                  <img src={activeChar.sprite} alt={activeChar.name}
-                    style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", objectPosition: "bottom center", imageRendering: "pixelated", filter: "drop-shadow(0 0 28px rgba(240,180,40,0.22))" }}
-                  />
-                )}
+                <img
+                  key={activeChar.id}
+                  src={activeChar.hdImg}
+                  alt={activeChar.name}
+                  style={{
+                    position: "absolute", inset: 0,
+                    width: "100%", height: "100%",
+                    objectFit: "contain",
+                    objectPosition: "bottom center",
+                    imageRendering: activeChar.id === "jess" ? "pixelated" : "auto",
+                    filter: "drop-shadow(0 0 28px rgba(240,180,40,0.22))",
+                  }}
+                />
               </div>
 
               {/* Info below */}
