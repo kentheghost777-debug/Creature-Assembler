@@ -597,7 +597,7 @@ const LH_BLOCKED: Rect[] = [
 
 // Route-1 exit trigger aligned with the top-left gap
 const OW_ROUTE1_EXIT: Rect = [212, 0, 327, 15];
-const OW_PROF_DOOR: Rect = [498, 328, 580, 378]; // tight zone around lab door (glow center x≈538)
+const OW_PROF_DOOR: Rect = [533, 325, 615, 382]; // tight zone around lab door — shifted east to visual door art
 
 // ── Whisperroot Trail (Route 1 / Area 1) ─────────────────────────────────────
 // South gate (blue) connects back to town; north continues deeper (future)
