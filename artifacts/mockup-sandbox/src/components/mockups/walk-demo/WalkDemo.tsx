@@ -912,7 +912,16 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const rowanInLab    = characterId !== "rowan";   // Rowan is the lab disciple
   const kaelAtHome    = characterId === "rowan";    // extra figure at home
 
-  const [scene,       setScene]       = useState<Scene>(() => resume?.scene ?? "home");
+  // Per-character starting positions for NEW games (no resume data).
+  // Kinju starts in their home; Jess in the overworld (roamer); Rowan in the lab.
+  const CHAR_SPAWN: Record<CharId, { scene: Scene; x: number; y: number }> = {
+    kinju: { scene: "home",      x: 400, y: 670 },
+    jess:  { scene: "overworld", x: 600, y: 830 },
+    rowan: { scene: "lab",       x: 480, y: 274 },
+  };
+  const defaultSpawn = CHAR_SPAWN[characterId] ?? CHAR_SPAWN.kinju;
+
+  const [scene,       setScene]       = useState<Scene>(() => resume?.scene ?? defaultSpawn.scene);
   const [phase,       setPhase]       = useState<Phase>("walk");
   const [fading,      setFading]      = useState(false);
   const [held,        setHeld]        = useState<string | null>(null);
@@ -1088,9 +1097,9 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   // It's kept current by the game loop + transitionTo, so a save taken during a
   // battle still restores the player to the spot they triggered it from.
   const lastSafeRef = useRef<{ scene: Scene; x: number; y: number }>({
-    scene: resume?.scene ?? "home",
-    x: resume?.x ?? 400,
-    y: resume?.y ?? 670,
+    scene: resume?.scene ?? defaultSpawn.scene,
+    x: resume?.x ?? defaultSpawn.x,
+    y: resume?.y ?? defaultSpawn.y,
   });
   // Live snapshot of the quest flags (scene + position come from lastSafeRef).
   const worldSnapRef = useRef<Omit<WorldSave, "scene" | "posX" | "posY">>({

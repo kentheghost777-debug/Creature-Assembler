@@ -7,22 +7,25 @@ const TITLE_TRACK = "./audio/primeria_title.mp3";
 
 type Screen = "studio" | "dedication" | "title" | "menu" | "intro" | "char_reveal" | "game";
 
-const CHARACTERS: { id: CharId; name: string; tag: string; sprite: string; desc: string; stats: [string, string][] }[] = [
+const CHARACTERS: { id: CharId; name: string; tag: string; sprite: string; hdImg: string; desc: string; stats: [string, string][] }[] = [
   {
     id: "kinju", name: "Kinju", tag: "Sunlit wanderer",
     sprite: "./images/kael_front_idle.png",
+    hdImg:  "./images/kinju.png",
     desc: "Born curious. Always at the edge of the known. When the world finally called your name — there was never any doubt.",
     stats: [["ORIGIN", "Primeria Village"], ["HEART", "Wanderlust"], ["CALL", "Horizon"]],
   },
   {
     id: "jess", name: "Jess", tag: "Wildheart roamer",
     sprite: "./images/jess_front_idle.png",
+    hdImg:  "./images/jess-sprite.png",
     desc: "Born to the living world. You speak in the language of creatures, silence, and instinct — without ever saying a word.",
     stats: [["ORIGIN", "Primeria Village"], ["HEART", "Wildborn"], ["CALL", "The Living Land"]],
   },
   {
     id: "rowan", name: "Rowan", tag: "Seasoned traveler",
     sprite: "./images/rowan_front_idle.png",
+    hdImg:  "./images/hero-art.png",
     desc: "Born to understand. Every question leads to the next. For you, the Trial is not a beginning — it is a continuation.",
     stats: [["ORIGIN", "Primeria Village"], ["HEART", "Discovery"], ["CALL", "The Unknown"]],
   },
@@ -539,7 +542,7 @@ export default function GameLauncher() {
       {screen === "char_reveal" && (() => {
         const activeChar = CHARACTERS.find(c => c.id === characterId) ?? CHARACTERS[0];
         const CharPicker = () => (
-          <div style={{ display: "flex", gap: isMobile ? 7 : 9, flexWrap: "nowrap" }}>
+          <div style={{ display: "flex", gap: isMobile ? 8 : 10, flexWrap: "nowrap" }}>
             {CHARACTERS.map(c => {
               const active = characterId === c.id;
               return (
@@ -548,31 +551,28 @@ export default function GameLauncher() {
                   onClick={() => setCharacterId(c.id)}
                   style={{
                     display: "flex", flexDirection: "column", alignItems: "center",
-                    flex: isMobile ? 1 : undefined,
-                    width: isMobile ? undefined : 90,
-                    padding: "10px 6px 8px", gap: 5, cursor: "pointer",
+                    flex: 1,
+                    padding: "8px 6px 10px", gap: 6, cursor: "pointer",
                     background: active ? "rgba(240,200,60,0.12)" : "rgba(255,255,255,0.02)",
                     border: active ? "1.5px solid rgba(240,200,60,0.6)" : "1px solid rgba(240,200,60,0.16)",
                     borderRadius: 10,
-                    boxShadow: active ? "0 0 16px rgba(240,200,60,0.12)" : "none",
+                    boxShadow: active ? "0 0 18px rgba(240,200,60,0.14)" : "none",
                     transition: "all 0.18s",
                   }}
                 >
                   <div style={{
-                    width: isMobile ? 46 : 56, height: isMobile ? 64 : 78,
-                    overflow: "hidden", display: "flex",
-                    alignItems: "flex-start", justifyContent: "center",
-                    flexShrink: 0,
+                    width: "100%", aspectRatio: "3/4",
+                    overflow: "hidden", borderRadius: 6, flexShrink: 0,
                   }}>
-                    <img src={c.sprite} alt={c.name} style={{
-                      width: "100%", objectFit: "contain",
-                      objectPosition: "top center",
-                      imageRendering: "pixelated",
-                      filter: active ? "none" : "grayscale(0.6) opacity(0.6)",
+                    <img src={c.hdImg} alt={c.name} style={{
+                      width: "100%", height: "100%",
+                      objectFit: "cover", objectPosition: "top center",
+                      filter: active ? "none" : "grayscale(0.55) opacity(0.55)",
+                      transition: "filter 0.18s",
                     }} />
                   </div>
-                  <div style={{ color: active ? "#f0d060" : "#8a7440", fontSize: 10, fontWeight: 800, letterSpacing: 1 }}>{c.name}</div>
-                  <div style={{ color: "#6a5424", fontSize: 7, letterSpacing: 0.4 }}>{c.tag}</div>
+                  <div style={{ color: active ? "#f0d060" : "#8a7440", fontSize: isMobile ? 11 : 12, fontWeight: 800, letterSpacing: 1 }}>{c.name}</div>
+                  <div style={{ color: "#6a5424", fontSize: isMobile ? 8 : 8.5, letterSpacing: 0.4 }}>{c.tag}</div>
                 </button>
               );
             })}
@@ -617,24 +617,24 @@ export default function GameLauncher() {
 
               {/* Info below */}
               <div style={{ padding: "16px 20px 32px", display: "flex", flexDirection: "column", gap: 0 }}>
-                <div style={{ color: "#4a3818", fontSize: 8, letterSpacing: 4, marginBottom: 10 }}>YOUR CHARACTER</div>
+                <div style={{ color: "#4a3818", fontSize: 10, letterSpacing: 4, marginBottom: 10 }}>YOUR CHARACTER</div>
                 <div style={{
-                  color: "#f0d060", fontSize: 26, fontWeight: 900, letterSpacing: 3, lineHeight: 1.05,
+                  color: "#f0d060", fontSize: 30, fontWeight: 900, letterSpacing: 3, lineHeight: 1.05,
                   textShadow: "0 0 22px rgba(240,200,60,0.22)",
                 }}>THE<br />KEEPER</div>
                 <div style={{ width: 46, height: 1, background: "rgba(240,200,60,0.22)", margin: "14px 0" }} />
-                <div style={{ color: "#c8bca0", fontSize: 12, lineHeight: 1.75, fontWeight: 300, marginBottom: 14 }}>
+                <div style={{ color: "#c8bca0", fontSize: 14, lineHeight: 1.7, fontWeight: 300, marginBottom: 14 }}>
                   {activeChar.desc}
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 7, marginBottom: 20 }}>
                   {activeChar.stats.map(([k, v]) => (
                     <div key={k} style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                      <div style={{ color: "#3a2c14", fontSize: 7.5, letterSpacing: 2, width: 52 }}>{k}</div>
-                      <div style={{ color: "#9a7c40", fontSize: 10, fontWeight: 600 }}>{v}</div>
+                      <div style={{ color: "#3a2c14", fontSize: 9, letterSpacing: 2, width: 58 }}>{k}</div>
+                      <div style={{ color: "#9a7c40", fontSize: 12, fontWeight: 600 }}>{v}</div>
                     </div>
                   ))}
                 </div>
-                <div style={{ color: "#4a3818", fontSize: 8, letterSpacing: 3, marginBottom: 9 }}>CHOOSE YOUR LOOK</div>
+                <div style={{ color: "#4a3818", fontSize: 10, letterSpacing: 3, marginBottom: 9 }}>CHOOSE YOUR LOOK</div>
                 <CharPicker />
                 <button
                   onClick={() => { if (!fading) beginJourney(); }}
