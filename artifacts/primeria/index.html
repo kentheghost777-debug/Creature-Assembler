@@ -40,5 +40,23 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("./sw.js").then((reg) => {
+            reg.addEventListener("updatefound", () => {
+              const sw = reg.installing;
+              if (!sw) return;
+              sw.addEventListener("statechange", () => {
+                if (sw.state === "installed" && navigator.serviceWorker.controller) {
+                  sw.postMessage({ type: "SKIP_WAITING" });
+                  window.location.reload();
+                }
+              });
+            });
+          });
+        });
+      }
+    </script>
   </body>
 </html>
