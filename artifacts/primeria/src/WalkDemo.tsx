@@ -926,20 +926,22 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const [fading,      setFading]      = useState(false);
   const [held,        setHeld]        = useState<string | null>(null);
 
-  const [isTouch] = useState(() =>
-    typeof window !== "undefined" && ("ontouchstart" in window || navigator.maxTouchPoints > 0)
-  );
+  const [isTouch] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return (
+      "ontouchstart" in window ||
+      navigator.maxTouchPoints > 0 ||
+      window.matchMedia("(pointer: coarse)").matches
+    );
+  });
   const [isLandscape, setIsLandscape] = useState(() =>
-    typeof window !== "undefined" && window.innerWidth > window.innerHeight
+    typeof window !== "undefined" && window.matchMedia("(orientation: landscape)").matches
   );
   useEffect(() => {
-    const onResize = () => setIsLandscape(window.innerWidth > window.innerHeight);
-    window.addEventListener("resize", onResize);
-    window.addEventListener("orientationchange", onResize);
-    return () => {
-      window.removeEventListener("resize", onResize);
-      window.removeEventListener("orientationchange", onResize);
-    };
+    const mq = window.matchMedia("(orientation: landscape)");
+    const onChange = () => setIsLandscape(mq.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
   }, []);
 
   const [nearProf,         setNearProf]         = useState(false);
