@@ -1,0 +1,1 @@
+- [Character portrait framing](portrait-framing.md) — portraits must share internal figure proportions; fix mis-positioned ones by re-padding the PNG, not CSS (contain ignores vertical objectPosition).
