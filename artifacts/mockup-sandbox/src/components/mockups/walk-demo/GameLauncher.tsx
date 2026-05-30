@@ -568,7 +568,7 @@ export default function GameLauncher() {
                   }}>
                     <img src={c.hdImg} alt={c.name} style={{
                       width: "100%", height: "100%",
-                      objectFit: "contain", objectPosition: "bottom center",
+                      objectFit: "contain", objectPosition: "top center",
                       filter: active ? "none" : "grayscale(0.55) opacity(0.55)",
                       transition: "filter 0.18s",
                     }} />
