@@ -509,8 +509,8 @@ const FLAVOR_TRACKS = [
 // ── Collision zones ─────────────────────────────────────────────────────────
 const OW_BLOCKED: Rect[] = [
   // ── OUTER BORDERS ──────────────────────────────────────────────────────────
-  [0,    0,   155,  400],  // left forest — north  (gap y=400-445 → Area 3 corridor at Jay's SW corner)
-  [0,  445,   155,  900],  // left forest — south
+  [0,    0,   155,  430],  // left forest — north  (gap y=430-475 → Area 3 corridor at Jay's SW corner)
+  [0,  475,   155,  900],  // left forest — south
   [155,  0,   214,   85],  // NW top strip (left of Route-1)
   [327,  0,  1124,   85],  // top border (right of Route-1 gap)
   [978,  85, 1124,  600],  // right forest — upper
@@ -532,10 +532,10 @@ const OW_BLOCKED: Rect[] = [
 
   // ── JAY'S HOME — fence perimeter + body (south gate x 240–308) ─────────────
   [214, 225,  327,  400],  // building body
-  [160, 225,  214,  400],  // west fence — solid north-to-building-bottom (gap y=400-440 → Area 3 corridor)
-  [327, 225,  335,  452],  // east fence (shrunk x=327–335 — opens Route-1 corridor east of Jay)
-  [160, 440,  240,  452],  // south fence — left of gate
-  [308, 440,  335,  452],  // south fence — right of gate (shrunk to match east fence)
+  [160, 225,  214,  430],  // west fence — solid north-to-building-bottom (gap y=430-470 → Area 3 corridor)
+  [327, 225,  335,  482],  // east fence (shrunk x=327–335 — opens Route-1 corridor east of Jay)
+  [160, 470,  240,  482],  // south fence — left of gate
+  [308, 470,  335,  482],  // south fence — right of gate (shrunk to match east fence)
 
   // ── MAYA'S HOME — fence perimeter + body (south gate x 845–912) ────────────
   [807, 225,  928,  383],  // building body
@@ -700,7 +700,7 @@ const JAY_BLOCKED: Rect[] = [
 // 1024×768 landscape map, east entry/exit at x≈960.
 const A3 = { w: 1024, h: 768 };
 const A3_SPAWN      = { x: 920, y: 380 };        // spawn near east entry
-const OW_AREA3_EXIT: Rect = [0,  398,  22, 447]; // left edge of OW — gap at Jay's SW corner (y=400-440 between building bottom and south fence)
+const OW_AREA3_EXIT: Rect = [0,  428,  22, 477]; // left edge of OW — gap at Jay's SW corner (y=430-470 between building bottom and south fence)
 const A3_RETURN_OW:  Rect = [960, 310, 1024, 450]; // east edge of Area 3
 // Cleminus "Jerbs" — west ruin corridor, opposite side from town entry
 // At y=380, x=235 is inside the doorway gap (y=340-430) between the two left ruin wall pieces.
@@ -1740,7 +1740,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             transitionTo("area3", A3_SPAWN.x, A3_SPAWN.y);
           }
         } else if (sc === "area3" && inRect(worldPos.current.x, worldPos.current.y, A3_RETURN_OW)) {
-          transitionTo("overworld", 170, 423);  // Jay's SW courtyard — walk east back into town
+          transitionTo("overworld", 170, 453);  // Jay's SW courtyard — walk east back into town
         } else if (sc === "area3" && worldPos.current.x < 215 && phaseRef.current === "walk") {
           // Far-west ruin corridor — Jerbs appears the first time here
           worldPos.current.x = 215;
