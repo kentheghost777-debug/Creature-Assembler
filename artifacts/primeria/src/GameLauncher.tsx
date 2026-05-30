@@ -94,6 +94,7 @@ export default function GameLauncher() {
 
   useEffect(() => {
     if (screen !== "title") return;
+    playTrack(TITLE_TRACK);
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Enter" || e.key === " ") fadeTo("menu");
     };
