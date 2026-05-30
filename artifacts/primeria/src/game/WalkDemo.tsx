@@ -2416,7 +2416,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   // ── Trainer battle — full takeover when scene === "battle" + trainerEncounter ─
   if (scene === "battle" && trainerEncounter && starter) {
     return (
-      <div style={{ width:"100vw", height:"100vh", background:"#000", position:"relative", overflow:"hidden" }}>
+      <div style={{ width:"100vw", height:"100dvh", background:"#000", position:"relative", overflow:"hidden" }}>
         <BattleScene
           wild={trainerEncounter.team[0]}
           starter={starter}
@@ -2457,7 +2457,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   // ── Wild battle — full takeover when scene === "battle" ───────────────────
   if (scene === "battle" && wildEncounter && starter) {
     return (
-      <div style={{ width:"100vw", height:"100vh", background:"#000", position:"relative", overflow:"hidden" }}>
+      <div style={{ width:"100vw", height:"100dvh", background:"#000", position:"relative", overflow:"hidden" }}>
         <BattleScene
           wild={wildEncounter}
           starter={starter}
@@ -2492,7 +2492,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   }
 
   return (
-    <div style={{ width:"100vw", height:"100vh", background:"#060606", display:"flex", flexDirection:"column", overflow:"hidden", userSelect:"none", WebkitUserSelect:"none", touchAction:"none", overscrollBehavior:"none" }}>
+    <div style={{ width:"100vw", height:"100dvh", background:"#060606", display:"flex", flexDirection:"column", overflow:"hidden", userSelect:"none", WebkitUserSelect:"none", touchAction:"none", overscrollBehavior:"none" }}>
 
       {/* ── MAP VIEWPORT ─────────────────────────────────────────────────── */}
       <div ref={vpRef} style={{ flex:1, position:"relative", overflow:"hidden" }}>
