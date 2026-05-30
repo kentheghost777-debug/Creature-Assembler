@@ -397,7 +397,7 @@ export default function GameLauncher() {
               src="./images/hero-art.png"
               alt="Hero"
               style={{
-                position: "absolute", bottom: 0, right: "0%",
+                position: "absolute", bottom: 0, right: "4%",
                 height: "min(93%, 480px)", objectFit: "contain", objectPosition: "bottom center",
                 filter: "drop-shadow(-4px 0 32px rgba(240,180,40,0.12))",
               }}
@@ -406,8 +406,8 @@ export default function GameLauncher() {
               src="./images/title-tayanari.png"
               alt="Tayanari"
               style={{
-                position: "absolute", bottom: 0, left: "4%",
-                width: "30%", objectFit: "contain", objectPosition: "bottom",
+                position: "absolute", bottom: 0, right: "34%",
+                width: "26%", objectFit: "contain", objectPosition: "bottom",
                 filter: "drop-shadow(0 0 14px rgba(40,220,80,0.35))",
               }}
             />
@@ -548,8 +548,8 @@ export default function GameLauncher() {
                   style={{
                     display: "flex", flexDirection: "column", alignItems: "center",
                     flex: isMobile ? 1 : undefined,
-                    width: isMobile ? undefined : 78,
-                    padding: "8px 4px 7px", gap: 4, cursor: "pointer",
+                    width: isMobile ? undefined : 90,
+                    padding: "10px 6px 8px", gap: 5, cursor: "pointer",
                     background: active ? "rgba(240,200,60,0.12)" : "rgba(255,255,255,0.02)",
                     border: active ? "1.5px solid rgba(240,200,60,0.6)" : "1px solid rgba(240,200,60,0.16)",
                     borderRadius: 10,
@@ -557,11 +557,19 @@ export default function GameLauncher() {
                     transition: "all 0.18s",
                   }}
                 >
-                  <img src={c.sprite} alt={c.name} style={{
-                    height: 48, objectFit: "contain",
-                    imageRendering: "pixelated",
-                    filter: active ? "none" : "grayscale(0.5) opacity(0.7)",
-                  }} />
+                  <div style={{
+                    width: isMobile ? 46 : 56, height: isMobile ? 64 : 78,
+                    overflow: "hidden", display: "flex",
+                    alignItems: "flex-start", justifyContent: "center",
+                    flexShrink: 0,
+                  }}>
+                    <img src={c.sprite} alt={c.name} style={{
+                      width: "100%", objectFit: "contain",
+                      objectPosition: "top center",
+                      imageRendering: "pixelated",
+                      filter: active ? "none" : "grayscale(0.6) opacity(0.6)",
+                    }} />
+                  </div>
                   <div style={{ color: active ? "#f0d060" : "#8a7440", fontSize: 10, fontWeight: 800, letterSpacing: 1 }}>{c.name}</div>
                   <div style={{ color: "#6a5424", fontSize: 7, letterSpacing: 0.4 }}>{c.tag}</div>
                 </button>
@@ -655,7 +663,7 @@ export default function GameLauncher() {
             }} />
             {/* Divider rule */}
             <div style={{
-              position: "absolute", left: "46%", top: "12%", bottom: "12%",
+              position: "absolute", left: "50%", top: "12%", bottom: "12%",
               width: 1, background: "linear-gradient(to bottom,transparent,rgba(240,200,60,0.15),transparent)",
               pointerEvents: "none",
             }} />
@@ -663,8 +671,8 @@ export default function GameLauncher() {
             {/* Left info panel */}
             <div style={{
               position: "relative", zIndex: 2,
-              width: "46%", display: "flex", flexDirection: "column",
-              justifyContent: "center", padding: "0 0 0 9%",
+              width: "50%", display: "flex", flexDirection: "column",
+              justifyContent: "center", padding: "0 4% 0 7%",
             }}>
               <div style={{ color: "#4a3818", fontSize: 8, letterSpacing: 4, marginBottom: 14 }}>YOUR CHARACTER</div>
               <div style={{
@@ -672,7 +680,7 @@ export default function GameLauncher() {
                 textShadow: "0 0 22px rgba(240,200,60,0.22)",
               }}>THE<br />KEEPER</div>
               <div style={{ width: 46, height: 1, background: "rgba(240,200,60,0.22)", margin: "20px 0" }} />
-              <div style={{ color: "#c8bca0", fontSize: 11, lineHeight: 1.85, fontWeight: 300, maxWidth: 170 }}>
+              <div style={{ color: "#c8bca0", fontSize: 11, lineHeight: 1.85, fontWeight: 300, maxWidth: 320 }}>
                 {activeChar.desc}
               </div>
               <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 7 }}>
@@ -690,7 +698,7 @@ export default function GameLauncher() {
               <button
                 onClick={() => { if (!fading) beginJourney(); }}
                 style={{
-                  marginTop: 24, width: 178, padding: "11px 0",
+                  marginTop: 24, width: "100%", maxWidth: 260, padding: "11px 0",
                   background: "rgba(240,200,60,0.12)",
                   border: "1.5px solid rgba(240,200,60,0.48)",
                   borderRadius: 10, color: "#f0d060",
@@ -707,7 +715,7 @@ export default function GameLauncher() {
             {/* Right: character art */}
             <div style={{
               position: "absolute", zIndex: 2,
-              right: 0, top: 0, bottom: 0, width: "58%",
+              right: 0, top: 0, bottom: 0, width: "54%",
               display: "flex", alignItems: "flex-end",
               justifyContent: "center", overflow: "hidden",
             }}>
