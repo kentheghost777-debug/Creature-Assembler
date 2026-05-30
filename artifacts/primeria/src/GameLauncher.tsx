@@ -593,9 +593,7 @@ export default function GameLauncher() {
               {/* Character art — top, fixed height */}
               <div style={{
                 width: "100%", height: 260, flexShrink: 0,
-                position: "relative", display: "flex",
-                alignItems: "flex-end", justifyContent: "center",
-                overflow: "hidden",
+                position: "relative", overflow: "hidden",
               }}>
                 <div style={{
                   position: "absolute", inset: 0,
@@ -604,15 +602,15 @@ export default function GameLauncher() {
                 }} />
                 {activeChar.id === "rowan" ? (
                   <img src="./images/hero-art.png" alt="Rowan"
-                    style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "bottom center", filter: "drop-shadow(0 0 28px rgba(240,180,40,0.22))" }}
+                    style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 8, width: "100%", height: "calc(100% - 8px)", objectFit: "contain", objectPosition: "bottom center", filter: "drop-shadow(0 0 28px rgba(240,180,40,0.22))" }}
                   />
                 ) : activeChar.id === "kinju" ? (
                   <img src="./images/kinju.png" alt="Kinju"
-                    style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "bottom center", filter: "drop-shadow(0 0 28px rgba(240,180,40,0.22))" }}
+                    style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", objectPosition: "bottom center", filter: "drop-shadow(0 0 28px rgba(240,180,40,0.22))" }}
                   />
                 ) : (
                   <img src={activeChar.sprite} alt={activeChar.name}
-                    style={{ width: "100%", height: "92%", objectFit: "contain", objectPosition: "bottom center", imageRendering: "pixelated", filter: "drop-shadow(0 0 28px rgba(240,180,40,0.22))" }}
+                    style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", objectPosition: "bottom center", imageRendering: "pixelated", filter: "drop-shadow(0 0 28px rgba(240,180,40,0.22))" }}
                   />
                 )}
               </div>
