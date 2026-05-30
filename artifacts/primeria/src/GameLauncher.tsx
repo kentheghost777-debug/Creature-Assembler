@@ -604,15 +604,15 @@ export default function GameLauncher() {
                 }} />
                 {activeChar.id === "rowan" ? (
                   <img src="./images/hero-art.png" alt="Rowan"
-                    style={{ height: "100%", objectFit: "contain", objectPosition: "bottom center", filter: "drop-shadow(0 0 28px rgba(240,180,40,0.22))" }}
+                    style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "bottom center", filter: "drop-shadow(0 0 28px rgba(240,180,40,0.22))" }}
                   />
                 ) : activeChar.id === "kinju" ? (
                   <img src="./images/kinju.png" alt="Kinju"
-                    style={{ height: "100%", objectFit: "contain", objectPosition: "bottom center", filter: "drop-shadow(0 0 28px rgba(240,180,40,0.22))" }}
+                    style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "bottom center", filter: "drop-shadow(0 0 28px rgba(240,180,40,0.22))" }}
                   />
                 ) : (
                   <img src={activeChar.sprite} alt={activeChar.name}
-                    style={{ height: "92%", objectFit: "contain", objectPosition: "bottom center", imageRendering: "pixelated", filter: "drop-shadow(0 0 28px rgba(240,180,40,0.22))" }}
+                    style={{ width: "100%", height: "92%", objectFit: "contain", objectPosition: "bottom center", imageRendering: "pixelated", filter: "drop-shadow(0 0 28px rgba(240,180,40,0.22))" }}
                   />
                 )}
               </div>
