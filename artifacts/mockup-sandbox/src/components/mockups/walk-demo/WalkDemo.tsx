@@ -748,7 +748,7 @@ const A3_BLOCKED: Rect[] = [
 // ── Ellio's Home ─────────────────────────────────────────────────────────────
 const EH = { w: 800, h: 800 };
 const ELLIO_POS = { x: 400, y: 350 };
-const OW_ELLIO_DOOR: Rect  = [244, 778, 296, 808]; // ON visible front door — centered on Ellio south face (building x=214-327, y=780); requires "up" key (anti walk-by)
+const OW_ELLIO_DOOR: Rect  = [255, 776, 325, 812]; // ON visible front door — right-of-centre on Ellio south face (building x=214-327, y=780); requires "up" key (anti walk-by)
 const ELLIO_HOME_EXIT: Rect = [305, 725, 505, 790];
 const EH_BLOCKED: Rect[] = [
   [0, 0, 800, 60], [0, 0, 60, 800], [740, 0, 800, 800],
