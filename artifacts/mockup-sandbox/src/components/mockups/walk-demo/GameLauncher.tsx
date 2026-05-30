@@ -600,15 +600,19 @@ export default function GameLauncher() {
                   background: "radial-gradient(ellipse at 50% 80%,rgba(240,180,40,0.09) 0%,transparent 70%)",
                   pointerEvents: "none",
                 }} />
-                <img
-                  src={activeChar.sprite}
-                  alt={activeChar.name}
-                  style={{
-                    height: "92%", objectFit: "contain", objectPosition: "bottom center",
-                    imageRendering: "pixelated",
-                    filter: "drop-shadow(0 0 28px rgba(240,180,40,0.22))",
-                  }}
-                />
+                {activeChar.id === "rowan" ? (
+                  <img src="/__mockup/images/hero-art.png" alt="Rowan"
+                    style={{ height: "100%", objectFit: "contain", objectPosition: "bottom center", filter: "drop-shadow(0 0 28px rgba(240,180,40,0.22))" }}
+                  />
+                ) : activeChar.id === "kinju" ? (
+                  <img src="/__mockup/images/kinju.png" alt="Kinju"
+                    style={{ height: "100%", objectFit: "contain", objectPosition: "bottom center", filter: "drop-shadow(0 0 28px rgba(240,180,40,0.22))" }}
+                  />
+                ) : (
+                  <img src={activeChar.sprite} alt={activeChar.name}
+                    style={{ height: "92%", objectFit: "contain", objectPosition: "bottom center", imageRendering: "pixelated", filter: "drop-shadow(0 0 28px rgba(240,180,40,0.22))" }}
+                  />
+                )}
               </div>
 
               {/* Info below */}
@@ -720,15 +724,19 @@ export default function GameLauncher() {
               display: "flex", alignItems: "flex-end",
               justifyContent: "center", overflow: "hidden",
             }}>
-              <img
-                src={activeChar.sprite}
-                alt="Your Keeper"
-                style={{
-                  height: "min(74%, 400px)", objectFit: "contain", objectPosition: "bottom center",
-                  imageRendering: "pixelated",
-                  filter: "drop-shadow(-2px 0 36px rgba(240,180,40,0.18))",
-                }}
-              />
+              {activeChar.id === "rowan" ? (
+                <img src="/__mockup/images/hero-art.png" alt="Rowan"
+                  style={{ height: "96%", objectFit: "contain", objectPosition: "bottom center", filter: "drop-shadow(-2px 0 36px rgba(240,180,40,0.16))" }}
+                />
+              ) : activeChar.id === "kinju" ? (
+                <img src="/__mockup/images/kinju.png" alt="Kinju"
+                  style={{ height: "94%", objectFit: "contain", objectPosition: "bottom center", filter: "drop-shadow(-2px 0 36px rgba(240,180,40,0.18))" }}
+                />
+              ) : (
+                <img src={activeChar.sprite} alt="Your Keeper"
+                  style={{ height: "min(80%, 440px)", objectFit: "contain", objectPosition: "bottom center", imageRendering: "pixelated", filter: "drop-shadow(-2px 0 36px rgba(240,180,40,0.18))" }}
+                />
+              )}
             </div>
           </div>
         );

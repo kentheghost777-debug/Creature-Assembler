@@ -916,6 +916,23 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const [phase,       setPhase]       = useState<Phase>("walk");
   const [fading,      setFading]      = useState(false);
   const [held,        setHeld]        = useState<string | null>(null);
+
+  const [isTouch] = useState(() =>
+    typeof window !== "undefined" && ("ontouchstart" in window || navigator.maxTouchPoints > 0)
+  );
+  const [isLandscape, setIsLandscape] = useState(() =>
+    typeof window !== "undefined" && window.innerWidth > window.innerHeight
+  );
+  useEffect(() => {
+    const onResize = () => setIsLandscape(window.innerWidth > window.innerHeight);
+    window.addEventListener("resize", onResize);
+    window.addEventListener("orientationchange", onResize);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("orientationchange", onResize);
+    };
+  }, []);
+
   const [nearProf,         setNearProf]         = useState(false);
   const [nearRowan,        setNearRowan]        = useState(false);
   const [rowanInteractPos, setRowanInteractPos] = useState({ sx: 0, sy: 0 });
@@ -1260,7 +1277,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       lab:       ["/__mockup/images/prof-irwyn-sprite.png", "/__mockup/images/rowan_front_idle.png"],
       overworld: ["/__mockup/images/maya-sprite.png"],
       jay:       ["/__mockup/images/jay_front_idle.png"],
-      ellio:     ["/__mockup/images/ellio_front_idle.png"],
+      ellio:     ["/__mockup/images/ellio-sprite.png"],
       home:      ["/__mockup/images/jess_front_idle.png", "/__mockup/images/kael_front_idle.png"],
       lia:       ["/__mockup/images/lia_front_idle.png", "/__mockup/images/cindrax.png"],
       area3:     ["/__mockup/images/jay_front_idle.png", "/__mockup/images/lia_front_idle.png",
@@ -5639,85 +5656,59 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         }}/>
       </div>
 
-      {/* ── D-PAD ───────────────────────────────────────────────────────── */}
-      <div style={{
-        flexShrink:0,
-        display:"flex", flexDirection:"column", alignItems:"center",
-        gap:4, padding:"10px 0", paddingBottom:"max(18px, env(safe-area-inset-bottom, 18px))",
-        background:"rgba(0,0,0,0.82)", backdropFilter:"blur(10px)",
-      }}>
-        <Btn d="up"   label="↑" />
-        <div style={{ display:"flex", gap:4, alignItems:"center" }}>
-          <Btn d="left"  label="←" />
-          <div style={{ width:64 }} />
-          <Btn d="right" label="→" />
-        </div>
-        <div style={{ display:"flex", gap:8, alignItems:"center" }}>
-          <Btn d="down" label="↓" />
-          <button
-            onClick={() => { setJournalTab("party"); setShowJournal(true); }}
-            style={{
-              width:52, height:52, borderRadius:12,
-              background:"rgba(44,26,14,0.75)",
-              border:"1.5px solid rgba(180,130,60,0.45)",
-              color:"#c8a44a", fontSize:20,
-              display:"flex", flexDirection:"column", alignItems:"center",
-              justifyContent:"center", gap:1,
-              cursor:"pointer", backdropFilter:"blur(6px)",
-              boxShadow:"0 2px 8px rgba(0,0,0,0.5)",
-            }}
-            aria-label="START — Menu"
-          >📖</button>
-          <button
-            onClick={() => { setJournalTab("bag"); setShowJournal(true); }}
-            style={{
-              width:52, height:52, borderRadius:12,
-              background:"rgba(44,26,14,0.75)",
-              border:"1.5px solid rgba(180,130,60,0.45)",
-              color:"#c8a44a", fontSize:20,
-              display:"flex", flexDirection:"column", alignItems:"center",
-              justifyContent:"center", gap:1,
-              cursor:"pointer", backdropFilter:"blur(6px)",
-              boxShadow:"0 2px 8px rgba(0,0,0,0.5)",
-            }}
-            aria-label="SELECT — Bag"
-          >🎒</button>
+      {/* ── CONTROLS ─────────────────────────────────────────────────────── */}
 
-          {/* ── SAVE BUTTON ──────────────────────────────────────── */}
-          <button
-            onClick={() => {
-              persistWorldRef.current();
-              setJustSaved(true);
-              window.setTimeout(() => setJustSaved(false), 1600);
-            }}
-            style={{
-              width:52, height:52, borderRadius:12,
-              background: justSaved ? "rgba(30,60,30,0.85)" : "rgba(14,34,14,0.75)",
-              border: justSaved
-                ? "1.5px solid rgba(80,200,80,0.75)"
-                : "1.5px solid rgba(80,160,80,0.45)",
-              color: justSaved ? "#80e880" : "#70b870",
-              fontSize: justSaved ? 18 : 20,
-              display:"flex", flexDirection:"column", alignItems:"center",
-              justifyContent:"center", gap:1,
-              cursor:"pointer", backdropFilter:"blur(6px)",
-              boxShadow: justSaved
-                ? "0 2px 12px rgba(80,200,80,0.35)"
-                : "0 2px 8px rgba(0,0,0,0.5)",
-              transition:"background 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s",
-            }}
-            aria-label="Save game"
-          >
-            {justSaved ? (
-              <span style={{ fontSize:16, fontWeight:900, lineHeight:1 }}>✓</span>
-            ) : "💾"}
-            <span style={{
-              fontSize:7, letterSpacing:0.5, fontWeight:700, lineHeight:1,
-              color: justSaved ? "#80e880" : "#507850",
-            }}>{justSaved ? "SAVED" : "SAVE"}</span>
-          </button>
+      {/* PORTRAIT + TOUCH — bottom bar */}
+      {isTouch && !isLandscape && (
+        <div style={{
+          flexShrink:0,
+          display:"flex", flexDirection:"column", alignItems:"center",
+          gap:4, padding:"10px 0", paddingBottom:"max(18px, env(safe-area-inset-bottom, 18px))",
+          background:"rgba(0,0,0,0.82)", backdropFilter:"blur(10px)",
+        }}>
+          <Btn d="up"   label="↑" />
+          <div style={{ display:"flex", gap:4, alignItems:"center" }}>
+            <Btn d="left"  label="←" />
+            <div style={{ width:64 }} />
+            <Btn d="right" label="→" />
+          </div>
+          <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+            <Btn d="down" label="↓" />
+            <button onClick={() => { setJournalTab("party"); setShowJournal(true); }} style={{ width:52, height:52, borderRadius:12, background:"rgba(44,26,14,0.75)", border:"1.5px solid rgba(180,130,60,0.45)", color:"#c8a44a", fontSize:20, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:1, cursor:"pointer", backdropFilter:"blur(6px)", boxShadow:"0 2px 8px rgba(0,0,0,0.5)" }} aria-label="START — Menu">📖</button>
+            <button onClick={() => { setJournalTab("bag"); setShowJournal(true); }} style={{ width:52, height:52, borderRadius:12, background:"rgba(44,26,14,0.75)", border:"1.5px solid rgba(180,130,60,0.45)", color:"#c8a44a", fontSize:20, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:1, cursor:"pointer", backdropFilter:"blur(6px)", boxShadow:"0 2px 8px rgba(0,0,0,0.5)" }} aria-label="SELECT — Bag">🎒</button>
+            <button onClick={() => { persistWorldRef.current(); setJustSaved(true); window.setTimeout(() => setJustSaved(false), 1600); }} style={{ width:52, height:52, borderRadius:12, background: justSaved ? "rgba(30,60,30,0.85)" : "rgba(14,34,14,0.75)", border: justSaved ? "1.5px solid rgba(80,200,80,0.75)" : "1.5px solid rgba(80,160,80,0.45)", color: justSaved ? "#80e880" : "#70b870", fontSize: justSaved ? 18 : 20, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:1, cursor:"pointer", backdropFilter:"blur(6px)", boxShadow: justSaved ? "0 2px 12px rgba(80,200,80,0.35)" : "0 2px 8px rgba(0,0,0,0.5)", transition:"background 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s" }} aria-label="Save game">{justSaved ? <span style={{ fontSize:16, fontWeight:900, lineHeight:1 }}>✓</span> : "💾"}<span style={{ fontSize:7, letterSpacing:0.5, fontWeight:700, lineHeight:1, color: justSaved ? "#80e880" : "#507850" }}>{justSaved ? "SAVED" : "SAVE"}</span></button>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* LANDSCAPE + TOUCH — floating corner overlays */}
+      {isTouch && isLandscape && (
+        <>
+          <div style={{ position:"absolute", bottom:"max(8px, env(safe-area-inset-bottom, 8px))", left:"max(8px, env(safe-area-inset-left, 8px))", zIndex:6, display:"flex", flexDirection:"column", alignItems:"center", gap:3, background:"rgba(0,0,0,0.55)", backdropFilter:"blur(10px)", borderRadius:16, padding:"8px" }}>
+            <Btn d="up"   label="↑" small />
+            <div style={{ display:"flex", gap:3, alignItems:"center" }}>
+              <Btn d="left"  label="←" small />
+              <div style={{ width:52 }} />
+              <Btn d="right" label="→" small />
+            </div>
+            <Btn d="down" label="↓" small />
+          </div>
+          <div style={{ position:"absolute", bottom:"max(8px, env(safe-area-inset-bottom, 8px))", right:"max(8px, env(safe-area-inset-right, 8px))", zIndex:6, display:"flex", flexDirection:"column", gap:4, alignItems:"flex-end" }}>
+            <button onClick={() => { setJournalTab("party"); setShowJournal(true); }} style={{ width:52, height:52, borderRadius:12, background:"rgba(44,26,14,0.75)", border:"1.5px solid rgba(180,130,60,0.45)", color:"#c8a44a", fontSize:20, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:1, cursor:"pointer", backdropFilter:"blur(6px)", boxShadow:"0 2px 8px rgba(0,0,0,0.5)" }}>📖</button>
+            <button onClick={() => { setJournalTab("bag"); setShowJournal(true); }} style={{ width:52, height:52, borderRadius:12, background:"rgba(44,26,14,0.75)", border:"1.5px solid rgba(180,130,60,0.45)", color:"#c8a44a", fontSize:20, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:1, cursor:"pointer", backdropFilter:"blur(6px)", boxShadow:"0 2px 8px rgba(0,0,0,0.5)" }}>🎒</button>
+            <button onClick={() => { persistWorldRef.current(); setJustSaved(true); window.setTimeout(() => setJustSaved(false), 1600); }} style={{ width:52, height:52, borderRadius:12, background: justSaved ? "rgba(30,60,30,0.85)" : "rgba(14,34,14,0.75)", border: justSaved ? "1.5px solid rgba(80,200,80,0.75)" : "1.5px solid rgba(80,160,80,0.45)", color: justSaved ? "#80e880" : "#70b870", fontSize: justSaved ? 18 : 20, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:1, cursor:"pointer", backdropFilter:"blur(6px)", boxShadow: justSaved ? "0 2px 12px rgba(80,200,80,0.35)" : "0 2px 8px rgba(0,0,0,0.5)", transition:"background 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s" }}>{justSaved ? <span style={{ fontSize:16, fontWeight:900, lineHeight:1 }}>✓</span> : "💾"}<span style={{ fontSize:7, letterSpacing:0.5, fontWeight:700, lineHeight:1, color: justSaved ? "#80e880" : "#507850" }}>{justSaved ? "SAVED" : "SAVE"}</span></button>
+          </div>
+        </>
+      )}
+
+      {/* DESKTOP (non-touch) — floating action buttons only, no D-pad */}
+      {!isTouch && (
+        <div style={{ position:"absolute", bottom:14, right:14, zIndex:6, display:"flex", gap:6 }}>
+          <button onClick={() => { setJournalTab("party"); setShowJournal(true); }} style={{ width:44, height:44, borderRadius:10, background:"rgba(44,26,14,0.82)", border:"1.5px solid rgba(180,130,60,0.45)", color:"#c8a44a", fontSize:18, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:1, cursor:"pointer", backdropFilter:"blur(6px)", boxShadow:"0 2px 8px rgba(0,0,0,0.5)" }} title="Journal (J)">📖</button>
+          <button onClick={() => { setJournalTab("bag"); setShowJournal(true); }} style={{ width:44, height:44, borderRadius:10, background:"rgba(44,26,14,0.82)", border:"1.5px solid rgba(180,130,60,0.45)", color:"#c8a44a", fontSize:18, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:1, cursor:"pointer", backdropFilter:"blur(6px)", boxShadow:"0 2px 8px rgba(0,0,0,0.5)" }} title="Bag (B)">🎒</button>
+          <button onClick={() => { persistWorldRef.current(); setJustSaved(true); window.setTimeout(() => setJustSaved(false), 1600); }} style={{ width:44, height:44, borderRadius:10, background: justSaved ? "rgba(30,60,30,0.85)" : "rgba(14,34,14,0.82)", border: justSaved ? "1.5px solid rgba(80,200,80,0.75)" : "1.5px solid rgba(80,160,80,0.45)", color: justSaved ? "#80e880" : "#70b870", fontSize: justSaved ? 16 : 18, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:1, cursor:"pointer", backdropFilter:"blur(6px)", boxShadow: justSaved ? "0 2px 12px rgba(80,200,80,0.35)" : "0 2px 8px rgba(0,0,0,0.5)", transition:"background 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s" }} title="Save (S)">{justSaved ? <span style={{ fontSize:14, fontWeight:900, lineHeight:1 }}>✓</span> : "💾"}<span style={{ fontSize:7, letterSpacing:0.5, fontWeight:700, lineHeight:1, color: justSaved ? "#80e880" : "#507850" }}>{justSaved ? "SAVED" : "SAVE"}</span></button>
+        </div>
+      )}
 
       <style>{`
         @keyframes pulse       { 0%,100%{opacity:.35} 50%{opacity:1} }

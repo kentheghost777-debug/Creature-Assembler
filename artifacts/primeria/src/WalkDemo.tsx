@@ -8,6 +8,14 @@ import {
   type Move,
 } from "./moves";
 import { type CharId, type RoleId, type PartySave, type WorldSave, ROLES, readSave, updateParty, updateWorld, updateRole, roleDef } from "./save";
+import { playTrack, playJingle, stopAll } from "./audioManager";
+
+// ── Audio track paths ─────────────────────────────────────────────────────
+const TOWN_TRACK   = "./audio/primeria_town.mp3";
+const BATTLE_TRACK = "./audio/primeria_battle.mp3";
+const ROUTE_TRACK  = "./audio/primeria_route.mp3";
+const WIN_JINGLE   = "./audio/primeria_victory.mp3";
+const CATCH_JINGLE = "./audio/primeria_catch.mp3";
 
 // ── Level-up reward generation ────────────────────────────────────────────
 const STAT_KEYS = ["hp", "atk", "def", "spd"] as const;
@@ -188,7 +196,12 @@ type Phase = "walk" | "d1" | "d2" | "pick" | "d3" | "role_pick" | "d4" | "d5"
            | "jay_a3_win" | "jay_a3_lose" | "jay_a3_idle"
            // Area 3 — Lia trainer battle (4-tier progressive, repeatable)
            | "lia_a3_d1" | "lia_a3_d2" | "lia_a3_d3" | "lia_a3_battle"
-           | "lia_a3_win" | "lia_a3_lose" | "lia_a3_idle";
+           | "lia_a3_win" | "lia_a3_lose" | "lia_a3_idle"
+           // Cleminus "Jerbs" — the demo-ending mystery NPC in Area 3 far west
+           | "jerbs_appear" | "jerbs_d1" | "jerbs_d2" | "jerbs_d3"
+           | "jerbs_cards" | "jerbs_d4" | "jerbs_remind"
+           | "jerbs_return_d1" | "jerbs_return_d2" | "jerbs_a3_idle"
+           | "demo_end";
 type Scene = "overworld" | "lab" | "maya" | "jay" | "home" | "ellio" | "lia" | "route1" | "route2" | "area3" | "battle";
 type Rect  = [number, number, number, number]; // x1 y1 x2 y2 world-px
 
@@ -496,8 +509,8 @@ const FLAVOR_TRACKS = [
 // ── Collision zones ─────────────────────────────────────────────────────────
 const OW_BLOCKED: Rect[] = [
   // ── OUTER BORDERS ──────────────────────────────────────────────────────────
-  [0,    0,   155,  290],  // left forest — north  (gap y=290-360 → Area 3 entrance)
-  [0,  360,   155,  900],  // left forest — south
+  [0,    0,   155,  430],  // left forest — north  (gap y=430-475 → Area 3 corridor at Jay's SW corner)
+  [0,  475,   155,  900],  // left forest — south
   [155,  0,   214,   85],  // NW top strip (left of Route-1)
   [327,  0,  1124,   85],  // top border (right of Route-1 gap)
   [978,  85, 1124,  600],  // right forest — upper
@@ -519,11 +532,10 @@ const OW_BLOCKED: Rect[] = [
 
   // ── JAY'S HOME — fence perimeter + body (south gate x 240–308) ─────────────
   [214, 225,  327,  400],  // building body
-  [160, 225,  214,  290],  // west fence — north  (gap y=290-360 → Area 3 corridor)
-  [160, 360,  214,  452],  // west fence — south
-  [327, 225,  335,  452],  // east fence (shrunk x=327–335 — opens Route-1 corridor east of Jay)
-  [160, 440,  240,  452],  // south fence — left of gate
-  [308, 440,  335,  452],  // south fence — right of gate (shrunk to match east fence)
+  [160, 225,  214,  430],  // west fence — solid north-to-building-bottom (gap y=430-470 → Area 3 corridor)
+  [327, 225,  335,  482],  // east fence (shrunk x=327–335 — opens Route-1 corridor east of Jay)
+  [160, 470,  240,  482],  // south fence — left of gate
+  [308, 470,  335,  482],  // south fence — right of gate (shrunk to match east fence)
 
   // ── MAYA'S HOME — fence perimeter + body (south gate x 845–912) ────────────
   [807, 225,  928,  383],  // building body
@@ -535,7 +547,7 @@ const OW_BLOCKED: Rect[] = [
   // ── PLAYER HOME — fence perimeter + body (north gate x 532–602) ────────────
   [367, 590,  757,  820],  // building body — pushed south to leave a real yard
   [359, 537,  532,  547],  // north fence — left of gate  (was x1=340; trimmed for PH↔Elio south corridor)
-  [602, 537,  765,  547],  // north fence — right of gate (was x2=782; trimmed for PH↔Lia south corridor)
+  [602, 537,  750,  547],  // north fence — right of gate (x2 trimmed from 765→750 to widen PH↔Lia gap to 50px)
   // PH west fence REMOVED — Elio↔PH corridor now spans body-to-body (x=327–367, ~40 wide)
   // PH east fence REMOVED — PH↔Lia corridor now spans body-to-body (x=757–807, ~50 wide)
 
@@ -548,7 +560,7 @@ const OW_BLOCKED: Rect[] = [
 
   // ── LIA'S HOME — fence perimeter + body (north gate x 846–910) ─────────────
   [807, 565,  942,  780],  // building body
-  [789, 537,  846,  547],  // north fence — left of gate  (was x1=775; trimmed for PH↔Lia south corridor)
+  [800, 537,  846,  547],  // north fence — left of gate  (x1 pushed from 789→800 to widen PH↔Lia gap to 50px)
   [910, 537,  950,  547],  // north fence — right of gate (was x2=978; trimmed for east-side corridor x=950–978)
   // Lia west fence REMOVED — PH↔Lia corridor widened to body-to-body
   [942, 537,  950,  790],  // east fence (narrowed for east-side corridor x=950–978)
@@ -585,7 +597,7 @@ const LH_BLOCKED: Rect[] = [
 
 // Route-1 exit trigger aligned with the top-left gap
 const OW_ROUTE1_EXIT: Rect = [212, 0, 327, 15];
-const OW_PROF_DOOR: Rect = [498, 328, 580, 378]; // tight zone around lab door (glow center x≈538)
+const OW_PROF_DOOR: Rect = [533, 325, 615, 382]; // tight zone around lab door — shifted east to visual door art
 
 // ── Whisperroot Trail (Route 1 / Area 1) ─────────────────────────────────────
 // South gate (blue) connects back to town; north continues deeper (future)
@@ -627,7 +639,7 @@ const LAB_EXIT: Rect = [262, 645, 438, 692]; // exit lab
 // ── Maya's Home ───────────────────────────────────────────────────────────────
 const MY = { w: 800, h: 800 };
 const MAYA_POS = { x: 870, y: 427 }; // Maya standing at her doorstep
-const OW_MAYA_DOOR: Rect  = [895, 383, 960, 445]; // moved EAST to actual visible door art (mailbox/eaves were east of trigger before)
+const OW_MAYA_DOOR: Rect  = [910, 383, 975, 445]; // shifted further east to align with visible door art
 const MAYA_HOME_EXIT: Rect = [310, 722, 490, 790]; // exit trigger at interior door
 const MAYA_SHELL: Rect     = [385, 400, 455, 460]; // pickup zone — center of the living-room rug
 const MAYA_BLOCKED: Rect[] = [
@@ -657,7 +669,7 @@ const MAYA_BLOCKED: Rect[] = [
 // ── Jay's Home ────────────────────────────────────────────────────────────────
 const JY = { w: 800, h: 800 };
 const JAY_POS = { x: 370, y: 310 }; // Jay standing in the center of his room
-const OW_JAY_DOOR: Rect  = [240, 400, 308, 448]; // tight zone at Jay's door (house body ends y=400)
+const OW_JAY_DOOR: Rect  = [225, 400, 293, 448]; // shifted west to align with visible door art
 const JAY_HOME_EXIT: Rect = [310, 725, 490, 790]; // interior door at bottom
 const JAY_BLOCKED: Rect[] = [
   // ── WALLS ──────────────────────────────────────────────────────────────────
@@ -688,8 +700,17 @@ const JAY_BLOCKED: Rect[] = [
 // 1024×768 landscape map, east entry/exit at x≈960.
 const A3 = { w: 1024, h: 768 };
 const A3_SPAWN      = { x: 920, y: 380 };        // spawn near east entry
-const OW_AREA3_EXIT: Rect = [0,  290,  20, 360]; // left edge of OW forest gap
+const OW_AREA3_EXIT: Rect = [0,  428,  22, 477]; // left edge of OW — gap at Jay's SW corner (y=430-470 between building bottom and south fence)
 const A3_RETURN_OW:  Rect = [960, 310, 1024, 450]; // east edge of Area 3
+// Cleminus "Jerbs" — west ruin corridor, opposite side from town entry
+// At y=380, x=235 is inside the doorway gap (y=340-430) between the two left ruin wall pieces.
+const JERBS_POS = { x: 235, y: 380 };
+// Jerbeen sprite sheet: 1024×1536, 5 cols × 3 rows, each frame ~205×512
+const JERBS_SW = 1024; const JERBS_SH = 1536;
+const JERBS_FW = Math.floor(JERBS_SW / 5); const JERBS_FH = Math.floor(JERBS_SH / 3);
+// Portal sprite sheet: 1536×1024, 5 cols × 2 rows, each frame ~307×512
+const PORTAL_SW = 1536; const PORTAL_SH = 1024;
+const PORTAL_FW = Math.floor(PORTAL_SW / 5); const PORTAL_FH = Math.floor(PORTAL_SH / 2);
 const A3_BLOCKED: Rect[] = [
   // ── OUTER BORDER STRIPS ───────────────────────────────────────────────────
   [0,    0,  1024,   55],  // top tree strip
@@ -727,7 +748,7 @@ const A3_BLOCKED: Rect[] = [
 // ── Ellio's Home ─────────────────────────────────────────────────────────────
 const EH = { w: 800, h: 800 };
 const ELLIO_POS = { x: 400, y: 350 };
-const OW_ELLIO_DOOR: Rect  = [155, 780, 215, 810]; // ON visible front door — left side of Ellio's south face (mailbox is on the RIGHT)
+const OW_ELLIO_DOOR: Rect  = [255, 776, 325, 812]; // ON visible front door — right-of-centre on Ellio south face (building x=214-327, y=780); requires "up" key (anti walk-by)
 const ELLIO_HOME_EXIT: Rect = [305, 725, 505, 790];
 const EH_BLOCKED: Rect[] = [
   [0, 0, 800, 60], [0, 0, 60, 800], [740, 0, 800, 800],
@@ -896,11 +917,9 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const [fading,      setFading]      = useState(false);
   const [held,        setHeld]        = useState<string | null>(null);
 
-  // Touch-device detection (one-time; capability doesn't change at runtime)
   const [isTouch] = useState(() =>
     typeof window !== "undefined" && ("ontouchstart" in window || navigator.maxTouchPoints > 0)
   );
-  // Landscape detection — updates on resize / orientationchange
   const [isLandscape, setIsLandscape] = useState(() =>
     typeof window !== "undefined" && window.innerWidth > window.innerHeight
   );
@@ -913,6 +932,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       window.removeEventListener("orientationchange", onResize);
     };
   }, []);
+
   const [nearProf,         setNearProf]         = useState(false);
   const [nearRowan,        setNearRowan]        = useState(false);
   const [rowanInteractPos, setRowanInteractPos] = useState({ sx: 0, sy: 0 });
@@ -978,6 +998,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const [jayA3InteractPos,     setJayA3InteractPos]     = useState({ sx: 0, sy: 0 });
   const [nearLiaA3,            setNearLiaA3]            = useState(false);
   const [liaA3InteractPos,     setLiaA3InteractPos]     = useState({ sx: 0, sy: 0 });
+  const [cleminusMet,          setCleminusMet]          = useState(() => savedWorld?.cleminusMet ?? false);
+  const [demoComplete,         setDemoComplete]         = useState(() => savedWorld?.demoComplete ?? false);
+  const [nearJerbs,            setNearJerbs]            = useState(false);
+  const [jerbsInteractPos,     setJerbsInteractPos]     = useState({ sx: 0, sy: 0 });
+  const [portalFrame,          setPortalFrame]          = useState(0);
+  const [portalOpen,           setPortalOpen]           = useState(false);
+  const [showCardIndex,        setShowCardIndex]        = useState(0); // 0=keeper, 1=elder
   // Role is declared in the lab at starter time. Older saves (pre-change) that
   // already hold a starter are treated as having declared, so their badge shows.
   const [roleChosen,           setRoleChosen]           = useState(() => savedWorld?.roleChosen ?? (savedParty?.starterId != null));
@@ -1000,6 +1027,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const [showStarterGate, setShowStarterGate] = useState(false);
   const [battleNotif,   setBattleNotif]   = useState<{ title: string; sub: string } | null>(null);
   const [justSaved,     setJustSaved]     = useState(false);
+  // isMobile: computed once — the game runs fullscreen and doesn't layout-shift on resize
+  const isMobile = window.innerWidth <= 520;
   // ── Starter progression ───────────────────────────────────────────────────
   const [starterLevel, setStarterLevel] = useState(() => savedParty?.level ?? 5);
   const [starterXp,    setStarterXp]    = useState(() => savedParty?.xp ?? 0);
@@ -1071,6 +1100,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     route1Visited, wifeOnPath, wifeIntercepted, route2Greeted, profRoute2Done,
     hasObsidianRealmShell, wyvruntCaught, wyvruntForm, wyrLoyalty,
     jayA3Wins, liaA3Wins, roleChosen, checksStreak,
+    cleminusMet, demoComplete,
   });
   const persistWorld = useCallback(() => {
     const safe = lastSafeRef.current;
@@ -1091,6 +1121,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       route1Visited, wifeOnPath, wifeIntercepted, route2Greeted, profRoute2Done,
       hasObsidianRealmShell, wyvruntCaught, wyvruntForm, wyrLoyalty,
       jayA3Wins, liaA3Wins, roleChosen, checksStreak,
+      cleminusMet, demoComplete,
     };
     persistWorld();
   }, [
@@ -1099,7 +1130,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     jessDone, jayDone, mayaInitDone, mayaDone, ellioDone, liaDone,
     route1Visited, wifeOnPath, wifeIntercepted, route2Greeted, profRoute2Done,
     hasObsidianRealmShell, wyvruntCaught, wyvruntForm, wyrLoyalty,
-    jayA3Wins, liaA3Wins, roleChosen, checksStreak, persistWorld,
+    jayA3Wins, liaA3Wins, roleChosen, checksStreak,
+    cleminusMet, demoComplete, persistWorld,
   ]);
   // On resume with Wyvrunt already caught, seed the follower beside the player
   // so it doesn't visibly fly in from the map origin on the first frame.
@@ -1195,6 +1227,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const jessPathPortraitRef= useRef<HTMLCanvasElement>(null);
   const jayA3CanvasRef     = useRef<HTMLCanvasElement>(null);
   const liaA3CanvasRef     = useRef<HTMLCanvasElement>(null);
+  const jerbsCanvasRef     = useRef<HTMLCanvasElement>(null);
   // Refs synced from arc state so the game-loop closure stays fresh
   const wifeOnPathRef       = useRef(false);
   const wifeInterceptedRef  = useRef(false);
@@ -1244,10 +1277,11 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       lab:       ["./images/prof-irwyn-sprite.png", "./images/rowan_front_idle.png"],
       overworld: ["./images/maya-sprite.png"],
       jay:       ["./images/jay_front_idle.png"],
-      ellio:     ["./images/ellio_front_idle.png"],
+      ellio:     ["./images/ellio-sprite.png"],
       home:      ["./images/jess_front_idle.png", "./images/kael_front_idle.png"],
       lia:       ["./images/lia_front_idle.png", "./images/cindrax.png"],
-      area3:     ["./images/jay_front_idle.png", "./images/lia_front_idle.png"],
+      area3:     ["./images/jay_front_idle.png", "./images/lia_front_idle.png",
+                  "./images/jerbs_sprite.png", "./images/jerbs_portal.png"],
     };
     (sceneNPCs[scene] ?? []).forEach(loadImg);
   }, [scene]);
@@ -1260,11 +1294,27 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   useEffect(() => { wyvruntCaughtRef.current   = wyvruntCaught; },   [wyvruntCaught]);
   useEffect(() => { route1VisitedRef.current   = route1Visited; },   [route1Visited]);
   useEffect(() => { starterRefArc.current      = !!starter; },       [starter]);
+  const cleminusMetRef = useRef(cleminusMet);
+  useEffect(() => { cleminusMetRef.current = cleminusMet; }, [cleminusMet]);
   useEffect(() => {
     allTownItemsRef.current = shellsCollected && hasHealingRune && hasResonanceStone && hasHearthberries && hasSatchel;
   }, [shellsCollected, hasHealingRune, hasResonanceStone, hasHearthberries, hasSatchel]);
   useEffect(() => { phaseRef.current = phase; },    [phase]);
   useEffect(() => { sceneRef.current = scene; },    [scene]);
+
+  // ── Background music — changes with scene ─────────────────────────────
+  useEffect(() => {
+    if (scene === "battle") {
+      playTrack(BATTLE_TRACK);
+    } else if (scene === "route1" || scene === "route2" || scene === "area3") {
+      playTrack(ROUTE_TRACK);
+    } else {
+      playTrack(TOWN_TRACK);
+    }
+  }, [scene]);
+
+  // Stop all audio on unmount
+  useEffect(() => { return () => { stopAll(); }; }, []);
 
   // Draw Prof Irwyn world sprite via canvas (proper transparency, no blend-mode)
   useEffect(() => {
@@ -1493,6 +1543,36 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     tryDraw();
   }, [scene]);
 
+  // Draw Jerbs (Cleminus) in Area 3 — row 1 (front-facing), col 2 of the jerbeen sheet
+  useEffect(() => {
+    if (scene !== "area3") return;
+    const src = "./images/jerbs_sprite.png";
+    const tryDraw = () => {
+      const c = jerbsCanvasRef.current;
+      if (!c) return;
+      const img = imgCache[src];
+      if (!img?.complete || img.naturalWidth === 0) { setTimeout(tryDraw, 150); return; }
+      const fw = Math.floor(img.naturalWidth / 5);
+      const fh = Math.floor(img.naturalHeight / 3);
+      c.width = 56; c.height = 112;
+      const ctx = c.getContext("2d")!;
+      ctx.clearRect(0, 0, 56, 112);
+      // col 2, row 1 = clearest front-standing pose
+      ctx.drawImage(img, fw * 2, fh * 1, fw, fh, 0, 0, 56, 112);
+    };
+    loadImg(src);
+    tryDraw();
+  }, [scene]);
+
+  // Portal frame animation — cycles while portalOpen
+  useEffect(() => {
+    if (!portalOpen) { setPortalFrame(0); return; }
+    const iv = window.setInterval(() => {
+      setPortalFrame(f => (f + 1) % 10);
+    }, 120);
+    return () => clearInterval(iv);
+  }, [portalOpen]);
+
   // Draw wife portrait for jess_path_ dialogue phases
   useEffect(() => {
     if (!phase.startsWith("jess_path_")) return;
@@ -1631,7 +1711,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           setLockedDoorNotif("It's locked.");
           window.setTimeout(() => setLockedDoorNotif(null), 1600);
         } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_PROF_DOOR as Rect)) {
-          transitionTo("lab", 350, 590);
+          if (!starterRefArc.current && !allTownItemsRef.current) {
+            worldPos.current.y = (OW_PROF_DOOR as Rect)[3] + 20;
+            setLockedDoorNotif("Prof. Irwyn says: Say your goodbyes first — visit everyone in town before you take this step.");
+            window.setTimeout(() => setLockedDoorNotif(null), 2800);
+          } else {
+            transitionTo("lab", 350, 590);
+          }
         } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_MAYA_DOOR)) {
           transitionTo("maya", 400, 660);
         } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_JAY_DOOR)) {
@@ -1646,18 +1732,39 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           transitionTo("home", 400, 670);       // enter Player Home — trigger sits ON visible front door (south face); require UP key so east-west walk-by on the south road doesn't enter
         } else if (sc === "home" && inRect(worldPos.current.x, worldPos.current.y, PLAYER_HOME_EXIT)) {
           transitionTo("overworld", 575, 858);  // exit onto south road, S of door (door y=820–850); avoid landing inside trigger
-        } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_ELLIO_DOOR)) {
-          transitionTo("ellio", 400, 670);      // enter Ellio's Home — trigger on visible front door
+        } else if (sc === "overworld" && h === "up" && inRect(worldPos.current.x, worldPos.current.y, OW_ELLIO_DOOR)) {
+          transitionTo("ellio", 400, 670);      // enter Ellio's Home — require "up" key (anti walk-by)
         } else if (sc === "ellio" && inRect(worldPos.current.x, worldPos.current.y, ELLIO_HOME_EXIT)) {
-          transitionTo("overworld", 270, 830);  // exit onto south road, S of door
+          transitionTo("overworld", 270, 812);  // exit onto south road, S of door
         } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_LIA_DOOR)) {
           transitionTo("lia", 400, 670);        // enter Lia's Home — trigger on visible front door
         } else if (sc === "lia" && inRect(worldPos.current.x, worldPos.current.y, LIA_HOME_EXIT)) {
           transitionTo("overworld", 875, 830);  // exit onto south road, S of door
         } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_AREA3_EXIT)) {
-          transitionTo("area3", A3_SPAWN.x, A3_SPAWN.y);
+          if (!starterRefArc.current) {
+            worldPos.current.x = OW_AREA3_EXIT[2] + 30;
+            setLockedDoorNotif("You need a Tayanari companion before heading into Westwood Reaches.");
+            window.setTimeout(() => setLockedDoorNotif(null), 2400);
+          } else if (!route1VisitedRef.current) {
+            worldPos.current.x = OW_AREA3_EXIT[2] + 30;
+            setLockedDoorNotif("Explore Whisperroot Trail (north gate) before venturing west.");
+            window.setTimeout(() => setLockedDoorNotif(null), 2400);
+          } else if (!route2GreetedRef.current) {
+            worldPos.current.x = OW_AREA3_EXIT[2] + 30;
+            setLockedDoorNotif("Explore the Verdant Basin (east gate) first.");
+            window.setTimeout(() => setLockedDoorNotif(null), 2400);
+          } else {
+            transitionTo("area3", A3_SPAWN.x, A3_SPAWN.y);
+          }
         } else if (sc === "area3" && inRect(worldPos.current.x, worldPos.current.y, A3_RETURN_OW)) {
-          transitionTo("overworld", 50, 325);   // forest gap corridor — walk east to re-enter town
+          transitionTo("overworld", 170, 453);  // Jay's SW courtyard — walk east back into town
+        } else if (sc === "area3" && worldPos.current.x < 215 && phaseRef.current === "walk") {
+          // Far-west ruin corridor — Jerbs appears the first time here
+          worldPos.current.x = 215;
+          if (!cleminusMetRef.current) {
+            setPortalOpen(true);
+            setPhase("jerbs_appear");
+          }
         }
 
         // Keep the resume point current, and throttle position saves while walking.
@@ -1815,16 +1922,21 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           setNearLia(near);
           if (near) setLiaInteractPos({ sx: screenX, sy: screenY });
         }
-        // Near-Jay/Lia check (Area 3 — trainer battles)
+        // Near-Jay/Lia/Jerbs check (Area 3 — trainer battles + demo NPC)
         if (sc === "area3") {
-          const djay = dist(px, py, JAY_A3_POS.x, JAY_A3_POS.y);
-          const dlia = dist(px, py, LIA_A3_POS.x, LIA_A3_POS.y);
+          const djay  = dist(px, py, JAY_A3_POS.x, JAY_A3_POS.y);
+          const dlia  = dist(px, py, LIA_A3_POS.x, LIA_A3_POS.y);
+          const djerbs = dist(px, py, JERBS_POS.x, JERBS_POS.y);
           const screenX = (px - cam.current.x) * ZOOM;
           const screenY = (py - cam.current.y - topOff - 28) * ZOOM;
           setNearJayA3(djay < 120);
           if (djay < 120) setJayA3InteractPos({ sx: screenX, sy: screenY });
           setNearLiaA3(dlia < 120);
           if (dlia < 120) setLiaA3InteractPos({ sx: screenX, sy: screenY });
+          // Jerbs is approachable only after his portal intro
+          const jerbs_near = cleminusMetRef.current && djerbs < 110;
+          setNearJerbs(jerbs_near);
+          if (jerbs_near) setJerbsInteractPos({ sx: screenX, sy: screenY });
         }
         // Near-wife on south town path (overworld, while she's there)
         if (sc === "overworld" && wifeOnPathRef.current) {
@@ -1887,6 +1999,17 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       jay_a3_win: "walk", jay_a3_lose: "walk", jay_a3_idle: "walk",
       lia_a3_d1: "lia_a3_d2", lia_a3_d2: "lia_a3_d3", lia_a3_d3: "lia_a3_battle",
       lia_a3_win: "walk", lia_a3_lose: "walk", lia_a3_idle: "walk",
+      // Cleminus "Jerbs"
+      jerbs_appear: "jerbs_d1",
+      jerbs_d1: "jerbs_d2", jerbs_d2: "jerbs_d3",
+      jerbs_d3: "jerbs_remind",    // default — JSX overrides to jerbs_cards when beatBoth
+      jerbs_cards: "jerbs_d4",
+      jerbs_d4: "demo_end",
+      jerbs_remind: "walk",
+      jerbs_return_d1: "jerbs_return_d2",
+      jerbs_return_d2: "jerbs_cards",
+      jerbs_a3_idle: "walk",
+      demo_end: "walk",
     };
     const next = map[from];
     if (next) setPhase(next);
@@ -1948,37 +2071,37 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     d3: starter ? `${starter.name}! A wonderful choice. I can already sense a connection forming. Treat them well — they will never let you down.` : "",
     d4: "Head north past the village gate through Route 1 to the Wild Area. Wild Tayanari roam freely there. It is the best place for a new Keeper to earn their first bonds.",
     d5: "But be careful — wild Tayanari are spirited and won't hesitate to test you. Keep your partner healthy and your wits sharp. I'll meet you in the Wild Area. Safe travels, Keeper.",
-    maya_d1: "There you are — I was hoping you'd stop by before you left. I've had something set aside for you for a while. My father's collection. I think today is finally the day I hand it over.",
-    maya_d2: "My father... he was a legendary Keeper. He spent his whole life exploring, bonding with Tayanari no one else could ever reach. He passed last winter. I still miss him every single day.",
-    maya_d3: "Before he left us, he entrusted me with his collection of Weathered Realm Shells — rare items that Keepers use in the wild. He told me: 'Give these to someone worthy, Maya. You'll know them when you see them.'",
-    maya_d4: "I've been holding onto them, wondering who that person could be. But looking at you... I think he would be so proud. Please — go inside and take them. Make us both proud out there.",
+    maya_d1: "There you are — I was hoping you'd stop by before you left. I've had something set aside for you for a while. My father's collection. I think today is finally the day I hand it over. ...I almost went myself, you know. Put my name in three times. He talked me out of every one. I thought I resented him for it. I don't, anymore.",
+    maya_d2: "My father was a legendary Keeper. He spent his whole life out there, bonding with Tayanari no one else could reach. He'd come home with field notes so full he had to tape extra pages in. Last creature he ever bonded was on the high cliffs north of the ruins — he said it looked at him like it already knew his name. He passed last winter. I miss him every single day.",
+    maya_d3: "Before he left us, he pressed his Weathered Realm Shells into my hands. Old things — you can feel the weight of every journey in them. He said: 'Give these to someone worthy, Maya. You'll know them when you see them.' I've been watching people leave for their Trials for months. I knew when I saw you.",
+    maya_d4: "Please — go inside and take them. And when you're actually out there, past the ruins — look up at the high cliffs for me. He used to say the view from the top changed everything. I want to believe that's still true.",
     jay_d1: "Today's the day — you're walking into that lab and picking your first Tayanari. I've been thinking about this for months. I know exactly who I'm going for when it's my turn. You ready? Actually — doesn't matter. Today you're doing it either way.",
-    jay_d2: "I've been training harder than you know. Every morning before you were even awake. I'm not stepping out of this village to finish second. That's not who I am and you know it.",
-    jay_d3: "But I'm glad it's you out there with me. Nobody else I'd want watching my back. Stay sharp. And don't even think about falling behind — I won't be slowing down. Not for anyone.",
+    jay_d2: "I've been training harder than you know. Every morning, before you were even awake. I'm not stepping out of this village to finish second. But if I'm honest — it's not about finishing first either. I need to know what I'm actually made of. Out there, with everything on the line. I think you understand that.",
+    jay_d3: "But I'm glad it's you out there with me. Nobody else I'd want watching my back. And if we end up on opposite sides of a battle someday — and we might — know that I'll give you everything I've got. That's the only honest thing I can do. Stay sharp.",
     jay_d4: "I don't go into anything blind. While everyone else was sparring in the yard I was reading — Realm theory, bonding science, rune taxonomy. There are rune types out there most Keepers have never even laid eyes on. Common, rare, mythic. Every single one of them has a name on my list. I'm collecting them all.",
     jay_d5: "Here's what they don't teach you early enough — socket a rune into a shell that holds a Tayanari and the bond amplifies. Offensive surge, healing pulse, barrier field. The right rune changes a battle in seconds. This one's yours. An Obsidian Healing Rune. Call it a head start. Don't waste it.",
-    jess_d1: "Professor Irwyn sent word — he's ready for you whenever you are. But before you head to the lab, please stop and say a proper goodbye to everyone. Maya's been up since dawn. Jay has something for you too, though he'll act like it's nothing.",
-    jess_d2: "This whole village has watched you grow up. They love you. Half of them were probably at their windows last night just knowing today was the day. Don't you dare sneak out without seeing them first.",
-    jess_d3: "I packed your favourite bread in the outer pocket — you'll find it when you need it most. I love you. Now go. Come home with stories worth telling. And just... come home.",
+    jess_d1: "Professor Irwyn sent word — he's ready for you whenever you are. But before you head to the lab, please stop and say a proper goodbye to everyone. Maya's been up since dawn. Jay has something for you too, though he'll act like it's nothing. I know how they feel — I'd have given anything to walk out that gate with someone worth believing in.",
+    jess_d2: "This whole village has watched you grow up. They love you. Half of them were probably at their windows last night just knowing today was the day. I was one of them. Couldn't sleep. Kept thinking — this is what we were always building toward, even when we didn't know it. Don't you dare sneak out without seeing them first.",
+    jess_d3: "I packed your favourite bread in the outer pocket — you'll find it when you need it most. I love you. Now go. Come home with stories worth telling. And if a Tayanari ever looks at you the way Draco looks at Lia... let them in. That's what the Trial is really for. Just come home.",
     maya_post1: "You found them! Those Weathered Realm Shells have been waiting for someone like you. Here's something my father taught me — Tayanari are drawn to beautiful shells. Place one on the ground and a wild one may stop to investigate.",
     maya_post2: "It's never guaranteed. A calm Tayanari might wander in out of curiosity. Even a rampaging one can blunder straight into a shell and bond with it. The shell becomes its home — if it chooses to accept.",
     maya_post3: "And my father used to say: 'A shell is just a home, but a rune makes it a welcome.' There are many types of shells, each with their own energy — and so many runes to socket inside them. You've already found one, I hear.",
     jay_done: "You're good. Go find some wild ones to catch — I'll be right behind you.",
-    ellio_d1: "I knew you'd stop by before you left — the whole village knew today was the day. I'm Ellio. Ask anyone in Primeria — my plan is to join the Merchants Collective. I've been studying trade routes, supply margins, market gaps. One day I'll be running caravans across every region. But right now, I've actually got something for you.",
-    ellio_d2: "A Resonance Stone. I came across it on a trade caravan last season. The merchants swore these things build a genuine bond between a Keeper and their Tayanari — something about frequencies, shared energy, resonance between spirits. I don't fully understand the mechanics. But I know it's real.",
-    ellio_d3: "Here's how they said to use it in battle: equip it to yourself — not your Tayanari. When you channel it, you can throw a small elemental move tuned to your partner's type. Raw and basic, but yours. I'm told it grows with you over time, though I don't know the full details yet. Take it. A merchant always travels light — and this one belongs with a Keeper.",
+    ellio_d1: "I knew you'd stop by — the whole village knew today was the day. I'm Ellio. My path is the Merchants Collective — trade routes, supply margins, every market gap from here to the eastern coast. I've had the northern route mapped since I was twelve. But every caravan I've ridden, the thing people want most is creature-related. Shells, runes, bonding aids. The whole world runs on Tayanari whether anyone admits it or not. Speaking of which — I've actually got something for you.",
+    ellio_d2: "A Resonance Stone. I came across it on a caravan last season — the merchants hauling it kept it wrapped in three layers of cloth, wouldn't say why. I held it once. Just for a moment. Something shifted — like a sound just below hearing. I'm not a Keeper. It wasn't looking for me. But I know what it is when something is looking for its right person.",
+    ellio_d3: "In battle, equip it to yourself — not your Tayanari. Channel it and you can throw an elemental move tuned to your partner's type. Raw at first, but yours, and I'm told it grows with the bond. Take it. A merchant travels light, and this one was never going to sit in a pack collecting dust. It was meant for someone. I'm glad it found you before I shipped it off to someone who'd just resell it.",
     ellio_done: "Safe roads. Come find me when you're a legend — I'll have something worth trading.",
-    lia_d1: "Oh look — the kid finally made it to my door. Took you long enough. Come in. Draco won't bite... probably. He's in a decent mood today.",
-    lia_d2: "That's Draco. Stone-Flame type. Stubborn, fierce, runs entirely on attitude and spite. We get along perfectly. He was bonded to me before you even knew what a Tayanari was.",
-    lia_d3: "Look — strength alone doesn't cut it out there. The land gives you tools, you just have to know how to read them. Hearthberries. I've been collecting them for months. One before you attempt a bond and the wild Tayanari's guard drops — makes the whole thing smoother.",
+    lia_d1: "Oh look — the kid finally made it to my door. Took you long enough. Come in. Draco won't bite... probably. He always knows when someone worth meeting is coming. I've learned not to question it.",
+    lia_d2: "That's Draco. Stone-Flame type. Stubborn, fierce, runs on attitude and spite. I found him on my first Trial — threw a shell and he crushed it. Didn't bond, just destroyed it and walked off. He came back three days later and sat outside my tent. We've been together since. We get along perfectly.",
+    lia_d3: "Strength alone doesn't cut it out there. My second year in the field I lost three bonding attempts in a week — went in too hard every time. Old Keeper named Serah on the eastern road showed me Hearthberries. One before you attempt a bond and the wild Tayanari's guard drops — makes everything smoother. Took me a week to believe it. Now I carry them everywhere.",
     lia_d4: "Here. Ten of them. And take this satchel — good leather, field-grade. A Keeper who can't carry their kit is just a kid with a dragon, and you're not going to be that kid.",
     lia_d5: "Now get out of my house. And don't lose to anything on Route 1, alright? I will absolutely hear about it and I will not let it go. Ever. Go do something worth bragging about.",
     lia_done: "You're still here? Go. If you need more berries later, you know where I live.",
     jess_path_d1: "There you are! Professor Irwyn was looking for you. He said to meet him on Route 2 — past Maya's house, east of town. Wouldn't tell me why. Only that you'd understand when you got there.",
     jess_path_d2: "Go on. I'll head back home. ...Just be careful out there, alright?",
     prof2_d1: "There you are. I felt you on the wind. ...Or maybe just heard your boots on the path. Either way — come closer. There is something I want you to see.",
-    prof2_d2: "I have been tracking a creature. Chaos-aligned. They do not behave like the others — and even their colors come in wrong. Lia bonded with one years ago. She calls hers Draco. Stubborn as her, and just as fierce.",
-    prof2_d3: "But this one is rarer still. It came down from the high cliffs and stopped here. I think it has been waiting. For you, specifically. Here — take this. An Obsidianeye Realm Shell. Carved for the truly singular.",
+    prof2_d2: "I have been tracking a creature for weeks. Chaos-aligned — they do not behave like the others, and their colors come in wrong. Pattern-breakers. Lia bonded with one years ago; Draco is the most remarkable Tayanari I have ever studied, and she still won't let me run a full scan. But this one is rarer still.",
+    prof2_d3: "It came down from the high cliffs four nights ago and stopped exactly here. Has not moved. Has not hunted. I believe it has been waiting — for you, specifically. A Tayanari that chooses before the bond is rarer than anything in my journals. Here — take this. An Obsidianeye Realm Shell. Carved for the truly singular.",
     prof2_d4: "Go to it. Slowly. I will watch from here. If it is what I believe it is, it will not fight you. It will test you. Trust the moment.",
     scripted_t1: "The Wyvrunt is still. Watching you. Its tail-flame ripples but it does not strike. PROF: \"Don't move yet. Let it read you.\"",
     scripted_t2: "Its eyes soften — curiosity replacing caution. The yin-yang sigils on its scales flicker brighter. PROF: \"Now. The shell. It is ready.\"",
@@ -1987,35 +2110,47 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     // The lab role-pick uses a custom modal, not this dialog strip.
     role_pick: "",
     // ── Ambient idle chats (always available; set no flags) ──────────────────
-    prof_idle: "Still here? Good — a Keeper who lingers in a lab is a Keeper who asks questions, and questions are how the work gets done. Mind your partner's health out there, and come tell me everything you find. Every bond teaches me something new.",
+    prof_idle: "Still here? Good — sit a moment. I've been looking at bonding resonance data from last season and something doesn't add up. Tayanari adapting faster than the models predict — not just in behavior, but in elemental expression. Either my instruments are wrong, or the world is changing faster than we thought. Mind your partner out there. Come tell me what you see. Every bond teaches me something I didn't know to ask.",
     prof_shells: "Heading back out? The lab keeps a steady store of Realm Shells — bonding takes patience, and patience takes supplies. Take a handful, and come back whenever you run low.",
     prof_shells_got: "There — ten fresh Realm Shells. Set them well; the wilds are patient, and so should you be. Off you go, Keeper.",
     jay_idle: "Don't get comfortable. I'm already plotting my route and I am NOT losing to you. ...But hey — watch your back out there. Can't beat you if some wild Tayanari gets you first.",
     maya_wait: "Did you find them yet? My father's Weathered Realm Shells — they're inside, on the table by the window. Go on in and take them. He'd want them in a real Keeper's hands.",
-    maya_idle: "Out chasing bonds already? Good. My father always said a shell left in a drawer is just a pretty stone — it only means something once it's out in the world with you. Make him proud.",
-    ellio_idle: "Back so soon? The roads always pull you home for a minute, then push you right back out. When you've got stories worth trading, you know where to find me — I'll have stock worth your while.",
-    lia_idle: "You again. Draco remembers you, for what that's worth — he hasn't tried to singe you yet, so consider that high praise. Berries are in the basket if you run dry. Now stop loitering and go be impressive.",
-    jess_idle: "There's my heart. Don't mind me — I just like seeing your face before you wander off again. Eat the bread I packed, stay warm, and come home in one piece. That's all I ask.",
+    maya_idle: "Out chasing bonds already? Good. I've been starting my own field notes, actually — just small things from the fence line. A Tayanari came close enough to touch last week. I stood still for twenty minutes. I think I'm starting to understand what he saw out there. Make him proud.",
+    ellio_idle: "Back already? I've been drawing up my first solo route — north past the ruins, east along the ridge, waystation at the Collective's outpost. If the charter signs before winter, I ship out next season. The world's bigger than Primeria. We both know that now. Come find me when you've got stories — I want to know what the ruins look like from the inside.",
+    lia_idle: "You again. Draco hasn't tried to singe you yet — consider that high praise. Berries are in the basket. And for what it's worth: every time you walk through that door looking a little more worn in, a little less like a new Keeper and a little more like one — I notice. Now stop loitering. Go be impressive.",
+    jess_idle: "There's my heart. Don't mind me — just like seeing your face. One of the wild Tayanari from the east meadow keeps coming to the garden. Small thing, storm-type. Keeps stealing hearthberries. I haven't shooed it off yet. I think it's lonely. ...Come home soon, alright?",
     // ── Rowan — the professor's disciple, dreaming of the Professor's seat ────
-    rowan_d1: "Oh — hey! You're the one starting your Trial today. I'm Rowan, the Professor's disciple. I sweep these floors, log the specimens, and read every journal he leaves lying around. Twice.",
-    rowan_d2: "Everyone wants to be a Keeper. Not me. I want to be a Professor. I want the lab, the field notes, the whole maddening science of how Tayanari bond and why. Someday this seat is going to be mine.",
-    rowan_d3: "So do me a favor out there — see things. Strange things. The Tayanari nobody can explain. Then come back and tell me everything. One day I'll be the one handing a kid their first partner, and I want to be ready.",
+    rowan_d1: "Oh — hey! You're the one starting your Trial today. I'm Rowan — Professor Irwyn's disciple. Sweep these floors, log the specimens, cross-reference the field reports. I've read every journal he has, most of them twice. Last week I found a notation from thirty years ago that doesn't match anything in current taxonomy. I've been losing sleep over it.",
+    rowan_d2: "Everyone wants to be a Keeper. Not me. I want to be a Professor. The lab, the field notes, the whole maddening problem of how Tayanari bond and why. I've got seventeen competing theories and they all fall apart at the same point. That's the part I can't stop thinking about.",
+    rowan_d3: "Do me a favor out there — if you encounter a Tayanari that doesn't match the type chart, or bonds in a way that shouldn't work by the numbers, remember it. Anything that breaks the model. One day I'll be the one handing a kid their first partner, and I want to have actually earned the seat by then. Tell me everything.",
     // ── Area 3 — Jay trainer battle (4-tier, repeatable) ──────────────────
-    jay_a3_d1: "You made it. Finally. I've been training here every day since town — these ruins hit different from Route 1. I needed it. I can see you've grown too. Good.",
-    jay_a3_d2: "I've been waiting for a real fight. No holding back. If you're not ready, say so now. But I think you are. I think you've been ready for a while.",
+    jay_a3_d1: "You made it. I've been out here every day since we left Primeria. First hour in these ruins I had two encounters I barely walked out of. The Tayanari here don't hold back the way Route 1 ones do — they've been at it longer. I needed that. I can see you've grown too. Good.",
+    jay_a3_d2: "I've been waiting for someone who actually knows how to read a battle. No holding back — that's the only rule. If you're not ready, say so. But I don't think that's the case. I think we've both been ready for a while. Let's find out.",
     jay_a3_d3: "Then let's go. No going easy. Show me everything you've got.",
     jay_a3_battle: "",
-    jay_a3_win: "You beat me. Fair fight, solid strategy. I'm not going to pretend that didn't sting — but I respect it. I'll be stronger next time. Come find me when you want another round.",
-    jay_a3_lose: "That's how it goes. You're not done growing yet. Come back when you're ready — I'll be here.",
-    jay_a3_idle: "These ruins have a weight to them. Good place to train — you never forget how small you are out here.",
+    jay_a3_win: "You beat me. I felt the moment it turned and I made the wrong call. I'm not going to pretend that didn't sting — but that's exactly why I came out here. You can't find what you're made of without someone testing it. I'll be stronger when you come back. Come find me.",
+    jay_a3_lose: "Not there yet. And that's okay — means there's still somewhere to go. The fact that you made it this deep and took the fight at all? That means something. Come back when you've pushed your team further. I'll be right here.",
+    jay_a3_idle: "I've been cataloguing the Tayanari out here — type distributions, territorial patterns. None of it matches the field guides. Someone needs to write the new chapter. Might as well start now. How's your team holding up?",
     // ── Area 3 — Lia trainer battle (4-tier, repeatable) ──────────────────
-    lia_a3_d1: "Here already? I didn't think you'd make it this deep this fast. Draco's been restless since we arrived. He needs a real fight — and so do I.",
-    lia_a3_d2: "This place used to be something. Now it just sits here, waiting. I've been here long enough to know it respects strength. So do I.",
+    lia_a3_d1: "Here already? I'll be honest — I didn't expect you this fast. Draco's been restless since we arrived. The Tayanari here are a different kind from Route 1 — older, sharper. He's been picking fights he doesn't finish. Means he's building to something. So am I.",
+    lia_a3_d2: "This place used to be something. You can feel it in the stone — old battles, old bonds. Draco's been quieter than usual since we got here. The quiet version of him is the one that worries me. It means he's focused. It means he's ready.",
     lia_a3_d3: "Enough talk. Draco's been patient long enough. Think you can handle us?",
     lia_a3_battle: "",
-    lia_a3_win: "Hm. Not bad at all. Draco's giving me that look — the one that says he actually enjoyed that. Come back. We'll go again.",
-    lia_a3_lose: "Right. That's why I keep training. Don't give up — come back when you've got more.",
-    lia_a3_idle: "The air here is strange. Draco loves it. Strange things drawn to strange places, I suppose.",
+    lia_a3_win: "That was a real fight. Draco doesn't give that look to just anyone — the one that says he's already looking forward to next time. I haven't felt that in a while. You pushed us somewhere we needed to go. Come back when you're ready. We'll be here.",
+    lia_a3_lose: "That's the gap — not in heart, in the read. You're doing the right things wrong. Come back and we'll find out if you've fixed it. Draco and I aren't going soft while we wait.",
+    lia_a3_idle: "Draco started sleeping outside — won't come in even when it rains. I've stopped asking him to. He's telling me something about this place that I don't have words for yet. How's your team handling it?",
+    // ── Cleminus "Jerbs" — clandestine jerbeen, far-west ruin corridor ─────
+    jerbs_appear: "W H O A. That was — that was SOMETHING. The third corridor is always the strangest. Note to self: do not take the third corridor. ...Oh. OH. There's someone here.",
+    jerbs_d1: "A Keeper. An ACTUAL Keeper — I can feel the resonance from here. It's like a bell someone rang right in the middle of my chest. Come here — come HERE — don't just stand there at the edge looking alarmed!",
+    jerbs_d2: "Cleminus. Jerbeen. Traveler, by habit. Elder, by — well. We'll get there. Most call me Jerbs. I have crossed fourteen realms, two collapsed timelines, and a mountain range that does not appear on any map I have ever read. I followed a resonance trail here. I do not normally tumble directly in front of strangers. Usually I land somewhere quieter.",
+    jerbs_d3: "I have been looking for you. Specifically you. The trail led to these ruins and it does not lie. But — I'm reading the local resonance here — there are two Keepers nearby whose battles haven't resolved yet. Jay and Lia. Have you faced them both?",
+    jerbs_cards: "",
+    jerbs_d4: "Good. Then it is time. These are your credentials. The Keeper Trial Card — official, licensed, signed by me, which means it's signed by someone who knows what they're signing. And this one: the Elder Trial Card. You're not ready for what it means yet. But you will be. More is coming, Keeper. So. Much. More.",
+    jerbs_remind: "Then go find them. Both of them — Jay is west of the main corridor, Lia further east. Battle them properly. They are worth your full attention. When you have, come back to this exact spot. I'll be right here. I am very, very good at waiting. I have been alive for... quite a long while.",
+    jerbs_return_d1: "There you are! I told you I'd wait. Very productively — I've been cataloguing the ruin acoustics. Did you know this stone hums at two frequencies simultaneously? Anyway — you found Jay and Lia. I felt the moment those battles concluded. The resonance settled, like a chord finally resolving. Are you ready?",
+    jerbs_return_d2: "Good. Then it is time. Here — your Keeper Trial Card and your Elder Trial Card. More is coming, Keeper. More than you can currently imagine. Keep walking.",
+    jerbs_a3_idle: "The ruins talk, if you listen long enough. I've been listening for a very long time. Some days I think they're almost ready to say something new.",
+    demo_end: "",
   };
 
   // ── Encounter handlers & disturbance tick ──────────────────────────────────
@@ -2200,6 +2335,10 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
 
     const evoTarget = checkStarterEvo(r.newLevel);
 
+    // Jingles
+    if (result.kind === "caught") playJingle(CATCH_JINGLE);
+    else if (result.kind === "ko") playJingle(WIN_JINGLE);
+
     let outcome: string;
     if (result.kind === "caught") {
       const toBox = addCaughtMon(result.mon);
@@ -2259,6 +2398,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     checkWyvForms(r.newLevel, loyaltyAfter);
 
     const evoTarget = checkStarterEvo(r.newLevel);
+
+    if (result.kind === "trainerWin") playJingle(WIN_JINGLE);
 
     if (result.kind === "trainerWin") {
       if (enc.trainer === "jay") setJayA3Wins(w => Math.min(3, w + 1));
@@ -2368,7 +2509,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   }
 
   return (
-    <div style={{ width:"100vw", height:"100dvh", background:"#060606", display:"flex", flexDirection:"column", overflow:"hidden", position:"relative", userSelect:"none", WebkitUserSelect:"none", touchAction:"none", overscrollBehavior:"none" }}>
+    <div style={{ width:"100vw", height:"100dvh", background:"#060606", display:"flex", flexDirection:"column", overflow:"hidden", userSelect:"none", WebkitUserSelect:"none", touchAction:"none", overscrollBehavior:"none" }}>
 
       {/* ── MAP VIEWPORT ─────────────────────────────────────────────────── */}
       <div ref={vpRef} style={{ flex:1, position:"relative", overflow:"hidden" }}>
@@ -2747,6 +2888,33 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                 letterSpacing:1, pointerEvents:"none",
                 textShadow:"0 0 4px #000,0 0 8px #000",
               }}>LIA</div>
+              {/* Jerbs — portal animation + jerbeen sprite */}
+              {portalOpen && (
+                <div style={{
+                  position:"absolute", pointerEvents:"none", zIndex:4,
+                  left: JERBS_POS.x - 72, top: JERBS_POS.y - 200,
+                  width:140, height:230,
+                  backgroundImage:"url(./images/jerbs_portal.png)",
+                  backgroundSize:"700px 460px",
+                  backgroundPosition:`${-(portalFrame % 5) * 140}px ${-Math.floor(portalFrame / 5) * 230}px`,
+                  backgroundRepeat:"no-repeat",
+                }}/>
+              )}
+              {(cleminusMet || portalOpen) && (
+                <canvas ref={jerbsCanvasRef} style={{
+                  position:"absolute", imageRendering:"auto", pointerEvents:"none", zIndex:5,
+                  left: JERBS_POS.x - 28, top: JERBS_POS.y - 112,
+                }}/>
+              )}
+              {cleminusMet && (
+                <div style={{
+                  position:"absolute", zIndex:6,
+                  left: JERBS_POS.x - 14, top: JERBS_POS.y - 130,
+                  color:"#e8b840", fontSize:8, fontWeight:800,
+                  letterSpacing:1, pointerEvents:"none",
+                  textShadow:"0 0 4px #000,0 0 8px #000",
+                }}>JERBS</div>
+              )}
             </>
           )}
 
@@ -3066,6 +3234,28 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               zIndex:10,
             }}
           >{liaA3Wins > 0 ? "↺" : "!"}</button>
+        )}
+
+        {/* ── INTERACT BUTTON — Jerbs (Area 3 demo NPC) ───────────────── */}
+        {scene === "area3" && nearJerbs && phase === "walk" && (
+          <button
+            onClick={() => {
+              const beatBoth = jayA3Wins > 0 && liaA3Wins > 0;
+              if (demoComplete) setPhase("jerbs_a3_idle");
+              else if (beatBoth) setPhase("jerbs_return_d1");
+              else setPhase("jerbs_remind");
+            }}
+            style={{
+              position:"absolute",
+              left: jerbsInteractPos.sx - 14, top: jerbsInteractPos.sy - 10,
+              width:28, height:28, borderRadius:"50%",
+              background:"#c8a030", border:"2px solid #fff",
+              color:"#1a0c00", fontSize:16, fontWeight:900,
+              display:"flex", alignItems:"center", justifyContent:"center",
+              cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite",
+              zIndex:10,
+            }}
+          >{demoComplete ? "…" : (jayA3Wins > 0 && liaA3Wins > 0) ? "!" : "?"}</button>
         )}
 
         {/* ── INTERACT BUTTON — Jess ────────────────────────────────────── */}
@@ -3871,11 +4061,177 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           </div>
         )}
 
+        {/* ── JERBS DIALOG BOX ──────────────────────────────────────────── */}
+        {(phase === "jerbs_appear" || phase === "jerbs_d1" || phase === "jerbs_d2"
+          || phase === "jerbs_d3" || phase === "jerbs_d4"
+          || phase === "jerbs_remind" || phase === "jerbs_return_d1" || phase === "jerbs_return_d2") && (
+          <div style={{
+            position:"absolute", bottom:0, left:0, right:0,
+            background:"linear-gradient(to top,rgba(8,5,2,0.97),rgba(18,11,3,0.93))",
+            borderTop:"2px solid rgba(190,140,40,0.6)",
+            padding:"10px 14px 14px",
+            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out",
+          }}>
+            <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+              {/* Jerbs portrait — jerbeen sprite sheet clip, row 1 col 2 */}
+              <div style={{
+                width:36, height:60, borderRadius:6, overflow:"hidden", flexShrink:0,
+                border:"1px solid rgba(190,140,40,0.4)",
+                backgroundImage:"url(./images/jerbs_sprite.png)",
+                backgroundSize:`${36 * 5}px auto`,
+                backgroundPosition:`${-36 * 2}px ${-Math.round(36 * JERBS_FH / JERBS_FW)}px`,
+                backgroundRepeat:"no-repeat",
+              }}/>
+              <div>
+                <span style={{ color:"#e8b840", fontWeight:700, fontSize:13, letterSpacing:1 }}>JERBS</span>
+                <div style={{ color:"#7a6020", fontSize:9, fontWeight:600, letterSpacing:0.8 }}>
+                  Clandestine Jerbeen · Traveler
+                </div>
+              </div>
+            </div>
+            <p style={{ color:"#e8dcc8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>
+              {LINES[phase]}
+            </p>
+            <div style={{ display:"flex", justifyContent:"flex-end" }}>
+              {phase === "jerbs_appear" ? (
+                <button
+                  onClick={() => { setPortalOpen(false); setCleminusMet(true); setPhase("jerbs_d1"); }}
+                  style={{ background:"rgba(190,140,40,0.15)", border:"1px solid rgba(190,140,40,0.5)",
+                    color:"#e8b840", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}
+                >Next ▶</button>
+              ) : phase === "jerbs_remind" ? (
+                <button
+                  onClick={() => { setCleminusMet(true); setPhase("walk"); }}
+                  style={{ background:"rgba(190,140,40,0.15)", border:"1px solid rgba(190,140,40,0.5)",
+                    color:"#e8b840", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}
+                >OK</button>
+              ) : (phase === "jerbs_d3" || phase === "jerbs_return_d2") ? (
+                <button
+                  onClick={() => {
+                    if (jayA3Wins > 0 && liaA3Wins > 0) {
+                      setShowCardIndex(0);
+                      setPhase("jerbs_cards");
+                    } else {
+                      setCleminusMet(true);
+                      setPhase("jerbs_remind");
+                    }
+                  }}
+                  style={{ background:"rgba(190,140,40,0.15)", border:"1px solid rgba(190,140,40,0.5)",
+                    color:"#e8b840", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}
+                >Next ▶</button>
+              ) : (
+                <button onClick={() => advanceDialog(phase)}
+                  style={{ background:"rgba(190,140,40,0.15)", border:"1px solid rgba(190,140,40,0.5)",
+                    color:"#e8b840", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}
+                >Next ▶</button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── JERBS TRIAL CARDS OVERLAY ─────────────────────────────────── */}
+        {phase === "jerbs_cards" && (
+          <div style={{
+            position:"absolute", inset:0,
+            background:"rgba(4,2,0,0.94)",
+            display:"flex", flexDirection:"column", alignItems:"center",
+            justifyContent:"center", zIndex:30, gap:10, overflow:"hidden",
+          }}>
+            <div style={{ color:"#e8b840", fontSize:12, fontWeight:700, letterSpacing:2, marginBottom:2, textAlign:"center" }}>
+              JERBS: "Here. Your credentials. Official. Signed."
+            </div>
+            <div style={{
+              display:"flex", gap:14, alignItems:"flex-start", justifyContent:"center",
+              maxWidth:"100%", padding:"0 8px",
+            }}>
+              {/* Keeper Trial Card with player sprite */}
+              <div style={{ position:"relative", width:180, flexShrink:0 }}>
+                <img src="./images/keeper_trial_card.png"
+                  style={{ width:180, display:"block", borderRadius:4 }} alt="Keeper Trial Card"/>
+                {/* Player sprite in photo slot */}
+                <img
+                  src={`./images/${CHAR_IMG_KEY[characterId]}_front_idle.png`}
+                  style={{
+                    position:"absolute",
+                    left: Math.round(88 * 180 / 1024),
+                    top:  Math.round(233 * 180 / 1024),
+                    width: Math.round(283 * 180 / 1024),
+                    height: Math.round(320 * 180 / 1024),
+                    objectFit:"cover", objectPosition:"center top",
+                    mixBlendMode:"multiply",
+                  }}
+                  alt=""
+                />
+              </div>
+              {/* Elder Trial Card */}
+              <div style={{ position:"relative", width:180, flexShrink:0 }}>
+                <img src="./images/elder_trial_card.png"
+                  style={{ width:180, display:"block", borderRadius:4 }} alt="Elder Trial Card"/>
+              </div>
+            </div>
+            <button
+              onClick={() => setPhase("jerbs_d4")}
+              style={{
+                marginTop:8,
+                background:"linear-gradient(135deg,rgba(190,140,40,0.22),rgba(120,90,20,0.22))",
+                border:"2px solid rgba(190,140,40,0.7)",
+                color:"#e8b840", padding:"10px 28px",
+                borderRadius:12, fontSize:13, fontWeight:800,
+                cursor:"pointer", letterSpacing:1,
+              }}
+            >Accept Trial Licenses ✦</button>
+          </div>
+        )}
+
+        {/* ── DEMO COMPLETE SCREEN ──────────────────────────────────────── */}
+        {phase === "demo_end" && (
+          <div style={{
+            position:"absolute", inset:0,
+            background:"#000",
+            display:"flex", flexDirection:"column", alignItems:"center",
+            justifyContent:"flex-start", zIndex:40, overflowY:"auto",
+          }}>
+            <img
+              src="./images/demo_complete.png"
+              style={{ width:"100%", maxWidth:480, display:"block" }}
+              alt="Demo Complete"
+            />
+            <div style={{
+              display:"flex", flexDirection:"column", alignItems:"center", gap:10,
+              padding:"16px 16px 32px", width:"100%",
+            }}>
+              <button
+                onClick={() => { setDemoComplete(true); setPhase("jerbs_a3_idle"); }}
+                style={{
+                  background:"linear-gradient(135deg,rgba(80,120,220,0.22),rgba(60,90,180,0.22))",
+                  border:"2px solid rgba(100,140,240,0.65)",
+                  color:"#a0c0f8", padding:"10px 28px",
+                  borderRadius:12, fontSize:13, fontWeight:800,
+                  cursor:"pointer", letterSpacing:1, width:"100%", maxWidth:320,
+                }}
+              >Continue Exploring ▶</button>
+              <button
+                onClick={() => {
+                  setDemoComplete(true);
+                  // Show thank-you screen momentarily then walk
+                  setPhase("walk");
+                }}
+                style={{
+                  background:"transparent", border:"1px solid rgba(255,255,255,0.18)",
+                  color:"rgba(255,255,255,0.45)", padding:"8px 20px",
+                  borderRadius:10, fontSize:11, cursor:"pointer",
+                }}
+              >Thank You for Playing ♡</button>
+            </div>
+          </div>
+        )}
+
         {/* ── AMBIENT CHAT BOX (idle NPC lines + Rowan's dream) ─────────── */}
         {(phase === "prof_idle" || phase === "jay_idle" || phase === "maya_idle"
           || phase === "maya_wait" || phase === "ellio_idle" || phase === "lia_idle"
           || phase === "jess_idle" || phase === "rowan_d1" || phase === "rowan_d2"
-          || phase === "rowan_d3" || phase === "jay_a3_idle" || phase === "lia_a3_idle") && (() => {
+          || phase === "rowan_d3" || phase === "jay_a3_idle" || phase === "lia_a3_idle"
+          || phase === "jerbs_a3_idle") && (() => {
           const speaker =
             phase === "prof_idle" ? { name: "PROF. IRWYN", color: "#f0d060" } :
             (phase === "jay_idle" || phase === "jay_a3_idle") ? { name: "JAY", color: "#6090e0" } :
@@ -3883,6 +4239,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             phase === "ellio_idle" ? { name: "ELLIO", color: "#a8e878" } :
             (phase === "lia_idle" || phase === "lia_a3_idle") ? { name: "LIA", color: "#ff7a44" } :
             phase === "jess_idle" ? { name: "JESS", color: "#f0a050" } :
+            phase === "jerbs_a3_idle" ? { name: "JERBS", color: "#e8b840" } :
             { name: "ROWAN", color: "#b8a0e0" };
           const more = phase === "rowan_d1" || phase === "rowan_d2";
           return (
@@ -4103,44 +4460,87 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               {/* Leather spine */}
               <div style={{
                 background:"linear-gradient(90deg,#1e0f06,#3d2010,#2c1608,#1e0f06)",
-                padding:"10px 16px 0",
-                display:"flex", alignItems:"flex-end", justifyContent:"space-between",
-                flexShrink:0, gap:10,
+                padding: isMobile ? "10px 12px 0" : "10px 16px 0",
+                display:"flex",
+                flexDirection: isMobile ? "column" : "row",
+                alignItems: isMobile ? "stretch" : "flex-end",
+                justifyContent:"space-between",
+                flexShrink:0, gap: isMobile ? 4 : 10,
               }}>
-                <span style={{
-                  color:"#c8a44a", fontSize:10, fontWeight:800,
-                  letterSpacing:3.5, textTransform:"uppercase",
-                  paddingBottom:10,
-                  textShadow:"0 1px 3px rgba(0,0,0,0.9)",
-                }}>Keeper's Journal</span>
+                {isMobile ? (
+                  <>
+                    {/* Mobile row 1: title + close */}
+                    <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", paddingBottom:4 }}>
+                      <span style={{
+                        color:"#c8a44a", fontSize:10, fontWeight:800,
+                        letterSpacing:2.5, textTransform:"uppercase",
+                        textShadow:"0 1px 3px rgba(0,0,0,0.9)",
+                      }}>Keeper's Journal</span>
+                      <button onClick={() => setShowJournal(false)} style={{
+                        width:26, height:26, borderRadius:"50%", flexShrink:0,
+                        background:"radial-gradient(circle at 38% 33%,#c0392b,#7b1c12)",
+                        border:"1.5px solid #3d0f0a",
+                        color:"#f5d5d0", fontSize:12, fontWeight:900,
+                        display:"flex", alignItems:"center", justifyContent:"center",
+                        cursor:"pointer",
+                        boxShadow:"0 2px 6px rgba(0,0,0,0.7)",
+                      }}>✕</button>
+                    </div>
+                    {/* Mobile row 2: tabs full width */}
+                    <div style={{ display:"flex", gap:3 }}>
+                      {(["party","storage","shells","bag"] as const).map(tab => (
+                        <button key={tab} onClick={() => setJournalTab(tab)} style={{
+                          flex:1, padding:"5px 4px 8px",
+                          background: journalTab === tab
+                            ? "linear-gradient(175deg,#f5e9cc,#ecdcb4)"
+                            : "rgba(0,0,0,0.30)",
+                          border:"none",
+                          borderRadius:"7px 7px 0 0",
+                          color: journalTab === tab ? "#3d1e04" : "#a08050",
+                          fontSize:10, fontWeight:800, letterSpacing:0.8,
+                          textTransform:"uppercase", cursor:"pointer",
+                        }}>{tab === "party" ? "Party" : tab === "storage" ? "Box" : tab === "shells" ? "Shells" : "Bag"}</button>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <span style={{
+                      color:"#c8a44a", fontSize:10, fontWeight:800,
+                      letterSpacing:3.5, textTransform:"uppercase",
+                      paddingBottom:10,
+                      textShadow:"0 1px 3px rgba(0,0,0,0.9)",
+                    }}>Keeper's Journal</span>
 
-                {/* Page tabs flush with bottom of spine */}
-                <div style={{ display:"flex", gap:3, alignSelf:"flex-end" }}>
-                  {(["party","storage","shells","bag"] as const).map(tab => (
-                    <button key={tab} onClick={() => setJournalTab(tab)} style={{
-                      padding:"5px 11px 8px",
-                      background: journalTab === tab
-                        ? "linear-gradient(175deg,#f5e9cc,#ecdcb4)"
-                        : "rgba(0,0,0,0.30)",
-                      border:"none",
-                      borderRadius:"7px 7px 0 0",
-                      color: journalTab === tab ? "#3d1e04" : "#a08050",
-                      fontSize:10, fontWeight:800, letterSpacing:1.2,
-                      textTransform:"uppercase", cursor:"pointer",
-                    }}>{tab === "party" ? "Party" : tab === "storage" ? "Box" : tab === "shells" ? "Shells" : "Bag"}</button>
-                  ))}
-                </div>
+                    {/* Page tabs flush with bottom of spine */}
+                    <div style={{ display:"flex", gap:3, alignSelf:"flex-end" }}>
+                      {(["party","storage","shells","bag"] as const).map(tab => (
+                        <button key={tab} onClick={() => setJournalTab(tab)} style={{
+                          padding:"5px 11px 8px",
+                          background: journalTab === tab
+                            ? "linear-gradient(175deg,#f5e9cc,#ecdcb4)"
+                            : "rgba(0,0,0,0.30)",
+                          border:"none",
+                          borderRadius:"7px 7px 0 0",
+                          color: journalTab === tab ? "#3d1e04" : "#a08050",
+                          fontSize:10, fontWeight:800, letterSpacing:1.2,
+                          textTransform:"uppercase", cursor:"pointer",
+                        }}>{tab === "party" ? "Party" : tab === "storage" ? "Box" : tab === "shells" ? "Shells" : "Bag"}</button>
+                      ))}
+                    </div>
 
-                {/* Wax-seal close */}
-                <button onClick={() => setShowJournal(false)} style={{
-                  width:26, height:26, borderRadius:"50%", flexShrink:0,
-                  background:"radial-gradient(circle at 38% 33%,#c0392b,#7b1c12)",
-                  border:"1.5px solid #3d0f0a",
-                  color:"#f5d5d0", fontSize:12, fontWeight:900,
-                  display:"flex", alignItems:"center", justifyContent:"center",
-                  cursor:"pointer", marginBottom:8,
-                  boxShadow:"0 2px 6px rgba(0,0,0,0.7)",
-                }}>✕</button>
+                    {/* Wax-seal close */}
+                    <button onClick={() => setShowJournal(false)} style={{
+                      width:26, height:26, borderRadius:"50%", flexShrink:0,
+                      background:"radial-gradient(circle at 38% 33%,#c0392b,#7b1c12)",
+                      border:"1.5px solid #3d0f0a",
+                      color:"#f5d5d0", fontSize:12, fontWeight:900,
+                      display:"flex", alignItems:"center", justifyContent:"center",
+                      cursor:"pointer", marginBottom:8,
+                      boxShadow:"0 2px 6px rgba(0,0,0,0.7)",
+                    }}>✕</button>
+                  </>
+                )}
               </div>
 
               {/* Parchment body */}
@@ -5284,16 +5684,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       {/* LANDSCAPE + TOUCH — floating corner overlays */}
       {isTouch && isLandscape && (
         <>
-          {/* D-pad cluster — bottom-left */}
-          <div style={{
-            position:"absolute",
-            bottom:"max(8px, env(safe-area-inset-bottom, 8px))",
-            left:"max(8px, env(safe-area-inset-left, 8px))",
-            zIndex:6,
-            display:"flex", flexDirection:"column", alignItems:"center", gap:3,
-            background:"rgba(0,0,0,0.55)", backdropFilter:"blur(10px)",
-            borderRadius:16, padding:"8px",
-          }}>
+          <div style={{ position:"absolute", bottom:"max(8px, env(safe-area-inset-bottom, 8px))", left:"max(8px, env(safe-area-inset-left, 8px))", zIndex:6, display:"flex", flexDirection:"column", alignItems:"center", gap:3, background:"rgba(0,0,0,0.55)", backdropFilter:"blur(10px)", borderRadius:16, padding:"8px" }}>
             <Btn d="up"   label="↑" small />
             <div style={{ display:"flex", gap:3, alignItems:"center" }}>
               <Btn d="left"  label="←" small />
@@ -5302,27 +5693,17 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             </div>
             <Btn d="down" label="↓" small />
           </div>
-          {/* Action buttons — bottom-right */}
-          <div style={{
-            position:"absolute",
-            bottom:"max(8px, env(safe-area-inset-bottom, 8px))",
-            right:"max(8px, env(safe-area-inset-right, 8px))",
-            zIndex:6,
-            display:"flex", flexDirection:"column", gap:4, alignItems:"flex-end",
-          }}>
-            <button onClick={() => { setJournalTab("party"); setShowJournal(true); }} style={{ width:52, height:52, borderRadius:12, background:"rgba(44,26,14,0.75)", border:"1.5px solid rgba(180,130,60,0.45)", color:"#c8a44a", fontSize:20, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:1, cursor:"pointer", backdropFilter:"blur(6px)", boxShadow:"0 2px 8px rgba(0,0,0,0.5)" }} aria-label="Menu">📖</button>
-            <button onClick={() => { setJournalTab("bag"); setShowJournal(true); }} style={{ width:52, height:52, borderRadius:12, background:"rgba(44,26,14,0.75)", border:"1.5px solid rgba(180,130,60,0.45)", color:"#c8a44a", fontSize:20, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:1, cursor:"pointer", backdropFilter:"blur(6px)", boxShadow:"0 2px 8px rgba(0,0,0,0.5)" }} aria-label="Bag">🎒</button>
-            <button onClick={() => { persistWorldRef.current(); setJustSaved(true); window.setTimeout(() => setJustSaved(false), 1600); }} style={{ width:52, height:52, borderRadius:12, background: justSaved ? "rgba(30,60,30,0.85)" : "rgba(14,34,14,0.75)", border: justSaved ? "1.5px solid rgba(80,200,80,0.75)" : "1.5px solid rgba(80,160,80,0.45)", color: justSaved ? "#80e880" : "#70b870", fontSize: justSaved ? 18 : 20, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:1, cursor:"pointer", backdropFilter:"blur(6px)", boxShadow: justSaved ? "0 2px 12px rgba(80,200,80,0.35)" : "0 2px 8px rgba(0,0,0,0.5)", transition:"background 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s" }} aria-label="Save">{justSaved ? <span style={{ fontSize:16, fontWeight:900, lineHeight:1 }}>✓</span> : "💾"}<span style={{ fontSize:7, letterSpacing:0.5, fontWeight:700, lineHeight:1, color: justSaved ? "#80e880" : "#507850" }}>{justSaved ? "SAVED" : "SAVE"}</span></button>
+          <div style={{ position:"absolute", bottom:"max(8px, env(safe-area-inset-bottom, 8px))", right:"max(8px, env(safe-area-inset-right, 8px))", zIndex:6, display:"flex", flexDirection:"column", gap:4, alignItems:"flex-end" }}>
+            <button onClick={() => { setJournalTab("party"); setShowJournal(true); }} style={{ width:52, height:52, borderRadius:12, background:"rgba(44,26,14,0.75)", border:"1.5px solid rgba(180,130,60,0.45)", color:"#c8a44a", fontSize:20, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:1, cursor:"pointer", backdropFilter:"blur(6px)", boxShadow:"0 2px 8px rgba(0,0,0,0.5)" }}>📖</button>
+            <button onClick={() => { setJournalTab("bag"); setShowJournal(true); }} style={{ width:52, height:52, borderRadius:12, background:"rgba(44,26,14,0.75)", border:"1.5px solid rgba(180,130,60,0.45)", color:"#c8a44a", fontSize:20, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:1, cursor:"pointer", backdropFilter:"blur(6px)", boxShadow:"0 2px 8px rgba(0,0,0,0.5)" }}>🎒</button>
+            <button onClick={() => { persistWorldRef.current(); setJustSaved(true); window.setTimeout(() => setJustSaved(false), 1600); }} style={{ width:52, height:52, borderRadius:12, background: justSaved ? "rgba(30,60,30,0.85)" : "rgba(14,34,14,0.75)", border: justSaved ? "1.5px solid rgba(80,200,80,0.75)" : "1.5px solid rgba(80,160,80,0.45)", color: justSaved ? "#80e880" : "#70b870", fontSize: justSaved ? 18 : 20, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:1, cursor:"pointer", backdropFilter:"blur(6px)", boxShadow: justSaved ? "0 2px 12px rgba(80,200,80,0.35)" : "0 2px 8px rgba(0,0,0,0.5)", transition:"background 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s" }}>{justSaved ? <span style={{ fontSize:16, fontWeight:900, lineHeight:1 }}>✓</span> : "💾"}<span style={{ fontSize:7, letterSpacing:0.5, fontWeight:700, lineHeight:1, color: justSaved ? "#80e880" : "#507850" }}>{justSaved ? "SAVED" : "SAVE"}</span></button>
           </div>
         </>
       )}
 
       {/* DESKTOP (non-touch) — floating action buttons only, no D-pad */}
       {!isTouch && (
-        <div style={{
-          position:"absolute", bottom:14, right:14, zIndex:6,
-          display:"flex", gap:6,
-        }}>
+        <div style={{ position:"absolute", bottom:14, right:14, zIndex:6, display:"flex", gap:6 }}>
           <button onClick={() => { setJournalTab("party"); setShowJournal(true); }} style={{ width:44, height:44, borderRadius:10, background:"rgba(44,26,14,0.82)", border:"1.5px solid rgba(180,130,60,0.45)", color:"#c8a44a", fontSize:18, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:1, cursor:"pointer", backdropFilter:"blur(6px)", boxShadow:"0 2px 8px rgba(0,0,0,0.5)" }} title="Journal (J)">📖</button>
           <button onClick={() => { setJournalTab("bag"); setShowJournal(true); }} style={{ width:44, height:44, borderRadius:10, background:"rgba(44,26,14,0.82)", border:"1.5px solid rgba(180,130,60,0.45)", color:"#c8a44a", fontSize:18, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:1, cursor:"pointer", backdropFilter:"blur(6px)", boxShadow:"0 2px 8px rgba(0,0,0,0.5)" }} title="Bag (B)">🎒</button>
           <button onClick={() => { persistWorldRef.current(); setJustSaved(true); window.setTimeout(() => setJustSaved(false), 1600); }} style={{ width:44, height:44, borderRadius:10, background: justSaved ? "rgba(30,60,30,0.85)" : "rgba(14,34,14,0.82)", border: justSaved ? "1.5px solid rgba(80,200,80,0.75)" : "1.5px solid rgba(80,160,80,0.45)", color: justSaved ? "#80e880" : "#70b870", fontSize: justSaved ? 16 : 18, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:1, cursor:"pointer", backdropFilter:"blur(6px)", boxShadow: justSaved ? "0 2px 12px rgba(80,200,80,0.35)" : "0 2px 8px rgba(0,0,0,0.5)", transition:"background 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s" }} title="Save (S)">{justSaved ? <span style={{ fontSize:14, fontWeight:900, lineHeight:1 }}>✓</span> : "💾"}<span style={{ fontSize:7, letterSpacing:0.5, fontWeight:700, lineHeight:1, color: justSaved ? "#80e880" : "#507850" }}>{justSaved ? "SAVED" : "SAVE"}</span></button>
