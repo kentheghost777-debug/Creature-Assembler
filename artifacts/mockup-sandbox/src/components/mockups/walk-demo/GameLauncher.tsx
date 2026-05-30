@@ -94,9 +94,8 @@ export default function GameLauncher() {
 
   useEffect(() => {
     if (screen !== "title") return;
-    playTrack(TITLE_TRACK);
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Enter" || e.key === " ") fadeTo("menu");
+      if (e.key === "Enter" || e.key === " ") { playTrack(TITLE_TRACK); fadeTo("menu"); }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
@@ -179,7 +178,7 @@ export default function GameLauncher() {
       {/* ── DEDICATION ─────────────────────────────────────────────── */}
       {screen === "dedication" && (
         <div
-          onClick={() => { if (!fading) fadeTo("title"); }}
+          onClick={() => { if (!fading) { playTrack(TITLE_TRACK); fadeTo("title"); } }}
           style={{
             width: "100%", height: "100%",
             background: "#040303",
