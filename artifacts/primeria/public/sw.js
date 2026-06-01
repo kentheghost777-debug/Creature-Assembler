@@ -1,5 +1,17 @@
-const CACHE_VERSION = "primeria-v11";
-const ASSET_CACHE   = "primeria-assets-v11";
+const CACHE_VERSION = "primeria-v12";
+const ASSET_CACHE   = "primeria-assets-v12";
+
+// Same host gate as index.html. A service worker that lingers on a dev preview
+// host pins old code (it can serve its own cached index.html, so the in-page
+// gate never even runs). On dev hosts this SW therefore *self-destructs*:
+// clears every cache, unregisters itself, and reloads open tabs so they come
+// back SW-free with fresh code. Only production keeps a real caching SW.
+const HOST = self.location.hostname;
+const IS_DEV =
+  HOST === "localhost" ||
+  HOST === "127.0.0.1" ||
+  HOST.endsWith(".replit.dev") ||
+  HOST.endsWith(".repl.co");
 
 const PRECACHE = [
   "./",
@@ -7,13 +19,26 @@ const PRECACHE = [
 ];
 
 self.addEventListener("install", (e) => {
+  self.skipWaiting();
+  if (IS_DEV) return;
   e.waitUntil(
     caches.open(CACHE_VERSION).then((c) => c.addAll(PRECACHE))
   );
-  self.skipWaiting();
 });
 
 self.addEventListener("activate", (e) => {
+  if (IS_DEV) {
+    e.waitUntil(
+      (async () => {
+        const keys = await caches.keys();
+        await Promise.all(keys.map((k) => caches.delete(k)));
+        await self.registration.unregister();
+        const clients = await self.clients.matchAll({ type: "window" });
+        clients.forEach((c) => c.navigate(c.url));
+      })()
+    );
+    return;
+  }
   e.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(
@@ -27,6 +52,8 @@ self.addEventListener("activate", (e) => {
 });
 
 self.addEventListener("fetch", (e) => {
+  if (IS_DEV) return; // dev: never intercept — browser fetches everything fresh
+
   const { request } = e;
   const url = new URL(request.url);
 
