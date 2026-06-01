@@ -3068,7 +3068,20 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                       onClick={() => handleHotspotClick(i, h)}
                       style={{
                         position:"absolute",
-                        left: h.x - h.r * HOTSPOT_VIS, top: h.y - h.r * HOTSPOT_VIS,
+                        left: h.x - h.r, top: h.y - h.r,
+                        width: h.r * 2, height: h.r * 2,
+                        background:"transparent",
+                        border:"none",
+                        cursor:"pointer",
+                        padding:0,
+                        opacity: onCd ? 0.25 : 1,
+                        zIndex: 4,
+                      }}
+                      aria-label={dist ? `disturbance-${rarity}` : `inspect-${h.kind}`}
+                    >
+                      <div style={{
+                        position:"absolute",
+                        left: h.r * (1 - HOTSPOT_VIS), top: h.r * (1 - HOTSPOT_VIS),
                         width: h.r * 2 * HOTSPOT_VIS, height: h.r * 2 * HOTSPOT_VIS,
                         borderRadius:"50%",
                         background: dist
@@ -3077,13 +3090,9 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                         border: dist ? `2px solid ${ringColor}` : "2px dashed rgba(180,160,80,0.18)",
                         boxShadow: dist ? `0 0 ${20 + drama * 30}px ${ringColor}99, inset 0 0 ${10 + drama * 16}px ${elColor}66` : "none",
                         animation: dist ? `disturb${rarity === "apex" || rarity === "ultra" ? "Big" : "Sml"} ${rarity === "apex" ? "1.0s" : rarity === "ultra" ? "1.2s" : "1.5s"} ease-in-out infinite` : undefined,
-                        cursor:"pointer",
-                        padding:0,
-                        opacity: onCd ? 0.25 : 1,
-                        zIndex: 4,
-                      }}
-                      aria-label={dist ? `disturbance-${rarity}` : `inspect-${h.kind}`}
-                    />
+                        pointerEvents:"none",
+                      }}/>
+                    </button>
                   );
                 })}
 
