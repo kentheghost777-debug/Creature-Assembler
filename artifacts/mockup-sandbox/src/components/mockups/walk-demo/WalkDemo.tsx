@@ -194,6 +194,7 @@ type Phase = "walk" | "d1" | "d2" | "pick" | "d3" | "role_pick" | "d4" | "d5"
            | "lia_d1"  | "lia_d2"  | "lia_d3"  | "lia_d4"  | "lia_d5"  | "lia_done"
            | "jess_path_d1" | "jess_path_d2"
            | "prof2_d1" | "prof2_d2" | "prof2_d3" | "prof2_d4"
+           | "farm_d1" | "farm_d2" | "farm_d3"
            | "scripted_t1" | "scripted_t2" | "scripted_set" | "scripted_caught"
            // Ambient "always talkable" idle chats (set no flags, never gate quests)
            | "prof_idle" | "jay_idle" | "maya_idle" | "maya_wait"
@@ -425,6 +426,12 @@ const R2 = { w: 1024, h: 1536 };
 const R2_SPAWN     = { x: 290, y: 1180 };   // red cross — west-side path entry
 const PROF_R2_POS  = { x: 470, y: 1040 };   // yellow X — prof at signpost
 const WYV_R2_POS   = { x: 620, y: 780 };    // wyvrunt appears north of prof
+// Old Hollis — farmer painted into route2-map.png; tends the farm up north,
+// watches the Tayanari play, and first found the rare Wyvrunt. Made interactive.
+const FARMER_R2_POS = { x: 665, y: 740 };
+const FARMER_R2_BOX: Rect = [651, 689, 680, 752]; // solid collider (user-tapped corners)
+const FARMER_SOLIDS: Rect[] = [FARMER_R2_BOX];
+const NO_SOLIDS: Rect[] = [];
 // Return-to-overworld trigger (west edge — aligned with the carved gap in the left forest mass)
 const R2_RETURN_OW: Rect    = [80, 1121, 170, 1241]; // TEMP door back to town (user-tapped 80,1121) — re-place after map swap
 // Locked future-content beats — show a "blocked"/"locked" toast
@@ -1014,6 +1021,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const [profRoute2Done,       setProfRoute2Done]       = useState(() => savedWorld?.profRoute2Done ?? false);
   const [nearProfR2,           setNearProfR2]           = useState(false);
   const [profR2InteractPos,    setProfR2InteractPos]    = useState({ sx: 0, sy: 0 });
+  const [nearFarmerR2,         setNearFarmerR2]         = useState(false);
+  const [farmerR2InteractPos,  setFarmerR2InteractPos]  = useState({ sx: 0, sy: 0 });
   const [hasObsidianRealmShell, setHasObsidianRealmShell] = useState(() => savedWorld?.hasObsidianRealmShell ?? false);
   const [wyvruntCaught,        setWyvruntCaught]        = useState(() => savedWorld?.wyvruntCaught ?? false);
   const [wyvruntForm,          setWyvruntForm]          = useState(() => savedWorld?.wyvruntForm ?? 0);
@@ -1728,8 +1737,10 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         const nx = Math.max(30, Math.min(x + dx, world.w - 30));
         // Allow y=0 so the northern path exit is reachable
         const ny = Math.max(0,  Math.min(y + dy, world.h - 30));
-        if (!blocked(nx, y,  zones)) worldPos.current.x = nx;
-        if (!blocked(x,  ny, zones)) worldPos.current.y = ny;
+        // Always-solid boxes (e.g. NPCs painted on the map) block even while WALLS_ON is off.
+        const solids = sc === "route2" ? FARMER_SOLIDS : NO_SOLIDS;
+        if (!blocked(nx, y,  zones) && !solids.some(r => inRect(nx, y,  r))) worldPos.current.x = nx;
+        if (!blocked(x,  ny, zones) && !solids.some(r => inRect(x,  ny, r))) worldPos.current.y = ny;
 
         // Door triggers
         if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_ROUTE1_EXIT)) {
@@ -2016,6 +2027,9 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           const screenY = (py - cam.current.y - topOff - 28) * ZOOM;
           setNearProfR2(dp < 110);
           if (dp < 110) setProfR2InteractPos({ sx: screenX, sy: screenY });
+          const dfarm = dist(px, py, FARMER_R2_POS.x, FARMER_R2_POS.y);
+          setNearFarmerR2(dfarm < 95);
+          if (dfarm < 95) setFarmerR2InteractPos({ sx: screenX, sy: screenY });
           // Auto-greet on first arrival
           if (!route2GreetedRef.current && phaseRef.current === "walk") {
             setRoute2Greeted(true);
@@ -2051,6 +2065,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       lia_done: "walk",
       jess_path_d1: "jess_path_d2", jess_path_d2: "walk",
       prof2_d1: "prof2_d2", prof2_d2: "prof2_d3", prof2_d3: "prof2_d4", prof2_d4: "walk",
+      farm_d1: "farm_d2", farm_d2: "farm_d3", farm_d3: "walk",
       scripted_t1: "scripted_t2", scripted_t2: "scripted_set",
       scripted_set: "scripted_caught", scripted_caught: "walk",
       // Ambient idle chats just close (no flags touched).
@@ -2167,6 +2182,9 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     prof2_d2: "Chaos-aligned Tayanari don't follow the same behavioral patterns as the rest. Their elemental signature comes in wrong — the colors shift, the resonance frequency is unstable. Most researchers write them off as anomalies. Lia bonded with one years ago; Draco is the most remarkable creature I have ever documented, and she still won't let me run a full scan. This one is rarer still.",
     prof2_d3: "It descended from the high cliffs four nights ago and stopped exactly here. Has not moved. Has not hunted. Has not fled. I believe it has been waiting — specifically for you. A Tayanari that selects its Keeper before the bond attempt is rarer than anything in my journals. Here — take this. An Obsidianeye Realm Shell. I had it made for exactly this kind of moment.",
     prof2_d4: "Walk toward it slowly. I will watch from here. If I am right about what it is, it will not fight you — it will test you. The test is different from a fight. Stay calm. Trust what happens.",
+    farm_d1: "Oh — hello there, Keeper. Don't mind me, I'm just sittin' out here watching the Tayanari play. Best show in the whole valley, and it don't cost a copper.",
+    farm_d2: "I keep the farm up north, past the rise where the grass goes gold. Hard work, sure, but come dusk the little ones wander down into my fields. Good company, the lot of 'em.",
+    farm_d3: "Funny thing, that Wyvrunt everyone's whispering about... I'm the one who first found it. Half-frozen by my north fence one winter, it was. Fed it scraps till it could fly again. Rare creature — glad it found its way to good hands.",
     scripted_t1: "The Wyvrunt is completely still. Its tail-flame ripples in slow arcs but it doesn't move. The yin-yang sigils on its scales pulse — reading you. PROF: \"Don't move yet. Let it finish its read.\"",
     scripted_t2: "Something in its posture shifts — the tension releasing by degrees, curiosity replacing caution. The sigils brighten. It has made a decision. PROF: \"Now. The shell. Set it down. It's ready.\"",
     scripted_set: "You place the Obsidianeye Realm Shell open on the ground before it. The Wyvrunt tilts its head — considers — and doesn't move away.",
@@ -2929,6 +2947,14 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                 animation:"pulse 1.6s ease-in-out infinite",
                 pointerEvents:"none",
               }}/>
+              {/* Old Hollis — painted-in farmer nametag */}
+              <div style={{
+                position:"absolute",
+                left: FARMER_R2_POS.x - 28, top: FARMER_R2_POS.y - 92,
+                color:"#bfe080", fontSize:8, fontWeight:800,
+                letterSpacing:1, pointerEvents:"none",
+                textShadow:"0 0 4px #000,0 0 8px #000",
+              }}>OLD HOLLIS</div>
             </>
           )}
 
@@ -3353,6 +3379,23 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               zIndex:10,
             }}
           >{!cleminusMet ? "!" : demoComplete ? "…" : (jayA3Wins > 0 && liaA3Wins > 0) ? "!" : "?"}</button>
+        )}
+
+        {/* ── INTERACT BUTTON — Old Hollis (Eastern Path farmer) ────────── */}
+        {scene === "route2" && nearFarmerR2 && phase === "walk" && (
+          <button
+            onClick={() => setPhase("farm_d1")}
+            style={{
+              position:"absolute",
+              left: farmerR2InteractPos.sx - 14, top: farmerR2InteractPos.sy - 10,
+              width:28, height:28, borderRadius:"50%",
+              background:"#8ec850", border:"2px solid #fff",
+              color:"#13200a", fontSize:16, fontWeight:900,
+              display:"flex", alignItems:"center", justifyContent:"center",
+              cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite",
+              zIndex:10,
+            }}
+          >!</button>
         )}
 
         {/* ── INTERACT BUTTON — Jess ────────────────────────────────────── */}
@@ -3783,6 +3826,38 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                   cursor:"pointer",
                 }}
               >{phase === "prof2_d3" ? "Take the Shell ☯" : phase === "prof2_d4" ? "OK" : "Next ▶"}</button>
+            </div>
+          </div>
+        )}
+
+        {/* ── OLD HOLLIS — Eastern Path farmer (flavor dialogue) ────────── */}
+        {(phase === "farm_d1" || phase === "farm_d2" || phase === "farm_d3") && (
+          <div style={{
+            position:"absolute", bottom:0, left:0, right:0,
+            background:"linear-gradient(to top,rgba(12,20,6,0.97),rgba(16,26,8,0.93))",
+            borderTop:"2px solid rgba(150,200,90,0.6)",
+            padding:"10px 14px 14px",
+            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out",
+          }}>
+            <div style={{ marginBottom:8 }}>
+              <span style={{ color:"#bfe080", fontWeight:700, fontSize:13, letterSpacing:1 }}>
+                OLD HOLLIS
+              </span>
+            </div>
+            <p style={{ color:"#e6ecd8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>
+              {LINES[phase]}
+            </p>
+            <div style={{ display:"flex", justifyContent:"flex-end" }}>
+              <button
+                onClick={() => advanceDialog(phase)}
+                style={{
+                  background:"rgba(150,200,90,0.15)",
+                  border:"1px solid rgba(150,200,90,0.5)",
+                  color:"#bfe080", padding:"6px 20px",
+                  borderRadius:8, fontSize:13, fontWeight:700,
+                  cursor:"pointer",
+                }}
+              >{phase === "farm_d3" ? "OK" : "Next ▶"}</button>
             </div>
           </div>
         )}
