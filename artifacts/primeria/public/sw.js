@@ -1,5 +1,5 @@
-const CACHE_VERSION = "primeria-v10";
-const ASSET_CACHE   = "primeria-assets-v10";
+const CACHE_VERSION = "primeria-v11";
+const ASSET_CACHE   = "primeria-assets-v11";
 
 const PRECACHE = [
   "./",

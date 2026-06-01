@@ -809,15 +809,15 @@ function loadImg(src: string) {
 // natively; the walk loop mirrors them (flipX) when moving left. Each direction
 // has a neutral idle plus a 6-frame walk cycle, all sliced from the character's
 // sprite sheet and normalised to a shared bottom-anchored canvas.
-function dirFrames(c: string): Record<string, string[]> {
+function dirFrames(c: string, sideN = 6): Record<string, string[]> {
   const p = (n: string) => `./images/${c}_${n}.png`;
-  const cycle = (dir: string) => [1, 2, 3, 4, 5, 6].map(i => p(`${dir}_${i}`));
+  const cycle = (dir: string, n = 6) => Array.from({ length: n }, (_, i) => p(`${dir}_${i + 1}`));
   return {
     idle:       [p("front_idle")], // shown at game start, facing forward
     idle_up:    [p("back_idle")],  // stopped, facing away
     idle_side:  [p("side_idle")],  // stopped, facing side (right; mirrored for left)
     idle_down:  [p("front_idle")], // stopped, facing forward
-    walk_side:  cycle("side"),
+    walk_side:  cycle("side", sideN),
     walk_up:    cycle("back"),
     walk_down:  cycle("front"),
   };
@@ -826,7 +826,7 @@ function dirFrames(c: string): Record<string, string[]> {
 const CHAR_FRAMES: Record<CharId, Record<string, string[]>> = {
   kinju: dirFrames("kael"),
   rowan: dirFrames("rowan"),
-  jess:  dirFrames("jess"),
+  jess:  dirFrames("jess", 5),
 };
 // Maps CharId → actual image filename prefix (kinju reuses "kael" assets until new sprites ship).
 const CHAR_IMG_KEY: Record<CharId, string> = { kinju: "kael", rowan: "rowan", jess: "jess" };

@@ -1,3 +1,4 @@
 - [SW stales dev preview](sw-dev-stale-preview.md) — Primeria's PWA service worker can pin old code in the dev preview; gate registration to production only, tear it down on dev hosts.
 - [Door-placement dev tool](door-dev-tool.md) — in-game "DEV" overlay lets the user tap the map to read world coords for placing door triggers; stop guessing coordinates.
 - [Portrait framing normalization](portrait-framing.md) — feet/figure position is the PNG's baked transparent margin, not CSS; "feet cut off" = zero bottom margin. Re-pad assets to a shared ratio, don't patch objectFit.
+- [Sprite-sheet slicing & walk norm](sprite-sheet-slicing.md) — slicing AI walk sheets: verify compass via montage, normalize per-frame to constant HEIGHT (rows scale-inconsistent → global scale pulses), keep 300×340 feet-flush canvas.
