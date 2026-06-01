@@ -1,5 +1,5 @@
-const CACHE_VERSION = "primeria-v12";
-const ASSET_CACHE   = "primeria-assets-v12";
+const CACHE_VERSION = "primeria-v13";
+const ASSET_CACHE   = "primeria-assets-v13";
 
 // Same host gate as index.html. A service worker that lingers on a dev preview
 // host pins old code (it can serve its own cached index.html, so the in-page
@@ -33,8 +33,10 @@ self.addEventListener("activate", (e) => {
         const keys = await caches.keys();
         await Promise.all(keys.map((k) => caches.delete(k)));
         await self.registration.unregister();
-        const clients = await self.clients.matchAll({ type: "window" });
-        clients.forEach((c) => c.navigate(c.url));
+        // NOTE: deliberately do NOT navigate/reload open tabs. Reloading yanks
+        // the player back to the title screen ("game resets from time to time").
+        // Caches are cleared + the SW is unregistered; the next *natural*
+        // navigation comes back SW-free with fresh code, no forced reload.
       })()
     );
     return;

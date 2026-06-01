@@ -29,8 +29,20 @@ gate existed can serve its own cached `index.html`, so the in-page gate script n
 runs — the user stays stuck no matter how many times they reset the preview. Fix:
 `sw.js` must ALSO self-destruct on dev hosts. The browser re-fetches `sw.js` on every
 navigation (bypassing the SW), so shipping a new `sw.js` (bump CACHE_VERSION so its
-bytes change) lets a dev-host branch run on activate: delete all caches,
-`self.registration.unregister()`, then `clients.matchAll → c.navigate(c.url)` to reload
-every tab SW-free. Also early-return the `fetch` handler on dev so it never intercepts.
-Both the index.html host gate and the sw.js dev self-destruct use the same IS_DEV host
-check (localhost/127.0.0.1/*.replit.dev/*.repl.co).
+bytes change) lets a dev-host branch run on activate: delete all caches and
+`self.registration.unregister()`. Also early-return the `fetch` handler on dev so it
+never intercepts. Both the index.html host gate and the sw.js dev self-destruct use the
+same IS_DEV host check (localhost/127.0.0.1/*.replit.dev/*.repl.co).
+
+**Do NOT force a reload from the SW or the registration script.** An earlier version
+had the dev self-destruct call `clients.matchAll → c.navigate(c.url)`, and the prod
+registration call `window.location.reload()` on `updatefound`. For a game whose
+GameLauncher always boots to the title screen, any forced reload looks like "the game
+resets from time to time" — it yanks the player back to the title mid-session. The
+self-destruct already works without reloading: clearing caches + unregistering means
+the *next natural* navigation is SW-free with fresh code. Same stale cache is also why
+old/ghost map elements (e.g. door overlay boxes at old positions) appear — fixed by the
+cache clear, not by any code change.
+
+**Why:** `c.navigate()`/`location.reload()` interrupt live game state; the fresh-code
+benefit isn't worth resetting the player. Let updates apply on the user's next reload.

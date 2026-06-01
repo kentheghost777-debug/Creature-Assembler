@@ -69,8 +69,10 @@
               if (!sw) return;
               sw.addEventListener("statechange", function () {
                 if (sw.state === "installed" && navigator.serviceWorker.controller) {
+                  // A new version is ready. Let it take over on the next natural
+                  // load — do NOT force window.location.reload() here, which would
+                  // reset the player to the title screen mid-session.
                   sw.postMessage({ type: "SKIP_WAITING" });
-                  window.location.reload();
                 }
               });
             });
