@@ -451,7 +451,7 @@ const FARMER_R2_BOX: Rect = [651, 689, 680, 752]; // solid collider (user-tapped
 const FARMER_SOLIDS: Rect[] = [FARMER_R2_BOX];
 const NO_SOLIDS: Rect[] = [];
 // Return-to-overworld trigger (west edge — aligned with the carved gap in the left forest mass)
-let R2_RETURN_OW: Rect    = ld("r2_return", [80, 1121, 170, 1241]); // TEMP door back to town (user-tapped 80,1121) — re-place after map swap
+let R2_RETURN_OW: Rect    = ld("r2_return", [79, 1028, 169, 1148]); // TEMP door back to town (user-tapped 80,1121) — re-place after map swap
 // Locked future-content beats — show a "blocked"/"locked" toast
 const R2_NORTH_BLOCKED: Rect = [520,   0, 780,  40]; // cliff stairs (top-right)
 const R2_SOUTH_BLOCKED: Rect = [360, 1510, 600,1536]; // south continuation
@@ -639,7 +639,7 @@ let OW_PROF_DOOR: Rect = ld("ow_lab", [585, 289, 667, 346]); // nudged 8 west of
 
 // ── Whisperroot Trail (Route 1 / Area 1) ─────────────────────────────────────
 // South gate (blue) connects back to town; north continues deeper (future)
-let R1_SOUTH_GATE: Rect = ld("r1_south", [418, 750, 582, 780]); // bottom-center exit → overworld
+let R1_SOUTH_GATE: Rect = ld("r1_south", [404, 749, 568, 779]); // bottom-center exit → overworld
 const R1_BLOCKED: Rect[] = [
   // ── OUTER FOREST BORDER ──────────────────────────────────────────────────
   [0,    0,  1024,   50],  // top forest strip
