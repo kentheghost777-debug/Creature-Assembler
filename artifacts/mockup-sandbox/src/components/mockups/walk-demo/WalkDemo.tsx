@@ -748,7 +748,7 @@ const A3_BLOCKED: Rect[] = [
 // ── Ellio's Home ─────────────────────────────────────────────────────────────
 const EH = { w: 800, h: 800 };
 const ELLIO_POS = { x: 400, y: 350 };
-const OW_ELLIO_DOOR: Rect  = [238, 698, 298, 758]; // front-yard frontage just S of the house (mailbox/entrance area) — where the player naturally stands; requires "up" key (anti walk-by)
+const OW_ELLIO_DOOR: Rect  = [174, 709, 234, 769]; // moved to the spot the user tapped in the door tool (204,739); requires "up" key (anti walk-by)
 const ELLIO_HOME_EXIT: Rect = [305, 725, 505, 790];
 const EH_BLOCKED: Rect[] = [
   [0, 0, 800, 60], [0, 0, 60, 800], [740, 0, 800, 800],
@@ -859,7 +859,12 @@ function drawSprite(
 function inRect(x: number, y: number, [x1,y1,x2,y2]: Rect) {
   return x >= x1 && x <= x2 && y >= y1 && y <= y2;
 }
+// Walls are temporarily OFF while we rebuild them with the visual editor.
+// Door triggers are independent of this (they call inRect directly), so every
+// door keeps working — the player can just now reach all of them freely.
+const WALLS_ON = false;
 function blocked(x: number, y: number, zones: Rect[]) {
+  if (!WALLS_ON) return false;
   return zones.some(r => inRect(x, y, r));
 }
 function dist(ax: number, ay: number, bx: number, by: number) {
@@ -1758,7 +1763,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         } else if (sc === "overworld" && h === "up" && inRect(worldPos.current.x, worldPos.current.y, OW_ELLIO_DOOR)) {
           transitionTo("ellio", 400, 670);      // enter Ellio's Home — require "up" key (anti walk-by)
         } else if (sc === "ellio" && inRect(worldPos.current.x, worldPos.current.y, ELLIO_HOME_EXIT)) {
-          transitionTo("overworld", 268, 778);  // exit onto front frontage, just S of the door
+          transitionTo("overworld", 204, 790);  // exit onto front frontage, just S of the door
         } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_LIA_DOOR)) {
           transitionTo("lia", 400, 670);        // enter Lia's Home — trigger on visible front door
         } else if (sc === "lia" && inRect(worldPos.current.x, worldPos.current.y, LIA_HOME_EXIT)) {
@@ -2578,8 +2583,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit: scene === "overworld" ? "fill" : "cover" }}
           />
 
-          {/* Dev: collision zone visualiser */}
-          {DEV_COLLISIONS && (
+          {/* Dev: collision zone visualiser (hidden while walls are off) */}
+          {DEV_COLLISIONS && WALLS_ON && (
             (scene === "overworld" ? OW_BLOCKED :
              scene === "route1"   ? R1_BLOCKED :
              scene === "route2"   ? R2_BLOCKED :
