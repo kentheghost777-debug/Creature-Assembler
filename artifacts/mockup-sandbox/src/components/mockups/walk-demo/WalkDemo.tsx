@@ -1328,11 +1328,11 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     const sceneNPCs: Partial<Record<Scene, string[]>> = {
       lab:       ["/__mockup/images/prof-irwyn-sprite.png", "/__mockup/images/rowan_front_idle.png"],
       overworld: ["/__mockup/images/maya-sprite.png"],
-      jay:       ["/__mockup/images/jay_front_idle.png"],
+      jay:       ["/__mockup/images/jay-sprite.png"],
       ellio:     ["/__mockup/images/ellio-sprite.png"],
       home:      ["/__mockup/images/jess_front_idle.png", "/__mockup/images/kael_front_idle.png"],
-      lia:       ["/__mockup/images/lia_front_idle.png", "/__mockup/images/cindrax.png"],
-      area3:     ["/__mockup/images/jay_front_idle.png", "/__mockup/images/lia_front_idle.png",
+      lia:       ["/__mockup/images/lia.png", "/__mockup/images/cindrax.png"],
+      area3:     ["/__mockup/images/jay-sprite.png", "/__mockup/images/lia.png",
                   "/__mockup/images/jerbs_sprite.png", "/__mockup/images/jerbs_portal.png"],
     };
     (sceneNPCs[scene] ?? []).forEach(loadImg);
@@ -1397,7 +1397,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   // Draw Jay world sprite (inside jay scene)
   useEffect(() => {
     if (scene !== "jay") return;
-    const src = "/__mockup/images/jay_front_idle.png";
+    const src = "/__mockup/images/jay-sprite.png";
     const tryDraw = () => {
       const c = jayCanvasRef.current;
       if (!c) return;
@@ -1434,7 +1434,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   // Draw Jay portrait in dialog box
   useEffect(() => {
     if (!phase.startsWith("jay_")) return;
-    const src = "/__mockup/images/jay_front_idle.png";
+    const src = "/__mockup/images/jay-sprite.png";
     const tryDraw = () => {
       const c = jayPortraitRef.current;
       if (!c) return;
@@ -1518,7 +1518,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   // Draw Lia world sprite inside Lia's home
   useEffect(() => {
     if (scene !== "lia") return;
-    const src = "/__mockup/images/lia_front_idle.png";
+    const src = "/__mockup/images/lia.png";
     const tryDraw = () => {
       const c = liaCanvasRef.current;
       if (!c) return;
@@ -1530,7 +1530,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   // Draw Lia portrait in dialog box
   useEffect(() => {
     if (!phase.startsWith("lia_")) return;
-    const src = "/__mockup/images/lia_front_idle.png";
+    const src = "/__mockup/images/lia.png";
     const tryDraw = () => {
       const c = liaPortraitRef.current;
       if (!c) return;
@@ -1581,7 +1581,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     const tryDraw = () => {
       const c = jayA3CanvasRef.current;
       if (!c) return;
-      if (!drawSprite(c, "/__mockup/images/jay_front_idle.png", false, 68)) setTimeout(tryDraw, 150);
+      if (!drawSprite(c, "/__mockup/images/jay-sprite.png", false, 68)) setTimeout(tryDraw, 150);
     };
     tryDraw();
   }, [scene]);
@@ -1592,7 +1592,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     const tryDraw = () => {
       const c = liaA3CanvasRef.current;
       if (!c) return;
-      if (!drawSprite(c, "/__mockup/images/lia_front_idle.png", false, 68)) setTimeout(tryDraw, 150);
+      if (!drawSprite(c, "/__mockup/images/lia.png", false, 68)) setTimeout(tryDraw, 150);
     };
     tryDraw();
   }, [scene]);
