@@ -29,3 +29,8 @@ AI sheets often draw the **top row larger than the bottom row** (e.g. side top r
 
 ## Canvas-clipping a sheet whose frames don't divide evenly
 When a sheet's frame size isn't an integer (e.g. 1024/5 = 204.8), use `Math.round(fw*col)` for the **source** rect, not `Math.floor` — floored columns drift left and bleed an adjacent frame's edge (Jerbs caught a neighbour's lantern). And make the destination canvas match the frame's aspect ratio: a 204.8×512 frame (~0.4) drawn into 56×112 (0.5) stretched the figure ~25% too wide. Pick one axis (keep height) and derive the other from the frame aspect.
+
+## Battle-stage sheets: cells are stretched to FILL the box → must be bottom-aligned
+Area-3 battle sheets (`a3-wild/new/mid/apex`, helpers `wldF/nwF/mmF/apF`) render each grid cell via `sheetBgStyle` background-position/size so one cell exactly fills the battle box. AI sheets place creatures at wildly inconsistent vertical positions inside their cells (measured botgaps ranged 2→291px), so creatures appeared to **float / "feet above heads"** in wild encounters.
+
+**Fix (no AI cost):** re-pack each cell with PIL — crop content bbox, scale DOWN only to fit (height ≤ ~0.94·cell, width ≤ ~0.96·cell, never upscale), then center-x and bottom-align (feet ~3% above cell bottom). Preserve relative size (a chick should stay smaller than a dragon) — do NOT normalize to constant height like walk frames (here the size variance is intentional, and upscaling genuinely-small art blurs it). Back up originals first; sync the 4 sheets to BOTH `artifacts/{primeria,mockup-sandbox}/public/images/` and bump `primeria/public/sw.js` cache.
