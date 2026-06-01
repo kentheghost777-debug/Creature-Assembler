@@ -276,16 +276,16 @@ const WYVRUNT_SPEC: MonSpec = {
   rarity: "apex",
   wildImg:   "./images/wyvrunt.png",
   playerImg: "./images/wyvrunt.png",
-  wildFaces: "left", playerFaces: "right",
+  wildFaces: "left", playerFaces: "left",
   maxHp: 60,
   baseDmg: [9, 15], // +5 over other starter-tier ceilings; scripted fight ignores it anyway
 };
 
 // ── Wyvrunt evolution chain forms (loyalty + level gated) ───────────────────
 // Forms 0-2 cap at lv30 (when wyvruntCaught). Form 3 (Aureyvant) has no cap.
-const WYRNAK_SPEC:    MonSpec = { ...WYVRUNT_SPEC, id:"wyrnak",    name:"Wyrnak",    nameIcon:"☯", wildImg:"./images/wyrnak.png",    playerImg:"./images/wyrnak.png",    maxHp:80,  baseDmg:[11,18] };
-const WYRVAST_SPEC:   MonSpec = { ...WYVRUNT_SPEC, id:"wyrvast",   name:"Wyrvast",   nameIcon:"☯", wildImg:"./images/wyrvast.png",   playerImg:"./images/wyrvast.png",   maxHp:100, baseDmg:[13,22] };
-const AUREYVANT_SPEC: MonSpec = { ...WYVRUNT_SPEC, id:"aureyvant", name:"Aureyvant", nameIcon:"✦", wildImg:"./images/aureyvant.png", playerImg:"./images/aureyvant.png", maxHp:120, baseDmg:[16,26] };
+const WYRNAK_SPEC:    MonSpec = { ...WYVRUNT_SPEC, id:"wyrnak",    name:"Wyvrunt II",    nameIcon:"☯", wildImg:"./images/wyrnak.png",    playerImg:"./images/wyrnak.png",    maxHp:80,  baseDmg:[11,18] };
+const WYRVAST_SPEC:   MonSpec = { ...WYVRUNT_SPEC, id:"wyrvast",   name:"Wyvrunt III",   nameIcon:"☯", wildImg:"./images/wyrvast.png",   playerImg:"./images/wyrvast.png",   maxHp:100, baseDmg:[13,22] };
+const AUREYVANT_SPEC: MonSpec = { ...WYVRUNT_SPEC, id:"aureyvant", name:"Wyvrunt IV", nameIcon:"✦", wildImg:"./images/aureyvant.png", playerImg:"./images/aureyvant.png", maxHp:120, baseDmg:[16,26] };
 const WYV_FORMS: MonSpec[] = [WYVRUNT_SPEC, WYRNAK_SPEC, WYRVAST_SPEC, AUREYVANT_SPEC];
 
 // ── Area 3 trainer battle MonSpecs ───────────────────────────────────────────
