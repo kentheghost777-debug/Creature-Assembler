@@ -11,21 +11,21 @@ const CHARACTERS: { id: CharId; name: string; tag: string; sprite: string; hdImg
   {
     id: "kinju", name: "Kinju", tag: "Sunlit wanderer",
     sprite: "/__mockup/images/kael_front_idle.png",
-    hdImg:  "/__mockup/images/kinju.png",
+    hdImg:  "/__mockup/images/kinju_hero.png",
     desc: "Born curious. Always at the edge of the known. When the world finally called your name — there was never any doubt.",
     stats: [["ORIGIN", "Primeria Village"], ["HEART", "Wanderlust"], ["CALL", "Horizon"]],
   },
   {
     id: "jess", name: "Jess", tag: "Wildheart roamer",
     sprite: "/__mockup/images/jess_front_idle.png",
-    hdImg:  "/__mockup/images/jess-sprite.png",
+    hdImg:  "/__mockup/images/jess_hero.png",
     desc: "Born to the living world. You speak in the language of creatures, silence, and instinct — without ever saying a word.",
     stats: [["ORIGIN", "Primeria Village"], ["HEART", "Wildborn"], ["CALL", "The Living Land"]],
   },
   {
     id: "rowan", name: "Rowan", tag: "Seasoned traveler",
     sprite: "/__mockup/images/rowan_front_idle.png",
-    hdImg:  "/__mockup/images/hero-art.png",
+    hdImg:  "/__mockup/images/rowan_hero.png",
     desc: "Born to understand. Every question leads to the next. For you, the Trial is not a beginning — it is a continuation.",
     stats: [["ORIGIN", "Primeria Village"], ["HEART", "Discovery"], ["CALL", "The Unknown"]],
   },
@@ -611,7 +611,6 @@ export default function GameLauncher() {
                     width: "100%", height: "100%",
                     objectFit: "contain",
                     objectPosition: "bottom center",
-                    imageRendering: activeChar.id === "jess" ? "pixelated" : "auto",
                     filter: "drop-shadow(0 0 28px rgba(240,180,40,0.22))",
                   }}
                 />
@@ -726,19 +725,12 @@ export default function GameLauncher() {
               display: "flex", alignItems: "flex-end",
               justifyContent: "center", overflow: "hidden",
             }}>
-              {activeChar.id === "rowan" ? (
-                <img src="/__mockup/images/hero-art.png" alt="Rowan"
-                  style={{ height: "96%", objectFit: "contain", objectPosition: "bottom center", filter: "drop-shadow(-2px 0 36px rgba(240,180,40,0.16))" }}
-                />
-              ) : activeChar.id === "kinju" ? (
-                <img src="/__mockup/images/kinju.png" alt="Kinju"
-                  style={{ height: "94%", objectFit: "contain", objectPosition: "bottom center", filter: "drop-shadow(-2px 0 36px rgba(240,180,40,0.18))" }}
-                />
-              ) : (
-                <img src={activeChar.sprite} alt="Your Keeper"
-                  style={{ height: "min(80%, 440px)", objectFit: "contain", objectPosition: "bottom center", imageRendering: "pixelated", filter: "drop-shadow(-2px 0 36px rgba(240,180,40,0.18))" }}
-                />
-              )}
+              <img
+                key={activeChar.id}
+                src={activeChar.hdImg}
+                alt="Your Keeper"
+                style={{ height: "min(88%, 520px)", objectFit: "contain", objectPosition: "bottom center", filter: "drop-shadow(-2px 0 36px rgba(240,180,40,0.18))" }}
+              />
             </div>
           </div>
         );

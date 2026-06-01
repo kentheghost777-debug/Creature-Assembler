@@ -7,22 +7,25 @@ const TITLE_TRACK = "./audio/primeria_title.mp3";
 
 type Screen = "studio" | "dedication" | "title" | "menu" | "intro" | "char_reveal" | "game";
 
-const CHARACTERS: { id: CharId; name: string; tag: string; sprite: string; desc: string; stats: [string, string][] }[] = [
+const CHARACTERS: { id: CharId; name: string; tag: string; sprite: string; hero: string; desc: string; stats: [string, string][] }[] = [
   {
     id: "kinju", name: "Kinju", tag: "Sunlit wanderer",
     sprite: "./images/kael_front_idle.png",
+    hero: "./images/kinju_hero.png",
     desc: "Born curious. Always at the edge of the known. When the world finally called your name — there was never any doubt.",
     stats: [["ORIGIN", "Primeria Village"], ["HEART", "Wanderlust"], ["CALL", "Horizon"]],
   },
   {
     id: "jess", name: "Jess", tag: "Wildheart roamer",
     sprite: "./images/jess_front_idle.png",
+    hero: "./images/jess_hero.png",
     desc: "Born to the living world. You speak in the language of creatures, silence, and instinct — without ever saying a word.",
     stats: [["ORIGIN", "Primeria Village"], ["HEART", "Wildborn"], ["CALL", "The Living Land"]],
   },
   {
     id: "rowan", name: "Rowan", tag: "Seasoned traveler",
     sprite: "./images/rowan_front_idle.png",
+    hero: "./images/rowan_hero.png",
     desc: "Born to understand. Every question leads to the next. For you, the Trial is not a beginning — it is a continuation.",
     stats: [["ORIGIN", "Primeria Village"], ["HEART", "Discovery"], ["CALL", "The Unknown"]],
   },
@@ -601,11 +604,10 @@ export default function GameLauncher() {
                   pointerEvents: "none",
                 }} />
                 <img
-                  src={activeChar.sprite}
+                  src={activeChar.hero}
                   alt={activeChar.name}
                   style={{
-                    height: "92%", objectFit: "contain", objectPosition: "bottom center",
-                    imageRendering: "pixelated",
+                    height: "98%", objectFit: "contain", objectPosition: "bottom center",
                     filter: "drop-shadow(0 0 28px rgba(240,180,40,0.22))",
                   }}
                 />
@@ -721,11 +723,10 @@ export default function GameLauncher() {
               justifyContent: "center", overflow: "hidden",
             }}>
               <img
-                src={activeChar.sprite}
+                src={activeChar.hero}
                 alt="Your Keeper"
                 style={{
-                  height: "min(74%, 400px)", objectFit: "contain", objectPosition: "bottom center",
-                  imageRendering: "pixelated",
+                  height: "min(88%, 520px)", objectFit: "contain", objectPosition: "bottom center",
                   filter: "drop-shadow(-2px 0 36px rgba(240,180,40,0.18))",
                 }}
               />
