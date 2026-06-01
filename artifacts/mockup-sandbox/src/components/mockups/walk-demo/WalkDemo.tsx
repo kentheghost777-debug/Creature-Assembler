@@ -569,7 +569,7 @@ const OW_BLOCKED: Rect[] = [
 // ── Lia's Home ─────────────────────────────────────────────────────────────
 const LH = { w: 800, h: 800 };
 const LIA_POS = { x: 385, y: 355 }; // Lia near the center rug
-const OW_LIA_DOOR: Rect  = [890, 780, 950, 810]; // ON visible front door — right side of Lia's south face (mailbox is on the LEFT)
+const OW_LIA_DOOR: Rect  = [945, 738, 1005, 768]; // moved to user-tapped spot (945,738)
 const LIA_HOME_EXIT: Rect = [310, 722, 490, 790]; // bottom-center door
 const LH_BLOCKED: Rect[] = [
   // ── WALLS ──────────────────────────────────────────────────────────────────
@@ -639,7 +639,7 @@ const LAB_EXIT: Rect = [262, 645, 438, 692]; // exit lab
 // ── Maya's Home ───────────────────────────────────────────────────────────────
 const MY = { w: 800, h: 800 };
 const MAYA_POS = { x: 870, y: 427 }; // Maya standing at her doorstep
-const OW_MAYA_DOOR: Rect  = [910, 383, 975, 445]; // shifted further east to align with visible door art
+const OW_MAYA_DOOR: Rect  = [965, 335, 1030, 397]; // moved to user-tapped spot (965,335)
 const MAYA_HOME_EXIT: Rect = [310, 722, 490, 790]; // exit trigger at interior door
 const MAYA_SHELL: Rect     = [385, 400, 455, 460]; // pickup zone — center of the living-room rug
 const MAYA_BLOCKED: Rect[] = [
@@ -669,7 +669,7 @@ const MAYA_BLOCKED: Rect[] = [
 // ── Jay's Home ────────────────────────────────────────────────────────────────
 const JY = { w: 800, h: 800 };
 const JAY_POS = { x: 370, y: 310 }; // Jay standing in the center of his room
-const OW_JAY_DOOR: Rect  = [225, 400, 293, 448]; // shifted west to align with visible door art
+const OW_JAY_DOOR: Rect  = [195, 349, 263, 397]; // moved to user-tapped spot (195,349)
 const JAY_HOME_EXIT: Rect = [310, 725, 490, 790]; // interior door at bottom
 const JAY_BLOCKED: Rect[] = [
   // ── WALLS ──────────────────────────────────────────────────────────────────
@@ -700,7 +700,7 @@ const JAY_BLOCKED: Rect[] = [
 // 1024×768 landscape map, east entry/exit at x≈960.
 const A3 = { w: 1024, h: 768 };
 const A3_SPAWN      = { x: 920, y: 380 };        // spawn near east entry
-const OW_AREA3_EXIT: Rect = [0,  428,  22, 477]; // left edge of OW — gap at Jay's SW corner (y=430-470 between building bottom and south fence)
+const OW_AREA3_EXIT: Rect = [44, 459, 66, 508]; // moved to user-tapped spot (~55,483 center)
 const A3_RETURN_OW:  Rect = [960, 310, 1024, 450]; // east edge of Area 3
 // Cleminus "Jerbs" — west ruin corridor, opposite side from town entry
 // At y=380, x=235 is inside the doorway gap (y=340-430) between the two left ruin wall pieces.
@@ -763,7 +763,7 @@ const EH_BLOCKED: Rect[] = [
 // ── Player's Home ────────────────────────────────────────────────────────────
 const PH = { w: 800, h: 800 };
 const JESS_POS = { x: 395, y: 370 }; // Jess standing in the open center of the home
-const OW_PLAYER_HOME_DOOR: Rect = [545, 820, 605, 850]; // ON visible front door — narrowed to door art only (mailbox sits to the WEST outside this band); also requires "up" key to enter (anti walk-by)
+const OW_PLAYER_HOME_DOOR: Rect = [544, 735, 604, 765]; // moved to user-tapped spot (544,735); also requires "up" key to enter (anti walk-by)
 const PLAYER_HOME_EXIT: Rect = [305, 725, 505, 790]; // bottom-center door
 const PH_BLOCKED: Rect[] = [
   // ── WALLS ──────────────────────────────────────────────────────────────────
