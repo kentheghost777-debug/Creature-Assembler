@@ -1606,13 +1606,17 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       if (!c) return;
       const img = imgCache[src];
       if (!img?.complete || img.naturalWidth === 0) { setTimeout(tryDraw, 150); return; }
-      const fw = Math.floor(img.naturalWidth / 5);
-      const fh = Math.floor(img.naturalHeight / 3);
-      c.width = 56; c.height = 112;
+      const fw = img.naturalWidth / 5;
+      const fh = img.naturalHeight / 3;
+      // Frame is ~204.8x512 (aspect ~0.4). The old 56x112 dest (aspect 0.5)
+      // stretched Jerbs ~25% too wide; keep height, narrow width to preserve aspect.
+      const cw = 45, ch = 112;
+      c.width = cw; c.height = ch;
       const ctx = c.getContext("2d")!;
-      ctx.clearRect(0, 0, 56, 112);
-      // col 2, row 1 = clearest front-standing pose
-      ctx.drawImage(img, fw * 2, fh * 1, fw, fh, 0, 0, 56, 112);
+      ctx.clearRect(0, 0, cw, ch);
+      // col 2, row 1 = clearest front-standing pose; round exact source coords
+      // (not floor) so a neighbouring frame's lantern doesn't bleed in on the left.
+      ctx.drawImage(img, Math.round(fw * 2), Math.round(fh), Math.round(fw), Math.round(fh), 0, 0, cw, ch);
     };
     loadImg(src);
     tryDraw();
@@ -3034,7 +3038,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               {(cleminusMet || portalOpen || jerbsAppeared) && (
                 <canvas ref={jerbsCanvasRef} style={{
                   position:"absolute", imageRendering:"auto", pointerEvents:"none", zIndex:5,
-                  left: JERBS_POS.x - 28, top: JERBS_POS.y - 112,
+                  left: JERBS_POS.x - 22, top: JERBS_POS.y - 112,
                 }}/>
               )}
               {cleminusMet && (
