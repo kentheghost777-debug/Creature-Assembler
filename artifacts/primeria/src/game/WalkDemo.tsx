@@ -415,7 +415,7 @@ const R2_SPAWN     = { x: 290, y: 1180 };   // red cross — west-side path entr
 const PROF_R2_POS  = { x: 470, y: 1040 };   // yellow X — prof at signpost
 const WYV_R2_POS   = { x: 620, y: 780 };    // wyvrunt appears north of prof
 // Return-to-overworld trigger (west edge — aligned with the carved gap in the left forest mass)
-const R2_RETURN_OW: Rect    = [0,  1120,  40, 1240];
+const R2_RETURN_OW: Rect    = [80, 1121, 170, 1241]; // TEMP door back to town (user-tapped 80,1121) — re-place after map swap
 // Locked future-content beats — show a "blocked"/"locked" toast
 const R2_NORTH_BLOCKED: Rect = [520,   0, 780,  40]; // cliff stairs (top-right)
 const R2_SOUTH_BLOCKED: Rect = [360, 1510, 600,1536]; // south continuation
