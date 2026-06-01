@@ -2614,6 +2614,9 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             ["Lia", OW_LIA_DOOR],
             ["Lab", OW_PROF_DOOR],
             ["Home", OW_PLAYER_HOME_DOOR],
+            ["Route1 (north)", OW_ROUTE1_EXIT],
+            ["Route2 (east)", OW_EAST_EXIT],
+            ["Area3 (west)", OW_AREA3_EXIT],
           ] as [string, Rect][]).map(([nm, [x1, y1, x2, y2]], i) => (
             <div key={`door-${i}`} style={{
               position:"absolute", left:x1, top:y1, width:x2-x1, height:y2-y1,
