@@ -997,7 +997,7 @@ function dist(ax: number, ay: number, bx: number, by: number) {
 const PROF = { x: 350, y: 268 }; // feet position in lab world
 
 // Party holds the starter (slot 1) plus up to PARTY_CAP-1 caught companions.
-const PARTY_CAP = 6;
+const PARTY_CAP = 8;
 
 // ── Main component ──────────────────────────────────────────────────────────
 export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" }: { characterId?: CharId; roleId?: RoleId } = {}) {
