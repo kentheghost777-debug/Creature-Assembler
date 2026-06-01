@@ -712,10 +712,10 @@ const JAY_BLOCKED: Rect[] = [
 const A3 = { w: 1024, h: 768 };
 const A3_SPAWN      = { x: 920, y: 380 };        // spawn near east entry
 const OW_AREA3_EXIT: Rect = [44, 459, 66, 508]; // moved to user-tapped spot (~55,483 center)
-const A3_RETURN_OW:  Rect = [960, 310, 1024, 450]; // east edge of Area 3
-// Cleminus "Jerbs" — west ruin corridor, opposite side from town entry
-// At y=380, x=235 is inside the doorway gap (y=340-430) between the two left ruin wall pieces.
-const JERBS_POS = { x: 235, y: 380 };
+const A3_RETURN_OW:  Rect = [998, 300, 1024, 470]; // far-east of the yellow path — door back to town
+// Cleminus "Jerbs" — west closed-door, opposite the east town exit.
+// Player walks west to the x<215 trigger; Jerbs lands here via portal, west of the barrier.
+const JERBS_POS = { x: 150, y: 380 };
 // Jerbeen sprite sheet: 1024×1536, 5 cols × 3 rows, each frame ~205×512
 const JERBS_SW = 1024; const JERBS_SH = 1536;
 const JERBS_FW = Math.floor(JERBS_SW / 5); const JERBS_FH = Math.floor(JERBS_SH / 3);
@@ -1003,6 +1003,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const [jerbsInteractPos,     setJerbsInteractPos]     = useState({ sx: 0, sy: 0 });
   const [portalFrame,          setPortalFrame]          = useState(0);
   const [portalOpen,           setPortalOpen]           = useState(false);
+  // Jerbs has landed via portal but the player hasn't spoken to him yet.
+  const [jerbsAppeared,        setJerbsAppeared]        = useState(false);
   const [showCardIndex,        setShowCardIndex]        = useState(0); // 0=keeper, 1=elder
   // Role is declared in the lab at starter time. Older saves (pre-change) that
   // already hold a starter are treated as having declared, so their badge shows.
@@ -1318,6 +1320,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   useEffect(() => { starterRefArc.current      = !!starter; },       [starter]);
   const cleminusMetRef = useRef(cleminusMet);
   useEffect(() => { cleminusMetRef.current = cleminusMet; }, [cleminusMet]);
+  const jerbsAppearedRef = useRef(jerbsAppeared);
+  useEffect(() => { jerbsAppearedRef.current = jerbsAppeared; }, [jerbsAppeared]);
   useEffect(() => {
     allTownItemsRef.current = shellsCollected && hasHealingRune && hasResonanceStone && hasHearthberries && hasSatchel;
   }, [shellsCollected, hasHealingRune, hasResonanceStone, hasHearthberries, hasSatchel]);
@@ -1584,7 +1588,9 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     };
     loadImg(src);
     tryDraw();
-  }, [scene]);
+    // Re-run when Jerbs' canvas actually mounts (it only renders once he has
+    // landed / been met), otherwise the freshly-mounted canvas stays blank.
+  }, [scene, cleminusMet, portalOpen, jerbsAppeared]);
 
   // Portal frame animation — cycles while portalOpen
   useEffect(() => {
@@ -1781,11 +1787,15 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         } else if (sc === "area3" && inRect(worldPos.current.x, worldPos.current.y, A3_RETURN_OW)) {
           transitionTo("overworld", 170, 453);  // Jay's SW courtyard — walk east back into town
         } else if (sc === "area3" && worldPos.current.x < 215 && phaseRef.current === "walk") {
-          // Far-west ruin corridor — Jerbs appears the first time here
+          // Far-west closed door — Jerbs lands here from his portal the first time.
+          // The portal plays out (no dialogue yet); the player then walks up to
+          // Jerbs and taps to start the conversation.
           worldPos.current.x = 215;
-          if (!cleminusMetRef.current) {
+          if (!cleminusMetRef.current && !jerbsAppearedRef.current) {
+            jerbsAppearedRef.current = true;
+            setJerbsAppeared(true);
             setPortalOpen(true);
-            setPhase("jerbs_appear");
+            window.setTimeout(() => setPortalOpen(false), 1700);
           }
         }
 
@@ -1955,8 +1965,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           if (djay < 120) setJayA3InteractPos({ sx: screenX, sy: screenY });
           setNearLiaA3(dlia < 120);
           if (dlia < 120) setLiaA3InteractPos({ sx: screenX, sy: screenY });
-          // Jerbs is approachable only after his portal intro
-          const jerbs_near = cleminusMetRef.current && djerbs < 110;
+          // Jerbs is approachable once he has landed (jerbsAppeared) or after meeting.
+          const jerbs_near = (cleminusMetRef.current || jerbsAppearedRef.current) && djerbs < 110;
           setNearJerbs(jerbs_near);
           if (jerbs_near) setJerbsInteractPos({ sx: screenX, sy: screenY });
         }
@@ -2993,7 +3003,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                   backgroundRepeat:"no-repeat",
                 }}/>
               )}
-              {(cleminusMet || portalOpen) && (
+              {(cleminusMet || portalOpen || jerbsAppeared) && (
                 <canvas ref={jerbsCanvasRef} style={{
                   position:"absolute", imageRendering:"auto", pointerEvents:"none", zIndex:5,
                   left: JERBS_POS.x - 28, top: JERBS_POS.y - 112,
@@ -3333,6 +3343,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         {scene === "area3" && nearJerbs && phase === "walk" && (
           <button
             onClick={() => {
+              if (!cleminusMet) { setPhase("jerbs_appear"); return; }
               const beatBoth = jayA3Wins > 0 && liaA3Wins > 0;
               if (demoComplete) setPhase("jerbs_a3_idle");
               else if (beatBoth) setPhase("jerbs_return_d1");
@@ -3348,7 +3359,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite",
               zIndex:10,
             }}
-          >{demoComplete ? "…" : (jayA3Wins > 0 && liaA3Wins > 0) ? "!" : "?"}</button>
+          >{!cleminusMet ? "!" : demoComplete ? "…" : (jayA3Wins > 0 && liaA3Wins > 0) ? "!" : "?"}</button>
         )}
 
         {/* ── INTERACT BUTTON — Jess ────────────────────────────────────── */}
