@@ -717,7 +717,7 @@ export function BattleScene({
           backgroundImage:"url(./images/forest-arena.png)",
           backgroundSize:"cover", backgroundPosition:"center",
         }}>
-        {/* Wild HP plate (top-right, above the enemy mon) */}
+        {/* Wild HP plate (top-right) */}
         <div style={hpPlateStyle("enemy")}>
           <div style={{ display:"flex", alignItems:"baseline", gap:6, marginBottom:4 }}>
             <span style={{ color:"#fff", fontSize:13, fontWeight:800 }}>
@@ -747,7 +747,7 @@ export function BattleScene({
           </div>
         </div>
 
-        {/* Player HP plate (bottom-left, below the player's Tayanari) */}
+        {/* Player HP plate (top-left) */}
         <div style={hpPlateStyle("player")}>
           <div style={{ display:"flex", alignItems:"baseline", gap:6, marginBottom:4 }}>
             <span style={{ color:"#fff", fontSize:13, fontWeight:800 }}>{starter.name}</span>
@@ -1281,12 +1281,11 @@ export function BattleScene({
   );
 
   function hpPlateStyle(who: "enemy" | "player"): React.CSSProperties {
-    // Each plate sits on the same side as its mon: enemy is on the right (top),
-    // the player's Tayanari is on the left (bottom).
+    // Both plates pinned to the top: the player's Tayanari on the left,
+    // the enemy on the right.
     return {
       position:"absolute",
-      top:    who === "enemy"  ? 10 : "auto",
-      bottom: who === "player" ? 10 : "auto",
+      top:    10,
       left:   who === "player" ? 8 : "auto",
       right:  who === "enemy"  ? 8 : "auto",
       padding:"6px 10px",
