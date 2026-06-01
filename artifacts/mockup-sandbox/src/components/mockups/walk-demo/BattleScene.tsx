@@ -717,8 +717,8 @@ export function BattleScene({
           backgroundImage:"url(/__mockup/images/forest-arena.png)",
           backgroundSize:"cover", backgroundPosition:"center",
         }}>
-        {/* Wild HP plate (top-left) */}
-        <div style={hpPlateStyle("left")}>
+        {/* Wild HP plate (top-right, above the enemy mon) */}
+        <div style={hpPlateStyle("enemy")}>
           <div style={{ display:"flex", alignItems:"baseline", gap:6, marginBottom:4 }}>
             <span style={{ color:"#fff", fontSize:13, fontWeight:800 }}>
               {currentOpponent.name}
@@ -747,8 +747,8 @@ export function BattleScene({
           </div>
         </div>
 
-        {/* Player HP plate (bottom-right) */}
-        <div style={hpPlateStyle("right")}>
+        {/* Player HP plate (bottom-left, below the player's Tayanari) */}
+        <div style={hpPlateStyle("player")}>
           <div style={{ display:"flex", alignItems:"baseline", gap:6, marginBottom:4 }}>
             <span style={{ color:"#fff", fontSize:13, fontWeight:800 }}>{starter.name}</span>
             <span style={{ color:"#aaa", fontSize:9 }}>Lv.{starterLevel}</span>
@@ -1280,13 +1280,15 @@ export function BattleScene({
     </div>
   );
 
-  function hpPlateStyle(side: "left" | "right"): React.CSSProperties {
+  function hpPlateStyle(who: "enemy" | "player"): React.CSSProperties {
+    // Each plate sits on the same side as its mon: enemy is on the right (top),
+    // the player's Tayanari is on the left (bottom).
     return {
       position:"absolute",
-      top: side === "left" ? 10 : "auto",
-      bottom: side === "right" ? "26%" : "auto",
-      left: side === "left"  ? 8 : "auto",
-      right: side === "right" ? 8 : "auto",
+      top:    who === "enemy"  ? 10 : "auto",
+      bottom: who === "player" ? 10 : "auto",
+      left:   who === "player" ? 8 : "auto",
+      right:  who === "enemy"  ? 8 : "auto",
       padding:"6px 10px",
       background:"linear-gradient(180deg, rgba(28,20,10,0.94), rgba(14,8,4,0.94))",
       border:"1.5px solid rgba(180,130,60,0.5)",
