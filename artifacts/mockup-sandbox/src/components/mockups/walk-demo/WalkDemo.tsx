@@ -552,10 +552,10 @@ const OW_BLOCKED: Rect[] = [
   // PH east fence REMOVED — PH↔Lia corridor now spans body-to-body (x=757–807, ~50 wide)
 
   // ── ELLIO'S HOME — fence perimeter + body (north gate x 238–308) ───────────
-  [214, 565,  327,  780],  // building body
+  [214, 565,  327,  700],  // building body — shrunk south to visible house bottom (front yard now walkable)
   [188, 537,  238,  547],  // north fence — left of gate  (was x1=155; trimmed for west-side corridor x=155–188)
   [308, 537,  335,  547],  // north fence — right of gate (was x2=365; trimmed for Elio↔PH south corridor)
-  [188, 537,  214,  790],  // west fence (narrowed for west-side corridor x=155–188)
+  [188, 537,  214,  700],  // west fence — shortened to house bottom so the door approach is clear (was y=790)
   // Elio east fence REMOVED — Elio↔PH corridor widened to body-to-body
 
   // ── LIA'S HOME — fence perimeter + body (north gate x 846–910) ─────────────
@@ -748,7 +748,7 @@ const A3_BLOCKED: Rect[] = [
 // ── Ellio's Home ─────────────────────────────────────────────────────────────
 const EH = { w: 800, h: 800 };
 const ELLIO_POS = { x: 400, y: 350 };
-const OW_ELLIO_DOOR: Rect  = [255, 776, 325, 812]; // ON visible front door — right-of-centre on Ellio south face (building x=214-327, y=780); requires "up" key (anti walk-by)
+const OW_ELLIO_DOOR: Rect  = [196, 700, 250, 740]; // ON visible arched door — sits on the steps just south of the house face (y=700); requires "up" key (anti walk-by)
 const ELLIO_HOME_EXIT: Rect = [305, 725, 505, 790];
 const EH_BLOCKED: Rect[] = [
   [0, 0, 800, 60], [0, 0, 60, 800], [740, 0, 800, 800],
@@ -1746,7 +1746,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         } else if (sc === "overworld" && h === "up" && inRect(worldPos.current.x, worldPos.current.y, OW_ELLIO_DOOR)) {
           transitionTo("ellio", 400, 670);      // enter Ellio's Home — require "up" key (anti walk-by)
         } else if (sc === "ellio" && inRect(worldPos.current.x, worldPos.current.y, ELLIO_HOME_EXIT)) {
-          transitionTo("overworld", 270, 812);  // exit onto south road, S of door
+          transitionTo("overworld", 225, 760);  // exit onto south yard, just S of the door
         } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_LIA_DOOR)) {
           transitionTo("lia", 400, 670);        // enter Lia's Home — trigger on visible front door
         } else if (sc === "lia" && inRect(worldPos.current.x, worldPos.current.y, LIA_HOME_EXIT)) {
