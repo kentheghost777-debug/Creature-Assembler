@@ -10,7 +10,7 @@ type Screen = "studio" | "dedication" | "title" | "menu" | "intro" | "char_revea
 const CHARACTERS: { id: CharId; name: string; tag: string; sprite: string; hdImg: string; desc: string; stats: [string, string][] }[] = [
   {
     id: "kinju", name: "Kinju", tag: "Sunlit wanderer",
-    sprite: "/__mockup/images/kael_front_idle.png",
+    sprite: "/__mockup/images/kinju_front_idle.png",
     hdImg:  "/__mockup/images/kinju_hero.png",
     desc: "Born curious. Always at the edge of the known. When the world finally called your name — there was never any doubt.",
     stats: [["ORIGIN", "Primeria Village"], ["HEART", "Wanderlust"], ["CALL", "Horizon"]],

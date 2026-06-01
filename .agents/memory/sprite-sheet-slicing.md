@@ -18,11 +18,11 @@ AI sheets often draw the **top row larger than the bottom row** (e.g. side top r
 **Normalize each frame to a constant figure HEIGHT** (crop to bbox, scale so height = TARGET, here 290), then center x and anchor feet flush at the canvas bottom. This equalizes rows without introducing pose-driven pulsing.
 
 ## Canvas / feet anchor must stay 300×340
-`drawSprite` maps canvas width→96px and height by aspect; `topOff=round(96*0.75)=72`. A 300×340 frame with feet at y=340 lands feet at `py+37` — the position every other char uses. Changing canvas aspect would misalign feet. Always output 300×340, feet flush at bottom (margin 0, matching jess/kael), so a new char sits consistently in the world.
+`drawSprite` maps canvas width→96px and height by aspect; `topOff=round(96*0.75)=72`. A 300×340 frame with feet at y=340 lands feet at `py+37` — the position every other char uses. Changing canvas aspect would misalign feet. Always output 300×340, feet flush at bottom (margin 0, matching jess/kinju), so a new char sits consistently in the world.
 
 **Why:** the cut-feet bug was baked into the *source art* (soles cropped), not CSS — re-slicing from full-feet art + bottom-flush placement fixes it. See also `portrait-framing.md` (char-select framing is a different concern: there feet need margin, not flush-bottom).
 
 ## Idle frames must match their walk frame, or the player "pops" size when stopping
 `drawSprite` normalizes by canvas WIDTH, so on-screen figure size = figure-px / canvas-px. If the `{dir}_idle.png` has a different figure-to-canvas ratio than its `{dir}_1.png` walk frame, the character visibly grows or shrinks the instant they stop moving. AI-generated idle and walk assets almost never share the same canvas/margins (idles came in tighter or looser).
 
-**Fix:** re-pad each idle to the matching walk frame — same canvas (300×340), crop idle to bbox, scale so its figure HEIGHT equals the walk frame's figure height, center x, feet flush at the walk frame's feet line. (Real case: kael/Kinju idle rendered oversized, Rowan's idle was figH 228 vs 290 walking — undersized.) The char-select picker reuses these same idle files via `objectFit:contain`, so this re-pad is safe there too.
+**Fix:** re-pad each idle to the matching walk frame — same canvas (300×340), crop idle to bbox, scale so its figure HEIGHT equals the walk frame's figure height, center x, feet flush at the walk frame's feet line. (Real case: Kinju idle rendered oversized, Rowan's idle was figH 228 vs 290 walking — undersized.) The char-select picker reuses these same idle files via `objectFit:contain`, so this re-pad is safe there too.

@@ -835,12 +835,12 @@ function dirFrames(c: string, sideN = 6): Record<string, string[]> {
 }
 
 const CHAR_FRAMES: Record<CharId, Record<string, string[]>> = {
-  kinju: dirFrames("kael"),
+  kinju: dirFrames("kinju"),
   rowan: dirFrames("rowan"),
   jess:  dirFrames("jess", 5),
 };
-// Maps CharId → actual image filename prefix (kinju reuses "kael" assets until new sprites ship).
-const CHAR_IMG_KEY: Record<CharId, string> = { kinju: "kael", rowan: "rowan", jess: "jess" };
+// Maps CharId → actual image filename prefix (kinju reuses "kinju" assets until new sprites ship).
+const CHAR_IMG_KEY: Record<CharId, string> = { kinju: "kinju", rowan: "rowan", jess: "jess" };
 
 // Wyvrunt follower frame set (Pokémon-Yellow style trailing companion).
 const WYV_FRAMES = dirFrames("wyvrunt");
@@ -926,7 +926,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const partnerName  = partnerId === "kinju" ? "Kinju" : "Jess";
   const partnerSprite = `/__mockup/images/${CHAR_IMG_KEY[partnerId]}_front_idle.png`;
   const rowanInLab    = characterId !== "rowan";   // Rowan is the lab disciple
-  const kaelAtHome    = characterId === "rowan";    // extra figure at home
+  const kinjuAtHome    = characterId === "rowan";    // extra figure at home
 
   // Per-character starting positions for NEW games (no resume data).
   // Kinju starts in their home; Jess in the overworld (roamer); Rowan in the lab.
@@ -1248,7 +1248,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const jessCanvasRef      = useRef<HTMLCanvasElement>(null);
   const jessPortraitRef    = useRef<HTMLCanvasElement>(null);
   const rowanLabCanvasRef  = useRef<HTMLCanvasElement>(null);
-  const kaelHomeCanvasRef  = useRef<HTMLCanvasElement>(null);
+  const kinjuHomeCanvasRef  = useRef<HTMLCanvasElement>(null);
 
   // ── Wyvrunt follower state ─────────────────────────────────────────────────
   const wyvFollowRef    = useRef<HTMLCanvasElement>(null);
@@ -1330,7 +1330,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       overworld: ["/__mockup/images/maya-sprite.png"],
       jay:       ["/__mockup/images/jay-sprite.png"],
       ellio:     ["/__mockup/images/ellio-sprite.png"],
-      home:      ["/__mockup/images/jess_front_idle.png", "/__mockup/images/kael_front_idle.png"],
+      home:      ["/__mockup/images/jess_front_idle.png", "/__mockup/images/kinju_front_idle.png"],
       lia:       ["/__mockup/images/lia.png", "/__mockup/images/cindrax.png"],
       area3:     ["/__mockup/images/jay-sprite.png", "/__mockup/images/lia.png",
                   "/__mockup/images/jerbs_sprite.png", "/__mockup/images/jerbs_portal.png"],
@@ -1503,17 +1503,17 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     tryDraw();
   }, [scene, rowanInLab]);
 
-  // Draw Kael also waiting at home when you are playing Rowan
+  // Draw Kinju also waiting at home when you are playing Rowan
   useEffect(() => {
-    if (scene !== "home" || !kaelAtHome) return;
+    if (scene !== "home" || !kinjuAtHome) return;
     const tryDraw = () => {
-      const c = kaelHomeCanvasRef.current;
+      const c = kinjuHomeCanvasRef.current;
       if (!c) return;
-      if (!drawSprite(c, "/__mockup/images/kael_front_idle.png", false, 82))
+      if (!drawSprite(c, "/__mockup/images/kinju_front_idle.png", false, 82))
         setTimeout(tryDraw, 150);
     };
     tryDraw();
-  }, [scene, kaelAtHome]);
+  }, [scene, kinjuAtHome]);
 
   // Draw Lia world sprite inside Lia's home
   useEffect(() => {
@@ -2860,9 +2860,9 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                 letterSpacing:1, pointerEvents:"none",
                 textShadow:"0 0 4px #000,0 0 8px #000",
               }}>{partnerName.toUpperCase()}</div>
-              {kaelAtHome && (
+              {kinjuAtHome && (
                 <>
-                  <canvas ref={kaelHomeCanvasRef} style={{
+                  <canvas ref={kinjuHomeCanvasRef} style={{
                     position:"absolute",
                     imageRendering:"auto", pointerEvents:"none",
                     left: JESS_POS.x + 70 - 34,

@@ -26,7 +26,7 @@ reference portrait (Kinju is the canonical reference: ~10.8% top / 73.5% figure 
 then bump the primeria `public/sw.js` cache version so clients refetch.
 
 **Primeria char-select assets:** the char_reveal screen (`CHARACTERS[].sprite` in
-primeria's `GameLauncher.tsx`) uses the SMALL `kael_front_idle.png` /
+primeria's `GameLauncher.tsx`) uses the SMALL `kinju_front_idle.png` /
 `jess_front_idle.png` / `rowan_front_idle.png` sprites — these are SEPARATE files
 from the in-game overworld `*_n.png` sprites, so re-padding `*_front_idle.png` only
 affects char-select (big art box + picker thumbnails) and never shifts gameplay
