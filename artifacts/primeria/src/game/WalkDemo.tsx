@@ -493,6 +493,8 @@ function pickMonForScene(rarity: MonRarity, sc: string): MonSpec {
 
 // ── Route 1 disturbance hotspots (clickable bushes/rocks/trees in world-space)
 type Hotspot = { x: number; y: number; r: number; kind: "bush" | "rock" | "tree" };
+// Visual scale for encounter circles (does not affect any gameplay logic — r is render-only).
+const HOTSPOT_VIS = 0.6;
 const R1_HOTSPOTS: Hotspot[] = [
   { x: 180, y: 620, r: 38, kind: "bush" },
   { x: 320, y: 520, r: 36, kind: "rock" },
@@ -3066,8 +3068,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                       onClick={() => handleHotspotClick(i, h)}
                       style={{
                         position:"absolute",
-                        left: h.x - h.r, top: h.y - h.r,
-                        width: h.r * 2, height: h.r * 2,
+                        left: h.x - h.r * HOTSPOT_VIS, top: h.y - h.r * HOTSPOT_VIS,
+                        width: h.r * 2 * HOTSPOT_VIS, height: h.r * 2 * HOTSPOT_VIS,
                         borderRadius:"50%",
                         background: dist
                           ? `radial-gradient(circle, ${elColor}88 0%, ${elColor}33 42%, ${ringColor}1c 64%, transparent 80%)`
@@ -3093,7 +3095,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                   const el = asElement(d.mon.type);
                   const c = el ? ELEMENT_COLOR[el] : RARITY_COLOR[d.mon.rarity];
                   const motes = d.mon.rarity === "apex" || d.mon.rarity === "ultra" ? 4 : 3;
-                  const ringR = h.r + 6;
+                  const ringR = h.r * HOTSPOT_VIS + 6;
                   const spin = d.mon.rarity === "apex" ? "3.2s" : d.mon.rarity === "ultra" ? "4s" : "5.5s";
                   return (
                     <div key={`motes-${k}`} style={{
