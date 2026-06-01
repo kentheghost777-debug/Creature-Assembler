@@ -161,21 +161,21 @@ type StarterId = typeof STARTERS[number]["id"];
 const EVO_BG_IMG: string | undefined = "./images/evo-bg.png";
 
 const EVO_TABLE: Array<{ from: string; atLevel: number; to: StarterSpec }> = [
-  { from:"burg",        atLevel:16, to:{ id:"burg_2",       name:"Burg·II",        type:"Frostformed",  color:"#7ddeff", img:"./images/frostbite-baby.png"  } },
+  { from:"burg",        atLevel:18, to:{ id:"burg_2",       name:"Burg·II",        type:"Frostformed",  color:"#7ddeff", img:"./images/frostbite-baby.png"  } },
   { from:"burg_2",      atLevel:30, to:{ id:"burg_3",       name:"Burg·III",       type:"Frostformed",  color:"#7ddeff", img:"./images/frostbite-baby.png"  } },
-  { from:"pebble",      atLevel:16, to:{ id:"pebble_2",     name:"Pebble·II",      type:"Earthbound",   color:"#c8a020", img:"./images/grrountain-baby.png" } },
+  { from:"pebble",      atLevel:18, to:{ id:"pebble_2",     name:"Pebble·II",      type:"Earthbound",   color:"#c8a020", img:"./images/grrountain-baby.png" } },
   { from:"pebble_2",    atLevel:30, to:{ id:"pebble_3",     name:"Pebble·III",     type:"Earthbound",   color:"#c8a020", img:"./images/grrountain-baby.png" } },
-  { from:"peachi",      atLevel:16, to:{ id:"peachi_2",     name:"Pea-chi·II",     type:"Nature",       color:"#50c040", img:"./images/leafkit.png"          } },
+  { from:"peachi",      atLevel:18, to:{ id:"peachi_2",     name:"Pea-chi·II",     type:"Nature",       color:"#50c040", img:"./images/leafkit.png"          } },
   { from:"peachi_2",    atLevel:30, to:{ id:"peachi_3",     name:"Pea-chi·III",    type:"Nature",       color:"#50c040", img:"./images/leafkit.png"          } },
-  { from:"cerepup",     atLevel:16, to:{ id:"cerepup_2",    name:"Cerepup·II",     type:"Volcanic",     color:"#ff6020", img:"./images/emberfox.png"         } },
+  { from:"cerepup",     atLevel:18, to:{ id:"cerepup_2",    name:"Cerepup·II",     type:"Volcanic",     color:"#ff6020", img:"./images/emberfox.png"         } },
   { from:"cerepup_2",   atLevel:30, to:{ id:"cerepup_3",    name:"Cerepup·III",    type:"Volcanic",     color:"#ff6020", img:"./images/emberfox.png"         } },
-  { from:"cunbubble",   atLevel:16, to:{ id:"cunbubble_2",  name:"Cun-bubble·II",  type:"Oceanic",      color:"#3080ff", img:"./images/phantorch.png"        } },
+  { from:"cunbubble",   atLevel:18, to:{ id:"cunbubble_2",  name:"Cun-bubble·II",  type:"Oceanic",      color:"#3080ff", img:"./images/phantorch.png"        } },
   { from:"cunbubble_2", atLevel:30, to:{ id:"cunbubble_3",  name:"Cun-bubble·III", type:"Oceanic",      color:"#3080ff", img:"./images/phantorch.png"        } },
-  { from:"shockit",     atLevel:16, to:{ id:"shockit_2",    name:"Shockit·II",     type:"Stormproven",  color:"#ffd000", img:"./images/voltfang.png"         } },
+  { from:"shockit",     atLevel:18, to:{ id:"shockit_2",    name:"Shockit·II",     type:"Stormproven",  color:"#ffd000", img:"./images/voltfang.png"         } },
   { from:"shockit_2",   atLevel:30, to:{ id:"shockit_3",    name:"Shockit·III",    type:"Stormproven",  color:"#ffd000", img:"./images/voltfang.png"         } },
-  { from:"mentyke",     atLevel:16, to:{ id:"mentyke_2",    name:"Mentyke·II",     type:"Mind",         color:"#c080ff", img:"./images/lumacorn.png"         } },
+  { from:"mentyke",     atLevel:18, to:{ id:"mentyke_2",    name:"Mentyke·II",     type:"Mind",         color:"#c080ff", img:"./images/lumacorn.png"         } },
   { from:"mentyke_2",   atLevel:30, to:{ id:"mentyke_3",    name:"Mentyke·III",    type:"Mind",         color:"#c080ff", img:"./images/lumacorn.png"         } },
-  { from:"foxin",       atLevel:16, to:{ id:"foxin_2",      name:"Foxin·II",       type:"Spirit",       color:"#60a070", img:"./images/vixgrim.png"          } },
+  { from:"foxin",       atLevel:18, to:{ id:"foxin_2",      name:"Foxin·II",       type:"Spirit",       color:"#60a070", img:"./images/vixgrim.png"          } },
   { from:"foxin_2",     atLevel:30, to:{ id:"foxin_3",      name:"Foxin·III",      type:"Spirit",       color:"#60a070", img:"./images/vixgrim.png"          } },
 ];
 
@@ -2343,7 +2343,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   function checkWyvForms(newLevel: number, loyaltyAfter: number) {
     if (!wyvruntCaught) return;
     let newForm = wyvruntForm;
-    if (newForm === 0 && newLevel >= 16) newForm = 1;
+    if (newForm === 0 && newLevel >= 18) newForm = 1;
     if (newForm === 1 && newLevel >= 30) newForm = 2;
     if (newForm === 2 && loyaltyAfter >= 80) newForm = 3;
     if (newForm !== wyvruntForm) {
@@ -2359,7 +2359,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   // ── Starter evo check ────────────────────────────────────────────────────
   function checkStarterEvo(newLevel: number): StarterSpec | null {
     if (!starter) return null;
-    for (const evolvesAt of [16, 30]) {
+    for (const evolvesAt of [18, 30]) {
       if (evolvesAt > starterLevel && evolvesAt <= newLevel) {
         const found = evoAt(starter.id, evolvesAt);
         if (found) return found;
