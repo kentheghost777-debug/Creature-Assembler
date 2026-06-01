@@ -712,7 +712,7 @@ const JAY_BLOCKED: Rect[] = [
 const A3 = { w: 1024, h: 768 };
 const A3_SPAWN      = { x: 920, y: 380 };        // spawn near east entry
 const OW_AREA3_EXIT: Rect = [44, 459, 66, 508]; // moved to user-tapped spot (~55,483 center)
-const A3_RETURN_OW:  Rect = [998, 300, 1024, 470]; // far-east of the yellow path — door back to town
+const A3_RETURN_OW:  Rect = [960, 370, 1024, 480]; // east-edge door back to town; starts west of the x=994 walk-clamp so it's actually reachable (player tapped ~1001,424)
 // Cleminus "Jerbs" — west closed-door, opposite the east town exit.
 // Player walks west to the x<215 trigger; Jerbs lands here via portal, west of the barrier.
 const JERBS_POS = { x: 150, y: 380 };
@@ -2954,6 +2954,14 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           {/* Area 3 — Jay & Lia trainer NPCs */}
           {scene === "area3" && (
             <>
+              {/* Town-return doorway glow — east edge of the clearing (A3_RETURN_OW) */}
+              <div style={{
+                position:"absolute", left:962, top:398,
+                width:40, height:64, borderRadius:"50%",
+                background:"radial-gradient(ellipse,rgba(255,210,90,0.78)0%,transparent 80%)",
+                animation:"pulse 1.4s ease-in-out infinite",
+                pointerEvents:"none",
+              }}/>
               <canvas ref={jayA3CanvasRef} style={{
                 position:"absolute", imageRendering:"auto", pointerEvents:"none",
                 left: JAY_A3_POS.x - 34, top: JAY_A3_POS.y - 60,
