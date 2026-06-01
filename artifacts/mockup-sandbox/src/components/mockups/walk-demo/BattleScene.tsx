@@ -920,7 +920,7 @@ export function BattleScene({
 
         {/* Opposing Keeper — purple ritual circle, facing west (keeper battles only) */}
         {isKeeper && (
-          <div style={standOn(POS.keeper, 15, 4, 84)}>
+          <div style={standOn(POS.keeper, 26, 4, 84)}>
             <div style={{
               width:"100%", height:"100%",
               animation: intro ? "introFloatR 1.1s ease-out" : "none",

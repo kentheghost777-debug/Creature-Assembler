@@ -2513,6 +2513,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           shellsCount={shellCount}
           heroImg={heroSideImg}
           opponentKind="keeper"
+          keeperImg={trainerEncounter.trainer === "jay" ? "./images/jay-sprite.png" : "./images/lia.png"}
           keeperName={trainerEncounter.name}
           keeperTeam={trainerEncounter.team}
           keeperMonLevels={trainerEncounter.levels}
