@@ -440,7 +440,7 @@ const R2_BLOCKED: Rect[] = [
 ];
 
 // East overworld exit → Route 2 (opens only after wife intercept)
-const OW_EAST_EXIT: Rect = [1080, 600, 1124, 690]; // east-edge gap (x1<=1094 so it's inside the player X clamp world.w-30)
+const OW_EAST_EXIT: Rect = [1091, 482, 1135, 572]; // moved to user-tapped spot (1091,482); player x clamps to 1094 so the east edge always lands inside the trigger
 // Wife intercepts on the open central plaza (reachable open ground, not inside any building body)
 const JESS_PATH_POS = { x: 430, y: 500 };
 
@@ -597,7 +597,7 @@ const LH_BLOCKED: Rect[] = [
 
 // Route-1 exit trigger aligned with the top-left gap
 const OW_ROUTE1_EXIT: Rect = [212, 0, 327, 15];
-const OW_PROF_DOOR: Rect = [533, 325, 615, 382]; // tight zone around lab door — shifted east to visual door art
+const OW_PROF_DOOR: Rect = [525, 325, 607, 382]; // nudged 8 west of the lab door art
 
 // ── Whisperroot Trail (Route 1 / Area 1) ─────────────────────────────────────
 // South gate (blue) connects back to town; north continues deeper (future)
@@ -639,7 +639,7 @@ const LAB_EXIT: Rect = [262, 645, 438, 692]; // exit lab
 // ── Maya's Home ───────────────────────────────────────────────────────────────
 const MY = { w: 800, h: 800 };
 const MAYA_POS = { x: 870, y: 427 }; // Maya standing at her doorstep
-const OW_MAYA_DOOR: Rect  = [965, 335, 1030, 397]; // moved to user-tapped spot (965,335)
+const OW_MAYA_DOOR: Rect  = [971, 335, 1036, 397]; // nudged +6 east of user-tapped 965,335
 const MAYA_HOME_EXIT: Rect = [310, 722, 490, 790]; // exit trigger at interior door
 const MAYA_SHELL: Rect     = [385, 400, 455, 460]; // pickup zone — center of the living-room rug
 const MAYA_BLOCKED: Rect[] = [
@@ -669,7 +669,7 @@ const MAYA_BLOCKED: Rect[] = [
 // ── Jay's Home ────────────────────────────────────────────────────────────────
 const JY = { w: 800, h: 800 };
 const JAY_POS = { x: 370, y: 310 }; // Jay standing in the center of his room
-const OW_JAY_DOOR: Rect  = [195, 349, 263, 397]; // moved to user-tapped spot (195,349)
+const OW_JAY_DOOR: Rect  = [195, 349, 263, 397]; // user-tapped spot (195,349)
 const JAY_HOME_EXIT: Rect = [310, 725, 490, 790]; // interior door at bottom
 const JAY_BLOCKED: Rect[] = [
   // ── WALLS ──────────────────────────────────────────────────────────────────
@@ -763,7 +763,7 @@ const EH_BLOCKED: Rect[] = [
 // ── Player's Home ────────────────────────────────────────────────────────────
 const PH = { w: 800, h: 800 };
 const JESS_POS = { x: 395, y: 370 }; // Jess standing in the open center of the home
-const OW_PLAYER_HOME_DOOR: Rect = [544, 735, 604, 765]; // moved to user-tapped spot (544,735); also requires "up" key to enter (anti walk-by)
+const OW_PLAYER_HOME_DOOR: Rect = [550, 735, 610, 765]; // nudged +6 east; also requires "up" key to enter (anti walk-by)
 const PLAYER_HOME_EXIT: Rect = [305, 725, 505, 790]; // bottom-center door
 const PH_BLOCKED: Rect[] = [
   // ── WALLS ──────────────────────────────────────────────────────────────────
