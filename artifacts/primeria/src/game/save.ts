@@ -143,7 +143,7 @@ export type SaveData = {
   world: WorldSave | null;
 };
 
-const SAVE_KEY = "primeria_v2";
+const SAVE_KEY = "primeria_v3";
 
 export function hasSave(): boolean {
   try {
