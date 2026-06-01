@@ -11,68 +11,107 @@ A monster-tamer RPG (Pokémon-style) built entirely in the browser — explore a
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
-- Vite + React 19 (mockup-sandbox)
-- Build: Vite dev server
+- Vite + React 19
 
-## Where things live
+## Two file sets (READ FIRST)
 
-- Game "Primeria" (monster-tamer RPG): `artifacts/mockup-sandbox/src/components/mockups/walk-demo/`
-  - `GameLauncher.tsx` — title/menu/character-reveal/intro flow → mounts the game (role/path is declared in-game at the lab)
-    - **New Game flow**: NEW GAME → `char_reveal` (pick character first) → `beginJourney()` creates save → `intro` (character-tailored Prof. Irwyn speech) → game.
-    - **Characters**: `CHARACTERS` array carries `id`, `name`, `tag`, `sprite`, `hero`, `desc`, `stats` per char. `sprite` = small pixel idle used in the char-select picker (the tiny tap-to-select box — leave it alone); `hero` = HD full-body portrait (transparent PNG `{kinju,jess,rowan}_hero.png`) shown in the large portrait box (mobile top / desktop right), `objectFit:contain` so the whole figure shows, no `imageRendering:pixelated`. `CHAR_INTRO_LINES` is a `Record<CharId, string[]>` with 5 character-specific lines each.
-    - **Playable characters**: Kinju (id `"kinju"`, sunlit wanderer — horizon-seeker), Jess (wildheart roamer — instinct/nature), Rowan (seasoned traveler — knowledge/discovery). All sprite files use the `kinju` prefix (the old `kael` placeholder name was fully removed).
-    - **Walk-cycle frames** (`dirFrames(c, sideN=6)` in WalkDemo): each char has `{front,back,side}_{1..6}.png` walk frames + `{front,back,side}_idle`. **Idle frames are normalized to match their `{dir}_1.png` walk frame** — same 300×340 canvas, same figure height, feet flush at bottom, centered x — so the player doesn't "pop" bigger/smaller when standing still (Kinju's idle was oversized, Rowan's was undersized). When regenerating any idle sprite, re-pad it to the matching walk frame's canvas+figH or the size-pop returns. The char-select picker reuses these idle files via `objectFit:contain`, so re-padding is safe there. Side frames face RIGHT natively; engine mirrors (flipX) for left. `sideN` lets a char use fewer side frames — **Jess uses `dirFrames("jess", 5)`** because `jess_side_6.png` faced the wrong way (left while 1-5 face right), causing a one-frame flip glitch; it's dropped from the cycle (file left unused). Rowan's walk frames were rebuilt from sprite sheets: per-frame **constant-height** normalization (TARGET_H=290) onto a 300×340 canvas, centered x, feet flush at bottom — sheet rows had inconsistent source scale so a single global scale would pulse. char-select uses `rowan_front_idle.png` (CHARACTERS[].sprite) — keep walk-cycle rebuilds separate from idle/char-select sprites.
-    - **CHAR_IMG_KEY**: `Record<CharId, string>` in WalkDemo — now an identity map (`kinju→"kinju"`, etc.); kept as the single place to remap a CharId to its sprite-file prefix if assets are ever swapped.
-  - `WalkDemo.tsx` — overworld engine (scenes: overworld/home/lab/route1/route2/area3/maya/jay/ellio/lia, movement, doors, NPCs, quests, inventory UI).
-    - Area 3 = Westwood Reaches (west of overworld via corridor at y≈290-360). **Background** is `area3-bg.png` (green clearing with a yellow path; 1536×1024 source drawn into the 1024×768 A3 world — slight vertical stretch accepted). **Town-return door** `A3_RETURN_OW=[960,370,1024,480]` sits on the EAST edge of the clearing (→ overworld at Jay's SW courtyard 170,453). **It must start west of x=994** — the movement clamp caps player x at `world.w-30`=994, so the old `[998,…]` rect was unreachable. A pulsing yellow glow marks it in the area3 scene render. **Jerbs** waits at the WEST closed-door `JERBS_POS={x:150,y:380}`. Encounter transition flourish: element-tinted radial burst (`encounterFlash` state + `@keyframes encounterFlash`) fires on disturbance click before the battle fade.
-    - `MoveManager` component lets the player rearrange their active 4 moves from the full learned pool in the party tab.
-    - **Progression gates**: Lab door → requires `allTownItems` (all 5 town errands done) before giving starter (bounce: "Say your goodbyes first"). Route 1 → requires `starter && allTownItems`. Route 2 → requires `wifeIntercepted` (triggers after Route 1 visit + all items). Area 3 → requires `starter && route1Visited && route2Greeted` (progressive toast messages).
-    - **Old Hollis (Route 2 farmer)**: the farmer is *painted into* `route2-map.png` art (no sprite entity). Made interactive via: `FARMER_R2_POS={x:665,y:740}` + solid collider `FARMER_R2_BOX=[651,689,680,752]`. Because global `WALLS_ON=false`, the collider is enforced by a dedicated always-solid check in movement: `const solids = sc==="route2"?FARMER_SOLIDS:NO_SOLIDS;` OR'd into both `blocked()` axis checks (NPC box blocks regardless of WALLS_ON). Proximity (`dfarm<95`) sets `nearFarmerR2`+`farmerR2InteractPos`; green "!" interact button (`#8ec850`) opens 3-line flavor dialogue `farm_d1→farm_d2→farm_d3→walk` (green-themed "OLD HOLLIS" dialog box + nametag). Lore: watches the Tayanari play, tends a farm up north, originally found the rare Wyvrunt half-frozen by his fence. Code-only (no asset/sw.js bump). **Note**: primeria & mockup LINES text for `prof2_d4` differs between the two file sets — anchor on each file's own text when syncing.
-    - **Walls (collisions) temporarily OFF**: `WALLS_ON = false` (defined next to `blocked()` in WalkDemo). `blocked()` short-circuits to `false`, so the player walks anywhere; the hand-tuned `*_BLOCKED` rect arrays are still in code but inactive, and the DEV red collision boxes are hidden while off. Doors are unaffected (they use `inRect` directly). Flip `WALLS_ON` back to `true` once new walls are baked in.
-      - **Planned wall editor** (to build on desktop; walls ONLY — doors stay on the existing tap-probe door tool): in the DEV panel, two taps (top-left corner, then bottom-right) draw a wall box; tap a box to delete it; works in whatever scene the player is standing in. Edits auto-save to localStorage live (don't lose work), PLUS a COPY button that exports the full per-scene rect set as text to paste back into the `*_BLOCKED` arrays in code.
-    - **Door positions** (all moved to user-tapped spots via the DEV door tool; rect = `[x1,y1,x2,y2]`, label shows top-left): Player home `[550,735,610,765]` + up-key; Lia `[945,738,1005,768]`; Ellio `[174,709,234,769]` + up-key (exit returns to `(204,790)`); Jay `[195,349,263,397]`; Maya `[971,335,1036,397]`; Lab `[525,325,607,382]`.
-    - **Area exits** (also shown in the DEV door overlay): Route 1 north `OW_ROUTE1_EXIT=[212,0,327,15]`; Route 2 east `OW_EAST_EXIT=[1091,482,1135,572]` (single trigger — moving it is the only "area 2 door"; player x clamps to `world.w-30`=1094 so the east edge always lands inside it); Area 3 west `OW_AREA3_EXIT=[44,459,66,508]`.
-    - **Area 3 corridor**: Gap in Jay's west fence at y=400-440 (building bottom to south fence). Left forest block `[0,0,155,400]` + `[0,445,155,900]` — gap at y=400-445. `OW_AREA3_EXIT=[44,459,66,508]` (moved to user-tapped ~55,483; return spawn shifts with `OW_AREA3_EXIT[2]+30`).
-    - **PH↔Lia path widened**: PH north fence right trimmed to x=750, Lia north fence left starts at x=800 → 50px gap (was 24px).
-    - **Wyvrunt evo chain**: WYVRUNT → WYRNAK (lv16) → WYRVAST (lv30) → AUREYVANT (wyrLoyalty≥80). Loyalty bar shown in party tab. WYV_FORMS array + wyvruntForm state + checkWyvForms() helper.
-    - **Jay & Lia (Area 3 trainers)**: JAY_A3_POS/LIA_A3_POS, jayA3Team(wins)/liaA3Team(wins) build 4-tier progressive teams. Interact buttons show "!" (first time) / "↺" (rematch). handleTrainerEnd() callback handles XP, loyalty, form-evo, win counter.
-    - **Jay/Lia sprite assets**: render from the user-provided HD renders `jay-sprite.png` (bald man, fur-collar coat) and `lia.png` (blonde adventurer) — already transparent. These replaced a previous AI-made anime walk set (`jay_front_idle.png`/`lia_front_idle.png` + `jay/lia_{front,back,side}_{1..6}.png`) that depicted DIFFERENT characters and was wrong; those files are now orphaned. Jay/Lia are STATIC NPCs (no walk cycle used) so a single front sprite covers overworld + dialog + Area 3 draws.
-    - **Level cap**: MAX_LEVEL=25 normally; wyvrunt chain (forms 0-2) cap=30; Aureyvant uncapped. Enforced in calcBattleXp() inner loop.
-    - Route 1 BESTIARY (10 mons): commons Hatchick/Loth/Voltowl, uncommons Stonub/Potent/Scavencrow, rares Ghosti/Scalel, ultra Mentyke, apex Peachi + cerepup_w (Volcanic apex) + shockit_wa (Storm ultra)
-    - Area 3 BESTIARY_A3 (24 mons): commons Sprigget/Ashcrawl/Finwing/Stoneback, uncommons Driftpaw×2/Stoneback_m/Gloomcap, rares Silkfae×2/Murkspine×2/Fernclaw×2 (from a3-new-sheet), ultras Verdwulf/Scorchrex/Tidalfang/Aetherwing (from a3-mid-sheet-m), apexes Verdanthos/Voidtide (from a3-apex-sheet) + cunbubble_wa/pebble_wa/foxin_wa apexes + burg_wa ultra
-    - Sprite sheets: `a3-wild-sheet.png` (4r×2c, 512×384/frame), `a3-new-sheet.png` (2r×3c, 512×512/frame), `a3-mid-sheet-m.png` (4r×1c, 1122×350/frame), `a3-apex-sheet.png` (2r×2c, 768×512/frame). Frame helper fns: `wldF(col,row)`, `nwF(col,row)`, `mmF(row)`, `apF(col,row)`
-    - `SpriteSheet` type + `sheetBgStyle(s)` exported from `BattleScene.tsx` — percentage-based CSS background clipping works at any container size. Party/storage icons use exact-pixel clip (maintain aspect ratio).
-    - A3_HOTSPOTS: 8 ruin spots in courtyard + clearing. Disturbance tick clears on scene entry and picks from scene-appropriate bestiary via `pickMonForScene(rarity, scene)`.
-  - `BattleScene.tsx` — turn-based battle + capture + XP. Exports `SpriteSheet`, `sheetBgStyle`, `MonSpec`, `BattleMon`. Trainer battle support: `keeperTeam`/`keeperMonLevels` props, `trainerMonIdx` cycling, `trainerWin` BattleResult kind.
-    - **Party battle system**: `bench?: BattleMon[]` prop carries the caught companions; internal `team = [lead, ...bench]` (lead built from starter props, `faces:"right"`). `activeIdx`/`activeIdxRef` + per-mon `teamHp`/`teamHpRef` + per-mon `teamPp`. `active` = current mon; HP plate, player sprite (img OR sheet), and facing all derive from `active`. `setPlayerHp`/`setPlayerPp` are shims writing the active slot.
-    - **Switching**: root "Switch" button → `menu==="switch"` picker (voluntary, **no turn lost** — `doSwitch` sets busy=false/menu=root). On active-mon faint: if any reserve alive → forced `menu==="switchForced"` (no Back button); else `onEnd({kind:"fainted"})`. You only lose when ALL party mons faint.
-    - **Participants/XP**: `participatedRef` (Set, seeded `[0]`=lead) tracks who entered battle; every `ko`/`caught`/`trainerWin` BattleResult carries `participants:number[]`. WalkDemo awards full XP to each participant (idx0=starter via existing logic; idx>0 → `caughtParty[idx-1]` via `levelUpCaughtMon`, cap 30, no evo).
-  - `progression.ts` — XP curve, SHELLS/RUNES item data, element colors
-  - `moves.ts` — combat data + pure math: `MOVES` catalog (per-element damage tiers + utility heal/sharpen/bulwark), validated `STRONG_AGAINST` type chart, `effectiveness`, `computeDamage` (STAB/eff/crit/defense soak, ±15% variance), learnsets (`learnedMoveIds`/`movesLearnedAt`/`defaultActiveMoves`/`sanitizeActiveMoves`), wild stat/level helpers
-  - `battleFx.tsx` — `<MoveFx>` per-element/utility battle animations + `MOVE_FX_KEYFRAMES` (mobile-light: transform/opacity, ≤10 particles)
-  - `save.ts` — localStorage save (key `primeria_v3`): `PartySave` + `WorldSave`. Exports `PartyMon = MonSpec & {level,xp}`; `PartySave.caught`/`box` are `PartyMon[]`. WorldSave includes: `wyvruntForm`, `wyrLoyalty`, `jayA3Wins`, `liaA3Wins`, `cleminusMet`, `demoComplete`. `PartySave.moves` stores active move IDs (max 4); migrated by `sanitizeActiveMoves` on load. Old saves (bare `MonSpec[]`) are hydrated by `hydrateParty()` in WalkDemo (level defaults to `wildLevelFor(rarity)`, xp 0).
-  - **Per-mon progression**: every caught creature has its own `level`/`xp` (cap 30, NO evolution for wild-caught — only the starter + Wyvrunt chain evolve). Battle stats come from `partyBattleStats(maxHp, baseDmg, rarity, level)` in `moves.ts`; active moves from `defaultActiveMoves(el, level)`. WalkDemo builds `battleBench: BattleMon[]` from `caughtParty` and passes it to BOTH BattleScene invocations. `checkWyvForms` preserves level/xp when swapping a caught Wyvrunt's form. Party tab shows per-mon `Lv.`.
-    - **Cleminus "Jerbs"** — demo-end mystery NPC. Jerbeen elder who lands via portal at the WEST closed-door (JERBS_POS={x:150,y:380}, trigger x<215 in area3). **Two-stage intro**: the west trigger first makes Jerbs *land* (portal animates, NO text) — `jerbsAppeared` state flips, `portalOpen` true then auto-closes after 1700ms; the player then walks up (proximity dist<110) and taps the "!" interact button to start the conversation (`setPhase("jerbs_appear")`). Phases: `jerbs_appear → jerbs_d1/d2/d3 → jerbs_cards (overlay) → jerbs_d4 → demo_end`. Branch at jerbs_d3: if jayA3Wins>0 && liaA3Wins>0 → cards; else → jerbs_remind. `cleminusMet` persists his NPC in world; `demoComplete` marks playthrough finished.
-    - **Trial Cards overlay** (phase `jerbs_cards`) — fullscreen black overlay showing Keeper Trial Card + Elder Trial Card side by side. Player front-idle sprite composited into photo slot of Keeper card (slot at ≈x:88,y:233,w:283,h:320 on 1024px card → scaled to 180px display width). Accept Licenses → `jerbs_d4`.
-    - **Demo Complete screen** (phase `demo_end`) — fullscreen overlay with `demo_complete.png`. "Continue Exploring" → `setDemoComplete(true)`, returns to world as `jerbs_a3_idle`. "Thank You" → walk.
-    - **Portal animation** — `jerbs_portal.png` (1536×1024, 5 cols×2 rows, 10 frames at 120ms/frame). CSS background-position step: size 700×460px, position -(frame%5)×140 / -floor(frame/5)×230. Loops via `setInterval` while `portalOpen`.
-    - **Jerbs sprite** — `jerbs_sprite.png` (1024×1536, 5 cols×3 rows). Canvas draws col 2, row 1 (front-standing). Dialog portrait: CSS background-size 180px auto, backgroundPosition -72px / -90px.
-  - `STANDALONE_BUILD.md` — exact steps to package a downloadable web/APK/desktop build
-- Game images: `artifacts/mockup-sandbox/public/images/` (referenced as `/__mockup/images/...`)
-- Play it at preview path `/preview/walk-demo/GameLauncher`
+There are TWO copies of the game code — apply every gameplay/dialogue/asset edit to BOTH and keep them in sync:
 
-## Architecture decisions
+1. **Canonical source**: `artifacts/mockup-sandbox/src/components/mockups/walk-demo/`
+2. **LIVE runtime the user plays**: `artifacts/primeria/src/game/` (entry: `src/main.tsx → App.tsx → ./game/GameLauncher`). Always sync to `src/game/<file>`, never `src/` root.
 
-- **Sprite sheet clipping** — `sheetBgStyle(SpriteSheet)` returns `background-size/position` as percentages. Formula: `bsX=(sheetW/frameW)*100%`, `bpX = x/(sheetW-frameW)*100%` (0% if single column). Works at any responsive container size. Party/storage icons use a different approach (explicit pixel scale via `Math.min(size/w, size/h)`) to preserve the frame's native aspect ratio inside a fixed-px box.
-- **Encounter zones** — both Route 1 and Area 3 share the same `activeDisturbances` + hotspot tick machinery. On scene entry the state is cleared; `pickMonForScene(rarity, scene)` selects from the scene-appropriate bestiary. The render block uses an IIFE (`(() => { const hs = …; return <>…</>; })()`) to bind a local `hs` variable inside JSX.
-- **Starter split** — 8 starters split across two encounter zones: cerepup/shockit in Route 1 (forest/fire/storm feel), cunbubble/pebble/foxin/burg in Area 3 (oceanic/earthbound/spirit/frost — ruins vibes). Route 1 starters use standalone `wildImg`/`playerImg`; Area 3 native mons use sprite sheet frames.
-- **Save key** — `primeria_v3` (localStorage). Bumping this key is how we wipe everyone's existing save for a clean slate without touching the save/load logic — the old `primeria_v2` slot is simply ignored (orphaned in the browser) and the title shows no CONTINUE. `PartySave.moves` stores active move IDs (max 4); migrated by `sanitizeActiveMoves` on load.
-- **Battle XP math** — shared via `calcBattleXp(rawXp, xpMult, baseLevel, baseXp, baseMoves)` inner function (renders fresh closure per call). `handleBattleEnd` handles wild; `handleTrainerEnd` handles trainer. Both call `checkWyvForms()` and `checkStarterEvo()` helpers post-XP.
-- **Trainer battles** — trainerEncounter state `{ trainer:"jay"|"lia", name, team, levels }` is set in the "Battle!" dialog button handler; scene transitions to "battle"; the trainer-battle render block checks `scene==="battle" && trainerEncounter` (checked before wild battle block). `handleTrainerEnd` caps jayA3Wins/liaA3Wins at 3 (tier ceiling).
-- **Wyvrunt loyalty** — wyrLoyalty: 0–100. Gains: +3 trainer win / +3 wild ko-win / +2 catch / +5 quest (manual). Form 0→1 at lv16, 1→2 at lv30, 2→3 at loyalty≥80. checkWyvForms() reads wyvruntForm from closure (stale-safe since it's in the same render as the battle callbacks).
-- **Evo level gates** — EVO_TABLE uses `atLevel:16` for tier-1 evolutions (previously 14). checkStarterEvo checks `[16, 30]`.
-- **Jerbs trigger** — fires when `worldPos.x < 215` in area3 while phase==="walk", `!cleminusMetRef.current` AND `!jerbsAppearedRef.current` (single-fire). Clamps player at x=215, sets `jerbsAppeared=true` (ref set imperatively too, to avoid re-fire before the effect syncs) + `portalOpen=true` + a `setTimeout(()=>setPortalOpen(false),1700)`. NO phase change here — the dialogue is NOT auto-started. Proximity (`nearJerbs`) is now gated on `(cleminusMetRef || jerbsAppearedRef) && dist<110`; the interact button onClick does `if(!cleminusMet){setPhase("jerbs_appear");return;}` (label "!"), else the existing return/remind branches. The `jerbs_appear` Next click then sets `cleminusMet=true`, phase→`jerbs_d1`. Jerbs canvas renders when `cleminusMet||portalOpen||jerbsAppeared`; its draw effect deps include those flags so the freshly-mounted canvas actually paints (it only mounts once he lands). On return (cleminusMet=true), button: "?" if !beatBoth, "!" if beatBoth && !demoComplete, "…" if demoComplete.
-- **Jerbs ambient** — `jerbs_a3_idle` handled by the ambient chat box (speaker `{name:"JERBS", color:"#e8b840"}`). `showCardIndex` state available for future card-by-card reveal (currently unused; both cards shown simultaneously).
+Sync rules & known divergences between the two sets:
+- **Image/audio paths differ**: mockup uses `/__mockup/images/` + `/__mockup/audio/`; primeria uses `./images/` + `./audio/`. Sync sed: `'s|/__mockup/images/|./images/|g; s|/__mockup/audio/|./audio/|g'`. `audioManager.ts` is copied verbatim (no path replacement).
+- **char-select portrait field name differs**: primeria runtime uses `activeChar.hero`, mockup uses `activeChar.hdImg` (both point at the same `{kinju,jess,rowan}_hero.png`). A blind sed-sync would clobber this — review before resyncing GameLauncher/WalkDemo.
+- **Some dialogue (LINES) text differs** between the two sets (e.g. `prof2_d4`). When adding adjacent lines, anchor on each file's own text rather than assuming identical strings.
+- **Assets are per-artifact copies**: image/audio fixes must be written to BOTH `artifacts/mockup-sandbox/public/` and `artifacts/primeria/public/`, then bump `artifacts/primeria/public/sw.js` CACHE_VERSION + ASSET_CACHE so the service worker refetches. **Code-only changes need NO sw.js bump.**
+
+## File map
+
+- `GameLauncher.tsx` — title/menu/character-reveal/intro flow → mounts the game (role/path declared in-game at the lab)
+- `WalkDemo.tsx` — overworld engine (scenes: overworld/home/lab/route1/route2/area3/maya/jay/ellio/lia; movement, doors, NPCs, quests, inventory UI)
+- `BattleScene.tsx` — turn-based battle + capture + XP. Exports `SpriteSheet`, `sheetBgStyle`, `MonSpec`, `BattleMon`
+- `progression.ts` — XP curve, SHELLS/RUNES item data, element colors
+- `moves.ts` — combat data + pure math (`MOVES`, `STRONG_AGAINST` type chart, `effectiveness`, `computeDamage`, learnsets, wild stat/level helpers, `partyBattleStats`)
+- `battleFx.tsx` — `<MoveFx>` per-element/utility battle animations + `MOVE_FX_KEYFRAMES` (mobile-light: transform/opacity, ≤10 particles)
+- `save.ts` — localStorage save (key `primeria_v3`)
+- `audioManager.ts` — singleton BGM/jingle manager
+- `STANDALONE_BUILD.md` — steps to package a downloadable web/APK/desktop build
+- Game images: `public/images/` (mockup serves as `/__mockup/images/...`)
+
+## Characters & sprites
+
+- **Playable characters**: Kinju (id `"kinju"`, sunlit wanderer), Jess (wildheart roamer), Rowan (seasoned traveler). All sprite files use the `kinju` prefix.
+- **`CHARACTERS` array** carries `id`, `name`, `tag`, `sprite`, `hero`, `desc`, `stats`. `sprite` = small pixel idle for the char-select picker (leave it alone); `hero` = HD full-body transparent portrait `{kinju,jess,rowan}_hero.png` shown in the large box (`objectFit:contain`, no pixelated). `CHAR_INTRO_LINES` = `Record<CharId,string[]>`, 5 lines each. `hero-art.png` is the title-screen art.
+- **`CHAR_IMG_KEY`** (`Record<CharId,string>` in WalkDemo) — identity map; the single place to remap a CharId to its sprite-file prefix if assets are swapped.
+- **Walk-cycle frames** (`dirFrames(c, sideN=6)`): each char has `{front,back,side}_{1..6}.png` + `{front,back,side}_idle`. Rules:
+  - **Idle frames must be normalized to match their `{dir}_1.png` walk frame** (same 300×340 canvas, same figure height, feet flush at bottom, centered x) or the player "pops" bigger/smaller when standing still. Re-pad on every idle regen.
+  - Side frames face RIGHT natively; engine mirrors (flipX) for left.
+  - `sideN` lets a char use fewer side frames — **Jess uses `dirFrames("jess", 5)`** (`jess_side_6.png` faces the wrong way; dropped from the cycle).
+  - When rebuilding walk frames from sprite sheets, normalize **per-frame to constant HEIGHT** (sheet rows have inconsistent source scale, so a single global scale pulses).
+- **Jay/Lia NPC sprites**: static (no walk cycle) — single front sprite `jay-sprite.png` / `lia.png` (already transparent) covers overworld + dialog + Area 3.
+
+## World geography & navigation
+
+Rects are `[x1,y1,x2,y2]`. Movement clamps player x to `world.w-30` — door/exit rects must START inside that bound or they're unreachable.
+
+- **Door positions** (placed via the DEV door tool): Player home `[550,735,610,765]` + up-key; Lia `[945,738,1005,768]`; Ellio `[174,709,234,769]` + up-key (exit → `(204,790)`); Jay `[195,349,263,397]`; Maya `[971,335,1036,397]`; Lab `[525,325,607,382]`.
+- **Area exits**: Route 1 north `OW_ROUTE1_EXIT=[212,0,327,15]`; Route 2 east `OW_EAST_EXIT=[1091,482,1135,572]`; Area 3 west `OW_AREA3_EXIT=[44,459,66,508]` (return spawn shifts with `OW_AREA3_EXIT[2]+30`).
+- **Area 3 corridor**: gap in Jay's west fence at y=400-440. Left forest block `[0,0,155,400]` + `[0,445,155,900]` (gap y=400-445).
+- **PH↔Lia path**: 50px gap (PH north fence right ends x=750, Lia north fence left starts x=800).
+- **Area 3 = Westwood Reaches** (west of overworld via corridor at y≈290-360). Background `area3-bg.png` (1536×1024 source drawn into 1024×768 world). Town-return door `A3_RETURN_OW=[960,370,1024,480]` on the EAST edge (→ overworld 170,453), pulsing yellow glow.
+- **Walls (collisions) currently OFF**: `WALLS_ON=false` short-circuits `blocked()` to false (player walks anywhere; `*_BLOCKED` rect arrays inactive; DEV red boxes hidden). Doors unaffected (use `inRect` directly). NPC colliders use a separate always-solid check so they block regardless (see Old Hollis). Flip back to `true` once new walls are baked in.
+  - **Planned wall editor** (desktop; walls only — doors stay on the tap-probe door tool): two taps draw a wall box, tap a box to delete; auto-save to localStorage live + a COPY button exporting per-scene rects to paste into the `*_BLOCKED` arrays.
+
+## Progression gates
+
+- Lab door → requires `allTownItems` (5 town errands done) before giving starter.
+- Route 1 → `starter && allTownItems`. Route 2 → `wifeIntercepted`. Area 3 → `starter && route1Visited && route2Greeted` (progressive toasts).
+- **Level cap**: MAX_LEVEL=25 normally; Wyvrunt chain (forms 0-2) cap=30; Aureyvant uncapped. Enforced in `calcBattleXp()`.
+
+## NPCs
+
+- **Old Hollis (Route 2 farmer)** — painted into `route2-map.png` art (no sprite entity), made interactive: `FARMER_R2_POS={x:665,y:740}` + solid collider `FARMER_R2_BOX=[651,689,680,752]`. Collider enforced via a dedicated always-solid check (`const solids = sc==="route2"?FARMER_SOLIDS:NO_SOLIDS;` OR'd into both `blocked()` axis checks) so it blocks even with `WALLS_ON=false`. Proximity (`dfarm<95`) → green "!" button (`#8ec850`) → 3-line dialogue `farm_d1→farm_d2→farm_d3→walk`. Lore: watches the Tayanari play, farms up north, originally found the rare Wyvrunt half-frozen by his fence.
+- **Cleminus "Jerbs"** — demo-end mystery NPC; Jerbeen elder who lands via portal at the WEST closed-door (`JERBS_POS={x:150,y:380}`, trigger `worldPos.x<215` in area3). **Two-stage intro**: the west trigger makes Jerbs *land* (portal animates, NO text — `jerbsAppeared` flips, `portalOpen` true then auto-closes after 1700ms); the player walks up (dist<110) and taps "!" to start the conversation. Phases: `jerbs_appear → jerbs_d1/d2/d3 → jerbs_cards (overlay) → jerbs_d4 → demo_end`. Branch at jerbs_d3: if both Jay & Lia beaten → cards, else → jerbs_remind. `cleminusMet` persists him; `demoComplete` marks playthrough finished. On return: button "?" if !beatBoth, "!" if beatBoth && !demoComplete, "…" if demoComplete.
+  - **Trial Cards overlay** (`jerbs_cards`) — fullscreen, Keeper + Elder Trial Cards side by side; player front-idle sprite composited into the Keeper card photo slot (≈x:88,y:233,w:283,h:320 on 1024px card → 180px display). Accept → `jerbs_d4`.
+  - **Demo Complete** (`demo_end`) — fullscreen `demo_complete.png`. "Continue Exploring" → `setDemoComplete(true)`, returns as `jerbs_a3_idle`. "Thank You" → walk.
+  - **Portal animation** — `jerbs_portal.png` (1536×1024, 5×2, 10 frames @120ms): size 700×460, position `-(frame%5)×140 / -floor(frame/5)×230`, loops via `setInterval` while `portalOpen`.
+  - **Jerbs sprite** — `jerbs_sprite.png` (1024×1536, 5×3); canvas draws col 2 row 1. Dialog portrait: background-size 180px, position -72px/-90px. Jerbs canvas renders when `cleminusMet||portalOpen||jerbsAppeared` (draw-effect deps include those flags so the freshly-mounted canvas paints).
+  - **Jerbs ambient** — `jerbs_a3_idle` handled by the ambient chat box (speaker `{name:"JERBS", color:"#e8b840"}`).
+
+## Battle & creatures
+
+- **Party battle system** (`BattleScene`): `bench?: BattleMon[]` carries caught companions; internal `team=[lead,...bench]`. `activeIdx`/`activeIdxRef` + per-mon `teamHp`/`teamPp`. `active` = current mon; HP plate, sprite, facing all derive from it. `setPlayerHp`/`setPlayerPp` are shims writing the active slot.
+- **Switching**: root "Switch" → `menu==="switch"` picker (voluntary, **no turn lost**). On faint: if any reserve alive → forced `menu==="switchForced"` (no Back); else `onEnd({kind:"fainted"})`. You only lose when ALL party mons faint.
+- **Participants/XP**: `participatedRef` (seeded `[0]`=lead) tracks who entered battle; `ko`/`caught`/`trainerWin` results carry `participants:number[]`. WalkDemo awards full XP to each (idx0=starter; idx>0 → `caughtParty[idx-1]` via `levelUpCaughtMon`, cap 30, no evo).
+- **Per-mon progression**: every caught creature has its own `level`/`xp` (cap 30, NO evolution for wild-caught — only the starter + Wyvrunt chain evolve). Battle stats from `partyBattleStats(maxHp, baseDmg, rarity, level)`; active moves from `defaultActiveMoves(el, level)`. Party tab shows per-mon `Lv.` + a `MoveManager` to rearrange the active 4 from the learned pool.
+- **Battle XP math** — `calcBattleXp(rawXp, xpMult, baseLevel, baseXp, baseMoves)` inner fn; `handleBattleEnd` (wild) / `handleTrainerEnd` (trainer) both call `checkWyvForms()` + `checkStarterEvo()` post-XP.
+- **Trainer battles (Jay & Lia, Area 3)**: `trainerEncounter` state set in the "Battle!" handler → scene "battle" → trainer block (checked before wild). `jayA3Team(wins)`/`liaA3Team(wins)` build 4-tier progressive teams; `handleTrainerEnd` caps wins at 3. Interact buttons: "!" (first) / "↺" (rematch).
+- **Wyvrunt evo chain**: WYVRUNT → WYRNAK (lv16) → WYRVAST (lv30) → AUREYVANT (loyalty≥80). `wyrLoyalty` 0–100: +3 trainer win / +3 wild ko / +2 catch / +5 quest. Loyalty bar in party tab. `checkWyvForms()` preserves level/xp when swapping a caught Wyvrunt's form.
+- **Evo level gates**: `EVO_TABLE` tier-1 at `atLevel:16`; `checkStarterEvo` checks `[16, 30]`.
+- **Encounter zones**: Route 1 & Area 3 share the `activeDisturbances` + hotspot tick machinery; cleared on scene entry; `pickMonForScene(rarity, scene)` selects from the scene bestiary. A3_HOTSPOTS: 8 ruin spots. Element-tinted radial burst (`encounterFlash`) fires on disturbance click before battle fade.
+- **Starter split** (8 starters): cerepup/shockit in Route 1 (standalone `wildImg`/`playerImg`); cunbubble/pebble/foxin/burg in Area 3 (sprite-sheet frames).
+- **Bestiaries**: Route 1 = 10 mons (commons Hatchick/Loth/Voltowl, uncommons Stonub/Potent/Scavencrow, rares Ghosti/Scalel, ultra Mentyke, apex Peachi + cerepup_w + shockit_wa). Area 3 = 24 mons (see code `BESTIARY_A3`).
+- **Sprite sheets**: `a3-wild-sheet.png` (4r×2c, 512×384), `a3-new-sheet.png` (2r×3c, 512×512), `a3-mid-sheet-m.png` (4r×1c, 1122×350), `a3-apex-sheet.png` (2r×2c, 768×512). Frame helpers: `wldF`, `nwF`, `mmF`, `apF`.
+
+## Save system
+
+- localStorage key `primeria_v3` — `PartySave` + `WorldSave`. `PartyMon = MonSpec & {level,xp}`; `caught`/`box` are `PartyMon[]`. `WorldSave` includes `wyvruntForm`, `wyrLoyalty`, `jayA3Wins`, `liaA3Wins`, `cleminusMet`, `demoComplete`. `PartySave.moves` = active move IDs (max 4), migrated by `sanitizeActiveMoves` on load. Bare-`MonSpec[]` old saves hydrated by `hydrateParty()`.
+- **Bumping the save key** (e.g. `_v3`→`_v4`) wipes everyone's save for a clean slate without touching save/load logic — the old slot is orphaned and the title shows no CONTINUE.
+- **💾 SAVE button** sits in the D-pad bar next to 🎒 Bag; calls `persistWorldRef.current()` (force-flush position + quest flags). Party state auto-saves via its own useEffect on every stat/level/xp/party change — the button is just visible confirmation (`justSaved` flips green ✓ "SAVED" for 1.6s).
+
+## Audio
+
+- `audioManager.ts` singleton: `playTrack(src,vol)` crossfades looping BGM; `playJingle(src,vol)` ducks BGM/plays once/resumes; `stopAll()` fades out.
+- **Tracks**: overworld/home/lab/npc → `primeria_town.mp3`; route1/route2/area3 → `primeria_route.mp3`; battle → `primeria_battle.mp3`; title/menu → `primeria_title.mp3` (starts on first title tap).
+- **Jingles**: catch → `primeria_catch.mp3`; KO win + trainer win → `primeria_victory.mp3`.
+- Browser autoplay: music starts on first user gesture (title tap). Earlier calls fail silently and clear bgSrc so the next call retries.
+
+## Architecture notes
+
+- **Sprite sheet clipping** — `sheetBgStyle(SpriteSheet)` returns percentage `background-size/position` (`bsX=(sheetW/frameW)*100%`, `bpX=x/(sheetW-frameW)*100%`, 0% if single column) — works at any container size. Party/storage icons instead use explicit pixel scale (`Math.min(size/w, size/h)`) to keep native aspect ratio in a fixed box.
+- **Encounter render** uses an IIFE to bind a local `hs` var inside JSX.
+- `calcBattleXp`, `applyLevelUp`, `checkWyvForms`, `checkStarterEvo` are plain inner fns (not useCallback) — they close over current render values and MUST be called from within the same render-cycle callback (handleBattleEnd / handleTrainerEnd).
 
 ## Product
 
@@ -80,29 +119,8 @@ Primeria is a browser-native monster-tamer RPG where you explore ruins, bond wit
 
 ## User preferences
 
-- Always run `remove_image_background_tool` on every character/NPC sprite before using it in the game — all directions (front, back, side/profile). Sprites from AI generators have gradient backgrounds that break transparency tricks. Proper transparent PNGs are the only reliable fix.
-
-## Save button
-- 💾 SAVE button sits in the D-pad bar next to 🎒 Bag. Calls `persistWorldRef.current()` (force-flushes position + all quest flags). Party state auto-saves via its own useEffect on every stat/level/xp/party change — the button just gives player-visible confirmation.
-- `justSaved` state flips to `true` for 1.6 s, turning the button green with a ✓ / "SAVED" label. Transitions back to 💾 / "SAVE" automatically.
-
-## Audio
-
-- `audioManager.ts` — singleton module (survives re-renders): `playTrack(src, vol)` crossfades looping BGM; `playJingle(src, vol)` ducks BGM, plays once, resumes; `stopAll()` fades everything out.
-- **Track map**: overworld/home/lab/npc scenes → `primeria_town.mp3`; route1/route2/area3 → `primeria_route.mp3`; battle scene → `primeria_battle.mp3`. Title/menu → `primeria_title.mp3` (starts on first title-screen tap in GameLauncher).
-- **Jingles**: catch → `primeria_catch.mp3`; KO win + trainer win → `primeria_victory.mp3`.
-- Audio files live in `public/audio/` in both artifacts (served as `/__mockup/audio/` in mockup-sandbox, `./audio/` in primeria).
-- Browser autoplay: music starts on first user gesture (title screen click). Calls before that fail silently and clear bgSrc so the next call retries.
-- **Sync note**: audioManager.ts is copied verbatim (no path replacement needed). WalkDemo/GameLauncher sed command: `'s|/__mockup/images/|./images/|g; s|/__mockup/audio/|./audio/|g'`.
-- **⚠️ primeria runtime path**: `artifacts/primeria/src/main.tsx → App.tsx → ./game/GameLauncher` — the LIVE primeria runtime is `artifacts/primeria/src/game/*`. Always sync canonical code to `artifacts/primeria/src/game/<file>` (NOT `src/` root). A stale orphaned duplicate set of game files (GameLauncher/WalkDemo/BattleScene/battleFx/EvoScene/moves/progression/save/audioManager) previously lived in `src/` root and was removed — do not recreate them. Note: the char-select big portrait box differs by field name across the two file sets — primeria runtime uses `activeChar.hero`, the mockup uses `activeChar.hdImg` (both point at the same `{kinju,jess,rowan}_hero.png` transparent portraits). A blind sed-sync would overwrite that field-name divergence — review before resyncing GameLauncher/WalkDemo. Old per-char HD files `kinju.png`/`jess-sprite.png` are now orphaned (replaced by `*_hero.png`); `hero-art.png` is still used on the title screen.
-- **Shared assets**: `public/images/` and `public/audio/` are per-artifact copies; image/audio fixes must be written to BOTH `artifacts/mockup-sandbox/public/` and `artifacts/primeria/public/`, then bump `artifacts/primeria/public/sw.js` CACHE_VERSION + ASSET_CACHE so the service worker refetches.
-
-## Gotchas
-
-- Sprite images from AI generators have warm gradient backgrounds, NOT black. BFS/threshold pixel tricks do not reliably work. Always pre-process sprites with background removal first.
-- After background removal, `drawSprite` just calls `ctx.drawImage` — no pixel manipulation needed.
-- `calcBattleXp`, `applyLevelUp`, `checkWyvForms`, `checkStarterEvo` are plain inner functions (not useCallback) — they close over current render values and must be called from within the same render-cycle callback (handleBattleEnd / handleTrainerEnd).
+- Always run `remove_image_background_tool` on every character/NPC sprite before using it — all directions (front, back, side). AI-generated sprites have warm gradient backgrounds (NOT black); BFS/threshold pixel tricks don't reliably work, so proper transparent PNGs are the only fix. After removal, `drawSprite` just calls `ctx.drawImage` (no pixel manipulation).
 
 ## Pointers
 
-- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details.
