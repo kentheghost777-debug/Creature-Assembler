@@ -1,1 +1,2 @@
-- [Character portrait framing](portrait-framing.md) — portraits must share internal figure proportions; fix mis-positioned ones by re-padding the PNG, not CSS (contain ignores vertical objectPosition).
+- [SW stales dev preview](sw-dev-stale-preview.md) — Primeria's PWA service worker can pin old code in the dev preview; gate registration to production only, tear it down on dev hosts.
+- [Door-placement dev tool](door-dev-tool.md) — in-game "DEV" overlay lets the user tap the map to read world coords for placing door triggers; stop guessing coordinates.

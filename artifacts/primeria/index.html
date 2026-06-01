@@ -41,13 +41,33 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
-      if ("serviceWorker" in navigator) {
-        window.addEventListener("load", () => {
-          navigator.serviceWorker.register("./sw.js").then((reg) => {
-            reg.addEventListener("updatefound", () => {
-              const sw = reg.installing;
+      (function () {
+        if (!("serviceWorker" in navigator)) return;
+        var host = location.hostname;
+        var isDev =
+          host === "localhost" ||
+          host === "127.0.0.1" ||
+          host.endsWith(".replit.dev") ||
+          host.endsWith(".repl.co");
+        if (isDev) {
+          // Development preview: never let a cached service worker serve stale
+          // code. Tear down any existing SW + caches so edits always show.
+          navigator.serviceWorker.getRegistrations().then(function (regs) {
+            regs.forEach(function (r) { r.unregister(); });
+          });
+          if (window.caches && caches.keys) {
+            caches.keys().then(function (keys) {
+              keys.forEach(function (k) { caches.delete(k); });
+            });
+          }
+          return;
+        }
+        window.addEventListener("load", function () {
+          navigator.serviceWorker.register("./sw.js").then(function (reg) {
+            reg.addEventListener("updatefound", function () {
+              var sw = reg.installing;
               if (!sw) return;
-              sw.addEventListener("statechange", () => {
+              sw.addEventListener("statechange", function () {
                 if (sw.state === "installed" && navigator.serviceWorker.controller) {
                   sw.postMessage({ type: "SKIP_WAITING" });
                   window.location.reload();
@@ -56,7 +76,7 @@
             });
           });
         });
-      }
+      })();
     </script>
   </body>
 </html>

@@ -1003,8 +1003,11 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const [activeDisturbances, setActiveDisturbances] = useState<Record<number, { mon: MonSpec; expiresAt: number }>>({});
   const [hotspotCd,     setHotspotCd]     = useState<Record<number, number>>({});
   const [encounterFlash, setEncounterFlash] = useState<{ color: string; key: number } | null>(null);
-  // ── Dev: collision debug overlay (flip to false before shipping) ──────────
-  const DEV_COLLISIONS = false;
+  // ── Dev: visual debug overlay — doors, collisions, tap-to-probe coords ────
+  const [devMode, setDevMode] = useState(false);
+  const [devProbe, setDevProbe] = useState<{ x: number; y: number } | null>(null);
+  const [devPlayerPos, setDevPlayerPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const DEV_COLLISIONS = devMode;
   const [checksStreak,  setChecksStreak]  = useState(() => savedWorld?.checksStreak ?? 0);
   const [floatMsg,      setFloatMsg]      = useState<{ x: number; y: number; text: string; key: number } | null>(null);
   const [showStarterGate, setShowStarterGate] = useState(false);
@@ -1238,6 +1241,15 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     resume ? { x: resume.x, y: resume.y } : { x: 400, y: 670 }
   ); // resume exact spot, else start inside Player Home (matches OW→home enter spawn)
   const cam        = useRef({ x: 0, y: 0 });
+
+  // Dev overlay: poll live player coords while debug mode is on
+  useEffect(() => {
+    if (!devMode) return;
+    const id = setInterval(() => {
+      setDevPlayerPos({ x: Math.round(worldPos.current.x), y: Math.round(worldPos.current.y) });
+    }, 150);
+    return () => clearInterval(id);
+  }, [devMode]);
 
   // Preload only the small, continuously-needed sprite frames: the playing
   // character's own walk/idle frames plus the Wyvrunt follower frames. Everything
@@ -2495,7 +2507,16 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     <div style={{ width:"100vw", height:"100dvh", background:"#060606", display:"flex", flexDirection:"column", overflow:"hidden", userSelect:"none", WebkitUserSelect:"none", touchAction:"none", overscrollBehavior:"none" }}>
 
       {/* ── MAP VIEWPORT ─────────────────────────────────────────────────── */}
-      <div ref={vpRef} style={{ flex:1, position:"relative", overflow:"hidden" }}>
+      <div ref={vpRef} style={{ flex:1, position:"relative", overflow:"hidden" }}
+        onClick={(e) => {
+          if (!devMode) return;
+          const vp = vpRef.current; if (!vp) return;
+          const r = vp.getBoundingClientRect();
+          setDevProbe({
+            x: Math.round(cam.current.x + (e.clientX - r.left) / ZOOM),
+            y: Math.round(cam.current.y + (e.clientY - r.top) / ZOOM),
+          });
+        }}>
 
         {/* World container — camera-scrolled + zoomed */}
         <div ref={worldRef} style={{
@@ -2550,6 +2571,32 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                 pointerEvents:"none", zIndex:22,
               }}/>
             ))
+          )}
+
+          {/* Dev: door hotspots + tap-probe crosshair */}
+          {devMode && scene === "overworld" && ([
+            ["Ellio", OW_ELLIO_DOOR],
+            ["Maya", OW_MAYA_DOOR],
+            ["Jay", OW_JAY_DOOR],
+            ["Lia", OW_LIA_DOOR],
+            ["Lab", OW_PROF_DOOR],
+            ["Home", OW_PLAYER_HOME_DOOR],
+          ] as [string, Rect][]).map(([nm, [x1, y1, x2, y2]], i) => (
+            <div key={`door-${i}`} style={{
+              position:"absolute", left:x1, top:y1, width:x2-x1, height:y2-y1,
+              background:"rgba(40,120,255,0.28)", border:"2px solid #2a78ff",
+              zIndex:24, pointerEvents:"none", display:"flex",
+              alignItems:"flex-start", justifyContent:"center",
+            }}>
+              <span style={{ fontSize:11, fontWeight:800, color:"#fff", background:"#2a78ff", padding:"1px 4px", borderRadius:3, whiteSpace:"nowrap", transform:"translateY(-100%)" }}>{nm} {x1},{y1}</span>
+            </div>
+          ))}
+          {devMode && devProbe && (
+            <div style={{ position:"absolute", left:devProbe.x-12, top:devProbe.y-12, width:24, height:24, zIndex:31, pointerEvents:"none" }}>
+              <div style={{ position:"absolute", left:11, top:0, width:2, height:24, background:"#ffd400" }}/>
+              <div style={{ position:"absolute", left:0, top:11, width:24, height:2, background:"#ffd400" }}/>
+              <div style={{ position:"absolute", left:5, top:5, width:14, height:14, borderRadius:"50%", border:"2px solid #ffd400" }}/>
+            </div>
           )}
 
           {/* Prof Irwyn */}
@@ -5718,6 +5765,32 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           </button>
         </div>
       </div>
+
+      {/* ── DEV door-placement tool ──────────────────────────────────────── */}
+      <button
+        onClick={() => { setDevMode(v => !v); setDevProbe(null); }}
+        style={{
+          position:"fixed", top:8, left:8, zIndex:9999,
+          padding:"6px 10px", borderRadius:8, border:"1px solid #2a78ff",
+          background: devMode ? "#2a78ff" : "rgba(10,10,12,0.7)",
+          color:"#fff", fontSize:12, fontWeight:800, letterSpacing:0.5,
+          fontFamily:"monospace", cursor:"pointer",
+        }}
+      >{devMode ? "DEV ✕" : "DEV"}</button>
+      {devMode && (
+        <div style={{
+          position:"fixed", top:8, left:64, right:8, zIndex:9999,
+          padding:"8px 10px", borderRadius:8,
+          background:"rgba(10,10,14,0.82)", border:"1px solid #2a78ff",
+          color:"#dfe8ff", fontSize:12, fontFamily:"monospace", lineHeight:1.5,
+          pointerEvents:"none",
+        }}>
+          <div style={{ fontWeight:800, color:"#7fb0ff" }}>DOOR TOOL — tap the map where you want a door</div>
+          <div>Player: <b style={{color:"#fff"}}>{devPlayerPos.x}, {devPlayerPos.y}</b></div>
+          <div>Tapped: <b style={{color:"#ffd400"}}>{devProbe ? `${devProbe.x}, ${devProbe.y}` : "—"}</b>{devProbe ? "  ← tell me these numbers" : ""}</div>
+          <div style={{ color:"#8fa0c0" }}>Blue boxes = current door triggers</div>
+        </div>
+      )}
 
       <style>{`
         @keyframes pulse       { 0%,100%{opacity:.35} 50%{opacity:1} }
