@@ -476,7 +476,7 @@ const R2_BLOCKED: Rect[] = [
 ];
 
 // East overworld exit → Route 2 (opens only after wife intercept)
-let OW_EAST_EXIT: Rect = ld("ow_east", [1091, 482, 1135, 572]); // moved to user-tapped spot (1091,482); player x clamps to 1094 so the east edge always lands inside the trigger
+let OW_EAST_EXIT: Rect = ld("ow_east", [1092, 433, 1136, 523]); // moved to user-tapped spot (1091,482); player x clamps to 1094 so the east edge always lands inside the trigger
 // Wife intercepts on the open central plaza (reachable open ground, not inside any building body)
 const JESS_PATH_POS = { x: 430, y: 500 };
 
@@ -607,7 +607,7 @@ const OW_BLOCKED: Rect[] = [
 // ── Lia's Home ─────────────────────────────────────────────────────────────
 const LH = { w: 800, h: 800 };
 const LIA_POS = { x: 385, y: 355 }; // Lia near the center rug
-let OW_LIA_DOOR: Rect  = ld("ow_lia", [945, 738, 1005, 768]); // moved to user-tapped spot (945,738)
+let OW_LIA_DOOR: Rect  = ld("ow_lia", [919, 714, 979, 744]); // moved to user-tapped spot (945,738)
 let LIA_HOME_EXIT: Rect = ld("lia_exit", [310, 722, 490, 790]); // bottom-center door
 const LH_BLOCKED: Rect[] = [
   // ── WALLS ──────────────────────────────────────────────────────────────────
@@ -634,8 +634,8 @@ const LH_BLOCKED: Rect[] = [
 ];
 
 // Route-1 exit trigger aligned with the top-left gap
-let OW_ROUTE1_EXIT: Rect = ld("ow_route1", [212, 0, 327, 15]);
-let OW_PROF_DOOR: Rect = ld("ow_lab", [525, 325, 607, 382]); // nudged 8 west of the lab door art
+let OW_ROUTE1_EXIT: Rect = ld("ow_route1", [247, 10, 362, 25]);
+let OW_PROF_DOOR: Rect = ld("ow_lab", [585, 289, 667, 346]); // nudged 8 west of the lab door art
 
 // ── Whisperroot Trail (Route 1 / Area 1) ─────────────────────────────────────
 // South gate (blue) connects back to town; north continues deeper (future)
@@ -677,7 +677,7 @@ let LAB_EXIT: Rect = ld("lab_exit", [262, 645, 438, 692]); // exit lab
 // ── Maya's Home ───────────────────────────────────────────────────────────────
 const MY = { w: 800, h: 800 };
 const MAYA_POS = { x: 870, y: 427 }; // Maya standing at her doorstep
-let OW_MAYA_DOOR: Rect  = ld("ow_maya", [971, 335, 1036, 397]); // nudged +6 east of user-tapped 965,335
+let OW_MAYA_DOOR: Rect  = ld("ow_maya", [938, 278, 1003, 340]); // nudged +6 east of user-tapped 965,335
 let MAYA_HOME_EXIT: Rect = ld("maya_exit", [310, 722, 490, 790]); // exit trigger at interior door
 const MAYA_SHELL: Rect     = [385, 400, 455, 460]; // pickup zone — center of the living-room rug
 const MAYA_BLOCKED: Rect[] = [
@@ -707,7 +707,7 @@ const MAYA_BLOCKED: Rect[] = [
 // ── Jay's Home ────────────────────────────────────────────────────────────────
 const JY = { w: 800, h: 800 };
 const JAY_POS = { x: 370, y: 310 }; // Jay standing in the center of his room
-let OW_JAY_DOOR: Rect  = ld("ow_jay", [195, 349, 263, 397]); // user-tapped spot (195,349)
+let OW_JAY_DOOR: Rect  = ld("ow_jay", [165, 297, 233, 345]); // user-tapped spot (195,349)
 let JAY_HOME_EXIT: Rect = ld("jay_exit", [310, 725, 490, 790]); // interior door at bottom
 const JAY_BLOCKED: Rect[] = [
   // ── WALLS ──────────────────────────────────────────────────────────────────
@@ -786,7 +786,7 @@ const A3_BLOCKED: Rect[] = [
 // ── Ellio's Home ─────────────────────────────────────────────────────────────
 const EH = { w: 800, h: 800 };
 const ELLIO_POS = { x: 400, y: 350 };
-let OW_ELLIO_DOOR: Rect  = ld("ow_ellio", [174, 709, 234, 769]); // moved to the spot the user tapped in the door tool (204,739); requires "up" key (anti walk-by)
+let OW_ELLIO_DOOR: Rect  = ld("ow_ellio", [177, 680, 237, 740]); // moved to the spot the user tapped in the door tool (204,739); requires "up" key (anti walk-by)
 let ELLIO_HOME_EXIT: Rect = ld("ellio_exit", [305, 725, 505, 790]);
 const EH_BLOCKED: Rect[] = [
   [0, 0, 800, 60], [0, 0, 60, 800], [740, 0, 800, 800],
@@ -801,31 +801,31 @@ const EH_BLOCKED: Rect[] = [
 // ── Player's Home ────────────────────────────────────────────────────────────
 const PH = { w: 800, h: 800 };
 const JESS_POS = { x: 395, y: 370 }; // Jess standing in the open center of the home
-let OW_PLAYER_HOME_DOOR: Rect = ld("ow_home", [550, 735, 610, 765]); // nudged +6 east; also requires "up" key to enter (anti walk-by)
+let OW_PLAYER_HOME_DOOR: Rect = ld("ow_home", [520, 718, 580, 748]); // nudged +6 east; also requires "up" key to enter (anti walk-by)
 let PLAYER_HOME_EXIT: Rect = ld("home_exit", [305, 725, 505, 790]); // bottom-center door
 
 // ── DEV door editor: registry (key → name / scene / live rect get+set) ──────
 type DoorEntry = { key: string; name: string; scene: Scene; glowDef: boolean; get: () => Rect; set: (r: Rect) => void };
 const DOOR_LIST: DoorEntry[] = [
   { key: "ow_lab",     name: "Lab",        scene: "overworld", glowDef: true,  get: () => OW_PROF_DOOR,        set: (r) => { OW_PROF_DOOR = r; } },
-  { key: "ow_home",    name: "Home",       scene: "overworld", glowDef: false, get: () => OW_PLAYER_HOME_DOOR, set: (r) => { OW_PLAYER_HOME_DOOR = r; } },
-  { key: "ow_ellio",   name: "Ellio",      scene: "overworld", glowDef: false, get: () => OW_ELLIO_DOOR,       set: (r) => { OW_ELLIO_DOOR = r; } },
-  { key: "ow_lia",     name: "Lia",        scene: "overworld", glowDef: false, get: () => OW_LIA_DOOR,         set: (r) => { OW_LIA_DOOR = r; } },
+  { key: "ow_home",    name: "Home",       scene: "overworld", glowDef: true,  get: () => OW_PLAYER_HOME_DOOR, set: (r) => { OW_PLAYER_HOME_DOOR = r; } },
+  { key: "ow_ellio",   name: "Ellio",      scene: "overworld", glowDef: true,  get: () => OW_ELLIO_DOOR,       set: (r) => { OW_ELLIO_DOOR = r; } },
+  { key: "ow_lia",     name: "Lia",        scene: "overworld", glowDef: true,  get: () => OW_LIA_DOOR,         set: (r) => { OW_LIA_DOOR = r; } },
   { key: "ow_jay",     name: "Jay",        scene: "overworld", glowDef: false, get: () => OW_JAY_DOOR,         set: (r) => { OW_JAY_DOOR = r; } },
-  { key: "ow_maya",    name: "Maya",       scene: "overworld", glowDef: false, get: () => OW_MAYA_DOOR,        set: (r) => { OW_MAYA_DOOR = r; } },
-  { key: "ow_route1",  name: "Route1 N",   scene: "overworld", glowDef: false, get: () => OW_ROUTE1_EXIT,      set: (r) => { OW_ROUTE1_EXIT = r; } },
+  { key: "ow_maya",    name: "Maya",       scene: "overworld", glowDef: true,  get: () => OW_MAYA_DOOR,        set: (r) => { OW_MAYA_DOOR = r; } },
+  { key: "ow_route1",  name: "Route1 N",   scene: "overworld", glowDef: true,  get: () => OW_ROUTE1_EXIT,      set: (r) => { OW_ROUTE1_EXIT = r; } },
   { key: "ow_east",    name: "Route2 E",   scene: "overworld", glowDef: false, get: () => OW_EAST_EXIT,        set: (r) => { OW_EAST_EXIT = r; } },
-  { key: "ow_area3",   name: "Area3 W",    scene: "overworld", glowDef: false, get: () => OW_AREA3_EXIT,       set: (r) => { OW_AREA3_EXIT = r; } },
+  { key: "ow_area3",   name: "Area3 W",    scene: "overworld", glowDef: true,  get: () => OW_AREA3_EXIT,       set: (r) => { OW_AREA3_EXIT = r; } },
   { key: "r1_south",   name: "R1 South",   scene: "route1",    glowDef: true,  get: () => R1_SOUTH_GATE,       set: (r) => { R1_SOUTH_GATE = r; } },
-  { key: "r2_return",  name: "R2 Return",  scene: "route2",    glowDef: false, get: () => R2_RETURN_OW,        set: (r) => { R2_RETURN_OW = r; } },
+  { key: "r2_return",  name: "R2 Return",  scene: "route2",    glowDef: true,  get: () => R2_RETURN_OW,        set: (r) => { R2_RETURN_OW = r; } },
   { key: "r2_locked",  name: "R2 Locked",  scene: "route2",    glowDef: true,  get: () => R2_LOCKED_DOOR,      set: (r) => { R2_LOCKED_DOOR = r; } },
   { key: "a3_return",  name: "A3 Return",  scene: "area3",     glowDef: true,  get: () => A3_RETURN_OW,        set: (r) => { A3_RETURN_OW = r; } },
-  { key: "home_exit",  name: "Home Exit",  scene: "home",      glowDef: false, get: () => PLAYER_HOME_EXIT,    set: (r) => { PLAYER_HOME_EXIT = r; } },
-  { key: "lia_exit",   name: "Lia Exit",   scene: "lia",       glowDef: false, get: () => LIA_HOME_EXIT,       set: (r) => { LIA_HOME_EXIT = r; } },
-  { key: "maya_exit",  name: "Maya Exit",  scene: "maya",      glowDef: false, get: () => MAYA_HOME_EXIT,      set: (r) => { MAYA_HOME_EXIT = r; } },
-  { key: "jay_exit",   name: "Jay Exit",   scene: "jay",       glowDef: false, get: () => JAY_HOME_EXIT,       set: (r) => { JAY_HOME_EXIT = r; } },
-  { key: "ellio_exit", name: "Ellio Exit", scene: "ellio",     glowDef: false, get: () => ELLIO_HOME_EXIT,     set: (r) => { ELLIO_HOME_EXIT = r; } },
-  { key: "lab_exit",   name: "Lab Exit",   scene: "lab",       glowDef: false, get: () => LAB_EXIT,            set: (r) => { LAB_EXIT = r; } },
+  { key: "home_exit",  name: "Home Exit",  scene: "home",      glowDef: true,  get: () => PLAYER_HOME_EXIT,    set: (r) => { PLAYER_HOME_EXIT = r; } },
+  { key: "lia_exit",   name: "Lia Exit",   scene: "lia",       glowDef: true,  get: () => LIA_HOME_EXIT,       set: (r) => { LIA_HOME_EXIT = r; } },
+  { key: "maya_exit",  name: "Maya Exit",  scene: "maya",      glowDef: true,  get: () => MAYA_HOME_EXIT,      set: (r) => { MAYA_HOME_EXIT = r; } },
+  { key: "jay_exit",   name: "Jay Exit",   scene: "jay",       glowDef: true,  get: () => JAY_HOME_EXIT,       set: (r) => { JAY_HOME_EXIT = r; } },
+  { key: "ellio_exit", name: "Ellio Exit", scene: "ellio",     glowDef: true,  get: () => ELLIO_HOME_EXIT,     set: (r) => { ELLIO_HOME_EXIT = r; } },
+  { key: "lab_exit",   name: "Lab Exit",   scene: "lab",       glowDef: true,  get: () => LAB_EXIT,            set: (r) => { LAB_EXIT = r; } },
 ];
 const doorGlowOn: Record<string, boolean> = {};
 DOOR_LIST.forEach((d) => { doorGlowOn[d.key] = ldGlow(d.key, d.glowDef); });
