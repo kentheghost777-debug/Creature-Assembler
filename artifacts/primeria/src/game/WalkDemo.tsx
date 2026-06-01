@@ -2752,54 +2752,6 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                 letterSpacing:1, pointerEvents:"none",
                 textShadow:"0 0 4px #000,0 0 8px #000",
               }}>MAYA</div>
-              {/* Maya's home door glow — south face yard (matches trigger center ~927,414) */}
-              <div style={{
-                position:"absolute", left:910, top:408,
-                width:44, height:14, borderRadius:"50%",
-                background:"radial-gradient(ellipse,rgba(120,220,140,0.7)0%,transparent 80%)",
-                animation:"pulse 1.4s ease-in-out infinite",
-                pointerEvents:"none",
-              }}/>
-              {/* Jay's home door glow — south face yard (matches trigger center ~274,424) */}
-              <div style={{
-                position:"absolute", left:252, top:418,
-                width:44, height:14, borderRadius:"50%",
-                background:"radial-gradient(ellipse,rgba(100,160,255,0.7)0%,transparent 80%)",
-                animation:"pulse 1.4s ease-in-out infinite",
-                pointerEvents:"none",
-              }}/>
-              {/* Player home door glow — south face on south road (matches trigger center ~575,835) */}
-              <div style={{
-                position:"absolute", left:553, top:828,
-                width:44, height:14, borderRadius:"50%",
-                background:"radial-gradient(ellipse,rgba(255,160,90,0.75)0%,transparent 80%)",
-                animation:"pulse 1.4s ease-in-out infinite",
-                pointerEvents:"none",
-              }}/>
-              {/* Ellio's home door glow — south face on south road (matches trigger center ~185,795) */}
-              <div style={{
-                position:"absolute", left:163, top:788,
-                width:44, height:14, borderRadius:"50%",
-                background:"radial-gradient(ellipse,rgba(140,220,255,0.75)0%,transparent 80%)",
-                animation:"pulse 1.4s ease-in-out infinite",
-                pointerEvents:"none",
-              }}/>
-              {/* Lia's home door glow — south face on south road (matches trigger center ~920,795) */}
-              <div style={{
-                position:"absolute", left:898, top:788,
-                width:44, height:14, borderRadius:"50%",
-                background:"radial-gradient(ellipse,rgba(255,120,80,0.75)0%,transparent 80%)",
-                animation:"pulse 1.4s ease-in-out infinite",
-                pointerEvents:"none",
-              }}/>
-              {/* Area 3 west entrance glow — forest gap left of Jay's compound (trigger ~x=0–20, y=290–360) */}
-              <div style={{
-                position:"absolute", left:0, top:302,
-                width:26, height:52, borderRadius:"50%",
-                background:"radial-gradient(ellipse,rgba(180,80,255,0.9)0%,transparent 80%)",
-                animation:"pulse 1.4s ease-in-out infinite",
-                pointerEvents:"none",
-              }}/>
             </>
           )}
 
