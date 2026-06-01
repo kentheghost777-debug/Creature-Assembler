@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, type PointerEvent as RPointerEvent, type MouseEvent as RMouseEvent } from "react";
 import { BattleScene, RARITY_COLOR, sheetBgStyle, type SpriteSheet, type MonSpec, type MonRarity, type BattleResult, type StarterStats, type StarterSpec, type BattleMon } from "./BattleScene";
 import { EvoScene } from "./EvoScene";
 import { SHELLS, ELEMENT_COLOR } from "./progression";
@@ -138,6 +138,24 @@ const LB = { w: 700, h: 700 }; // lab
 const R1 = { w: 1024, h: 780 }; // Whisperroot Trail (Area 1)
 const SPEED     = 3.5;
 const ZOOM      = 0.82; // zoom-out factor — values <1 show more of the world
+
+// ── DEV door editor: localStorage overrides for door rects + per-door glow ──
+const DEV_DOOR_KEY = "primeria_dev_doors";
+const DEV_GLOW_KEY = "primeria_dev_glows";
+function _loadDevMap(k: string): Record<string, unknown> {
+  try { return JSON.parse(localStorage.getItem(k) || "{}") || {}; } catch { return {}; }
+}
+const _devDoors = _loadDevMap(DEV_DOOR_KEY);
+const _devGlows = _loadDevMap(DEV_GLOW_KEY);
+function ld(key: string, def: Rect): Rect {
+  const v = _devDoors[key];
+  return (Array.isArray(v) && v.length === 4 && v.every((n) => typeof n === "number"))
+    ? [v[0], v[1], v[2], v[3]] as Rect : def;
+}
+function ldGlow(key: string, def: boolean): boolean {
+  const v = _devGlows[key];
+  return typeof v === "boolean" ? v : def;
+}
 const SPRITE_PX = 96;   // bigger on mobile
 const ANCHOR    = 0.75; // fraction of sprite above anchor point
 
@@ -433,11 +451,11 @@ const FARMER_R2_BOX: Rect = [651, 689, 680, 752]; // solid collider (user-tapped
 const FARMER_SOLIDS: Rect[] = [FARMER_R2_BOX];
 const NO_SOLIDS: Rect[] = [];
 // Return-to-overworld trigger (west edge — aligned with the carved gap in the left forest mass)
-const R2_RETURN_OW: Rect    = [80, 1121, 170, 1241]; // TEMP door back to town (user-tapped 80,1121) — re-place after map swap
+let R2_RETURN_OW: Rect    = ld("r2_return", [80, 1121, 170, 1241]); // TEMP door back to town (user-tapped 80,1121) — re-place after map swap
 // Locked future-content beats — show a "blocked"/"locked" toast
 const R2_NORTH_BLOCKED: Rect = [520,   0, 780,  40]; // cliff stairs (top-right)
 const R2_SOUTH_BLOCKED: Rect = [360, 1510, 600,1536]; // south continuation
-const R2_LOCKED_DOOR: Rect   = [820, 760, 900, 830]; // locked house door
+let R2_LOCKED_DOOR: Rect   = ld("r2_locked", [820, 760, 900, 830]); // locked house door
 const R2_BLOCKED: Rect[] = [
   // outer borders
   [0,    0, 1024,  60],
@@ -458,7 +476,7 @@ const R2_BLOCKED: Rect[] = [
 ];
 
 // East overworld exit → Route 2 (opens only after wife intercept)
-const OW_EAST_EXIT: Rect = [1091, 482, 1135, 572]; // moved to user-tapped spot (1091,482); player x clamps to 1094 so the east edge always lands inside the trigger
+let OW_EAST_EXIT: Rect = ld("ow_east", [1091, 482, 1135, 572]); // moved to user-tapped spot (1091,482); player x clamps to 1094 so the east edge always lands inside the trigger
 // Wife intercepts on the open central plaza (reachable open ground, not inside any building body)
 const JESS_PATH_POS = { x: 430, y: 500 };
 
@@ -589,8 +607,8 @@ const OW_BLOCKED: Rect[] = [
 // ── Lia's Home ─────────────────────────────────────────────────────────────
 const LH = { w: 800, h: 800 };
 const LIA_POS = { x: 385, y: 355 }; // Lia near the center rug
-const OW_LIA_DOOR: Rect  = [945, 738, 1005, 768]; // moved to user-tapped spot (945,738)
-const LIA_HOME_EXIT: Rect = [310, 722, 490, 790]; // bottom-center door
+let OW_LIA_DOOR: Rect  = ld("ow_lia", [945, 738, 1005, 768]); // moved to user-tapped spot (945,738)
+let LIA_HOME_EXIT: Rect = ld("lia_exit", [310, 722, 490, 790]); // bottom-center door
 const LH_BLOCKED: Rect[] = [
   // ── WALLS ──────────────────────────────────────────────────────────────────
   [0,    0,   800,  80],  // top wall
@@ -616,12 +634,12 @@ const LH_BLOCKED: Rect[] = [
 ];
 
 // Route-1 exit trigger aligned with the top-left gap
-const OW_ROUTE1_EXIT: Rect = [212, 0, 327, 15];
-const OW_PROF_DOOR: Rect = [525, 325, 607, 382]; // nudged 8 west of the lab door art
+let OW_ROUTE1_EXIT: Rect = ld("ow_route1", [212, 0, 327, 15]);
+let OW_PROF_DOOR: Rect = ld("ow_lab", [525, 325, 607, 382]); // nudged 8 west of the lab door art
 
 // ── Whisperroot Trail (Route 1 / Area 1) ─────────────────────────────────────
 // South gate (blue) connects back to town; north continues deeper (future)
-const R1_SOUTH_GATE: Rect = [418, 750, 582, 780]; // bottom-center exit → overworld
+let R1_SOUTH_GATE: Rect = ld("r1_south", [418, 750, 582, 780]); // bottom-center exit → overworld
 const R1_BLOCKED: Rect[] = [
   // ── OUTER FOREST BORDER ──────────────────────────────────────────────────
   [0,    0,  1024,   50],  // top forest strip
@@ -654,13 +672,13 @@ const LAB_BLOCKED: Rect[] = [
   [0,   0,   142, 700],  // left cylinders
   [558, 0,   700, 700],  // right cylinders
 ];
-const LAB_EXIT: Rect = [262, 645, 438, 692]; // exit lab
+let LAB_EXIT: Rect = ld("lab_exit", [262, 645, 438, 692]); // exit lab
 
 // ── Maya's Home ───────────────────────────────────────────────────────────────
 const MY = { w: 800, h: 800 };
 const MAYA_POS = { x: 870, y: 427 }; // Maya standing at her doorstep
-const OW_MAYA_DOOR: Rect  = [971, 335, 1036, 397]; // nudged +6 east of user-tapped 965,335
-const MAYA_HOME_EXIT: Rect = [310, 722, 490, 790]; // exit trigger at interior door
+let OW_MAYA_DOOR: Rect  = ld("ow_maya", [971, 335, 1036, 397]); // nudged +6 east of user-tapped 965,335
+let MAYA_HOME_EXIT: Rect = ld("maya_exit", [310, 722, 490, 790]); // exit trigger at interior door
 const MAYA_SHELL: Rect     = [385, 400, 455, 460]; // pickup zone — center of the living-room rug
 const MAYA_BLOCKED: Rect[] = [
   // ── WALLS ──────────────────────────────────────────────────────────────────
@@ -689,8 +707,8 @@ const MAYA_BLOCKED: Rect[] = [
 // ── Jay's Home ────────────────────────────────────────────────────────────────
 const JY = { w: 800, h: 800 };
 const JAY_POS = { x: 370, y: 310 }; // Jay standing in the center of his room
-const OW_JAY_DOOR: Rect  = [195, 349, 263, 397]; // user-tapped spot (195,349)
-const JAY_HOME_EXIT: Rect = [310, 725, 490, 790]; // interior door at bottom
+let OW_JAY_DOOR: Rect  = ld("ow_jay", [195, 349, 263, 397]); // user-tapped spot (195,349)
+let JAY_HOME_EXIT: Rect = ld("jay_exit", [310, 725, 490, 790]); // interior door at bottom
 const JAY_BLOCKED: Rect[] = [
   // ── WALLS ──────────────────────────────────────────────────────────────────
   [0,    0,   800,  80],  // top wall
@@ -720,8 +738,8 @@ const JAY_BLOCKED: Rect[] = [
 // 1024×768 landscape map, east entry/exit at x≈960.
 const A3 = { w: 1024, h: 768 };
 const A3_SPAWN      = { x: 920, y: 380 };        // spawn near east entry
-const OW_AREA3_EXIT: Rect = [44, 459, 66, 508]; // moved to user-tapped spot (~55,483 center)
-const A3_RETURN_OW:  Rect = [960, 370, 1024, 480]; // east-edge door back to town; starts west of the x=994 walk-clamp so it's actually reachable (player tapped ~1001,424)
+let OW_AREA3_EXIT: Rect = ld("ow_area3", [44, 459, 66, 508]); // moved to user-tapped spot (~55,483 center)
+let A3_RETURN_OW: Rect = ld("a3_return", [960, 370, 1024, 480]); // east-edge door back to town; starts west of the x=994 walk-clamp so it's actually reachable (player tapped ~1001,424)
 // Cleminus "Jerbs" — west closed-door, opposite the east town exit.
 // Player walks west to the x<215 trigger; Jerbs lands here via portal, west of the barrier.
 const JERBS_POS = { x: 150, y: 380 };
@@ -768,8 +786,8 @@ const A3_BLOCKED: Rect[] = [
 // ── Ellio's Home ─────────────────────────────────────────────────────────────
 const EH = { w: 800, h: 800 };
 const ELLIO_POS = { x: 400, y: 350 };
-const OW_ELLIO_DOOR: Rect  = [174, 709, 234, 769]; // moved to the spot the user tapped in the door tool (204,739); requires "up" key (anti walk-by)
-const ELLIO_HOME_EXIT: Rect = [305, 725, 505, 790];
+let OW_ELLIO_DOOR: Rect  = ld("ow_ellio", [174, 709, 234, 769]); // moved to the spot the user tapped in the door tool (204,739); requires "up" key (anti walk-by)
+let ELLIO_HOME_EXIT: Rect = ld("ellio_exit", [305, 725, 505, 790]);
 const EH_BLOCKED: Rect[] = [
   [0, 0, 800, 60], [0, 0, 60, 800], [740, 0, 800, 800],
   [0, 735, 305, 800], [505, 735, 800, 800],
@@ -783,8 +801,60 @@ const EH_BLOCKED: Rect[] = [
 // ── Player's Home ────────────────────────────────────────────────────────────
 const PH = { w: 800, h: 800 };
 const JESS_POS = { x: 395, y: 370 }; // Jess standing in the open center of the home
-const OW_PLAYER_HOME_DOOR: Rect = [550, 735, 610, 765]; // nudged +6 east; also requires "up" key to enter (anti walk-by)
-const PLAYER_HOME_EXIT: Rect = [305, 725, 505, 790]; // bottom-center door
+let OW_PLAYER_HOME_DOOR: Rect = ld("ow_home", [550, 735, 610, 765]); // nudged +6 east; also requires "up" key to enter (anti walk-by)
+let PLAYER_HOME_EXIT: Rect = ld("home_exit", [305, 725, 505, 790]); // bottom-center door
+
+// ── DEV door editor: registry (key → name / scene / live rect get+set) ──────
+type DoorEntry = { key: string; name: string; scene: Scene; glowDef: boolean; get: () => Rect; set: (r: Rect) => void };
+const DOOR_LIST: DoorEntry[] = [
+  { key: "ow_lab",     name: "Lab",        scene: "overworld", glowDef: true,  get: () => OW_PROF_DOOR,        set: (r) => { OW_PROF_DOOR = r; } },
+  { key: "ow_home",    name: "Home",       scene: "overworld", glowDef: false, get: () => OW_PLAYER_HOME_DOOR, set: (r) => { OW_PLAYER_HOME_DOOR = r; } },
+  { key: "ow_ellio",   name: "Ellio",      scene: "overworld", glowDef: false, get: () => OW_ELLIO_DOOR,       set: (r) => { OW_ELLIO_DOOR = r; } },
+  { key: "ow_lia",     name: "Lia",        scene: "overworld", glowDef: false, get: () => OW_LIA_DOOR,         set: (r) => { OW_LIA_DOOR = r; } },
+  { key: "ow_jay",     name: "Jay",        scene: "overworld", glowDef: false, get: () => OW_JAY_DOOR,         set: (r) => { OW_JAY_DOOR = r; } },
+  { key: "ow_maya",    name: "Maya",       scene: "overworld", glowDef: false, get: () => OW_MAYA_DOOR,        set: (r) => { OW_MAYA_DOOR = r; } },
+  { key: "ow_route1",  name: "Route1 N",   scene: "overworld", glowDef: false, get: () => OW_ROUTE1_EXIT,      set: (r) => { OW_ROUTE1_EXIT = r; } },
+  { key: "ow_east",    name: "Route2 E",   scene: "overworld", glowDef: false, get: () => OW_EAST_EXIT,        set: (r) => { OW_EAST_EXIT = r; } },
+  { key: "ow_area3",   name: "Area3 W",    scene: "overworld", glowDef: false, get: () => OW_AREA3_EXIT,       set: (r) => { OW_AREA3_EXIT = r; } },
+  { key: "r1_south",   name: "R1 South",   scene: "route1",    glowDef: true,  get: () => R1_SOUTH_GATE,       set: (r) => { R1_SOUTH_GATE = r; } },
+  { key: "r2_return",  name: "R2 Return",  scene: "route2",    glowDef: false, get: () => R2_RETURN_OW,        set: (r) => { R2_RETURN_OW = r; } },
+  { key: "r2_locked",  name: "R2 Locked",  scene: "route2",    glowDef: true,  get: () => R2_LOCKED_DOOR,      set: (r) => { R2_LOCKED_DOOR = r; } },
+  { key: "a3_return",  name: "A3 Return",  scene: "area3",     glowDef: true,  get: () => A3_RETURN_OW,        set: (r) => { A3_RETURN_OW = r; } },
+  { key: "home_exit",  name: "Home Exit",  scene: "home",      glowDef: false, get: () => PLAYER_HOME_EXIT,    set: (r) => { PLAYER_HOME_EXIT = r; } },
+  { key: "lia_exit",   name: "Lia Exit",   scene: "lia",       glowDef: false, get: () => LIA_HOME_EXIT,       set: (r) => { LIA_HOME_EXIT = r; } },
+  { key: "maya_exit",  name: "Maya Exit",  scene: "maya",      glowDef: false, get: () => MAYA_HOME_EXIT,      set: (r) => { MAYA_HOME_EXIT = r; } },
+  { key: "jay_exit",   name: "Jay Exit",   scene: "jay",       glowDef: false, get: () => JAY_HOME_EXIT,       set: (r) => { JAY_HOME_EXIT = r; } },
+  { key: "ellio_exit", name: "Ellio Exit", scene: "ellio",     glowDef: false, get: () => ELLIO_HOME_EXIT,     set: (r) => { ELLIO_HOME_EXIT = r; } },
+  { key: "lab_exit",   name: "Lab Exit",   scene: "lab",       glowDef: false, get: () => LAB_EXIT,            set: (r) => { LAB_EXIT = r; } },
+];
+const doorGlowOn: Record<string, boolean> = {};
+DOOR_LIST.forEach((d) => { doorGlowOn[d.key] = ldGlow(d.key, d.glowDef); });
+function saveDevDoors() {
+  const m: Record<string, Rect> = {};
+  DOOR_LIST.forEach((d) => { m[d.key] = d.get(); });
+  try { localStorage.setItem(DEV_DOOR_KEY, JSON.stringify(m)); } catch { /* ignore */ }
+}
+function saveDevGlows() {
+  try { localStorage.setItem(DEV_GLOW_KEY, JSON.stringify(doorGlowOn)); } catch { /* ignore */ }
+}
+type GlowBox = { left: number; top: number; w: number; h: number; color: string };
+// Per-door glow shapes (anchored to the live rect so they track dragging) — preserve the original hand-tuned look.
+const GLOW_SHAPE: Record<string, (r: Rect) => GlowBox> = {
+  ow_lab:    (r) => ({ left: r[0] - 9,  top: r[1] + 23, w: 44, h: 10, color: "rgba(255,210,60,0.6)" }),
+  r1_south:  (r) => ({ left: r[0] + 42, top: r[1] - 8,  w: 80, h: 14, color: "rgba(100,220,120,0.6)" }),
+  r2_locked: (r) => ({ left: (r[0] + r[2]) / 2 - 22, top: r[3] - 8, w: 44, h: 14, color: "rgba(200,150,120,0.45)" }),
+  a3_return: (r) => ({ left: r[0] + 2,  top: r[1] + 28, w: 40, h: 64, color: "rgba(255,210,90,0.78)" }),
+};
+function fallbackCopy(txt: string, done: () => void) {
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = txt; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    if (ok) done();
+  } catch { /* ignore */ }
+}
 const PH_BLOCKED: Rect[] = [
   // ── WALLS ──────────────────────────────────────────────────────────────────
   [0,    0,   800,  80],  // top wall
@@ -1035,6 +1105,56 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   // ── Dev: visual debug overlay — doors, collisions, tap-to-probe coords ────
   const [devMode, setDevMode] = useState(false);
   const [devProbe, setDevProbe] = useState<{ x: number; y: number } | null>(null);
+  // ── DEV door editor: drag-to-move + glow toggle + COPY export ──────────────
+  const [, setDoorEditTick] = useState(0);
+  const [doorCopied, setDoorCopied] = useState(false);
+  const doorDragRef = useRef<{ sx: number; sy: number; orig: Rect } | null>(null);
+  const onDoorDown = (_key: string, get: () => Rect) => (e: RPointerEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    doorDragRef.current = { sx: e.clientX, sy: e.clientY, orig: [...get()] as Rect };
+  };
+  const onDoorMove = (set: (r: Rect) => void) => (e: RPointerEvent<HTMLDivElement>) => {
+    const d = doorDragRef.current;
+    if (!d) return;
+    e.stopPropagation();
+    const dx = Math.round((e.clientX - d.sx) / ZOOM);
+    const dy = Math.round((e.clientY - d.sy) / ZOOM);
+    set([d.orig[0] + dx, d.orig[1] + dy, d.orig[2] + dx, d.orig[3] + dy] as Rect);
+    setDoorEditTick((t) => t + 1);
+  };
+  const onDoorUp = (e: RPointerEvent<HTMLDivElement>) => {
+    if (!doorDragRef.current) return;
+    e.stopPropagation();
+    doorDragRef.current = null;
+    saveDevDoors();
+  };
+  const toggleDoorGlow = (key: string) => (e: RMouseEvent) => {
+    e.stopPropagation();
+    doorGlowOn[key] = !doorGlowOn[key];
+    saveDevGlows();
+    setDoorEditTick((t) => t + 1);
+  };
+  const copyDoorLayout = () => {
+    const order: Scene[] = ["overworld", "route1", "route2", "area3", "home", "lia", "maya", "jay", "ellio", "lab"];
+    const out: string[] = ["PRIMERIA DOOR LAYOUT — paste this back to the assistant"];
+    order.forEach((sc) => {
+      const inScene = DOOR_LIST.filter((d) => d.scene === sc);
+      if (!inScene.length) return;
+      out.push("", "[" + sc + "]");
+      inScene.forEach((d) => {
+        const [a, b, c, e2] = d.get();
+        out.push("  " + d.name.padEnd(12) + " " + d.key.padEnd(11) + " [" + a + "," + b + "," + c + "," + e2 + "]  glow:" + (doorGlowOn[d.key] ? "ON" : "OFF"));
+      });
+    });
+    const txt = out.join("\n");
+    const done = () => { setDoorCopied(true); window.setTimeout(() => setDoorCopied(false), 1800); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(done).catch(() => fallbackCopy(txt, done));
+    } else {
+      fallbackCopy(txt, done);
+    }
+  };
   const [devPlayerPos, setDevPlayerPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const DEV_COLLISIONS = devMode;
   const [checksStreak,  setChecksStreak]  = useState(() => savedWorld?.checksStreak ?? 0);
@@ -2677,27 +2797,50 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             ))
           )}
 
-          {/* Dev: door hotspots + tap-probe crosshair */}
-          {devMode && scene === "overworld" && ([
-            ["Ellio", OW_ELLIO_DOOR],
-            ["Maya", OW_MAYA_DOOR],
-            ["Jay", OW_JAY_DOOR],
-            ["Lia", OW_LIA_DOOR],
-            ["Lab", OW_PROF_DOOR],
-            ["Home", OW_PLAYER_HOME_DOOR],
-            ["Route1 (north)", OW_ROUTE1_EXIT],
-            ["Route2 (east)", OW_EAST_EXIT],
-            ["Area3 (west)", OW_AREA3_EXIT],
-          ] as [string, Rect][]).map(([nm, [x1, y1, x2, y2]], i) => (
-            <div key={`door-${i}`} style={{
-              position:"absolute", left:x1, top:y1, width:x2-x1, height:y2-y1,
-              background:"rgba(40,120,255,0.28)", border:"2px solid #2a78ff",
-              zIndex:24, pointerEvents:"none", display:"flex",
-              alignItems:"flex-start", justifyContent:"center",
-            }}>
-              <span style={{ fontSize:11, fontWeight:800, color:"#fff", background:"#2a78ff", padding:"1px 4px", borderRadius:3, whiteSpace:"nowrap", transform:"translateY(-100%)" }}>{nm} {x1},{y1}</span>
-            </div>
-          ))}
+          {/* Door glows — always on; per-door shape preserved, toggled in DEV */}
+          {DOOR_LIST.filter((d) => d.scene === scene && doorGlowOn[d.key]).map((d) => {
+            const r = d.get();
+            const shape = GLOW_SHAPE[d.key];
+            const dw = Math.min(r[2] - r[0], 64);
+            const g: GlowBox = shape ? shape(r) : { left:(r[0] + r[2]) / 2 - dw / 2, top:(r[1] + r[3]) / 2 - 8, w:dw, h:16, color:"rgba(255,210,90,0.7)" };
+            return (
+              <div key={`glow-${d.key}`} style={{
+                position:"absolute", left:g.left, top:g.top, width:g.w, height:g.h, borderRadius:"50%",
+                background:`radial-gradient(ellipse,${g.color}0%,transparent 80%)`,
+                animation:"pulse 1.5s ease-in-out infinite", pointerEvents:"none", zIndex:4,
+              }}/>
+            );
+          })}
+
+          {/* Dev: draggable door editor (current scene) + tap-probe crosshair */}
+          {devMode && DOOR_LIST.filter((d) => d.scene === scene).map((d) => {
+            const [x1, y1, x2, y2] = d.get();
+            const gOn = doorGlowOn[d.key];
+            return (
+              <div key={`door-${d.key}`}
+                onPointerDown={onDoorDown(d.key, d.get)}
+                onPointerMove={onDoorMove(d.set)}
+                onPointerUp={onDoorUp}
+                onPointerCancel={onDoorUp}
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  position:"absolute", left:x1, top:y1,
+                  width:Math.max(10, x2 - x1), height:Math.max(10, y2 - y1),
+                  background:"rgba(40,120,255,0.28)", border:"2px solid #2a78ff",
+                  zIndex:30, cursor:"move", touchAction:"none",
+                }}>
+                <span style={{ position:"absolute", top:0, left:0, transform:"translateY(-100%)", fontSize:11, fontWeight:800, color:"#fff", background:"#2a78ff", padding:"1px 4px", borderRadius:3, whiteSpace:"nowrap" }}>{d.name} {x1},{y1}</span>
+                <button
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={toggleDoorGlow(d.key)}
+                  style={{
+                    position:"absolute", right:-9, bottom:-9, width:20, height:20, borderRadius:"50%",
+                    border:"1px solid #fff", background: gOn ? "#ffcf3a" : "rgba(15,15,20,0.9)",
+                    color: gOn ? "#3a2a00" : "#9aa", fontSize:11, lineHeight:1, padding:0, cursor:"pointer", zIndex:32,
+                  }}>✦</button>
+              </div>
+            );
+          })}
           {devMode && devProbe && (
             <div style={{ position:"absolute", left:devProbe.x-12, top:devProbe.y-12, width:24, height:24, zIndex:31, pointerEvents:"none" }}>
               <div style={{ position:"absolute", left:11, top:0, width:2, height:24, background:"#ffd400" }}/>
@@ -2743,16 +2886,6 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             </>
           )}
 
-          {/* Lab door glow on overworld */}
-          {scene === "overworld" && (
-            <div style={{
-              position:"absolute", left:516, top:348,
-              width:44, height:10, borderRadius:"50%",
-              background:"radial-gradient(ellipse,rgba(255,210,60,0.6)0%,transparent 80%)",
-              animation:"pulse 1.4s ease-in-out infinite",
-              pointerEvents:"none",
-            }}/>
-          )}
 
           {/* Jay NPC sprite inside his home — no fixed CSS w/h; canvas pixel dims set by drawSprite */}
           {scene === "jay" && (
@@ -2921,15 +3054,6 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                 </>
               )}
 
-              {/* Locked house door glow */}
-              <div style={{
-                position:"absolute",
-                left:(R2_LOCKED_DOOR[0]+R2_LOCKED_DOOR[2])/2 - 22, top:R2_LOCKED_DOOR[3] - 8,
-                width:44, height:14, borderRadius:"50%",
-                background:"radial-gradient(ellipse,rgba(200,150,120,0.45)0%,transparent 80%)",
-                animation:"pulse 1.6s ease-in-out infinite",
-                pointerEvents:"none",
-              }}/>
               {/* Old Hollis — painted-in farmer nametag */}
               <div style={{
                 position:"absolute",
@@ -2963,14 +3087,6 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           {/* Area 3 — Jay & Lia trainer NPCs */}
           {scene === "area3" && (
             <>
-              {/* Town-return doorway glow — east edge of the clearing (A3_RETURN_OW) */}
-              <div style={{
-                position:"absolute", left:962, top:398,
-                width:40, height:64, borderRadius:"50%",
-                background:"radial-gradient(ellipse,rgba(255,210,90,0.78)0%,transparent 80%)",
-                animation:"pulse 1.4s ease-in-out infinite",
-                pointerEvents:"none",
-              }}/>
               <canvas ref={jayA3CanvasRef} style={{
                 position:"absolute", imageRendering:"auto", pointerEvents:"none",
                 left: JAY_A3_POS.x - 34, top: JAY_A3_POS.y - 60,
@@ -3046,16 +3162,6 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             </>
           )}
 
-          {/* Whisperroot Trail — south gate glow (route1 only) */}
-          {scene === "route1" && (
-            <div style={{
-              position:"absolute", left:460, top:742,
-              width:80, height:14, borderRadius:"50%",
-              background:"radial-gradient(ellipse,rgba(100,220,120,0.6)0%,transparent 80%)",
-              animation:"pulse 1.6s ease-in-out infinite",
-              pointerEvents:"none",
-            }}/>
-          )}
 
           {/* Encounter zone hotspots — rendered in route1 and area3 */}
           {(scene === "route1" || scene === "area3") && (() => {
@@ -5919,13 +6025,16 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           position:"fixed", top:8, left:64, right:8, zIndex:9999,
           padding:"8px 10px", borderRadius:8,
           background:"rgba(10,10,14,0.82)", border:"1px solid #2a78ff",
-          color:"#dfe8ff", fontSize:12, fontFamily:"monospace", lineHeight:1.5,
-          pointerEvents:"none",
+          color:"#dfe8ff", fontSize:12, fontFamily:"monospace", lineHeight:1.45,
         }}>
-          <div style={{ fontWeight:800, color:"#7fb0ff" }}>DOOR TOOL — tap the map where you want a door</div>
-          <div>Player: <b style={{color:"#fff"}}>{devPlayerPos.x}, {devPlayerPos.y}</b></div>
-          <div>Tapped: <b style={{color:"#ffd400"}}>{devProbe ? `${devProbe.x}, ${devProbe.y}` : "—"}</b>{devProbe ? "  ← tell me these numbers" : ""}</div>
-          <div style={{ color:"#8fa0c0" }}>Blue boxes = current door triggers</div>
+          <div style={{ fontWeight:800, color:"#7fb0ff" }}>DOOR TOOL</div>
+          <div style={{ color:"#9fb0d0" }}>Drag blue boxes to move doors · tap ✦ to toggle glow per door</div>
+          <div>Player: <b style={{color:"#fff"}}>{devPlayerPos.x}, {devPlayerPos.y}</b> · Tapped: <b style={{color:"#ffd400"}}>{devProbe ? `${devProbe.x}, ${devProbe.y}` : "—"}</b></div>
+          <button onClick={copyDoorLayout} style={{
+            marginTop:6, padding:"5px 12px", borderRadius:6,
+            border:"1px solid #2a78ff", background: doorCopied ? "#1f7a36" : "#2a78ff",
+            color:"#fff", fontWeight:800, fontSize:12, fontFamily:"monospace", cursor:"pointer",
+          }}>{doorCopied ? "✓ COPIED — paste it to me" : "COPY door layout"}</button>
         </div>
       )}
 
