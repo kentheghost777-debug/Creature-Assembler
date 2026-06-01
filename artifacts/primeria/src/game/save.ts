@@ -67,6 +67,11 @@ export function roleDef(id: RoleId): RoleDef {
   return ROLES.find(r => r.id === id) ?? ROLES[0];
 }
 
+/** A caught companion with its own progression. Wild-caught mons gain levels
+ *  (and thus derived stats + moves) but do not evolve in this demo. Older saves
+ *  stored bare MonSpec[]; those are migrated to level 1 on load. */
+export type PartyMon = MonSpec & { level: number; xp: number };
+
 export type PartySave = {
   starterId: string | null;
   /** When the starter has evolved, stores the evolved form's identity so the
@@ -77,8 +82,8 @@ export type PartySave = {
   xp: number;
   stats: StarterStats;
   moves: string[];
-  caught: MonSpec[];
-  box: MonSpec[];
+  caught: PartyMon[];
+  box: PartyMon[];
   shells: number;
 };
 

@@ -181,6 +181,21 @@ export function wildLevelFor(rarity: string): number {
   return RARITY_LEVEL[rarity] ?? 5;
 }
 
+/** Deterministic player-side battle stats for a caught party mon, scaled by
+ *  level. Wild-caught mons don't store stats — they're derived from their base
+ *  spec so a single saved `level` fully determines their power. */
+export function partyBattleStats(
+  maxHp: number, baseDmg: [number, number], rarity: string, level: number,
+): { hp: number; atk: number; def: number; spd: number } {
+  const base = wildCombatStats(baseDmg, rarity);
+  return {
+    hp:  Math.round(maxHp * (1 + level * 0.04)),
+    atk: base.atk + Math.floor(level * 0.6),
+    def: base.def + Math.floor(level * 0.5),
+    spd: 5 + Math.floor(level * 0.4),
+  };
+}
+
 // ── Learnsets ───────────────────────────────────────────────────────────────
 // Per element: a fixed unlock schedule interleaving damage tiers with utility.
 export type LearnEntry = { level: number; moveId: string };

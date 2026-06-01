@@ -1,14 +1,25 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { BattleScene, RARITY_COLOR, sheetBgStyle, type SpriteSheet, type MonSpec, type MonRarity, type BattleResult, type StarterStats, type StarterSpec } from "./BattleScene";
+import { BattleScene, RARITY_COLOR, sheetBgStyle, type SpriteSheet, type MonSpec, type MonRarity, type BattleResult, type StarterStats, type StarterSpec, type BattleMon } from "./BattleScene";
 import { EvoScene } from "./EvoScene";
 import { SHELLS, ELEMENT_COLOR } from "./progression";
 import {
   getMove, moveName, asElement,
   learnedMoveIds, movesLearnedAt, defaultActiveMoves, sanitizeActiveMoves,
+  partyBattleStats, wildLevelFor,
   type Move,
 } from "./moves";
-import { type CharId, type RoleId, type PartySave, type WorldSave, ROLES, readSave, updateParty, updateWorld, updateRole, roleDef } from "./save";
+import { type CharId, type RoleId, type PartySave, type PartyMon, type WorldSave, ROLES, readSave, updateParty, updateWorld, updateRole, roleDef } from "./save";
 import { playTrack, playJingle, stopAll } from "./audioManager";
+
+/** Hydrate caught/box entries on load. Older saves stored bare MonSpec (no
+ *  progression); those default to the level the mon was caught at. */
+function hydrateParty(arr: PartyMon[]): PartyMon[] {
+  return arr.map(m => ({
+    ...m,
+    level: typeof m.level === "number" ? m.level : (wildLevelFor(m.rarity) || 5),
+    xp:    typeof m.xp === "number" ? m.xp : 0,
+  }));
+}
 
 // ── Audio track paths ─────────────────────────────────────────────────────
 const TOWN_TRACK   = "./audio/primeria_town.mp3";
@@ -1003,8 +1014,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   // ── Encounter / battle state ────────────────────────────────────────────
   const [shellCount,    setShellCount]    = useState(() => savedParty?.shells ?? 0);
   const [wildEncounter, setWildEncounter] = useState<MonSpec | null>(null);
-  const [caughtParty,   setCaughtParty]   = useState<MonSpec[]>(() => savedParty?.caught ?? []);
-  const [storageBox,    setStorageBox]    = useState<MonSpec[]>(() => savedParty?.box ?? []);
+  const [caughtParty,   setCaughtParty]   = useState<PartyMon[]>(() => hydrateParty(savedParty?.caught ?? []));
+  const [storageBox,    setStorageBox]    = useState<PartyMon[]>(() => hydrateParty(savedParty?.box ?? []));
   const [activeDisturbances, setActiveDisturbances] = useState<Record<number, { mon: MonSpec; expiresAt: number }>>({});
   const [hotspotCd,     setHotspotCd]     = useState<Record<number, number>>({});
   const [encounterFlash, setEncounterFlash] = useState<{ color: string; key: number } | null>(null);
@@ -1154,19 +1165,30 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   }, []);
 
   // Fresh snapshot of in-party caught mons for the catch handler closure.
-  const caughtPartyRef = useRef<MonSpec[]>(caughtParty);
+  const caughtPartyRef = useRef<PartyMon[]>(caughtParty);
   useEffect(() => { caughtPartyRef.current = caughtParty; }, [caughtParty]);
 
   // Single source of truth for adding a captured mon: respects the party cap,
   // overflowing into the storage box. Returns true if the mon was boxed.
+  // A freshly caught mon starts at the level it was fighting at, XP reset.
   const addCaughtMon = useCallback((mon: MonSpec): boolean => {
+    const pm: PartyMon = { ...mon, level: wildLevelFor(mon.rarity) || 5, xp: 0 };
     if (caughtPartyRef.current.length >= PARTY_CAP - 1) {
-      setStorageBox(b => [...b, mon]);
+      setStorageBox(b => [...b, pm]);
       return true;
     }
-    setCaughtParty(p => [...p, mon]);
+    setCaughtParty(p => [...p, pm]);
     return false;
   }, []);
+
+  // Apply battle XP to a caught companion (cap 30, no evolution for wild-caught).
+  function levelUpCaughtMon(m: PartyMon, award: number): PartyMon {
+    if (award <= 0) return m;
+    let lvl = m.level, xp = m.xp + award;
+    let thr = lvl * 10 + 10;
+    while (xp >= thr && lvl < 30) { xp -= thr; lvl += 1; thr = lvl * 10 + 10; }
+    return { ...m, level: lvl, xp };
+  }
 
   // Post-battle report modal (shell recovery + xp + level up)
   const [battleReport, setBattleReport] = useState<{
@@ -2294,7 +2316,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       setWyvruntForm(newForm);
       setCaughtParty(prev => prev.map(m =>
         (["wyvrunt","wyrnak","wyrvast","aureyvant"] as string[]).includes(m.id)
-          ? WYV_FORMS[newForm]!
+          ? { ...WYV_FORMS[newForm]!, level: m.level, xp: m.xp }
           : m
       ));
     }
@@ -2326,6 +2348,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     const rawXp = (result.kind === "caught" || result.kind === "ko") ? result.xpGained : 0;
     const r = calcBattleXp(rawXp, role.xpMult, starterLevel, starterXp, starterMoves);
     applyLevelUp(r);
+
+    // Award the same XP to every caught companion that joined the fight.
+    // participant 0 is the starter (handled above); idx>0 → caughtParty[idx-1].
+    const parts = ("participants" in result && result.participants) ? result.participants : [0];
+    if (r.xpGained > 0 && parts.some(p => p > 0)) {
+      setCaughtParty(prev => prev.map((m, i) => parts.includes(i + 1) ? levelUpCaughtMon(m, r.xpGained) : m));
+    }
 
     // Loyalty gains (+3 win, +2 catch)
     const loyaltyDelta = result.kind === "ko" ? 3 : result.kind === "caught" ? 2 : 0;
@@ -2391,6 +2420,12 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     const r = calcBattleXp(rawXp, role.xpMult, starterLevel, starterXp, starterMoves);
     applyLevelUp(r);
 
+    // Award the same XP to every caught companion that joined the fight.
+    const parts = ("participants" in result && result.participants) ? result.participants : [0];
+    if (r.xpGained > 0 && parts.some(p => p > 0)) {
+      setCaughtParty(prev => prev.map((m, i) => parts.includes(i + 1) ? levelUpCaughtMon(m, r.xpGained) : m));
+    }
+
     // Loyalty +3 trainer win
     const loyaltyDelta = result.kind === "trainerWin" ? 3 : 0;
     if (loyaltyDelta > 0) setWyrLoyalty(l => Math.min(100, l + loyaltyDelta));
@@ -2430,6 +2465,24 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     }
   }, [transitionTo, trainerEncounter, starter, starterLevel, starterXp, starterMoves, role, wyvruntCaught, wyvruntForm, wyrLoyalty]);
 
+  // Caught companions become the battle bench (party slots 2..N). Each fights at
+  // its own level: stats from partyBattleStats, moves from its level-based pool.
+  const battleBench: BattleMon[] = caughtParty.map(m => {
+    const el = asElement(m.type);
+    return {
+      id: m.id,
+      name: m.name,
+      type: m.type,
+      color: ELEMENT_COLOR[m.type as keyof typeof ELEMENT_COLOR] ?? "#cccccc",
+      level: m.level,
+      stats: partyBattleStats(m.maxHp, m.baseDmg, m.rarity, m.level),
+      moves: el ? defaultActiveMoves(el, m.level) : [],
+      img: m.playerImg,
+      sheet: m.playerSheet,
+      faces: m.playerFaces,
+    };
+  });
+
   // ── Trainer battle — full takeover when scene === "battle" + trainerEncounter ─
   if (scene === "battle" && trainerEncounter && starter) {
     return (
@@ -2449,6 +2502,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           keeperName={trainerEncounter.name}
           keeperTeam={trainerEncounter.team}
           keeperMonLevels={trainerEncounter.levels}
+          bench={battleBench}
           onConsumeShell={() => setShellCount(c => Math.max(0, c - 1))}
           onEnd={handleTrainerEnd}
         />
@@ -2486,6 +2540,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           catchMult={role.catchMult}
           shellsCount={shellCount}
           heroImg={heroSideImg}
+          bench={battleBench}
           onConsumeShell={() => setShellCount(c => Math.max(0, c - 1))}
           onEnd={handleBattleEnd}
         />
@@ -4783,8 +4838,11 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                             color:"#8a5c22", borderBottom:"1px solid rgba(100,64,20,0.35)",
                             paddingBottom:2,
                           }}>{mon.type.toUpperCase()}</div>
-                          <div style={{ color: RARITY_COLOR[mon.rarity], fontSize:9, fontWeight:800, marginTop:4, letterSpacing:0.5 }}>
-                            ◈ {mon.rarity.toUpperCase()}
+                          <div style={{ display:"flex", alignItems:"center", gap:8, marginTop:4 }}>
+                            <span style={{ color:"#2a1206", fontSize:10, fontWeight:800, letterSpacing:0.3 }}>Lv. {mon.level}</span>
+                            <span style={{ color: RARITY_COLOR[mon.rarity], fontSize:9, fontWeight:800, letterSpacing:0.5 }}>
+                              ◈ {mon.rarity.toUpperCase()}
+                            </span>
                           </div>
                         </div>
                         <button

@@ -77,6 +77,22 @@ export type StarterSpec = {
   maxHp?: number;
 };
 
+/** A player combatant in battle. The lead is built from the starter props; the
+ *  rest of the party (caught companions) are passed via `bench`. Any non-fainted
+ *  mon can be made active by switching. */
+export type BattleMon = {
+  id: string;
+  name: string;
+  type: string;
+  color: string;
+  level: number;
+  stats: StarterStats;
+  moves: string[];
+  img?: string;
+  sheet?: SpriteSheet;
+  faces: "left" | "right";
+};
+
 export const RARITY_COLOR: Record<MonRarity, string> = {
   common:   "#e8e8e8",
   uncommon: "#5ad06a",
@@ -118,11 +134,11 @@ function rollOutcome(hpFrac: number): typeof SHELL_OUTCOMES[number] {
 }
 
 export type BattleResult =
-  | { kind: "caught";     mon: MonSpec; shellsSet: number; xpGained: number }
+  | { kind: "caught";     mon: MonSpec; shellsSet: number; xpGained: number; participants?: number[] }
   | { kind: "fled";       shellsSet: number }
   | { kind: "fainted";    shellsSet: number }
-  | { kind: "ko";         mon: MonSpec; shellsSet: number; xpGained: number }
-  | { kind: "trainerWin"; shellsSet: number; xpGained: number };
+  | { kind: "ko";         mon: MonSpec; shellsSet: number; xpGained: number; participants?: number[] }
+  | { kind: "trainerWin"; shellsSet: number; xpGained: number; participants?: number[] };
 
 export type StarterStats = { hp: number; atk: number; def: number; spd: number };
 
@@ -152,6 +168,9 @@ type Props = {
   keeperTeam?: MonSpec[];
   /** Fixed level per trainer mon (parallel array with keeperTeam). */
   keeperMonLevels?: number[];
+  /** Caught companions (party slots 2…N) as battle-ready mons. The lead is
+   *  built from the starter props; these fill out the switchable team. */
+  bench?: BattleMon[];
   onConsumeShell: () => void;
   onEnd: (r: BattleResult) => void;
 };
@@ -162,7 +181,7 @@ function xpFor(wild: MonSpec, caught: boolean): number {
   return caught ? Math.round(base * 1.10) : base;
 }
 
-type Menu = "root" | "moves" | "shellConfirm" | "ended";
+type Menu = "root" | "moves" | "shellConfirm" | "ended" | "switch" | "switchForced";
 
 const BTN_BG    = "linear-gradient(180deg, rgba(60,40,20,0.92), rgba(36,22,10,0.92))";
 const BTN_BG_HI = "linear-gradient(180deg, rgba(90,62,30,0.96), rgba(56,36,16,0.96))";
@@ -172,7 +191,7 @@ export function BattleScene({
   catchMult = 1, shellsCount,
   opponentKind = "wild", keeperName = "Keeper", keeperImg = "/__mockup/images/rowan_side_1.png",
   heroImg = "/__mockup/images/walk_side_1.png",
-  keeperTeam, keeperMonLevels,
+  keeperTeam, keeperMonLevels, bench,
   onConsumeShell, onEnd,
 }: Props) {
   const isKeeper = opponentKind === "keeper";
@@ -189,8 +208,40 @@ export function BattleScene({
     ? (keeperMonLevels[trainerMonIdx] ?? Math.max(5, starterLevel))
     : (isKeeper ? Math.max(5, starterLevel) : wildLevelFor(wild.rarity));
 
-  const playerMaxHp = starterStats.hp;
-  const [playerHp, setPlayerHp]   = useState(playerMaxHp);
+  // ── Player team (lead + bench) ──────────────────────────────────────────
+  // The lead is built from the starter props; caught companions ride `bench`.
+  // Any non-fainted mon can be made active by switching (no turn is spent).
+  const lead: BattleMon = {
+    id: starter.id, name: starter.name, type: starter.type,
+    color: starter.color, level: starterLevel, stats: starterStats,
+    moves: starterMoves, img: starter.img, faces: "right",
+  };
+  const team: BattleMon[] = [lead, ...(bench ?? [])];
+  const [activeIdx, setActiveIdx] = useState(0);
+  const activeIdxRef = useRef(0);
+  useEffect(() => { activeIdxRef.current = activeIdx; }, [activeIdx]);
+  const active = team[activeIdx] ?? team[0];
+  // Mons sent out at any point earn XP at battle end. The lead always counts.
+  const participatedRef = useRef<Set<number>>(new Set([0]));
+
+  // Per-mon current HP (persists across switches within a battle; full each battle).
+  const [teamHp, setTeamHp] = useState<number[]>(() => team.map(m => m.stats.hp));
+  const teamHpRef = useRef<number[]>(team.map(m => m.stats.hp));
+
+  const playerMaxHp = active.stats.hp;
+  const playerHp    = teamHp[activeIdx] ?? 0;
+  // Compatibility shim — updates the ACTIVE mon's HP slot (clamped ≥ 0).
+  function setPlayerHp(v: number | ((hp: number) => number)) {
+    const idx = activeIdxRef.current;
+    setTeamHp(prev => {
+      const cur = prev[idx] ?? 0;
+      const nextV = typeof v === "function" ? (v as (h: number) => number)(cur) : v;
+      const arr = [...prev];
+      arr[idx] = Math.max(0, nextV);
+      teamHpRef.current = arr;
+      return arr;
+    });
+  }
   const [wildHp,   setWildHp]     = useState(wild.maxHp);
   const [log,      setLog]        = useState<string>(
     isKeeper ? `${keeperName} sends out ${wild.name}!` : `A wild ${wild.name} appears!`,
@@ -223,22 +274,26 @@ export function BattleScene({
   const fxIdRef = useRef(1);
   const nextFxId = () => ++fxIdRef.current;
 
-  // ── Move system: derived combatants (all from currentOpponent) ───────────
-  const playerEl  = asElement(starter.type);
+  // ── Move system: derived combatants ──────────────────────────────────────
+  // Resolve a battle mon's active loadout (≤4), falling back to its element
+  // defaults, then Struggle. Shared by the active mon and per-mon PP pools.
+  function resolveMoves(m: BattleMon): Move[] {
+    const resolved = m.moves.map(getMove).filter((x): x is Move => !!x);
+    if (resolved.length) return resolved.slice(0, 4);
+    const el = asElement(m.type);
+    if (el) {
+      const def = defaultActiveMoves(el, m.level).map(getMove).filter((x): x is Move => !!x);
+      if (def.length) return def;
+    }
+    return [STRUGGLE];
+  }
+  const playerEl  = asElement(active.type);
   const wildEl    = asElement(currentOpponent.type);
   const wildStats = wildCombatStats(currentOpponent.baseDmg, currentOpponent.rarity);
   const wildLevel = currentOpponentLevel;
 
-  // Player's active loadout (fall back to a sensible default, then Struggle).
-  const playerMoves: Move[] = (() => {
-    const resolved = starterMoves.map(getMove).filter((m): m is Move => !!m);
-    if (resolved.length) return resolved.slice(0, 4);
-    if (playerEl) {
-      const def = defaultActiveMoves(playerEl, starterLevel).map(getMove).filter((m): m is Move => !!m);
-      if (def.length) return def;
-    }
-    return [STRUGGLE];
-  })();
+  // Active mon's loadout.
+  const playerMoves: Move[] = resolveMoves(active);
   // Wild's loadout derived from its element + notional level.
   const wildMoves: Move[] = (() => {
     if (wildEl) {
@@ -254,12 +309,19 @@ export function BattleScene({
     }];
   })();
 
-  // PP pools. Player PP is stateful (drives the move menu); wild PP rides a ref.
-  const [playerPp, setPlayerPp] = useState<Record<string, number>>(() => {
-    const o: Record<string, number> = {};
-    for (const m of playerMoves) o[m.id] = m.pp;
-    return o;
-  });
+  // PP pools. Player PP is per-mon (drives the move menu); wild PP rides a ref.
+  const [teamPp, setTeamPp] = useState<Record<string, number>[]>(() =>
+    team.map(m => {
+      const o: Record<string, number> = {};
+      for (const mv of resolveMoves(m)) o[mv.id] = mv.pp;
+      return o;
+    }),
+  );
+  const playerPp = teamPp[activeIdx] ?? {};
+  function setPlayerPp(updater: (p: Record<string, number>) => Record<string, number>) {
+    const idx = activeIdxRef.current;
+    setTeamPp(prev => { const a = [...prev]; a[idx] = updater(prev[idx] ?? {}); return a; });
+  }
   const wildPpRef    = useRef<Record<string, number>>({});
   const wildPpKeyRef = useRef(-1); // tracks which trainerMonIdx PP was last populated for
   if (wildPpKeyRef.current !== trainerMonIdx) {
@@ -277,7 +339,6 @@ export function BattleScene({
 
   // HP refs (latest values for delayed AI/KO logic).
   const wildHpRef   = useRef(wild.maxHp);
-  const playerHpRef = useRef(playerMaxHp);
 
   // Move animation overlay.
   type MoveFxState = { anim: Move["anim"]; color: string; from: "player" | "wild"; category: Move["category"]; id: number };
@@ -327,8 +388,8 @@ export function BattleScene({
   }
 
   // Effective stats after battle-long buffs.
-  function pAtk() { return starterStats.atk + buffsRef.current.pAtk; }
-  function pDef() { return starterStats.def + buffsRef.current.pDef; }
+  function pAtk() { return active.stats.atk + buffsRef.current.pAtk; }
+  function pDef() { return active.stats.def + buffsRef.current.pDef; }
   function wAtk() { return wildStats.atk + buffsRef.current.wAtk; }
   function wDef() { return wildStats.def + buffsRef.current.wDef; }
 
@@ -405,13 +466,24 @@ export function BattleScene({
       }, 380);
       later(() => setShake(null), 600);
       later(() => {
-        setPlayerHp(hp => {
-          const next = Math.max(0, hp - dmg);
-          playerHpRef.current = next;
+        setTeamHp(prev => {
+          const idx = activeIdxRef.current;
+          const next = Math.max(0, (prev[idx] ?? 0) - dmg);
+          const arr = [...prev];
+          arr[idx] = next;
+          teamHpRef.current = arr;
           if (next === 0) {
+            const faintedName = team[idx]?.name ?? "Your Tayanari";
+            const anyAlive = arr.some((h, i) => i !== idx && h > 0);
             later(() => {
-              setLog(`${starter.name} fainted…`);
-              later(() => onEnd({ kind: "fainted", shellsSet: shellsSetRef.current }), 900);
+              setLog(`${faintedName} fainted…`);
+              if (anyAlive) {
+                // Mandatory send-out — the player picks the next mon. No turn is
+                // spent: once chosen, the player's turn resumes.
+                later(() => { setMenu("switchForced"); setBusy(true); }, 700);
+              } else {
+                later(() => onEnd({ kind: "fainted", shellsSet: shellsSetRef.current }), 900);
+              }
             }, 700);
           } else {
             later(() => {
@@ -420,7 +492,7 @@ export function BattleScene({
               afterCb?.();
             }, 520);
           }
-          return next;
+          return arr;
         });
       }, 380);
     }, 560);
@@ -458,15 +530,16 @@ export function BattleScene({
             // Last mon — resolve battle
             const totalXp = trainerXpRef.current + monXp;
             trainerXpRef.current = 0;
+            const participants = [...participatedRef.current];
             later(() => {
               setLog(isKeeper && keeperTeam
                 ? `${currentOpponent.name} is down! You bested ${keeperName}! (+${totalXp} XP total)`
-                : `${currentOpponent.name} fainted! ${starter.name} gains ${monXp} XP.`);
+                : `${currentOpponent.name} fainted! ${active.name} gains ${monXp} XP.`);
               setMenu("ended");
               later(() => onEnd(
                 isKeeper && keeperTeam
-                  ? { kind: "trainerWin", shellsSet: shellsSetRef.current, xpGained: totalXp }
-                  : { kind: "ko", mon: currentOpponent, shellsSet: shellsSetRef.current, xpGained: monXp }
+                  ? { kind: "trainerWin", shellsSet: shellsSetRef.current, xpGained: totalXp, participants }
+                  : { kind: "ko", mon: currentOpponent, shellsSet: shellsSetRef.current, xpGained: monXp, participants }
               ), 1100);
             }, 650);
           }
@@ -483,7 +556,7 @@ export function BattleScene({
     if (busy) return;
     setMenu("root");
     setBusy(true);
-    const color = move.element ? typeColor(move.element) : typeColor(starter.type);
+    const color = move.element ? typeColor(move.element) : typeColor(active.type);
     if (move.id !== STRUGGLE.id) {
       setPlayerPp(p => ({ ...p, [move.id]: Math.max(0, (p[move.id] ?? 0) - 1) }));
     }
@@ -493,14 +566,14 @@ export function BattleScene({
       triggerMove(move.anim, color, "player", move.category);
       if (move.category === "heal" && move.heal) {
         const heal = Math.floor(playerMaxHp * move.heal);
-        setPlayerHp(hp => { const n = Math.min(playerMaxHp, hp + heal); playerHpRef.current = n; return n; });
-        setLog(`${starter.name} uses ${move.name} — recovers ${heal} HP!`);
+        setPlayerHp(hp => Math.min(playerMaxHp, hp + heal));
+        setLog(`${active.name} uses ${move.name} — recovers ${heal} HP!`);
       } else if (move.category === "buff" && move.atkBuff) {
         setBuffs(b => ({ ...b, pAtk: b.pAtk + move.atkBuff! }));
-        setLog(`${starter.name} uses ${move.name} — Attack rose!`);
+        setLog(`${active.name} uses ${move.name} — Attack rose!`);
       } else if (move.category === "shield" && move.defBuff) {
         setBuffs(b => ({ ...b, pDef: b.pDef + move.defBuff! }));
-        setLog(`${starter.name} uses ${move.name} — Defense rose!`);
+        setLog(`${active.name} uses ${move.name} — Defense rose!`);
       }
       later(() => wildTurn(), 760);
       return;
@@ -513,7 +586,7 @@ export function BattleScene({
         triggerAux("feint", undefined, "wild", 750);
         setFeinting(true);
         later(() => setFeinting(false), 600);
-        setLog(`${starter.name} uses ${move.name} — ${wild.name} feinted away!`);
+        setLog(`${active.name} uses ${move.name} — ${wild.name} feinted away!`);
         later(() => wildTurn(), 650);
       }, 360);
       return;
@@ -524,7 +597,7 @@ export function BattleScene({
     const { dmg, crit } = computeDamage({
       power: move.power, attackerAtk: pAtk(), defenderDef: wDef(), stab, effectiveness: eff,
     });
-    later(() => playerHit(dmg, `${starter.name} uses ${move.name}!`, crit, eff), 140);
+    later(() => playerHit(dmg, `${active.name} uses ${move.name}!`, crit, eff), 140);
   }
 
   function onHeal() {
@@ -534,7 +607,7 @@ export function BattleScene({
     const heal   = Math.floor(playerMaxHp * 0.5);
     const next   = Math.min(playerMaxHp, before + heal);
     setPlayerHp(next);
-    setLog(`${starter.name} recovers ${next - before} HP!`);
+    setLog(`${active.name} recovers ${next - before} HP!`);
     setHealCd(2);
     triggerAux("heal", "#80ff80", "player", 1000);
     later(() => wildTurn(), 700);
@@ -560,18 +633,18 @@ export function BattleScene({
     if (resBar < 15)        { setLog(`Resonance not ready (${resBar}/15).`); return; }
     setBusy(true);  // lock input immediately — FX delays would otherwise leak a turn
     setResBar(0);
-    const resColor = typeColor(starter.type);
+    const resColor = typeColor(active.type);
     triggerAux("resonate", resColor, undefined, 900);
-    if (starter.type === "Spirit") {
+    if (active.type === "Spirit") {
       // Fae-like: revival/cleanse — heals fully
       setBusy(true);
       setPlayerHp(playerMaxHp);
-      setLog(`Spirit Resonance — ${starter.name} is fully restored!`);
+      setLog(`Spirit Resonance — ${active.name} is fully restored!`);
       later(() => wildTurn(), 850);
       return;
     }
     const dmg = 5 + Math.floor(Math.random() * 11); // 5-15
-    later(() => playerHit(dmg, `${starter.type} Resonance bursts! ${dmg} damage!`), 350);
+    later(() => playerHit(dmg, `${active.type} Resonance bursts! ${dmg} damage!`), 350);
   }
 
   function onFlee() {
@@ -634,6 +707,7 @@ export function BattleScene({
           later(() => onEnd({
             kind: "caught", mon: wild,
             shellsSet: shellsSetRef.current, xpGained: xp,
+            participants: [...participatedRef.current],
           }), 900);
         }, 750);
       } else {
@@ -647,12 +721,27 @@ export function BattleScene({
     }, 2100);
   }
 
+  // Switch the active mon (voluntary from the menu, or forced after a faint).
+  // No turn is spent: in both cases the player's turn resumes after sending out.
+  function doSwitch(idx: number) {
+    if (idx === activeIdxRef.current) return;
+    if ((teamHpRef.current[idx] ?? 0) <= 0) return;
+    participatedRef.current.add(idx);
+    setActiveIdx(idx);
+    activeIdxRef.current = idx;
+    setBuffs(b => ({ ...b, pAtk: 0, pDef: 0 })); // attack/defense buffs don't carry over
+    setLog(`Go, ${team[idx].name}!`);
+    setMenu("root");
+    setBusy(false);
+  }
+  const hasReserve = team.some((_, i) => i !== activeIdx && (teamHp[i] ?? 0) > 0);
+
   // ── render
   // wildFaces / playerFaces describe each sprite's NATIVE art orientation (same
   // file orientation is reused for both sides). Wild stands on the RIGHT and must
   // face LEFT (toward player); player mon stands on the LEFT and must face RIGHT.
   const wildScaleX   = currentOpponent.wildFaces === "left"   ? 1 : -1; // flip when native faces right
-  const playerScaleX = currentOpponent.playerFaces === "right" ? 1 : -1; // flip when native faces left
+  const playerScaleX = active.faces === "right" ? 1 : -1; // flip when active mon's native art faces left
   const wildShake   = shake === "wild"   ? "shakeFx 0.22s" : "none";
   const playerShake = shake === "player" ? "shakeFx 0.22s" : "none";
 
@@ -750,12 +839,12 @@ export function BattleScene({
         {/* Player HP plate (top-left) */}
         <div style={hpPlateStyle("player")}>
           <div style={{ display:"flex", alignItems:"baseline", gap:6, marginBottom:4 }}>
-            <span style={{ color:"#fff", fontSize:13, fontWeight:800 }}>{starter.name}</span>
-            <span style={{ color:"#aaa", fontSize:9 }}>Lv.{starterLevel}</span>
+            <span style={{ color:"#fff", fontSize:13, fontWeight:800 }}>{active.name}</span>
+            <span style={{ color:"#aaa", fontSize:9 }}>Lv.{active.level}</span>
           </div>
           <HpBar hp={playerHp} max={playerMaxHp} />
           <div style={{ display:"flex", justifyContent:"space-between", marginTop:2 }}>
-            <span style={{ color: starter.color, fontSize:9 }}>{starter.type}</span>
+            <span style={{ color: active.color, fontSize:9 }}>{active.type}</span>
             <span style={{ color:"#c8c8c8", fontSize:9, fontWeight:700 }}>{playerHp}/{playerMaxHp}</span>
           </div>
         </div>
@@ -853,14 +942,25 @@ export function BattleScene({
             animation: intro ? "introSlide 1.1s ease-out" : (playerShake || "none"),
             animationDelay: intro ? "0.15s" : undefined,
           }}>
-            <img src={starter.img} alt={starter.name} style={{
-              width:"100%", height:"100%", objectFit:"contain",
-              // Keeper-side mon faces EAST (right). Native right-facing sprite => no flip; native left => scaleX(-1).
-              transform: (playerFlip + playerExtra).trim() || "none",
-              transformOrigin:"center center",
-              transition:"transform 0.45s ease-in, opacity 0.45s",
-              filter:"drop-shadow(0 6px 8px rgba(0,0,0,0.5))",
-            }}/>
+            {active.sheet ? (
+              <div role="img" aria-label={active.name} style={{
+                position:"absolute", inset:0,
+                ...sheetBgStyle(active.sheet),
+                transform: (playerFlip + playerExtra).trim() || "none",
+                transformOrigin:"center center",
+                transition:"transform 0.45s ease-in",
+                filter:"drop-shadow(0 6px 8px rgba(0,0,0,0.5))",
+              }}/>
+            ) : (
+              <img src={active.img} alt={active.name} style={{
+                width:"100%", height:"100%", objectFit:"contain",
+                // Keeper-side mon faces EAST (right). Native right-facing sprite => no flip; native left => scaleX(-1).
+                transform: (playerFlip + playerExtra).trim() || "none",
+                transformOrigin:"center center",
+                transition:"transform 0.45s ease-in, opacity 0.45s",
+                filter:"drop-shadow(0 6px 8px rgba(0,0,0,0.5))",
+              }}/>
+            )}
           </div>
         </div>
 
@@ -869,7 +969,7 @@ export function BattleScene({
         {summon && (
           <div key="summon" style={{ position:"absolute", inset:0, pointerEvents:"none", zIndex:6 }}>
             {/* Player Tayanari glimmer (left circle, starter element color) */}
-            <SummonBurst x={POS.mon.x} y={POS.mon.y - 8} color={typeColor(starter.type)} delay={0.15}/>
+            <SummonBurst x={POS.mon.x} y={POS.mon.y - 8} color={typeColor(active.type)} delay={0.15}/>
             {/* Opponent glimmer (right circle, wild element color) */}
             <SummonBurst x={POS.wild.x} y={POS.wild.y - 8} color={typeColor(currentOpponent.type)} delay={0}/>
           </div>
@@ -1103,7 +1203,46 @@ export function BattleScene({
           border:"1px solid rgba(120,80,30,0.35)",
         }}>{log}</div>
 
-        {menu === "shellConfirm" ? (
+        {(menu === "switch" || menu === "switchForced") ? (
+          <div style={{ display:"flex", flexDirection:"column", gap:5, marginTop:8 }}>
+            <div style={{ color:"#f0d890", fontSize:11, fontWeight:800, textAlign:"center", marginBottom:2 }}>
+              {menu === "switchForced" ? "Choose your next Tayanari" : "Switch to…"}
+            </div>
+            {team.map((m, i) => {
+              const hp = teamHp[i] ?? 0;
+              const ko = hp <= 0;
+              const isActive = i === activeIdx;
+              return (
+                <button
+                  key={m.id + ":" + i}
+                  disabled={ko || isActive}
+                  onClick={() => doSwitch(i)}
+                  style={{
+                    display:"flex", justifyContent:"space-between", alignItems:"center",
+                    padding:"8px 10px", borderRadius:7,
+                    background: isActive ? BTN_BG_HI : BTN_BG,
+                    border:"1.5px solid rgba(180,130,60,0.45)",
+                    color: ko ? "#8a6a5a" : "#f0d890",
+                    fontSize:11, fontWeight:800,
+                    cursor: (ko || isActive) ? "default" : "pointer",
+                    opacity: ko ? 0.5 : 1,
+                  }}
+                >
+                  <span>{m.name} <span style={{ color:"#aaa", fontWeight:600 }}>Lv.{m.level}</span></span>
+                  <span style={{ color: ko ? "#8a6a5a" : "#c8c8c8", fontWeight:700 }}>
+                    {ko ? "Fainted" : `${hp}/${m.stats.hp}`}{isActive ? " • active" : ""}
+                  </span>
+                </button>
+              );
+            })}
+            {menu === "switch" && (
+              <button onClick={() => setMenu("root")} style={{
+                padding:"8px", background:BTN_BG, border:"1.5px solid rgba(180,130,60,0.45)",
+                borderRadius:7, color:"#f0d890", fontSize:11, fontWeight:800, cursor:"pointer",
+              }}>← Back</button>
+            )}
+          </div>
+        ) : menu === "shellConfirm" ? (
           <div style={{ display:"flex", gap:6, marginTop:8 }}>
             <button onClick={doShellSet} style={confirmBtn("#4a8a4a")}>
               Set Shell ({shellsCount})
@@ -1152,6 +1291,7 @@ export function BattleScene({
             <BattleBtn label="Set Shell" sub={isKeeper ? "bonded" : `×${shellsCount}`} disabled={busy || isKeeper || shellsCount <= 0} onClick={onShell}/>
             <BattleBtn label="Heal"     sub={healCd > 0 ? `CD ${healCd}` : "50%"} disabled={busy || healCd > 0} onClick={onHeal}/>
             <BattleBtn label="Rune"     sub={healingRuneEquipped ? `×${runeUses}` : "—"} disabled={busy || !healingRuneEquipped || runeUses <= 0} onClick={onRune}/>
+            <BattleBtn label="Switch"   sub={hasReserve ? "party" : "none"} disabled={busy || !hasReserve} onClick={() => setMenu("switch")}/>
             <BattleBtn label="Flee"     sub={isKeeper ? "locked" : "70%"} disabled={busy || isKeeper} onClick={onFlee}/>
           </div>
         )}
