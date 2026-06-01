@@ -156,6 +156,17 @@ function ldGlow(key: string, def: boolean): boolean {
   const v = _devGlows[key];
   return typeof v === "boolean" ? v : def;
 }
+// DEV wall editor persistence: per-scene collider rects + the global walls on/off flag.
+const DEV_WALL_KEY = "primeria_dev_walls";
+const DEV_WALLSON_KEY = "primeria_dev_walls_on";
+const _devWalls = _loadDevMap(DEV_WALL_KEY);
+function ldWalls(key: string, def: Rect[]): Rect[] {
+  const v = _devWalls[key];
+  if (Array.isArray(v) && v.every((r) => Array.isArray(r) && r.length === 4 && r.every((n: unknown) => typeof n === "number"))) {
+    return (v as number[][]).map((r) => [r[0], r[1], r[2], r[3]] as Rect);
+  }
+  return def;
+}
 const SPRITE_PX = 96;   // bigger on mobile
 const ANCHOR    = 0.75; // fraction of sprite above anchor point
 
@@ -456,7 +467,7 @@ let R2_RETURN_OW: Rect    = ld("r2_return", [79, 1028, 169, 1148]); // TEMP door
 const R2_NORTH_BLOCKED: Rect = [520,   0, 780,  40]; // cliff stairs (top-right)
 const R2_SOUTH_BLOCKED: Rect = [360, 1510, 600,1536]; // south continuation
 let R2_LOCKED_DOOR: Rect   = ld("r2_locked", [820, 760, 900, 830]); // locked house door
-const R2_BLOCKED: Rect[] = [
+let R2_BLOCKED: Rect[] = [
   // outer borders
   [0,    0, 1024,  60],
   [0, 1500, 1024,1536],
@@ -545,7 +556,7 @@ const FLAVOR_TRACKS = [
 ];
 
 // ── Collision zones ─────────────────────────────────────────────────────────
-const OW_BLOCKED: Rect[] = [
+let OW_BLOCKED: Rect[] = [
   // ── OUTER BORDERS ──────────────────────────────────────────────────────────
   [0,    0,   155,  430],  // left forest — north  (gap y=430-475 → Area 3 corridor at Jay's SW corner)
   [0,  475,   155,  900],  // left forest — south
@@ -609,7 +620,7 @@ const LH = { w: 800, h: 800 };
 const LIA_POS = { x: 385, y: 355 }; // Lia near the center rug
 let OW_LIA_DOOR: Rect  = ld("ow_lia", [919, 714, 979, 744]); // moved to user-tapped spot (945,738)
 let LIA_HOME_EXIT: Rect = ld("lia_exit", [310, 722, 490, 790]); // bottom-center door
-const LH_BLOCKED: Rect[] = [
+let LH_BLOCKED: Rect[] = [
   // ── WALLS ──────────────────────────────────────────────────────────────────
   [0,    0,   800,  80],  // top wall
   [0,    0,    65, 800],  // left wall
@@ -640,7 +651,7 @@ let OW_PROF_DOOR: Rect = ld("ow_lab", [585, 289, 667, 346]); // nudged 8 west of
 // ── Whisperroot Trail (Route 1 / Area 1) ─────────────────────────────────────
 // South gate (blue) connects back to town; north continues deeper (future)
 let R1_SOUTH_GATE: Rect = ld("r1_south", [404, 749, 568, 779]); // bottom-center exit → overworld
-const R1_BLOCKED: Rect[] = [
+let R1_BLOCKED: Rect[] = [
   // ── OUTER FOREST BORDER ──────────────────────────────────────────────────
   [0,    0,  1024,   50],  // top forest strip
   [0,    0,    52,  780],  // left forest strip
@@ -662,7 +673,7 @@ const R1_BLOCKED: Rect[] = [
   [468,  325,  558,  442],  // central monolith + circular stone plinth
 ];
 
-const LAB_BLOCKED: Rect[] = [
+let LAB_BLOCKED: Rect[] = [
   [0,   0,   700, 22 ],  // top
   [0,   0,   22,  700],  // left wall
   [678, 0,   700, 700],  // right wall
@@ -680,7 +691,7 @@ const MAYA_POS = { x: 870, y: 427 }; // Maya standing at her doorstep
 let OW_MAYA_DOOR: Rect  = ld("ow_maya", [938, 278, 1003, 340]); // nudged +6 east of user-tapped 965,335
 let MAYA_HOME_EXIT: Rect = ld("maya_exit", [310, 722, 490, 790]); // exit trigger at interior door
 const MAYA_SHELL: Rect     = [385, 400, 455, 460]; // pickup zone — center of the living-room rug
-const MAYA_BLOCKED: Rect[] = [
+let MAYA_BLOCKED: Rect[] = [
   // ── WALLS ──────────────────────────────────────────────────────────────────
   [0,    0,   800,  90],  // top wall
   [0,    0,    75, 800],  // left wall
@@ -709,7 +720,7 @@ const JY = { w: 800, h: 800 };
 const JAY_POS = { x: 370, y: 310 }; // Jay standing in the center of his room
 let OW_JAY_DOOR: Rect  = ld("ow_jay", [165, 297, 233, 345]); // user-tapped spot (195,349)
 let JAY_HOME_EXIT: Rect = ld("jay_exit", [310, 725, 490, 790]); // interior door at bottom
-const JAY_BLOCKED: Rect[] = [
+let JAY_BLOCKED: Rect[] = [
   // ── WALLS ──────────────────────────────────────────────────────────────────
   [0,    0,   800,  80],  // top wall
   [0,    0,    65, 800],  // left wall
@@ -749,7 +760,7 @@ const JERBS_FW = Math.floor(JERBS_SW / 5); const JERBS_FH = Math.floor(JERBS_SH 
 // Portal sprite sheet: 1536×1024, 5 cols × 2 rows, each frame ~307×512
 const PORTAL_SW = 1536; const PORTAL_SH = 1024;
 const PORTAL_FW = Math.floor(PORTAL_SW / 5); const PORTAL_FH = Math.floor(PORTAL_SH / 2);
-const A3_BLOCKED: Rect[] = [
+let A3_BLOCKED: Rect[] = [
   // ── OUTER BORDER STRIPS ───────────────────────────────────────────────────
   [0,    0,  1024,   55],  // top tree strip
   [0,    0,    55,  768],  // left edge
@@ -788,7 +799,7 @@ const EH = { w: 800, h: 800 };
 const ELLIO_POS = { x: 400, y: 350 };
 let OW_ELLIO_DOOR: Rect  = ld("ow_ellio", [177, 680, 237, 740]); // moved to the spot the user tapped in the door tool (204,739); requires "up" key (anti walk-by)
 let ELLIO_HOME_EXIT: Rect = ld("ellio_exit", [305, 725, 505, 790]);
-const EH_BLOCKED: Rect[] = [
+let EH_BLOCKED: Rect[] = [
   [0, 0, 800, 60], [0, 0, 60, 800], [740, 0, 800, 800],
   [0, 735, 305, 800], [505, 735, 800, 800],
   [0, 0, 800, 185],
@@ -855,7 +866,7 @@ function fallbackCopy(txt: string, done: () => void) {
     if (ok) done();
   } catch { /* ignore */ }
 }
-const PH_BLOCKED: Rect[] = [
+let PH_BLOCKED: Rect[] = [
   // ── WALLS ──────────────────────────────────────────────────────────────────
   [0,    0,   800,  80],  // top wall
   [0,    0,    75, 800],  // left wall
@@ -882,6 +893,27 @@ const PH_BLOCKED: Rect[] = [
   [525, 550,  700, 638],  // workshop desk + open book + lantern
   [650, 548,  725, 715],  // barrel + chest + corner plants
 ];
+
+// ── DEV wall editor: registry (scene → live blocked-array get+set) ──────────
+const WALL_SCENES: { scene: Scene; key: string; arr: string; get: () => Rect[]; set: (r: Rect[]) => void }[] = [
+  { scene: "overworld", key: "overworld", arr: "OW_BLOCKED",   get: () => OW_BLOCKED,   set: (r) => { OW_BLOCKED = r; } },
+  { scene: "route1",    key: "route1",    arr: "R1_BLOCKED",   get: () => R1_BLOCKED,   set: (r) => { R1_BLOCKED = r; } },
+  { scene: "route2",    key: "route2",    arr: "R2_BLOCKED",   get: () => R2_BLOCKED,   set: (r) => { R2_BLOCKED = r; } },
+  { scene: "area3",     key: "area3",     arr: "A3_BLOCKED",   get: () => A3_BLOCKED,   set: (r) => { A3_BLOCKED = r; } },
+  { scene: "lab",       key: "lab",       arr: "LAB_BLOCKED",  get: () => LAB_BLOCKED,  set: (r) => { LAB_BLOCKED = r; } },
+  { scene: "jay",       key: "jay",       arr: "JAY_BLOCKED",  get: () => JAY_BLOCKED,  set: (r) => { JAY_BLOCKED = r; } },
+  { scene: "maya",      key: "maya",      arr: "MAYA_BLOCKED", get: () => MAYA_BLOCKED, set: (r) => { MAYA_BLOCKED = r; } },
+  { scene: "lia",       key: "lia",       arr: "LH_BLOCKED",   get: () => LH_BLOCKED,   set: (r) => { LH_BLOCKED = r; } },
+  { scene: "ellio",     key: "ellio",     arr: "EH_BLOCKED",   get: () => EH_BLOCKED,   set: (r) => { EH_BLOCKED = r; } },
+  { scene: "home",      key: "home",      arr: "PH_BLOCKED",   get: () => PH_BLOCKED,   set: (r) => { PH_BLOCKED = r; } },
+];
+// Overlay any DEV wall-editor edits saved in localStorage on top of the baked defaults.
+WALL_SCENES.forEach((w) => { w.set(ldWalls(w.key, w.get())); });
+function saveDevWalls() {
+  const m: Record<string, Rect[]> = {};
+  WALL_SCENES.forEach((w) => { m[w.key] = w.get(); });
+  try { localStorage.setItem(DEV_WALL_KEY, JSON.stringify(m)); } catch { /* ignore */ }
+}
 
 // ── Sprite / image utilities ─────────────────────────────────────────────────
 const imgCache: Record<string, HTMLImageElement> = {};
@@ -952,7 +984,7 @@ function inRect(x: number, y: number, [x1,y1,x2,y2]: Rect) {
 // Walls are temporarily OFF while we rebuild them with the visual editor.
 // Door triggers are independent of this (they call inRect directly), so every
 // door keeps working — the player can just now reach all of them freely.
-const WALLS_ON = false;
+let WALLS_ON = (() => { try { return localStorage.getItem(DEV_WALLSON_KEY) === "1"; } catch { return false; } })();
 function blocked(x: number, y: number, zones: Rect[]) {
   if (!WALLS_ON) return false;
   return zones.some(r => inRect(x, y, r));
@@ -1149,6 +1181,88 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     });
     const txt = out.join("\n");
     const done = () => { setDoorCopied(true); window.setTimeout(() => setDoorCopied(false), 1800); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(done).catch(() => fallbackCopy(txt, done));
+    } else {
+      fallbackCopy(txt, done);
+    }
+  };
+  // ── DEV wall editor: draw (2-tap) + drag-move + double-tap delete + COPY ────
+  const [, setWallEditTick] = useState(0);
+  const [wallEditMode, setWallEditMode] = useState(false);
+  const [wallPendA, setWallPendA] = useState<{ x: number; y: number } | null>(null);
+  const [wallsCopied, setWallsCopied] = useState(false);
+  const [, setWallsOnTick] = useState(0);
+  const wallDragRef = useRef<{ sx: number; sy: number; idx: number; orig: Rect } | null>(null);
+  const wallMovedRef = useRef(false);
+  const wallTapRef = useRef<{ idx: number; t: number } | null>(null);
+  const curWallEntry = () => WALL_SCENES.find((w) => w.scene === scene);
+  const addWall = (a: { x: number; y: number }, b: { x: number; y: number }) => {
+    const w = curWallEntry(); if (!w) return;
+    const rect: Rect = [Math.min(a.x, b.x), Math.min(a.y, b.y), Math.max(a.x, b.x), Math.max(a.y, b.y)];
+    if (rect[2] - rect[0] < 4 || rect[3] - rect[1] < 4) return; // ignore tiny accidental boxes
+    w.set([...w.get(), rect]);
+    saveDevWalls();
+    setWallEditTick((t) => t + 1);
+  };
+  const deleteWall = (idx: number) => {
+    const w = curWallEntry(); if (!w) return;
+    w.set(w.get().filter((_, i) => i !== idx));
+    saveDevWalls();
+    setWallEditTick((t) => t + 1);
+  };
+  const onWallDown = (idx: number) => (e: RPointerEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    const w = curWallEntry(); if (!w) return;
+    const cur = w.get()[idx]; if (!cur) return;
+    wallMovedRef.current = false;
+    wallDragRef.current = { sx: e.clientX, sy: e.clientY, idx, orig: [...cur] as Rect };
+  };
+  const onWallMove = (e: RPointerEvent<HTMLDivElement>) => {
+    const d = wallDragRef.current; if (!d) return;
+    e.stopPropagation();
+    const dx = Math.round((e.clientX - d.sx) / ZOOM);
+    const dy = Math.round((e.clientY - d.sy) / ZOOM);
+    if (dx !== 0 || dy !== 0) wallMovedRef.current = true;
+    const w = curWallEntry(); if (!w) return;
+    const next = w.get().slice();
+    next[d.idx] = [d.orig[0] + dx, d.orig[1] + dy, d.orig[2] + dx, d.orig[3] + dy] as Rect;
+    w.set(next);
+    setWallEditTick((t) => t + 1);
+  };
+  const onWallUp = (e: RPointerEvent<HTMLDivElement>) => {
+    if (!wallDragRef.current) return;
+    e.stopPropagation();
+    wallDragRef.current = null;
+    saveDevWalls();
+  };
+  const onWallTap = (idx: number) => {
+    if (wallMovedRef.current) { wallMovedRef.current = false; return; } // a drag, not a tap
+    const now = Date.now();
+    const last = wallTapRef.current;
+    if (last && last.idx === idx && now - last.t < 450) {
+      wallTapRef.current = null;
+      deleteWall(idx);
+    } else {
+      wallTapRef.current = { idx, t: now };
+    }
+  };
+  const toggleWalls = () => {
+    WALLS_ON = !WALLS_ON;
+    try { localStorage.setItem(DEV_WALLSON_KEY, WALLS_ON ? "1" : "0"); } catch { /* ignore */ }
+    setWallsOnTick((t) => t + 1);
+  };
+  const copyWallLayout = () => {
+    const out: string[] = ["PRIMERIA WALL LAYOUT — paste this back to the assistant"];
+    WALL_SCENES.forEach((w) => {
+      out.push("", "[" + w.scene + "]  (" + w.arr + ")");
+      const rects = w.get();
+      if (!rects.length) { out.push("  (none)"); return; }
+      rects.forEach(([a, b, c, d2]) => out.push("  [" + a + ", " + b + ", " + c + ", " + d2 + "],"));
+    });
+    const txt = out.join("\n");
+    const done = () => { setWallsCopied(true); window.setTimeout(() => setWallsCopied(false), 1800); };
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(txt).then(done).catch(() => fallbackCopy(txt, done));
     } else {
@@ -2736,10 +2850,14 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           if (!devMode) return;
           const vp = vpRef.current; if (!vp) return;
           const r = vp.getBoundingClientRect();
-          setDevProbe({
-            x: Math.round(cam.current.x + (e.clientX - r.left) / ZOOM),
-            y: Math.round(cam.current.y + (e.clientY - r.top) / ZOOM),
-          });
+          const wx = Math.round(cam.current.x + (e.clientX - r.left) / ZOOM);
+          const wy = Math.round(cam.current.y + (e.clientY - r.top) / ZOOM);
+          if (wallEditMode) {
+            if (!wallPendA) { setWallPendA({ x: wx, y: wy }); }
+            else { addWall(wallPendA, { x: wx, y: wy }); setWallPendA(null); }
+          } else {
+            setDevProbe({ x: wx, y: wy });
+          }
         }}>
 
         {/* World container — camera-scrolled + zoomed */}
@@ -2775,7 +2893,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           />
 
           {/* Dev: collision zone visualiser (hidden while walls are off) */}
-          {DEV_COLLISIONS && WALLS_ON && (
+          {DEV_COLLISIONS && WALLS_ON && !wallEditMode && (
             (scene === "overworld" ? OW_BLOCKED :
              scene === "route1"   ? R1_BLOCKED :
              scene === "route2"   ? R2_BLOCKED :
@@ -2813,7 +2931,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           })}
 
           {/* Dev: draggable door editor (current scene) + tap-probe crosshair */}
-          {devMode && DOOR_LIST.filter((d) => d.scene === scene).map((d) => {
+          {devMode && !wallEditMode && DOOR_LIST.filter((d) => d.scene === scene).map((d) => {
             const [x1, y1, x2, y2] = d.get();
             const gOn = doorGlowOn[d.key];
             return (
@@ -2841,11 +2959,39 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               </div>
             );
           })}
-          {devMode && devProbe && (
+          {devMode && !wallEditMode && devProbe && (
             <div style={{ position:"absolute", left:devProbe.x-12, top:devProbe.y-12, width:24, height:24, zIndex:31, pointerEvents:"none" }}>
               <div style={{ position:"absolute", left:11, top:0, width:2, height:24, background:"#ffd400" }}/>
               <div style={{ position:"absolute", left:0, top:11, width:24, height:2, background:"#ffd400" }}/>
               <div style={{ position:"absolute", left:5, top:5, width:14, height:14, borderRadius:"50%", border:"2px solid #ffd400" }}/>
+            </div>
+          )}
+
+          {/* Dev: wall/collider editor — draggable boxes for the current scene */}
+          {devMode && wallEditMode && (WALL_SCENES.find((w) => w.scene === scene)?.get() ?? []).map((rect, i) => {
+            const [x1, y1, x2, y2] = rect;
+            return (
+              <div key={`wall-${i}`}
+                onPointerDown={onWallDown(i)}
+                onPointerMove={onWallMove}
+                onPointerUp={onWallUp}
+                onPointerCancel={onWallUp}
+                onClick={(e) => { e.stopPropagation(); onWallTap(i); }}
+                style={{
+                  position:"absolute", left:x1, top:y1,
+                  width:Math.max(8, x2 - x1), height:Math.max(8, y2 - y1),
+                  background:"rgba(255,70,70,0.30)", border:"2px solid #ff5a3c",
+                  zIndex:29, cursor:"move", touchAction:"none",
+                }}>
+                <span style={{ position:"absolute", top:0, left:0, transform:"translateY(-100%)", fontSize:10, fontWeight:800, color:"#fff", background:"#ff5a3c", padding:"0 3px", borderRadius:3, whiteSpace:"nowrap" }}>#{i}</span>
+              </div>
+            );
+          })}
+          {devMode && wallEditMode && wallPendA && (
+            <div style={{ position:"absolute", left:wallPendA.x-10, top:wallPendA.y-10, width:20, height:20, zIndex:31, pointerEvents:"none" }}>
+              <div style={{ position:"absolute", left:9, top:0, width:2, height:20, background:"#39ff88" }}/>
+              <div style={{ position:"absolute", left:0, top:9, width:20, height:2, background:"#39ff88" }}/>
+              <div style={{ position:"absolute", left:4, top:4, width:12, height:12, borderRadius:"50%", border:"2px solid #39ff88" }}/>
             </div>
           )}
 
@@ -6035,6 +6181,32 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             border:"1px solid #2a78ff", background: doorCopied ? "#1f7a36" : "#2a78ff",
             color:"#fff", fontWeight:800, fontSize:12, fontFamily:"monospace", cursor:"pointer",
           }}>{doorCopied ? "✓ COPIED — paste it to me" : "COPY door layout"}</button>
+          <div style={{ marginTop:8, paddingTop:8, borderTop:"1px solid rgba(127,176,255,0.3)" }}>
+            <div style={{ fontWeight:800, color:"#ff9a7f" }}>WALL TOOL</div>
+            <div style={{ display:"flex", gap:6, marginTop:4, flexWrap:"wrap" }}>
+              <button onClick={toggleWalls} style={{
+                padding:"5px 10px", borderRadius:6, border:"1px solid #ff5a3c",
+                background: WALLS_ON ? "#b5341f" : "rgba(20,12,10,0.7)",
+                color:"#fff", fontWeight:800, fontSize:12, fontFamily:"monospace", cursor:"pointer",
+              }}>Walls: {WALLS_ON ? "ON" : "OFF"}</button>
+              <button onClick={() => { setWallEditMode((v) => !v); setWallPendA(null); setDevProbe(null); }} style={{
+                padding:"5px 10px", borderRadius:6, border:"1px solid #ff5a3c",
+                background: wallEditMode ? "#b5341f" : "rgba(20,12,10,0.7)",
+                color:"#fff", fontWeight:800, fontSize:12, fontFamily:"monospace", cursor:"pointer",
+              }}>Edit: {wallEditMode ? "ON" : "OFF"}</button>
+            </div>
+            {wallEditMode && (
+              <div style={{ color:"#e0b0a0", marginTop:4 }}>
+                Tap two corners to draw a wall · drag a box to move · double-tap a box to delete.
+                {" "}First corner: <b style={{color:"#39ff88"}}>{wallPendA ? `${wallPendA.x}, ${wallPendA.y}` : "—"}</b>
+              </div>
+            )}
+            <button onClick={copyWallLayout} style={{
+              marginTop:6, padding:"5px 12px", borderRadius:6,
+              border:"1px solid #ff5a3c", background: wallsCopied ? "#1f7a36" : "#ff5a3c",
+              color:"#fff", fontWeight:800, fontSize:12, fontFamily:"monospace", cursor:"pointer",
+            }}>{wallsCopied ? "✓ COPIED — paste it to me" : "COPY wall layout"}</button>
+          </div>
         </div>
       )}
 

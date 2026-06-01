@@ -23,7 +23,27 @@ a localStorage override (`primeria_dev_doors`); `ldGlow()` reads `primeria_dev_g
 `let`s, and drives both the always-on glow renderer and the dev editor. Per-door glow
 visuals are preserved by a `GLOW_SHAPE` lookup (keyed by door key, anchored to the live
 rect so the glow tracks dragging); unmapped doors fall back to a centered ellipse.
-Excluded from the registry on purpose: `*_BLOCKED` wall arrays and `MAYA_SHELL` (a pickup).
+Excluded from the DOOR registry on purpose: `MAYA_SHELL` (a pickup).
+
+## DEV wall/collider editor (same DEV overlay, "WALL TOOL" section)
+
+The same DEV overlay now also has a wall editor mirroring the door one. The `*_BLOCKED`
+arrays are now module-level `let` (not const) with a `WALL_SCENES` registry (scene → key
+→ get()/set() closures reassigning those lets). At module load `WALL_SCENES.forEach(w =>
+w.set(ldWalls(w.key, w.get())))` overlays localStorage edits (`primeria_dev_walls`) on top
+of the baked defaults. `WALLS_ON` is also `let`, initialized from `primeria_dev_walls_on`.
+- In the panel: "Walls: ON/OFF" toggle (flips module `WALLS_ON` + persists), "Edit:
+  ON/OFF" toggle, and "COPY wall layout" (exports per-scene rects with the array var name).
+- In edit mode: tap two map corners to draw a box, drag a box to move, **double-tap**
+  (450ms window, guarded by `wallMovedRef` so a drag isn't a tap) to delete. While
+  wallEditMode is ON, the door editor / probe / passive red visualiser are suppressed.
+- Reading correctness: `blocked()`, the movement zones ternary, and the render ternary all
+  read the module-level lets at call/render time, so reassignment is observed immediately;
+  React overlays refresh via `setWallEditTick` / `setWallsOnTick`.
+- **To bake a layout:** user enables DEV → Edit, draws walls, hits COPY, pastes back; I
+  write the rects into the `*_BLOCKED` array literals in BOTH WalkDemo copies, then flip
+  `WALLS_ON` default back to a real default once walls are baked. Same localStorage-masking
+  caveat as doors — trust the user's COPY/words over source defaults.
 
 **Why:** repositioning doors by eye from screenshots was a slow, costly guess loop. The
 editor lets a non-technical user drag doors and toggle glows themselves, then COPY the
