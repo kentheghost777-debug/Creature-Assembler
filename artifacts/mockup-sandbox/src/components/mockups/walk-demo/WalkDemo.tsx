@@ -2384,6 +2384,15 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     }
   }
 
+  // The Wyvrunt evolves on ITS OWN (post-battle) level, not the starter's.
+  // Mirrors the XP award above: if it joined the fight, apply the same XP.
+  function wyvLevelAfter(parts: number[], xpGained: number): number {
+    const cur = caughtPartyRef.current;
+    const i = cur.findIndex(m => (["wyvrunt","wyrnak","wyrvast","aureyvant"] as string[]).includes(m.id));
+    if (i < 0) return 0;
+    return (xpGained > 0 && parts.includes(i + 1)) ? levelUpCaughtMon(cur[i], xpGained).level : cur[i].level;
+  }
+
   // ── Starter evo check ────────────────────────────────────────────────────
   function checkStarterEvo(newLevel: number): StarterSpec | null {
     if (!starter) return null;
@@ -2422,7 +2431,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     const loyaltyDelta = result.kind === "ko" ? 3 : result.kind === "caught" ? 2 : 0;
     if (loyaltyDelta > 0) setWyrLoyalty(l => Math.min(100, l + loyaltyDelta));
     const loyaltyAfter = Math.min(100, wyrLoyalty + loyaltyDelta);
-    checkWyvForms(r.newLevel, loyaltyAfter);
+    checkWyvForms(wyvLevelAfter(parts, r.xpGained), loyaltyAfter);
 
     const evoTarget = checkStarterEvo(r.newLevel);
 
@@ -2492,7 +2501,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     const loyaltyDelta = result.kind === "trainerWin" ? 3 : 0;
     if (loyaltyDelta > 0) setWyrLoyalty(l => Math.min(100, l + loyaltyDelta));
     const loyaltyAfter = Math.min(100, wyrLoyalty + loyaltyDelta);
-    checkWyvForms(r.newLevel, loyaltyAfter);
+    checkWyvForms(wyvLevelAfter(parts, r.xpGained), loyaltyAfter);
 
     const evoTarget = checkStarterEvo(r.newLevel);
 
