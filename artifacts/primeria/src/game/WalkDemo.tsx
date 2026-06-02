@@ -173,7 +173,7 @@ const ANCHOR    = 0.75; // fraction of sprite above anchor point
 // ── Tayanari starter data ───────────────────────────────────────────────────
 const STARTERS = [
   { id: "burg",       name: "Burg",       type: "Frostformed",  color: "#7ddeff", img: "./images/frostbite-baby.png" },
-  { id: "pebble",     name: "Pebble",     type: "Earthbound",   color: "#c8a020", img: "./images/grrountain-baby.png" },
+  { id: "pebble",     name: "Pebble",     type: "Earthbound",   color: "#c8a020", img: "./images/grrountain-baby.png", faces: "left" as const },
   { id: "peachi",     name: "Pea-chi",    type: "Nature",       color: "#50c040", img: "./images/leafkit.png" },
   { id: "cerepup",    name: "Cerepup",    type: "Volcanic",     color: "#ff6020", img: "./images/emberfox.png" },
   { id: "cunbubble",  name: "Cun-bubble", type: "Oceanic",      color: "#3080ff", img: "./images/phantorch.png" },
@@ -387,57 +387,68 @@ const mmF  = (r:number): SpriteSheet =>
   ({ url:_A3M, x:0,     y:r*350, w:1122, h:350, sheetW:1122, sheetH:1402 });
 const apF  = (c:number,r:number): SpriteSheet =>
   ({ url:_A3A, x:c*768, y:r*512, w:768,  h:512, sheetW:1536, sheetH:1024 });
+// Tight-crop helpers — pass absolute sheet pixel coordinates measured to the
+// actual content bounding box, not the full grid cell. Eliminates empty headroom
+// that caused the arena background to bleed above/below sprites.
+const A3WS = (x:number,y:number,w:number,h:number): SpriteSheet =>
+  ({ url:_A3W, x, y, w, h, sheetW:1024, sheetH:1536 });
+const A3NS = (x:number,y:number,w:number,h:number): SpriteSheet =>
+  ({ url:_A3N, x, y, w, h, sheetW:1536, sheetH:1024 });
+const A3MS = (x:number,y:number,w:number,h:number): SpriteSheet =>
+  ({ url:_A3M, x, y, w, h, sheetW:1122, sheetH:1402 });
+const A3AS = (x:number,y:number,w:number,h:number): SpriteSheet =>
+  ({ url:_A3A, x, y, w, h, sheetW:1536, sheetH:1024 });
 
 // ── Bestiary — Area 3 (Westwood Reaches) ─────────────────────────────────────
 const BESTIARY_A3: MonSpec[] = [
   // ── COMMON ─────────────────────────────────────────────────────────────────
   { id:"sprigget",    name:"Sprigget",   type:"Nature",     rarity:"common",
-    wildImg:"", playerImg:"", wildSheet:wldF(0,0), playerSheet:wldF(0,0),
+    wildImg:"", playerImg:"", wildSheet:A3WS(0,172,512,200), playerSheet:A3WS(0,172,512,200),
     wildFaces:"left", playerFaces:"left", maxHp:32, baseDmg:[4,8] },
   { id:"ashcrawl",    name:"Ashcrawl",   type:"Volcanic",   rarity:"common",
-    wildImg:"", playerImg:"", wildSheet:wldF(1,0), playerSheet:wldF(1,0),
+    wildImg:"", playerImg:"", wildSheet:A3WS(512,164,512,208), playerSheet:A3WS(512,164,512,208),
     wildFaces:"left", playerFaces:"left", maxHp:35, baseDmg:[5,9] },
   { id:"finwing",     name:"Finwing",    type:"Oceanic",    rarity:"common",
     wildImg:"", playerImg:"", wildSheet:wldF(0,1), playerSheet:wldF(0,1),
     wildFaces:"left", playerFaces:"left", maxHp:30, baseDmg:[4,8] },
   { id:"stoneback",   name:"Stoneback",  type:"Earthbound", rarity:"common",
-    wildImg:"", playerImg:"", wildSheet:wldF(1,1), playerSheet:wldF(1,1),
+    wildImg:"", playerImg:"", wildSheet:A3WS(512,612,512,143), playerSheet:A3WS(512,612,512,143),
     wildFaces:"left", playerFaces:"left", maxHp:40, baseDmg:[4,7] },
   // ── UNCOMMON ───────────────────────────────────────────────────────────────
   { id:"driftpaw_f",  name:"Driftpaw",   type:"Skyborne",   rarity:"uncommon",
     wildImg:"", playerImg:"", wildSheet:wldF(0,2), playerSheet:wldF(0,2),
     wildFaces:"left", playerFaces:"left", maxHp:38, baseDmg:[5,10] },
   { id:"driftpaw_m",  name:"Driftpaw",   type:"Skyborne",   rarity:"uncommon",
-    wildImg:"", playerImg:"", wildSheet:wldF(0,3), playerSheet:wldF(0,3),
+    wildImg:"", playerImg:"", wildSheet:A3WS(0,780,512,360), playerSheet:A3WS(0,780,512,360),
     wildFaces:"left", playerFaces:"left", maxHp:38, baseDmg:[5,10] },
   { id:"stoneback_m", name:"Stoneback",  type:"Earthbound", rarity:"uncommon",
-    wildImg:"", playerImg:"", wildSheet:wldF(1,3), playerSheet:wldF(1,3),
+    wildImg:"", playerImg:"", wildSheet:A3WS(512,1427,512,97), playerSheet:A3WS(512,1427,512,97),
     wildFaces:"left", playerFaces:"left", maxHp:44, baseDmg:[4,8] },
   { id:"gloomcap",    name:"Gloomcap",   type:"Abyss",      rarity:"uncommon",
     wildImg:"", playerImg:"", wildSheet:wldF(1,2), playerSheet:wldF(1,2),
     wildFaces:"left", playerFaces:"left", maxHp:36, baseDmg:[5,11] },
   // ── RARE (A3-exclusive deep-wood spirits) ───────────────────────────────────
   { id:"silkfae_m",   name:"Silkfae",    type:"Spirit",     rarity:"rare",
-    wildImg:"", playerImg:"", wildSheet:nwF(0,0), playerSheet:nwF(0,0),
+    wildImg:"", playerImg:"", wildSheet:A3NS(0,141,512,355), playerSheet:A3NS(0,141,512,355),
     wildFaces:"left", playerFaces:"left", maxHp:50, baseDmg:[6,12] },
   { id:"silkfae_f",   name:"Silkfae",    type:"Spirit",     rarity:"rare",
-    wildImg:"", playerImg:"", wildSheet:nwF(0,1), playerSheet:nwF(0,1),
+    wildImg:"", playerImg:"", wildSheet:A3NS(0,652,512,357), playerSheet:A3NS(0,652,512,357),
     wildFaces:"left", playerFaces:"left", maxHp:50, baseDmg:[6,12] },
   { id:"murkspine_m", name:"Murkspine",  type:"Abyss",      rarity:"rare",
-    wildImg:"", playerImg:"", wildSheet:nwF(1,0), playerSheet:nwF(1,0),
+    wildImg:"", playerImg:"", wildSheet:A3NS(512,160,512,337), playerSheet:A3NS(512,160,512,337),
     wildFaces:"left", playerFaces:"left", maxHp:54, baseDmg:[7,13] },
   { id:"murkspine_f", name:"Murkspine",  type:"Abyss",      rarity:"rare",
-    wildImg:"", playerImg:"", wildSheet:nwF(1,1), playerSheet:nwF(1,1),
+    wildImg:"", playerImg:"", wildSheet:A3NS(512,684,512,325), playerSheet:A3NS(512,684,512,325),
     wildFaces:"left", playerFaces:"left", maxHp:54, baseDmg:[7,13] },
   { id:"fernclaw_m",  name:"Fernclaw",   type:"Earthbound", rarity:"rare",
-    wildImg:"", playerImg:"", wildSheet:nwF(2,0), playerSheet:nwF(2,0),
+    wildImg:"", playerImg:"", wildSheet:A3NS(1024,169,512,328), playerSheet:A3NS(1024,169,512,328),
     wildFaces:"left", playerFaces:"left", maxHp:58, baseDmg:[7,14] },
   { id:"fernclaw_f",  name:"Fernclaw",   type:"Earthbound", rarity:"rare",
-    wildImg:"", playerImg:"", wildSheet:nwF(2,1), playerSheet:nwF(2,1),
+    wildImg:"", playerImg:"", wildSheet:A3NS(1024,689,512,320), playerSheet:A3NS(1024,689,512,320),
     wildFaces:"left", playerFaces:"left", maxHp:58, baseDmg:[7,14] },
   // ── ULTRA (mid-evolved forms) ───────────────────────────────────────────────
   { id:"verdwulf",    name:"Verdwulf",   type:"Nature",     rarity:"ultra",
-    wildImg:"", playerImg:"", wildSheet:mmF(0), playerSheet:mmF(0),
+    wildImg:"", playerImg:"", wildSheet:A3MS(0,46,1122,294), playerSheet:A3MS(0,46,1122,294),
     wildFaces:"left", playerFaces:"left", maxHp:70, baseDmg:[9,15] },
   { id:"scorchrex",   name:"Scorchrex",  type:"Volcanic",   rarity:"ultra",
     wildImg:"", playerImg:"", wildSheet:mmF(1), playerSheet:mmF(1),
@@ -446,14 +457,14 @@ const BESTIARY_A3: MonSpec[] = [
     wildImg:"", playerImg:"", wildSheet:mmF(2), playerSheet:mmF(2),
     wildFaces:"left", playerFaces:"left", maxHp:68, baseDmg:[9,15] },
   { id:"aetherwing",  name:"Aetherwing", type:"Skyborne",   rarity:"ultra",
-    wildImg:"", playerImg:"", wildSheet:mmF(3), playerSheet:mmF(3),
+    wildImg:"", playerImg:"", wildSheet:A3MS(0,1114,1122,276), playerSheet:A3MS(0,1114,1122,276),
     wildFaces:"left", playerFaces:"left", maxHp:65, baseDmg:[9,14] },
   // ── APEX (unique A3 + starter second-half split) ────────────────────────────
   { id:"verdanthos",  name:"Verdanthos", type:"Nature",     rarity:"apex",
     wildImg:"", playerImg:"", wildSheet:apF(0,0), playerSheet:apF(0,0),
     wildFaces:"left", playerFaces:"left", maxHp:100, baseDmg:[12,20] },
   { id:"voidtide",    name:"Voidtide",   type:"Abyss",      rarity:"apex",
-    wildImg:"", playerImg:"", wildSheet:apF(1,0), playerSheet:apF(1,0),
+    wildImg:"", playerImg:"", wildSheet:A3AS(768,140,768,357), playerSheet:A3AS(768,140,768,357),
     wildFaces:"left", playerFaces:"left", maxHp:95, baseDmg:[11,19] },
   // Starter half — Area 3 (Oceanic/Earthbound/Frostformed/Spirit — ruins vibes)
   { id:"cunbubble_wa",name:"Cun-bubble", type:"Oceanic",    rarity:"apex",
@@ -1113,7 +1124,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   // Active character's animation frame set (stable for the session).
   const charFrames = CHAR_FRAMES[characterId] ?? CHAR_FRAMES.kinju;
   // Character-specific side sprite for the battle arena (each character has a full sprite set).
-  const heroSideImg = `./images/${CHAR_IMG_KEY[characterId]}_side_1.png`;
+  const heroSideImg = `./images/${CHAR_IMG_KEY[characterId]}_hero.png`;
 
   // ── Role / spawn swap ──────────────────────────────────────────────────────
   // The spouse waiting at home is whichever of Kinju/Jess you are NOT playing

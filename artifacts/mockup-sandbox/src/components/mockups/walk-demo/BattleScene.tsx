@@ -75,6 +75,8 @@ export type StarterSpec = {
   color: string;
   img: string;
   maxHp?: number;
+  /** Native art direction of the starter's battle sprite (defaults "right"). */
+  faces?: "left" | "right";
 };
 
 /** A player combatant in battle. The lead is built from the starter props; the
@@ -218,7 +220,7 @@ export function BattleScene({
   const lead: BattleMon = {
     id: starter.id, name: starter.name, type: starter.type,
     color: starter.color, level: starterLevel, stats: starterStats,
-    moves: starterMoves, img: starter.img, faces: "right",
+    moves: starterMoves, img: starter.img, faces: starter.faces ?? "right",
   };
   const team: BattleMon[] = [lead, ...(bench ?? [])];
   const [activeIdx, setActiveIdx] = useState(0);
@@ -968,7 +970,7 @@ export function BattleScene({
 
         {/* Side-view stage: Keeper (green) + Tayanari (red) face EAST; wild (yellow) faces WEST */}
         {/* Hero / Keeper — green ritual circle, facing east */}
-        <div style={standOn(POS.hero, 15, 4, 84)}>
+        <div style={standOn(POS.hero, 20, 4, 84)}>
           <div style={{
             width:"100%", height:"100%",
             animation: intro ? "introSlide 1.1s ease-out" : "none",

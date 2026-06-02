@@ -5,3 +5,5 @@
 - [Sprite-sheet slicing & walk norm](sprite-sheet-slicing.md) — slicing AI walk sheets: verify compass via montage, normalize per-frame to constant HEIGHT (rows scale-inconsistent → global scale pulses), keep 300×340 feet-flush canvas.
 - [Battle-handler stale state](battle-handler-stale-state.md) — handleBattleEnd/handleTrainerEnd omit caughtParty from deps; read companion state via caughtPartyRef + functional updaters. Wyvrunt evolves on its OWN level via wyvLevelAfter, not the starter's.
 - [Dual save.ts — WorldSave changes need BOTH files](dual-save-ts.md) — mockup-sandbox has its own save.ts separate from primeria's; any WorldSave type addition must be applied to BOTH or mockup typecheck fails.
+- [A3 sprite sheet tight-crop fix](a3-sprite-tight-crop.md) — A3 wild/new/mid/apex sheets have large empty top margins per frame; use A3WS/A3NS/A3MS/A3AS tight-bound helpers with measured pixel coords, not the generic grid helpers.
+- [StarterSpec faces field](starter-faces.md) — add faces?:"left"|"right" to StarterSpec for starters whose art natively faces left (Pebble/grrountain-baby.png); BattleScene lead uses starter.faces ?? "right".
