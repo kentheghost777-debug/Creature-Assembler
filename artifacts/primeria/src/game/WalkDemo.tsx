@@ -6367,7 +6367,27 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         <Btn d="up"   label="↑" />
         <div style={{ display:"flex", gap:4, alignItems:"center" }}>
           <Btn d="left"  label="←" />
-          <div style={{ width:64 }} />
+          {/* ── Character face avatar (HD portrait, face-cropped) ── */}
+          <div style={{
+            width:64, height:64, borderRadius:"50%",
+            overflow:"hidden", flexShrink:0,
+            border:"2px solid rgba(200,160,60,0.7)",
+            boxShadow:"0 0 12px rgba(0,0,0,0.7), inset 0 0 6px rgba(200,160,60,0.15)",
+            background:"rgba(18,10,5,0.92)",
+            position:"relative",
+          }}>
+            <img
+              src={`./images/${CHAR_IMG_KEY[characterId]}_hero.png`}
+              alt={characterId}
+              style={{
+                position:"absolute",
+                height:200, width:"auto",
+                top:-10, left:"50%",
+                transform:"translateX(-50%)",
+                pointerEvents:"none",
+              }}
+            />
+          </div>
           <Btn d="right" label="→" />
         </div>
         <div style={{ display:"flex", gap:8, alignItems:"center" }}>
