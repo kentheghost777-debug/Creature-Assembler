@@ -206,6 +206,16 @@ const EVO_TABLE: Array<{ from: string; atLevel: number; to: StarterSpec }> = [
   { from:"mentyke_2",   atLevel:30, to:{ id:"mentyke_3",    name:"Lumayke",        type:"Mind",         color:"#d0b0ff", img:"/__mockup/images/mentyke_evo2.png" } },
   { from:"foxin",       atLevel:18, to:{ id:"foxin_2",      name:"Foxin·II",       type:"Spirit",       color:"#60a070", img:"/__mockup/images/vixgrim.png"          } },
   { from:"foxin_2",     atLevel:30, to:{ id:"foxin_3",      name:"Foxin·III",      type:"Spirit",       color:"#60a070", img:"/__mockup/images/vixgrim.png"          } },
+  // ── Wild evo lines (4 Area 3 chains) ────────────────────────────────────────
+  { from:"sprigget",    atLevel:18, to:{ id:"sprigget_2",   name:"Verdusk",        type:"Nature",       color:"#3a9828", img:"" } },
+  { from:"sprigget_2",  atLevel:30, to:{ id:"sprigget_3",   name:"Grovekai",       type:"Nature",       color:"#2a7818", img:"" } },
+  { from:"ashcrawl",    atLevel:18, to:{ id:"ashcrawl_2",   name:"Embrak",         type:"Volcanic",     color:"#ff4000", img:"" } },
+  { from:"ashcrawl_2",  atLevel:30, to:{ id:"ashcrawl_3",   name:"Magnarok",       type:"Volcanic",     color:"#cc2000", img:"" } },
+  { from:"finwing",     atLevel:18, to:{ id:"finwing_2",    name:"Coralfin",       type:"Oceanic",      color:"#2090e0", img:"" } },
+  { from:"finwing_2",   atLevel:30, to:{ id:"finwing_3",    name:"Tidalvast",      type:"Oceanic",      color:"#10a0c0", img:"" } },
+  { from:"driftpaw_f",  atLevel:18, to:{ id:"driftpaw_2",   name:"Gustfang",       type:"Skyborne",     color:"#60a8ff", img:"" } },
+  { from:"driftpaw_m",  atLevel:18, to:{ id:"driftpaw_2",   name:"Gustfang",       type:"Skyborne",     color:"#60a8ff", img:"" } },
+  { from:"driftpaw_2",  atLevel:30, to:{ id:"driftpaw_3",   name:"Stormayne",      type:"Skyborne",     color:"#4080ff", img:"" } },
 ];
 
 /** Returns the StarterSpec the starter evolves into when it reaches exactly `atLevel`. */
@@ -2635,11 +2645,17 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     return (xpGained > 0 && parts.includes(i + 1)) ? levelUpCaughtMon(cur[i], xpGained).level : cur[i].level;
   }
 
-  // ── Caught-mon evo (cerepup chain only; mentyke is starter-only) ────────
+  // ── Caught-mon evo (cerepup, sprigget, ashcrawl, finwing, driftpaw; mentyke is starter-only) ────
   function checkCaughtMonEvos(parts: number[], xpGained: number) {
     if (xpGained <= 0) return;
     const cur = caughtPartyRef.current;
-    const CAUGHT_EVO_IDS = ["cerepup", "cerepup_2"];
+    const CAUGHT_EVO_IDS = [
+      "cerepup",    "cerepup_2",
+      "sprigget",   "sprigget_2",
+      "ashcrawl",   "ashcrawl_2",
+      "finwing",    "finwing_2",
+      "driftpaw_f", "driftpaw_m", "driftpaw_2",
+    ];
     const evoMap = new Map<number, StarterSpec>();
     cur.forEach((m, i) => {
       if (!parts.includes(i + 1)) return;
