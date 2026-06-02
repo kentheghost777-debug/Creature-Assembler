@@ -156,6 +156,114 @@ uri = "file://attached_assets/fx_chaos.png"
 type = "image"
 title = "generated_image"
 
+[[generated]]
+id = "5APOZKNojar3FrdF8sL0n"
+uri = "file://attached_assets/fx_shield_volcanic.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "_3vHhW_6-XmbxmqJTBeEc"
+uri = "file://attached_assets/fx_shield_frostformed.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "QSES_IMwzzZIAM8aDgLYb"
+uri = "file://attached_assets/fx_shield_oceanic.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "RsF_GVdqTuO7xRluW0lfC"
+uri = "file://attached_assets/fx_shield_stormproven.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "O_WwjX56X7IEnQ7PGZJQB"
+uri = "file://attached_assets/fx_shield_nature.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "-h1M78inVfq1tqC9nLzeP"
+uri = "file://attached_assets/fx_shield_earthbound.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "0C7WZS_kypj59yeY_MBO3"
+uri = "file://attached_assets/fx_shield_mind.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "nD1sdm6GHxMnttR_BJ1wQ"
+uri = "file://attached_assets/fx_shield_spirit.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "d5A5eLPpXwcL_Hrhml_8R"
+uri = "file://attached_assets/fx_shield_chaos.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "epOFebaRDXjtMzYD-PzBk"
+uri = "file://attached_assets/fx_buff_volcanic.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "GOZKwxno8eeAdzr8tLajg"
+uri = "file://attached_assets/fx_buff_frostformed.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "7qMLQlNmY-_Wt9zkL8aTO"
+uri = "file://attached_assets/fx_buff_oceanic.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "o4fGXt28MLLaL8BkfHggR"
+uri = "file://attached_assets/fx_buff_stormproven.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "jStHzPxDzQvPyC6IQxNjR"
+uri = "file://attached_assets/fx_buff_nature.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "idyGGvsA_XCBpB0IPxyaj"
+uri = "file://attached_assets/fx_buff_earthbound.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "xYBC0a9yS-niMCyqULq5W"
+uri = "file://attached_assets/fx_buff_mind.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "3Tfena_4OoIsE-sY36wR9"
+uri = "file://attached_assets/fx_buff_spirit.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "my9pCNJYImt2U1wAOCx2H"
+uri = "file://attached_assets/fx_buff_chaos.png"
+type = "image"
+title = "generated_image"
+
 [[outputs]]
 id = "hj9mwcgl1Uv9QQTG9g6KL"
 uri = "file://kinju_walk_demo.tar.gz"

@@ -268,10 +268,11 @@ export function BattleScene({
   type ShellFx  = { phase: "set" | "wobble" | "caught" | "break"; id: number };
   type AuxFx    = { kind: "heal" | "rune" | "resonate" | "feint";
                     color?: string; at?: "player" | "wild"; id: number };
-  const [attackFx, setAttackFx] = useState<AttackFx | null>(null);
-  const [dmgFx,    setDmgFx]    = useState<DmgFx    | null>(null);
-  const [shellFx,  setShellFx]  = useState<ShellFx  | null>(null);
-  const [auxFx,    setAuxFx]    = useState<AuxFx    | null>(null);
+  const [attackFx,    setAttackFx]    = useState<AttackFx | null>(null);
+  const [dmgFx,       setDmgFx]       = useState<DmgFx    | null>(null);
+  const [shellFx,     setShellFx]     = useState<ShellFx  | null>(null);
+  const [auxFx,       setAuxFx]       = useState<AuxFx    | null>(null);
+  const [screenFlash, setScreenFlash] = useState<"player" | "wild" | null>(null);
   // Summon bloom at battle start (plays once during the intro window).
   const [summon,   setSummon]   = useState(true);
   // Quick dodge state for the wild when it feints a strike.
@@ -346,7 +347,7 @@ export function BattleScene({
   const wildHpRef   = useRef(wild.maxHp);
 
   // Move animation overlay.
-  type MoveFxState = { anim: Move["anim"]; color: string; from: "player" | "wild"; category: Move["category"]; id: number; element?: string };
+  type MoveFxState = { anim: Move["anim"]; color: string; from: "player" | "wild"; category: Move["category"]; id: number; element?: string; power?: number };
   const [moveFx, setMoveFx] = useState<MoveFxState | null>(null);
 
   useEffect(() => {
@@ -385,10 +386,10 @@ export function BattleScene({
     later(() => setAuxFx(curr => (curr?.id === id ? null : curr)), ms);
   }
   function triggerMove(
-    anim: Move["anim"], color: string, from: "player" | "wild", category: Move["category"], element?: string,
+    anim: Move["anim"], color: string, from: "player" | "wild", category: Move["category"], element?: string, power?: number,
   ) {
     const id = nextFxId();
-    setMoveFx({ anim, color, from, category, id, element });
+    setMoveFx({ anim, color, from, category, id, element, power });
     later(() => setMoveFx(curr => (curr?.id === id ? null : curr)), 1100);
   }
 
@@ -432,7 +433,7 @@ export function BattleScene({
 
       // Utility moves — wild heals or buffs itself, no damage to player.
       if (move.category !== "damage") {
-        triggerMove(move.anim, color, "wild", move.category, move.element);
+        triggerMove(move.anim, color, "wild", move.category, move.element, move.power);
         if (move.category === "heal" && move.heal) {
           const heal = Math.floor(currentOpponent.maxHp * move.heal);
           setWildHp(hp => { const n = Math.min(currentOpponent.maxHp, hp + heal); wildHpRef.current = n; return n; });
@@ -460,10 +461,11 @@ export function BattleScene({
       const { dmg, crit } = computeDamage({
         power: move.power, attackerAtk: wAtk(), defenderDef: pDef(), stab, effectiveness: eff,
       });
-      triggerMove(move.anim, color, "wild", "damage", move.element);
+      triggerMove(move.anim, color, "wild", "damage", move.element, move.power);
 
       later(() => {
         setShake("player");
+        setScreenFlash("player"); later(() => setScreenFlash(null), 190);
         showDmg("player", dmg, crit);
         const tag = effLabel(eff);
         setLog(`${currentOpponent.name} uses ${move.name}!${crit ? " A critical hit!" : ""}${tag ? " " + tag : ""}`);
@@ -508,6 +510,7 @@ export function BattleScene({
     later(() => setShake(null), 600);
     later(() => {
       setShake("wild");
+      setScreenFlash("wild"); later(() => setScreenFlash(null), 190);
       showDmg("wild", dmg, crit);
       const tag = effLabel(eff);
       setLog(`${msg}${crit ? " A critical hit!" : ""}${tag ? " " + tag : ""}`);
@@ -568,7 +571,7 @@ export function BattleScene({
 
     // Utility — heal / buff / shield the player, then the wild acts.
     if (move.category !== "damage") {
-      triggerMove(move.anim, color, "player", move.category, move.element);
+      triggerMove(move.anim, color, "player", move.category, move.element, move.power);
       if (move.category === "heal" && move.heal) {
         const heal = Math.floor(playerMaxHp * move.heal);
         setPlayerHp(hp => Math.min(playerMaxHp, hp + heal));
@@ -585,7 +588,7 @@ export function BattleScene({
     }
 
     // Damage — accuracy check (a miss reads as the wild feinting away).
-    triggerMove(move.anim, color, "player", "damage", move.element);
+    triggerMove(move.anim, color, "player", "damage", move.element, move.power);
     if (Math.random() * 100 > move.accuracy) {
       later(() => {
         triggerAux("feint", undefined, "wild", 750);
@@ -1033,8 +1036,16 @@ export function BattleScene({
         {/* Move animation (elemental projectile / utility aura) */}
         {moveFx && (
           <div key={`mv-${moveFx.id}`} style={{ position:"absolute", inset:0, pointerEvents:"none", zIndex:6 }}>
-            <MoveFx anim={moveFx.anim} color={moveFx.color} from={moveFx.from} category={moveFx.category} element={moveFx.element} />
+            <MoveFx anim={moveFx.anim} color={moveFx.color} from={moveFx.from} category={moveFx.category} element={moveFx.element} power={moveFx.power} />
           </div>
+        )}
+        {/* Screen flash on hit */}
+        {screenFlash && (
+          <div key={`sf-${screenFlash}`} style={{
+            position:"absolute", inset:0, pointerEvents:"none", zIndex:8,
+            background: screenFlash === "player" ? "#ff333318" : "#ffffff18",
+            animation: "screenFlashFade 0.19s ease-out forwards",
+          }}/>
         )}
         {/* Attack streak + impact burst */}
         {attackFx && (
@@ -1429,6 +1440,11 @@ export function BattleScene({
           0%   { transform: translateY(0)    scale(0.6); opacity: 0; }
           30%  { transform: translateY(-12px) scale(1.25); opacity: 1; }
           100% { transform: translateY(-28px) scale(1);    opacity: 0; }
+        }
+
+        @keyframes screenFlashFade {
+          0%   { opacity: 1; }
+          100% { opacity: 0; }
         }
 
         /* Mon entry (right side) + summon glimmer */
