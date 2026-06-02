@@ -998,6 +998,8 @@ const PROF = { x: 350, y: 268 }; // feet position in lab world
 
 // Party holds the starter (slot 1) plus up to PARTY_CAP-1 caught companions.
 const PARTY_CAP = 8;
+// Storage Box at the lab holds up to this many extra Tayanari.
+const STORAGE_CAP = 100;
 
 // ── Main component ──────────────────────────────────────────────────────────
 export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" }: { characterId?: CharId; roleId?: RoleId } = {}) {
@@ -1442,18 +1444,22 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   // Fresh snapshot of in-party caught mons for the catch handler closure.
   const caughtPartyRef = useRef<PartyMon[]>(caughtParty);
   useEffect(() => { caughtPartyRef.current = caughtParty; }, [caughtParty]);
+  const storageBoxRef = useRef<PartyMon[]>(storageBox);
+  useEffect(() => { storageBoxRef.current = storageBox; }, [storageBox]);
 
   // Single source of truth for adding a captured mon: respects the party cap,
-  // overflowing into the storage box. Returns true if the mon was boxed.
+  // overflowing into the storage box (which itself caps at STORAGE_CAP).
+  // Returns where the mon ended up: "party", "box", or "full" (nowhere — both full).
   // A freshly caught mon starts at the level it was fighting at, XP reset.
-  const addCaughtMon = useCallback((mon: MonSpec): boolean => {
+  const addCaughtMon = useCallback((mon: MonSpec, force = false): "party" | "box" | "full" => {
     const pm: PartyMon = { ...mon, level: wildLevelFor(mon.rarity) || 5, xp: 0 };
     if (caughtPartyRef.current.length >= PARTY_CAP - 1) {
+      if (storageBoxRef.current.length >= STORAGE_CAP && !force) return "full";
       setStorageBox(b => [...b, pm]);
-      return true;
+      return "box";
     }
     setCaughtParty(p => [...p, pm]);
-    return false;
+    return "party";
   }, []);
 
   // Apply battle XP to a caught companion (cap 30, no evolution for wild-caught).
@@ -2675,8 +2681,11 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
 
     let outcome: string;
     if (result.kind === "caught") {
-      const toBox = addCaughtMon(result.mon);
-      if (toBox) {
+      const dest = addCaughtMon(result.mon);
+      if (dest === "full") {
+        setBattleNotif({ title: `${result.mon.name} couldn't be stored!`, sub: `Party & Storage Box both full (${STORAGE_CAP})` });
+        outcome = `${result.mon.name} bonded with you, but your party and Storage Box are both full — it returned to the wild.`;
+      } else if (dest === "box") {
         setBattleNotif({ title: `Bond formed — ${result.mon.name}!`, sub: "Party full · sent to Storage Box" });
         outcome = `${result.mon.name} bonded with you, but your party was full — it was sent to the Storage Box.`;
       } else {
@@ -4251,7 +4260,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                       window.setTimeout(() => setPhase("scripted_caught"), 650);
                     } else if (phase === "scripted_caught") {
                       setWyvruntCaught(true);
-                      addCaughtMon(WYVRUNT_SPEC);
+                      addCaughtMon(WYVRUNT_SPEC, true); // story creature — bypasses the box cap
                       // Seed the follower beside the player so it activates in-place
                       breadcrumbsRef.current   = [];
                       followPosRef.current     = {
@@ -5197,7 +5206,9 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                           </div>
                         </div>
                         <button
+                          disabled={storageBox.length >= STORAGE_CAP}
                           onClick={() => {
+                            if (storageBox.length >= STORAGE_CAP) return;
                             setCaughtParty(p => p.filter((_, j) => j !== i));
                             setStorageBox(b => [...b, mon]);
                           }}
@@ -5205,9 +5216,11 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                             padding:"5px 10px", borderRadius:8, flexShrink:0,
                             background:"rgba(100,64,20,0.08)",
                             border:"1px solid rgba(100,64,20,0.30)",
-                            color:"#8a5c22", fontSize:9.5, fontWeight:800, cursor:"pointer",
+                            color: storageBox.length >= STORAGE_CAP ? "#c0ab8e" : "#8a5c22",
+                            fontSize:9.5, fontWeight:800,
+                            cursor: storageBox.length >= STORAGE_CAP ? "not-allowed" : "pointer",
                           }}
-                        >→ Box</button>
+                        >{storageBox.length >= STORAGE_CAP ? "Box full" : "→ Box"}</button>
                         <div style={{
                           color:"#9a7040", fontSize:10, fontWeight:700,
                           background:"rgba(100,64,20,0.09)",
@@ -5244,6 +5257,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                     <div style={{ color:"#9a7c50", fontSize:10, lineHeight:1.6, fontStyle:"italic", marginBottom:2 }}>
                       Tayanari beyond your party of {PARTY_CAP} rest here at the lab.
                       {" "}Withdraw one when a party slot is free.
+                      {" "}<span style={{ fontStyle:"normal", fontWeight:800, color:"#7a5e34" }}>({storageBox.length} / {STORAGE_CAP})</span>
                     </div>
                     {storageBox.length === 0 ? (
                       <div style={{ textAlign:"center", padding:"26px 0", color:"#b09468", fontSize:12, fontStyle:"italic" }}>
