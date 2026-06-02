@@ -329,19 +329,21 @@ const TR_CUNB:   MonSpec = { id:"tr_cunb",   name:"Cunbubble",type:"Oceanic",   
 const TR_DRIFT:  MonSpec = { id:"tr_drift",  name:"Driftpaw", type:"Skyborne",  rarity:"uncommon", wildImg:"/__mockup/images/vixgrim.png",            playerImg:"/__mockup/images/vixgrim.png",           wildFaces:"left", playerFaces:"left", maxHp:56,  baseDmg:[6,11] };
 const TR_SPRIG:  MonSpec = { id:"tr_sprig",  name:"Sprigget", type:"Nature",    rarity:"common",   wildImg:"", playerImg:"",                          wildSheet:{ url:"/__mockup/images/a3-wild-sheet.png", x:0, y:0, w:512, h:384, sheetW:1024, sheetH:1536 }, playerSheet:{ url:"/__mockup/images/a3-wild-sheet.png", x:0, y:0, w:512, h:384, sheetW:1024, sheetH:1536 }, wildFaces:"left", playerFaces:"left", maxHp:52, baseDmg:[5,10] };
 const TR_MURK:   MonSpec = { id:"tr_murk",   name:"Murkspine",type:"Abyss",    rarity:"rare",     wildImg:"", playerImg:"",                          wildSheet:{ url:"/__mockup/images/a3-new-sheet.png", x:512, y:0, w:512, h:512, sheetW:1536, sheetH:1024 }, playerSheet:{ url:"/__mockup/images/a3-new-sheet.png", x:512, y:0, w:512, h:512, sheetW:1536, sheetH:1024 }, wildFaces:"left", playerFaces:"left", maxHp:78, baseDmg:[8,15] };
+// Lia's blue-and-grey Wyvburn (Draco) — her ace, strongest battle companion.
+const TR_CINDRAX: MonSpec = { id:"tr_cindrax", name:"Cindrax", type:"Chaos", rarity:"apex", wildImg:"/__mockup/images/cindrax.png", playerImg:"/__mockup/images/cindrax.png", wildFaces:"left", playerFaces:"left", maxHp:92, baseDmg:[12,19] };
 
 type TrainerTier = { team: MonSpec[]; levels: number[] };
 function jayA3Team(wins: number): TrainerTier {
   if (wins === 0) return { team:[TR_FOXIN],                               levels:[12] };
-  if (wins === 1) return { team:[TR_FOXIN, TR_STONUB],                    levels:[15,14] };
-  if (wins === 2) return { team:[TR_FOXIN, TR_STONUB, TR_SAVEN],          levels:[19,18,17] };
-  return            { team:[TR_FOXIN, TR_STONUB, TR_SAVEN, TR_MENTY],     levels:[23,22,20,19] };
+  if (wins === 1) return { team:[TR_FOXIN, TR_STONUB],                    levels:[18,16] };
+  if (wins === 2) return { team:[TR_FOXIN, TR_STONUB, TR_SAVEN],          levels:[24,22,20] };
+  return            { team:[TR_FOXIN, TR_STONUB, TR_SAVEN, TR_MENTY],     levels:[28,26,24,30] };
 }
 function liaA3Team(wins: number): TrainerTier {
   if (wins === 0) return { team:[TR_CUNB],                                 levels:[12] };
-  if (wins === 1) return { team:[TR_CUNB, TR_DRIFT],                       levels:[15,13] };
-  if (wins === 2) return { team:[TR_CUNB, TR_DRIFT, TR_SPRIG],             levels:[19,17,16] };
-  return            { team:[TR_CUNB, TR_DRIFT, TR_SPRIG, TR_MURK],        levels:[23,21,19,17] };
+  if (wins === 1) return { team:[TR_CUNB, TR_DRIFT],                       levels:[18,16] };
+  if (wins === 2) return { team:[TR_CUNB, TR_DRIFT, TR_SPRIG],             levels:[24,22,20] };
+  return            { team:[TR_CUNB, TR_DRIFT, TR_SPRIG, TR_CINDRAX],     levels:[28,26,24,30] };
 }
 
 // NPC positions inside Area 3 (world-px coordinates)
