@@ -436,3 +436,63 @@ export function applyShellGrowthBias(
   }
   return out;
 }
+
+// ── Battle Shells & Runes (Primeria Farm equip system) ───────────────────────
+
+export type BattleShellId =
+  | "bshell_moss" | "bshell_ember" | "bshell_tide"   | "bshell_storm"
+  | "bshell_dusk" | "bshell_frost" | "bshell_spirit" | "bshell_alch";
+
+export type BattleRuneId =
+  | "brune_warden"    | "brune_resonance" | "brune_swift"     | "brune_power"
+  | "brune_lifesteal" | "brune_barrier"   | "brune_evasion"   | "brune_soulforge";
+
+export type BattleRuneEffect =
+  | "defense_boost" | "resonance_fill" | "swift"    | "power_boost"
+  | "lifesteal"     | "barrier"        | "evasion"  | "xp_boost";
+
+export type BattleShellItem = {
+  id: BattleShellId;
+  name: string;
+  element: Element;
+  color: string;
+  icon: string;
+  desc: string;
+};
+
+export type BattleRuneItem = {
+  id: BattleRuneId;
+  name: string;
+  effect: BattleRuneEffect;
+  color: string;
+  icon: string;
+  desc: string;
+};
+
+export const BATTLE_SHELLS: readonly BattleShellItem[] = [
+  { id:"bshell_moss",   name:"Mosscap Shell",  element:"Nature",      color:"#5ac070", icon:"🌿", desc:"Woven from living forest moss. Soft, grounding, and patient." },
+  { id:"bshell_ember",  name:"Embershell",     element:"Volcanic",    color:"#ff6020", icon:"🔥", desc:"Forged in Cerepup embers. Still faintly warm to the touch." },
+  { id:"bshell_tide",   name:"Tideshell",      element:"Oceanic",     color:"#3a90ff", icon:"🌊", desc:"Pulled from the shallows. Hums with the memory of tides." },
+  { id:"bshell_storm",  name:"Stormhusk",      element:"Stormproven", color:"#ffd040", icon:"⚡", desc:"Crackles faintly when held. Wild and unchained energy." },
+  { id:"bshell_dusk",   name:"Duskhollow",     element:"Abyss",       color:"#604080", icon:"◉",  desc:"Cool even in summer. Carries the silence of deep places." },
+  { id:"bshell_frost",  name:"Crystalcap",     element:"Frostformed", color:"#7ddeff", icon:"❄",  desc:"Etched with ancient frost-rune patterns. Unmelting, unyielding." },
+  { id:"bshell_spirit", name:"Veilshell",      element:"Spirit",      color:"#b890e0", icon:"✦",  desc:"Shimmers at the edge of sight. Whispers when the world goes quiet." },
+  { id:"bshell_alch",   name:"Alchemband",     element:"Alchemy",     color:"#90c060", icon:"⚗",  desc:"Smells faintly of transmutation salts. Shifts under moonlight." },
+];
+
+export const BATTLE_SHELLS_BY_ID: Record<BattleShellId, BattleShellItem> =
+  Object.fromEntries(BATTLE_SHELLS.map(s => [s.id, s])) as Record<BattleShellId, BattleShellItem>;
+
+export const BATTLE_RUNES: readonly BattleRuneItem[] = [
+  { id:"brune_warden",    name:"Warden Rune",     effect:"defense_boost",  color:"#60d080", icon:"🛡", desc:"Hardens your Tayanari's defenses. Damage taken reduced by 55% this battle." },
+  { id:"brune_resonance", name:"Resonance Rune",  effect:"resonance_fill", color:"#c0a0ff", icon:"◈",  desc:"Resonance floods to full at battle start. Use it wisely." },
+  { id:"brune_swift",     name:"Swiftwood Rune",  effect:"swift",          color:"#80ffcc", icon:"💨", desc:"Preternatural speed. Your Tayanari strikes first every turn." },
+  { id:"brune_power",     name:"Thornpower Rune", effect:"power_boost",    color:"#ff8040", icon:"⚔",  desc:"Raw striking force surges through every blow. +40% damage dealt." },
+  { id:"brune_lifesteal", name:"Bloodvine Rune",  effect:"lifesteal",      color:"#ff6060", icon:"❤",  desc:"Each hit you land heals 15% of damage dealt back to your Tayanari." },
+  { id:"brune_barrier",   name:"Aegis Rune",      effect:"barrier",        color:"#a0d0ff", icon:"💠", desc:"An invisible shield absorbs the first hit your Tayanari takes. Once." },
+  { id:"brune_evasion",   name:"Mistveil Rune",   effect:"evasion",        color:"#c0e080", icon:"🌫", desc:"Become part-shadow. 25% chance to evade each incoming attack." },
+  { id:"brune_soulforge", name:"Soulforge Rune",  effect:"xp_boost",       color:"#ffd060", icon:"✧",  desc:"+40% XP earned from this battle. The forge remembers every victory." },
+];
+
+export const BATTLE_RUNES_BY_ID: Record<BattleRuneId, BattleRuneItem> =
+  Object.fromEntries(BATTLE_RUNES.map(r => [r.id, r])) as Record<BattleRuneId, BattleRuneItem>;

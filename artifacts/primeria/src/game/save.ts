@@ -143,6 +143,17 @@ export type WorldSave = {
   thornberries: number;   // +ATK buff for the battle
   calmberries: number;    // +DEF buff for the battle
   brightberries: number;  // clears heal cooldown + restores lowest-PP move
+  // Primeria Farm (north of Route 2)
+  farmVisited: boolean;
+  farmShellsGiven: boolean;   // Shella gave the player a battle shell
+  farmRunesGiven: boolean;    // Runrik gave all runes + Crucibyx
+  marenGifted: boolean;       // Maren gave brightberries
+  // Battle shell / rune equip system (socketed before wild battles)
+  ownedBattleShellIds: string[];
+  equippedBattleShellId: string | null;
+  ownedBattleRuneIds: string[];
+  slottedBattleRuneId: string | null;  // rune currently socketed in the shell
+  hasCrucibyx: boolean;
 };
 
 export type SaveData = {

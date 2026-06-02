@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback, type PointerEvent as RPointerEvent, type MouseEvent as RMouseEvent } from "react";
 import { BattleScene, RARITY_COLOR, sheetBgStyle, type SpriteSheet, type MonSpec, type MonRarity, type BattleResult, type StarterStats, type StarterSpec, type BattleMon } from "./BattleScene";
 import { EvoScene } from "./EvoScene";
-import { SHELLS, ELEMENT_COLOR } from "./progression";
+import { SHELLS, ELEMENT_COLOR, BATTLE_SHELLS, BATTLE_RUNES, BATTLE_SHELLS_BY_ID, BATTLE_RUNES_BY_ID } from "./progression";
 import {
   getMove, moveName, asElement,
   learnedMoveIds, movesLearnedAt, defaultActiveMoves, sanitizeActiveMoves,
@@ -259,8 +259,12 @@ type Phase = "walk" | "d1" | "d2" | "pick" | "d3" | "role_pick" | "d4" | "d5"
            | "jerbs_battle_intro"
           | "jerbs_crystal_d1" | "jerbs_crystal_d2" | "jerbs_crystal_d3"
           | "jerbs_stone_pick" | "jerbs_crystal_evo"
-          | "demo_end";
-type Scene = "overworld" | "lab" | "maya" | "jay" | "home" | "ellio" | "lia" | "route1" | "route2" | "area3" | "battle";
+          | "demo_end"
+          // Primeria Farm NPCs
+          | "shella_d1" | "shella_d2" | "shella_d3" | "shella_done" | "shella_idle"
+          | "runrik_d1" | "runrik_d2" | "runrik_d3" | "runrik_d4" | "runrik_done" | "runrik_idle"
+          | "maren_d1" | "maren_d2" | "maren_done" | "maren_idle";
+type Scene = "overworld" | "lab" | "maya" | "jay" | "home" | "ellio" | "lia" | "route1" | "route2" | "area3" | "battle" | "farm";
 type Rect  = [number, number, number, number]; // x1 y1 x2 y2 world-px
 
 // ── Bestiary (Route 1 encounter pool) ───────────────────────────────────────
@@ -642,6 +646,28 @@ const WYV_R2_POS   = { x: 620, y: 780 };    // wyvrunt appears north of prof
 const FARMER_R2_POS = { x: 665, y: 740 };
 const FARMER_R2_BOX: Rect = [651, 689, 680, 752]; // solid collider (user-tapped corners)
 const FARMER_SOLIDS: Rect[] = [FARMER_R2_BOX];
+
+// ── Primeria Farm (north of Route 2) ─────────────────────────────────────────
+const FARM = { w: 1024, h: 1024 };
+const FARM_SPAWN    = { x: 500, y: 950 };           // entering from Route 2 (south)
+const R2_FARM_EXIT: Rect  = [50, 0, 280, 20 ];       // Route 2 top-left → farm
+const FARM_RETURN_R2: Rect = [370, 1005, 660, 1024 ]; // farm south edge → Route 2
+// NPC world positions (farm scene)
+const SHELLA_POS = { x: 310, y: 650 };   // shell vendor — left side near house
+const RUNRIK_POS = { x: 610, y: 560 };   // rune vendor — centre-right
+const MAREN_POS  = { x: 780, y: 700 };   // berry elder — right side
+// Farm animal decorations (src, world x/y, display size)
+const FARM_ANIMALS: { src: string; x: number; y: number; w: number; h: number }[] = [
+  { src: "./images/chicken1.png", x: 175, y: 810, w: 50, h: 50 },
+  { src: "./images/chicken2.png", x: 315, y: 840, w: 50, h: 50 },
+  { src: "./images/chicken3.png", x: 200, y: 760, w: 50, h: 50 },
+  { src: "./images/goat1.png",    x: 730, y: 790, w: 68, h: 68 },
+  { src: "./images/goat2.png",    x: 860, y: 770, w: 68, h: 68 },
+];
+// Townspeople sprite sheet slices (farm-townspeople.png — 1024×512, 4 cols × 2 rows, 256×256 each)
+const SHELLA_SHEET = { sx: 512, sy:   0, sw: 256, sh: 256 }; // purple-apron crafter col2 row0
+const RUNRIK_SHEET = { sx: 768, sy: 256, sw: 256, sh: 256 }; // colourful bard col3 row1
+const MAREN_SHEET  = { sx:   0, sy:   0, sw: 256, sh: 256 }; // elder woman col0 row0
 const NO_SOLIDS: Rect[] = [];
 // Return-to-overworld trigger (west edge — aligned with the carved gap in the left forest mass)
 let R2_RETURN_OW: Rect    = ld("r2_return", [79, 1028, 169, 1148]); // TEMP door back to town (user-tapped 80,1121) — re-place after map swap
@@ -1209,7 +1235,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   // Saves live in localStorage and could be malformed/tampered, so we validate
   // the scene against the known walkable set and require finite coordinates;
   // anything off falls back to the safe home spawn.
-  const WALKABLE_SCENES: Scene[] = ["overworld","lab","maya","jay","home","ellio","lia","route1","route2","area3"];
+  const WALKABLE_SCENES: Scene[] = ["overworld","lab","maya","jay","home","ellio","lia","route1","route2","area3","farm"];
   const resume = (() => {
     if (!savedWorld) return null;
     const HOME = { scene: "home" as Scene, x: 400, y: 670 };
@@ -1315,6 +1341,24 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const [thornberries,         setThornberries]         = useState(() => savedWorld?.thornberries ?? 0);
   const [calmberries,          setCalmberries]          = useState(() => savedWorld?.calmberries ?? 0);
   const [brightberries,        setBrightberries]        = useState(() => savedWorld?.brightberries ?? 0);
+  // Primeria Farm state
+  const [farmVisited,          setFarmVisited]          = useState(() => savedWorld?.farmVisited ?? false);
+  const [farmShellsGiven,      setFarmShellsGiven]      = useState(() => savedWorld?.farmShellsGiven ?? false);
+  const [farmRunesGiven,       setFarmRunesGiven]       = useState(() => savedWorld?.farmRunesGiven ?? false);
+  const [marenGifted,          setMarenGifted]          = useState(() => savedWorld?.marenGifted ?? false);
+  const [ownedBattleShellIds,  setOwnedBattleShellIds]  = useState<string[]>(() => savedWorld?.ownedBattleShellIds ?? []);
+  const [equippedBattleShellId,setEquippedBattleShellId]= useState<string|null>(() => savedWorld?.equippedBattleShellId ?? null);
+  const [ownedBattleRuneIds,   setOwnedBattleRuneIds]   = useState<string[]>(() => savedWorld?.ownedBattleRuneIds ?? []);
+  const [slottedBattleRuneId,  setSlottedBattleRuneId]  = useState<string|null>(() => savedWorld?.slottedBattleRuneId ?? null);
+  const [hasCrucibyx,          setHasCrucibyx]          = useState(() => savedWorld?.hasCrucibyx ?? false);
+  const [showShellPicker,      setShowShellPicker]      = useState(false);
+  const [showRunePicker,       setShowRunePicker]       = useState(false);
+  const [nearShella,           setNearShella]           = useState(false);
+  const [shellaInteractPos,    setShellaInteractPos]    = useState({ sx: 0, sy: 0 });
+  const [nearRunrik,           setNearRunrik]           = useState(false);
+  const [runrikInteractPos,    setRunrikInteractPos]    = useState({ sx: 0, sy: 0 });
+  const [nearMaren,            setNearMaren]            = useState(false);
+  const [marenInteractPos,     setMarenInteractPos]     = useState({ sx: 0, sy: 0 });
   const [nearJerbs,            setNearJerbs]            = useState(false);
   const [jerbsInteractPos,     setJerbsInteractPos]     = useState({ sx: 0, sy: 0 });
   const [portalFrame,          setPortalFrame]          = useState(0);
@@ -1555,6 +1599,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     cleminusMet, demoComplete,
     jerbsBattleDone, hasCrystalFang, crystalFangEvo,
     hollisGifted, duskberries, thornberries, calmberries, brightberries,
+    farmVisited, farmShellsGiven, farmRunesGiven, marenGifted,
+    ownedBattleShellIds, equippedBattleShellId, ownedBattleRuneIds, slottedBattleRuneId, hasCrucibyx,
   });
   const persistWorld = useCallback(() => {
     const safe = lastSafeRef.current;
@@ -1578,6 +1624,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       cleminusMet, demoComplete,
       jerbsBattleDone, hasCrystalFang, crystalFangEvo,
       hollisGifted, duskberries, thornberries, calmberries, brightberries,
+      farmVisited, farmShellsGiven, farmRunesGiven, marenGifted,
+      ownedBattleShellIds, equippedBattleShellId, ownedBattleRuneIds, slottedBattleRuneId, hasCrucibyx,
     };
     persistWorld();
   }, [
@@ -1589,7 +1637,10 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     jayA3Wins, liaA3Wins, roleChosen, checksStreak,
     cleminusMet, demoComplete,
     jerbsBattleDone, hasCrystalFang, crystalFangEvo,
-    hollisGifted, duskberries, thornberries, calmberries, brightberries, persistWorld,
+    hollisGifted, duskberries, thornberries, calmberries, brightberries,
+    farmVisited, farmShellsGiven, farmRunesGiven, marenGifted,
+    ownedBattleShellIds, equippedBattleShellId, ownedBattleRuneIds, slottedBattleRuneId, hasCrucibyx,
+    persistWorld,
   ]);
   // On resume with Wyvrunt already caught, seed the follower beside the player
   // so it doesn't visibly fly in from the map origin on the first frame.
@@ -1709,6 +1760,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const jayA3CanvasRef     = useRef<HTMLCanvasElement>(null);
   const liaA3CanvasRef     = useRef<HTMLCanvasElement>(null);
   const jerbsCanvasRef     = useRef<HTMLCanvasElement>(null);
+  // Farm NPC canvas refs
+  const shellaCanvasRef    = useRef<HTMLCanvasElement>(null);
+  const shellaPortraitRef  = useRef<HTMLCanvasElement>(null);
+  const runrikCanvasRef    = useRef<HTMLCanvasElement>(null);
+  const runrikPortraitRef  = useRef<HTMLCanvasElement>(null);
+  const marenCanvasRef     = useRef<HTMLCanvasElement>(null);
+  const marenPortraitRef   = useRef<HTMLCanvasElement>(null);
   // Refs synced from arc state so the game-loop closure stays fresh
   const wifeOnPathRef       = useRef(false);
   const wifeInterceptedRef  = useRef(false);
@@ -2074,6 +2132,54 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     return () => clearInterval(iv);
   }, [portalOpen]);
 
+  // Draw farm NPCs (Shella, Runrik, Maren) from sprite sheet
+  useEffect(() => {
+    if (scene !== "farm") return;
+    const src = "./images/farm-townspeople.png";
+    const drawSheet = (
+      ref: React.RefObject<HTMLCanvasElement | null>,
+      sh: { sx:number; sy:number; sw:number; sh:number },
+    ) => {
+      const c = ref.current;
+      if (!c) return false;
+      const img = imgCache[src];
+      if (!img?.complete || img.naturalWidth === 0) return false;
+      const ctx = c.getContext("2d");
+      if (!ctx) return false;
+      const sz = 72;
+      c.width = sz; c.height = sz;
+      ctx.clearRect(0, 0, sz, sz);
+      ctx.drawImage(img, sh.sx, sh.sy, sh.sw, sh.sh, 0, 0, sz, sz);
+      return true;
+    };
+    if (!imgCache[src]) { const i = new Image(); i.src = src; imgCache[src] = i; }
+    const attempt = () => {
+      if (!drawSheet(shellaCanvasRef, SHELLA_SHEET)) { setTimeout(attempt, 150); return; }
+      drawSheet(runrikCanvasRef, RUNRIK_SHEET);
+      drawSheet(marenCanvasRef, MAREN_SHEET);
+    };
+    attempt();
+  }, [scene]);
+
+  // Draw farm NPC portrait in dialogue box
+  useEffect(() => {
+    if (!phase.startsWith("shella_") && !phase.startsWith("runrik_") && !phase.startsWith("maren_")) return;
+    const src = "./images/farm-townspeople.png";
+    const sh = phase.startsWith("shella_") ? SHELLA_SHEET : phase.startsWith("runrik_") ? RUNRIK_SHEET : MAREN_SHEET;
+    const ref = phase.startsWith("shella_") ? shellaPortraitRef : phase.startsWith("runrik_") ? runrikPortraitRef : marenPortraitRef;
+    const tryDraw = () => {
+      const c = ref.current;
+      if (!c) return;
+      const img = imgCache[src];
+      if (!img?.complete || img.naturalWidth === 0) { setTimeout(tryDraw, 150); return; }
+      const ctx = c.getContext("2d");
+      if (!ctx) return;
+      ctx.clearRect(0, 0, c.width, c.height);
+      ctx.drawImage(img, sh.sx, sh.sy, sh.sw, sh.sh, 0, 0, c.width, c.height);
+    };
+    tryDraw();
+  }, [phase]);
+
   // Draw wife portrait for jess_path_ dialogue phases
   useEffect(() => {
     if (!phase.startsWith("jess_path_")) return;
@@ -2261,6 +2367,11 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           }
         } else if (sc === "area3" && inRect(worldPos.current.x, worldPos.current.y, A3_RETURN_OW)) {
           transitionTo("overworld", 170, 453);  // Jay's SW courtyard — walk east back into town
+        } else if (sc === "route2" && inRect(worldPos.current.x, worldPos.current.y, R2_FARM_EXIT)) {
+          transitionTo("farm", FARM_SPAWN.x, FARM_SPAWN.y);
+          if (!farmVisited) setFarmVisited(true);
+        } else if (sc === "farm" && inRect(worldPos.current.x, worldPos.current.y, FARM_RETURN_R2)) {
+          transitionTo("route2", 165, 45);
         } else if (sc === "area3" && worldPos.current.x < 215 && phaseRef.current === "walk") {
           // Far-west closed door — Jerbs lands here from his portal the first time.
           // The portal plays out (no dialogue yet); the player then walks up to
@@ -2475,6 +2586,20 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             }
           }
         }
+        // Farm NPC proximity
+        if (sc === "farm") {
+          const screenX = (px - cam.current.x) * ZOOM;
+          const screenY = (py - cam.current.y - topOff - 28) * ZOOM;
+          const ds = dist(px, py, SHELLA_POS.x, SHELLA_POS.y);
+          setNearShella(ds < 90);
+          if (ds < 90) setShellaInteractPos({ sx: screenX, sy: screenY });
+          const dr = dist(px, py, RUNRIK_POS.x, RUNRIK_POS.y);
+          setNearRunrik(dr < 90);
+          if (dr < 90) setRunrikInteractPos({ sx: screenX, sy: screenY });
+          const dm = dist(px, py, MAREN_POS.x, MAREN_POS.y);
+          setNearMaren(dm < 90);
+          if (dm < 90) setMarenInteractPos({ sx: screenX, sy: screenY });
+        }
       }
       raf = requestAnimationFrame(loop);
     };
@@ -2499,6 +2624,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       prof2_d1: "prof2_d2", prof2_d2: "prof2_d3", prof2_d3: "prof2_d4", prof2_d4: "walk",
       farm_d1: "farm_d2", farm_d2: "farm_d3", farm_d3: "farm_d4", farm_d4: "walk",
       farm_idle: "walk",
+      // Primeria Farm NPCs
+      shella_d1: "shella_d2", shella_d2: "shella_d3",
+      shella_done: "walk", shella_idle: "walk",
+      runrik_d1: "runrik_d2", runrik_d2: "runrik_d3", runrik_d3: "runrik_d4", runrik_d4: "walk",
+      runrik_done: "walk", runrik_idle: "walk",
+      maren_d1: "maren_d2", maren_d2: "walk",
+      maren_done: "walk", maren_idle: "walk",
       scripted_t1: "scripted_t2", scripted_t2: "scripted_set",
       scripted_set: "scripted_caught", scripted_caught: "walk",
       // Ambient idle chats just close (no flags touched).
@@ -2529,6 +2661,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       jerbs_a3_idle: "walk",
       demo_end: "walk",
     };
+    if (from === "shella_d3") { setShowShellPicker(true); return; }
+    if (from === "runrik_d3") { setShowRunePicker(true); return; }
     const next = map[from];
     if (next) setPhase(next);
   }, []);
@@ -2626,6 +2760,21 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     farm_d3: "Funny thing, that Wyvrunt everyone's whispering about... I'm the one who first found it. Half-frozen by my north fence one winter, it was. Fed it scraps till it could fly again. Rare creature — glad it found its way to good hands.",
     farm_d4: "Say — you look like a Keeper who earns their keep. I've got more field berries than I can use before the season turns. Take some. Duskberry for healing, Thornberry for a sharp edge, Calmberry for a steady guard, Brightberry when your moves run dry. They'll serve you well out there.",
     farm_idle: "Fine day out here, ain't it? Come back anytime — the valley's always got something worth watching.",
+    shella_d1: "Goodness — a visitor! Most folks pass right through the north gate without stopping. Come closer, I won't bite. Name's Shella. I run the shell workshop — forge Realm Shells out of crystalite shards and valley ore.",
+    shella_d2: "My brother-in-law thinks it's too niche. 'Shella,' he says, 'nobody needs custom shells.' But then every Keeper who's bonded a rare Tayanari comes straight to me. Funny how that works.",
+    shella_d3: "Actually — you look like a serious Keeper. I've got some premium-grade shells in stock right now. Battle Shells — reinforced for combat use. Give your lead Tayanari a real edge. Want to take a look?",
+    shella_done: "Come back anytime — I've always got something new in the kiln.",
+    shella_idle: "Busy season, but I always have time for a Keeper with a good eye.",
+    runrik_d1: "Oi! You there — you're a Keeper, yeah? Good. Been hoping one of you would wander through. Name's Runrik. I work the rune forge over that hill — soul-script, bonding glyphs, the whole craft.",
+    runrik_d2: "Now, I'm going to be honest with you — I've been sitting on some Battle Runes for weeks. Forged them fresh, carved the script myself. But Keepers around here don't take rune-work seriously. Think it's superstition.",
+    runrik_d3: "It isn't. I'll prove it. Here — your first Battle Rune is on the house. Pick your effect, slot it before your next fight. You'll feel the difference. Go on.",
+    runrik_d4: "There. Now you know. Come back when you want more — I don't give free samples to just anyone, mind you. You've got good energy. I can always tell.",
+    runrik_done: "Back for more rune-work? Wise. The good ones always come back.",
+    runrik_idle: "Carving's going well today. Clear sky always helps the script set right.",
+    maren_d1: "Oh — hello! Are you looking for the Crucibyx? That's what everyone comes to the farm to see lately. Little Cruci's been here since hatching — found the egg in a runoff pool after a heavy rain. Alchemy type — only one I've ever seen up close.",
+    maren_d2: "We've gotten attached, honestly. But a creature like that belongs with a Keeper. Go on — introduce yourself. I have a feeling it'll take to you just fine.",
+    maren_done: "Take good care of little Cruci. Visit anytime — the farm's always open.",
+    maren_idle: "Cruci's been in a good mood all morning. Whatever you did, keep doing it.",
     scripted_t1: "The Wyvrunt is still. Watching you. Its tail-flame ripples but it does not strike. PROF: \"Don't move yet. Let it read you.\"",
     scripted_t2: "Its eyes soften — curiosity replacing caution. The yin-yang sigils on its scales flicker brighter. PROF: \"Now. The shell. It is ready.\"",
     scripted_set: "You set the Obsidianeye Realm Shell open before it. Wyvrunt tilts its head — and waits.",
@@ -2892,7 +3041,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     if (recovered > 0) setShellCount(c => c + recovered);
 
     const rawXp = (result.kind === "caught" || result.kind === "ko") ? result.xpGained : 0;
-    const r = calcBattleXp(rawXp, role.xpMult, starterLevel, starterXp, starterMoves);
+    const runeXpMult = slottedBattleRuneId === "xp_boost" ? 1.5 : 1;
+    const r = calcBattleXp(rawXp, role.xpMult * runeXpMult, starterLevel, starterXp, starterMoves);
     applyLevelUp(r);
 
     // Award the same XP to every caught companion that joined the fight.
@@ -3047,6 +3197,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           starterMoves={starterMoves}
           hasResonanceStone={resonanceStoneEquipped}
           healingRuneEquipped={healingRuneEquipped}
+          slottedRuneId={slottedBattleRuneId}
           catchMult={0}
           shellsCount={shellCount}
           heroImg={heroSideImg}
@@ -3097,6 +3248,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           starterMoves={starterMoves}
           hasResonanceStone={resonanceStoneEquipped}
           healingRuneEquipped={healingRuneEquipped}
+          slottedRuneId={slottedBattleRuneId}
           catchMult={role.catchMult}
           shellsCount={shellCount}
           caughtIds={[...caughtParty.map(m => m.id), ...storageBox.map(m => m.id)]}
@@ -3153,8 +3305,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         {/* World container — camera-scrolled + zoomed */}
         <div ref={worldRef} style={{
           position: "absolute",
-          width:  scene === "overworld" ? OW.w : scene === "lab" ? LB.w : scene === "route1" ? R1.w : scene === "route2" ? R2.w : scene === "area3" ? A3.w : scene === "maya" ? MY.w : scene === "jay" ? JY.w : scene === "ellio" ? EH.w : scene === "lia" ? LH.w : PH.w,
-          height: scene === "overworld" ? OW.h : scene === "lab" ? LB.h : scene === "route1" ? R1.h : scene === "route2" ? R2.h : scene === "area3" ? A3.h : scene === "maya" ? MY.h : scene === "jay" ? JY.h : scene === "ellio" ? EH.h : scene === "lia" ? LH.h : PH.h,
+          width:  scene === "overworld" ? OW.w : scene === "lab" ? LB.w : scene === "route1" ? R1.w : scene === "route2" ? R2.w : scene === "area3" ? A3.w : scene === "farm" ? FARM.w : scene === "maya" ? MY.w : scene === "jay" ? JY.w : scene === "ellio" ? EH.w : scene === "lia" ? LH.w : PH.w,
+          height: scene === "overworld" ? OW.h : scene === "lab" ? LB.h : scene === "route1" ? R1.h : scene === "route2" ? R2.h : scene === "area3" ? A3.h : scene === "farm" ? FARM.h : scene === "maya" ? MY.h : scene === "jay" ? JY.h : scene === "ellio" ? EH.h : scene === "lia" ? LH.h : PH.h,
           willChange: "transform",
           transformOrigin: "0 0",
           transform: `scale(${ZOOM}) translate(${-cam.current.x}px,${-cam.current.y}px)`,
@@ -3165,6 +3317,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             src={scene === "ellio" ? "./images/ellio-home-interior.png"
               : scene === "lia"    ? "./images/lia-home.png"
               : scene === "area3"  ? "./images/area3-bg.png"
+              : scene === "farm"   ? "./images/farm-bg.png"
               : scene === "route1" ? "./images/route1-bg.png"
               : scene === "route2" ? "./images/route2-map.png"
               : scene === "overworld"
@@ -3575,6 +3728,23 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             </>
           )}
 
+          {/* ── Farm NPCs + animals ─────────────────────────────────────── */}
+          {scene === "farm" && (
+            <>
+              <canvas ref={shellaCanvasRef} style={{ position:"absolute", imageRendering:"auto", pointerEvents:"none", zIndex:5, left: SHELLA_POS.x - 36, top: SHELLA_POS.y - 72 }}/>
+              <div style={{ position:"absolute", zIndex:6, left: SHELLA_POS.x - 22, top: SHELLA_POS.y - 90, color:"#f5c842", fontSize:8, fontWeight:800, letterSpacing:1, pointerEvents:"none", textShadow:"0 0 4px #000,0 0 8px #000" }}>SHELLA</div>
+              <canvas ref={runrikCanvasRef} style={{ position:"absolute", imageRendering:"auto", pointerEvents:"none", zIndex:5, left: RUNRIK_POS.x - 36, top: RUNRIK_POS.y - 72 }}/>
+              <div style={{ position:"absolute", zIndex:6, left: RUNRIK_POS.x - 22, top: RUNRIK_POS.y - 90, color:"#8090f0", fontSize:8, fontWeight:800, letterSpacing:1, pointerEvents:"none", textShadow:"0 0 4px #000,0 0 8px #000" }}>RUNRIK</div>
+              <canvas ref={marenCanvasRef} style={{ position:"absolute", imageRendering:"auto", pointerEvents:"none", zIndex:5, left: MAREN_POS.x - 36, top: MAREN_POS.y - 72 }}/>
+              <div style={{ position:"absolute", zIndex:6, left: MAREN_POS.x - 22, top: MAREN_POS.y - 90, color:"#90c060", fontSize:8, fontWeight:800, letterSpacing:1, pointerEvents:"none", textShadow:"0 0 4px #000,0 0 8px #000" }}>MAREN</div>
+              {FARM_ANIMALS.map((a, i) => (
+                <img key={i} src={`./images/${a.src}`} alt=""
+                  style={{ position:"absolute", left: a.x - 30, top: a.y - 30, width:60, height:60, objectFit:"contain", imageRendering:"auto", pointerEvents:"none", zIndex:4 }}
+                />
+              ))}
+            </>
+          )}
+
           {/* Shell item inside Maya's home */}
           {scene === "maya" && !shellsCollected && (
             <>
@@ -3974,6 +4144,23 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite",
               zIndex:10,
             }}
+          >!</button>
+        )}
+
+        {/* ── INTERACT BUTTONS — Farm NPCs (Shella / Runrik / Maren) ──── */}
+        {scene === "farm" && nearShella && phase === "walk" && (
+          <button onClick={() => setPhase(farmShellsGiven ? "shella_idle" : "shella_d1")}
+            style={{ position:"absolute", left: shellaInteractPos.sx - 14, top: shellaInteractPos.sy - 10, width:28, height:28, borderRadius:"50%", background:"#f5c842", border:"2px solid #fff", color:"#13200a", fontSize:16, fontWeight:900, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite", zIndex:10 }}
+          >!</button>
+        )}
+        {scene === "farm" && nearRunrik && phase === "walk" && (
+          <button onClick={() => setPhase(farmRunesGiven ? "runrik_idle" : "runrik_d1")}
+            style={{ position:"absolute", left: runrikInteractPos.sx - 14, top: runrikInteractPos.sy - 10, width:28, height:28, borderRadius:"50%", background:"#8090f0", border:"2px solid #fff", color:"#fff", fontSize:16, fontWeight:900, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite", zIndex:10 }}
+          >!</button>
+        )}
+        {scene === "farm" && nearMaren && phase === "walk" && (
+          <button onClick={() => setPhase(marenGifted ? "maren_idle" : "maren_d1")}
+            style={{ position:"absolute", left: marenInteractPos.sx - 14, top: marenInteractPos.sy - 10, width:28, height:28, borderRadius:"50%", background:"#90c060", border:"2px solid #fff", color:"#fff", fontSize:16, fontWeight:900, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite", zIndex:10 }}
           >!</button>
         )}
 
@@ -4444,6 +4631,69 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                   cursor:"pointer",
                 }}
               >{phase === "farm_d4" ? "Take Berries ✦" : phase === "farm_idle" ? "OK" : "Next ▶"}</button>
+            </div>
+          </div>
+        )}
+
+        {/* ── SHELLA — shell vendor dialogue ─────────────────────────────── */}
+        {(phase === "shella_d1" || phase === "shella_d2" || phase === "shella_d3" || phase === "shella_done" || phase === "shella_idle") && (
+          <div style={{ position:"absolute", bottom:0, left:0, right:0, background:"linear-gradient(to top,rgba(14,10,2,0.97),rgba(20,14,4,0.93))", borderTop:"2px solid rgba(245,200,66,0.6)", padding:"10px 14px 14px", zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+              <canvas ref={shellaPortraitRef} width={44} height={44} style={{ width:44, height:44, borderRadius:8, background:"#140c02", border:"1px solid rgba(245,200,66,0.4)" }}/>
+              <span style={{ color:"#f5c842", fontWeight:700, fontSize:13, letterSpacing:1 }}>SHELLA</span>
+            </div>
+            <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>{LINES[phase]}</p>
+            <div style={{ display:"flex", justifyContent:"flex-end" }}>
+              <button onClick={() => advanceDialog(phase)} style={{ background:"rgba(245,200,66,0.15)", border:"1px solid rgba(245,200,66,0.5)", color:"#f5c842", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}>
+                {phase === "shella_d3" ? "See Shells ▶" : phase === "shella_done" || phase === "shella_idle" ? "OK" : "Next ▶"}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── RUNRIK — rune forger dialogue ───────────────────────────────── */}
+        {(phase === "runrik_d1" || phase === "runrik_d2" || phase === "runrik_d3" || phase === "runrik_d4" || phase === "runrik_done" || phase === "runrik_idle") && (
+          <div style={{ position:"absolute", bottom:0, left:0, right:0, background:"linear-gradient(to top,rgba(8,8,20,0.97),rgba(12,12,26,0.93))", borderTop:"2px solid rgba(128,144,240,0.6)", padding:"10px 14px 14px", zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+              <canvas ref={runrikPortraitRef} width={44} height={44} style={{ width:44, height:44, borderRadius:8, background:"#08080c", border:"1px solid rgba(128,144,240,0.4)" }}/>
+              <span style={{ color:"#8090f0", fontWeight:700, fontSize:13, letterSpacing:1 }}>RUNRIK</span>
+            </div>
+            <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>{LINES[phase]}</p>
+            <div style={{ display:"flex", justifyContent:"flex-end" }}>
+              <button onClick={() => {
+                if (phase === "runrik_d4") {
+                  setFarmRunesGiven(true);
+                  advanceDialog(phase);
+                } else {
+                  advanceDialog(phase);
+                }
+              }} style={{ background:"rgba(128,144,240,0.15)", border:"1px solid rgba(128,144,240,0.5)", color:"#8090f0", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}>
+                {phase === "runrik_d3" ? "Pick a Rune ▶" : phase === "runrik_d4" ? "Thanks!" : phase === "runrik_done" || phase === "runrik_idle" ? "OK" : "Next ▶"}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── MAREN — creature keeper dialogue ────────────────────────────── */}
+        {(phase === "maren_d1" || phase === "maren_d2" || phase === "maren_done" || phase === "maren_idle") && (
+          <div style={{ position:"absolute", bottom:0, left:0, right:0, background:"linear-gradient(to top,rgba(4,12,4,0.97),rgba(6,16,6,0.93))", borderTop:"2px solid rgba(144,192,96,0.6)", padding:"10px 14px 14px", zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+              <canvas ref={marenPortraitRef} width={44} height={44} style={{ width:44, height:44, borderRadius:8, background:"#040c04", border:"1px solid rgba(144,192,96,0.4)" }}/>
+              <span style={{ color:"#90c060", fontWeight:700, fontSize:13, letterSpacing:1 }}>MAREN</span>
+            </div>
+            <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>{LINES[phase]}</p>
+            <div style={{ display:"flex", justifyContent:"flex-end" }}>
+              <button onClick={() => {
+                if (phase === "maren_d2" && !marenGifted) {
+                  setMarenGifted(true);
+                  setHasCrucibyx(true);
+                  const cruciSpec = { id:"crucibyx", name:"Crucibyx", type:"alchemy" as const, color:"#90c060", rarity:"rare" as const, img:"./images/crucibyx.png", wildImg:"./images/crucibyx.png", playerImg:"./images/crucibyx.png", wildFaces:"right" as const, playerFaces:"right" as const, maxHp:40, baseDmg:[8,12] as [number,number] };
+                  setCaughtParty(p => [...p, { ...cruciSpec, level:5, xp:0 }]);
+                }
+                advanceDialog(phase);
+              }} style={{ background:"rgba(144,192,96,0.15)", border:"1px solid rgba(144,192,96,0.5)", color:"#90c060", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}>
+                {phase === "maren_d2" && !marenGifted ? "Meet Cruci! ✦" : phase === "maren_done" || phase === "maren_idle" ? "OK" : "Next ▶"}
+              </button>
             </div>
           </div>
         )}
@@ -5997,6 +6247,52 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                       </div>
                     )}
 
+                    {/* ── Battle Shell equip ─────────────────────────── */}
+                    {ownedBattleShellIds.length > 0 && (
+                      <div style={{ background:"rgba(60,40,10,0.06)", border:"1px solid rgba(200,160,60,0.25)", borderRadius:14, padding:14, marginBottom:12 }}>
+                        <div style={{ color:"#9a6e2e", fontWeight:900, fontSize:10, letterSpacing:1.5, textTransform:"uppercase", marginBottom:10 }}>⚔ Battle Shell</div>
+                        {ownedBattleShellIds.map(id => {
+                          const bs = BATTLE_SHELLS.find(s => s.id === id);
+                          if (!bs) return null;
+                          const isEq = equippedBattleShellId === id;
+                          return (
+                            <div key={id} style={{ display:"flex", alignItems:"center", gap:8, padding:"7px 9px", borderRadius:9, marginBottom:6, background: isEq ? "rgba(245,200,66,0.14)" : "rgba(0,0,0,0.03)", border:`1px solid ${isEq ? "#f5c842" : "rgba(200,160,60,0.2)"}` }}>
+                              <div style={{ flex:1 }}>
+                                <div style={{ color: isEq ? "#f5c842" : "#7a5820", fontWeight:800, fontSize:11 }}>{bs.icon} {bs.name}{isEq ? " (equipped)" : ""}</div>
+                                <div style={{ color:"#906030", fontSize:9.5, marginTop:1 }}>{bs.element} element</div>
+                              </div>
+                              <button onClick={() => setEquippedBattleShellId(isEq ? null : id)} style={{ background: isEq ? "rgba(200,60,60,0.15)" : "rgba(80,140,60,0.15)", border:`1px solid ${isEq ? "#c04040" : "#60a040"}`, color: isEq ? "#d06060" : "#70b050", padding:"4px 10px", borderRadius:7, fontSize:10, fontWeight:700, cursor:"pointer" }}>
+                                {isEq ? "Unequip" : "Equip"}
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* ── Battle Rune equip ─────────────────────────── */}
+                    {ownedBattleRuneIds.length > 0 && (
+                      <div style={{ background:"rgba(20,20,60,0.06)", border:"1px solid rgba(128,144,240,0.25)", borderRadius:14, padding:14, marginBottom:12 }}>
+                        <div style={{ color:"#5060a0", fontWeight:900, fontSize:10, letterSpacing:1.5, textTransform:"uppercase", marginBottom:10 }}>✦ Battle Rune</div>
+                        {ownedBattleRuneIds.map(id => {
+                          const br = BATTLE_RUNES.find(r => r.id === id);
+                          if (!br) return null;
+                          const isSlotted = slottedBattleRuneId === id;
+                          return (
+                            <div key={id} style={{ display:"flex", alignItems:"center", gap:8, padding:"7px 9px", borderRadius:9, marginBottom:6, background: isSlotted ? "rgba(128,144,240,0.14)" : "rgba(0,0,0,0.03)", border:`1px solid ${isSlotted ? "#8090f0" : "rgba(128,144,240,0.2)"}` }}>
+                              <div style={{ flex:1 }}>
+                                <div style={{ color: isSlotted ? "#a0b0ff" : "#4a5890", fontWeight:800, fontSize:11 }}>{br.icon} {br.name}{isSlotted ? " (slotted)" : ""}</div>
+                                <div style={{ color:"#6070a0", fontSize:9.5, marginTop:1 }}>{br.desc}</div>
+                              </div>
+                              <button onClick={() => setSlottedBattleRuneId(isSlotted ? null : id)} style={{ background: isSlotted ? "rgba(200,60,60,0.15)" : "rgba(80,80,200,0.15)", border:`1px solid ${isSlotted ? "#c04040" : "#6060c0"}`, color: isSlotted ? "#d06060" : "#8090e0", padding:"4px 10px", borderRadius:7, fontSize:10, fontWeight:700, cursor:"pointer" }}>
+                                {isSlotted ? "Remove" : "Slot"}
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
                     {/* ── SHELL CODEX (all 18 known shells) ─────────── */}
                     <div style={{
                       background:"rgba(30,20,50,0.05)",
@@ -6436,7 +6732,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           border:"1px solid rgba(240,208,96,0.3)", pointerEvents:"none",
           textTransform:"uppercase", zIndex:5,
         }}>
-          {scene === "overworld" ? "Primeria Village" : scene === "lab" ? "Prof. Irwyn's Lab" : scene === "maya" ? "Maya's Home" : scene === "jay" ? "Jay's Home" : scene === "ellio" ? "Ellio's Home" : scene === "lia" ? "Lia's Home" : scene === "route1" ? "Whisperroot Trail" : scene === "route2" ? "Route 2 — Eastern Path" : scene === "battle" ? "Battle" : "Your Home"}
+          {scene === "overworld" ? "Primeria Village" : scene === "lab" ? "Prof. Irwyn's Lab" : scene === "maya" ? "Maya's Home" : scene === "jay" ? "Jay's Home" : scene === "ellio" ? "Ellio's Home" : scene === "lia" ? "Lia's Home" : scene === "route1" ? "Whisperroot Trail" : scene === "route2" ? "Route 2 — Eastern Path" : scene === "farm" ? "Primeria Farm" : scene === "battle" ? "Battle" : "Your Home"}
         </div>
 
         {/* Role badge — declared path + active boon (hidden until declared) */}
@@ -6457,6 +6753,71 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         )}
 
         {/* Encounter transition flourish — element-tinted radial burst on battle entry */}
+        {/* ── SHELL PICKER MODAL (Shella) ────────────────────────────── */}
+        {showShellPicker && (
+          <div style={{ position:"absolute", inset:0, zIndex:90, background:"rgba(10,6,2,0.92)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"20px 16px", overflowY:"auto" }}>
+            <div style={{ color:"#f5c842", fontWeight:900, fontSize:16, letterSpacing:1, marginBottom:6 }}>Shella's Battle Shells</div>
+            <div style={{ color:"#c8b080", fontSize:11, marginBottom:16, textAlign:"center" }}>Choose a Battle Shell to equip on your lead Tayanari. You can swap anytime from the Shells tab.</div>
+            <div style={{ display:"flex", flexDirection:"column", gap:8, width:"100%", maxWidth:360, marginBottom:16 }}>
+              {BATTLE_SHELLS.map(bs => {
+                const isEquipped = equippedBattleShellId === bs.id;
+                return (
+                  <button key={bs.id} onClick={() => {
+                    if (!ownedBattleShellIds.includes(bs.id)) setOwnedBattleShellIds(ids => [...ids, bs.id]);
+                    setEquippedBattleShellId(bs.id);
+                  }} style={{ display:"flex", alignItems:"flex-start", gap:10, padding:"10px 12px", borderRadius:10, background: isEquipped ? "rgba(245,200,66,0.18)" : "rgba(255,255,255,0.05)", border:`1.5px solid ${isEquipped ? "#f5c842" : "rgba(245,200,66,0.25)"}`, cursor:"pointer", textAlign:"left" }}>
+                    <div style={{ width:10, height:10, borderRadius:"50%", background: isEquipped ? "#f5c842" : "#666", marginTop:3, flexShrink:0 }}/>
+                    <div style={{ flex:1 }}>
+                      <div style={{ color:"#f5e090", fontWeight:800, fontSize:12 }}>{bs.icon} {bs.name}{isEquipped ? " ✓" : ""}</div>
+                      <div style={{ color:"#c0a060", fontSize:10, marginTop:2 }}>{bs.desc}</div>
+                      <div style={{ color:"#90d060", fontSize:9.5, marginTop:2, fontStyle:"italic" }}>{bs.element} element</div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            <button onClick={() => {
+              if (!farmShellsGiven) { setFarmShellsGiven(true); setOwnedBattleShellIds(BATTLE_SHELLS.map(b => b.id)); }
+              setShowShellPicker(false);
+              setPhase("shella_done");
+            }} style={{ background:"rgba(245,200,66,0.2)", border:"1.5px solid #f5c842", color:"#f5c842", padding:"8px 28px", borderRadius:10, fontSize:13, fontWeight:800, cursor:"pointer" }}>
+              {equippedBattleShellId ? "Confirm ✓" : "Close"}
+            </button>
+          </div>
+        )}
+
+        {/* ── RUNE PICKER MODAL (Runrik) ──────────────────────────────── */}
+        {showRunePicker && (
+          <div style={{ position:"absolute", inset:0, zIndex:90, background:"rgba(4,4,16,0.93)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"20px 16px", overflowY:"auto" }}>
+            <div style={{ color:"#8090f0", fontWeight:900, fontSize:16, letterSpacing:1, marginBottom:6 }}>Runrik's Battle Runes</div>
+            <div style={{ color:"#a0a8e0", fontSize:11, marginBottom:16, textAlign:"center" }}>Pick one Battle Rune for your lead Tayanari — your first is free. Slot it before battle to feel the effect.</div>
+            <div style={{ display:"flex", flexDirection:"column", gap:8, width:"100%", maxWidth:360, marginBottom:16 }}>
+              {BATTLE_RUNES.map(br => {
+                const isSlotted = slottedBattleRuneId === br.id;
+                return (
+                  <button key={br.id} onClick={() => {
+                    setSlottedBattleRuneId(br.id);
+                    if (!ownedBattleRuneIds.includes(br.id)) setOwnedBattleRuneIds(ids => [...ids, br.id]);
+                  }} style={{ display:"flex", alignItems:"flex-start", gap:10, padding:"10px 12px", borderRadius:10, background: isSlotted ? "rgba(128,144,240,0.18)" : "rgba(255,255,255,0.05)", border:`1.5px solid ${isSlotted ? "#8090f0" : "rgba(128,144,240,0.25)"}`, cursor:"pointer", textAlign:"left" }}>
+                    <div style={{ width:10, height:10, borderRadius:"50%", background: isSlotted ? "#8090f0" : "#666", marginTop:3, flexShrink:0 }}/>
+                    <div style={{ flex:1 }}>
+                      <div style={{ color:"#c0c8ff", fontWeight:800, fontSize:12 }}>{br.icon} {br.name}{isSlotted ? " ✓" : ""}</div>
+                      <div style={{ color:"#8090c0", fontSize:10, marginTop:2 }}>{br.desc}</div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            <button onClick={() => {
+              if (slottedBattleRuneId) setFarmRunesGiven(true);
+              setShowRunePicker(false);
+              setPhase("runrik_d4");
+            }} style={{ background:"rgba(128,144,240,0.2)", border:"1.5px solid #8090f0", color:"#8090f0", padding:"8px 28px", borderRadius:10, fontSize:13, fontWeight:800, cursor:"pointer" }}>
+              {slottedBattleRuneId ? "Slot Rune ✓" : "Close"}
+            </button>
+          </div>
+        )}
+
         {encounterFlash && (
           <div key={encounterFlash.key} style={{
             position:"absolute", inset:0, pointerEvents:"none", zIndex:48,

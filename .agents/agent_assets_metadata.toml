@@ -564,6 +564,42 @@ uri = "file://artifacts/primeria/public/images/ashflare-wild.png"
 type = "image"
 title = "generated_image"
 
+[[generated]]
+id = "OEcYWWJEmCx0AupngMGNC"
+uri = "file://artifacts/primeria/public/images/chicken1.png"
+type = "image"
+title = "white pixel chicken sprite"
+
+[[generated]]
+id = "pbg2CtvVp5mXbcRtAptmk"
+uri = "file://artifacts/primeria/public/images/chicken2.png"
+type = "image"
+title = "brown pixel chicken sprite"
+
+[[generated]]
+id = "Sg1r2s2edgVmFreIhZcBn"
+uri = "file://artifacts/primeria/public/images/chicken3.png"
+type = "image"
+title = "speckled pixel chicken sprite"
+
+[[generated]]
+id = "LLCAYgTCy0ZAgygO70aqs"
+uri = "file://artifacts/primeria/public/images/goat1.png"
+type = "image"
+title = "white pixel goat sprite"
+
+[[generated]]
+id = "xkdaE4LoODdEpIMAxP96a"
+uri = "file://artifacts/primeria/public/images/goat2.png"
+type = "image"
+title = "brown pixel goat sprite"
+
+[[generated]]
+id = "uS-1bzumRBNVLDzLSsEYx"
+uri = "file://artifacts/primeria/public/images/crucibyx.png"
+type = "image"
+title = "crucibyx alchemy tayanari sprite"
+
 [[outputs]]
 id = "hj9mwcgl1Uv9QQTG9g6KL"
 uri = "file://kinju_walk_demo.tar.gz"

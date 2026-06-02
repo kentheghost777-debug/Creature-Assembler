@@ -143,6 +143,17 @@ export type WorldSave = {
   thornberries: number;
   calmberries: number;
   brightberries: number;
+  // Primeria Farm (north of Route 2)
+  farmVisited: boolean;
+  farmShellsGiven: boolean;
+  farmRunesGiven: boolean;
+  marenGifted: boolean;
+  // Battle shell / rune equip system
+  ownedBattleShellIds: string[];
+  equippedBattleShellId: string | null;
+  ownedBattleRuneIds: string[];
+  slottedBattleRuneId: string | null;
+  hasCrucibyx: boolean;
 };
 
 export type SaveData = {
