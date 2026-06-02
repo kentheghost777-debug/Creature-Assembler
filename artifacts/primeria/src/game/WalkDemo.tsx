@@ -252,7 +252,10 @@ type Phase = "walk" | "d1" | "d2" | "pick" | "d3" | "role_pick" | "d4" | "d5"
            | "jerbs_appear" | "jerbs_d1" | "jerbs_d2" | "jerbs_d3"
            | "jerbs_cards" | "jerbs_d4" | "jerbs_remind"
            | "jerbs_return_d1" | "jerbs_return_d2" | "jerbs_a3_idle"
-           | "demo_end";
+           | "jerbs_battle_intro"
+          | "jerbs_crystal_d1" | "jerbs_crystal_d2" | "jerbs_crystal_d3"
+          | "jerbs_stone_pick" | "jerbs_crystal_evo"
+          | "demo_end";
 type Scene = "overworld" | "lab" | "maya" | "jay" | "home" | "ellio" | "lia" | "route1" | "route2" | "area3" | "battle";
 type Rect  = [number, number, number, number]; // x1 y1 x2 y2 world-px
 
@@ -341,6 +344,12 @@ const TR_SPRIG:  MonSpec = { id:"tr_sprig",  name:"Sprigget", type:"Nature",    
 const TR_MURK:   MonSpec = { id:"tr_murk",   name:"Murkspine",type:"Abyss",    rarity:"rare",     wildImg:"", playerImg:"",                          wildSheet:{ url:"./images/a3-new-sheet.png", x:512, y:0, w:512, h:512, sheetW:1536, sheetH:1024 }, playerSheet:{ url:"./images/a3-new-sheet.png", x:512, y:0, w:512, h:512, sheetW:1536, sheetH:1024 }, wildFaces:"left", playerFaces:"left", maxHp:78, baseDmg:[8,15] };
 // Lia's blue-and-grey Wyvburn (Draco) — her ace, strongest battle companion.
 const TR_CINDRAX: MonSpec = { id:"tr_cindrax", name:"Cindrax", type:"Chaos", rarity:"apex", wildImg:"./images/cindrax.png", playerImg:"./images/cindrax.png", wildFaces:"left", playerFaces:"left", maxHp:92, baseDmg:[12,19] };
+
+const TR_CRYSTALFANG: MonSpec = { id:"tr_crystalfang", name:"Crystalfang", type:"Frostformed", rarity:"apex", wildImg:"./images/crystalfang.png", playerImg:"./images/crystalfang.png", wildFaces:"right", playerFaces:"right", maxHp:78, baseDmg:[9,16] };
+const CRYSTALFANG_STARTER: StarterSpec = { id:"crystalfang", name:"Crystalfang", type:"Frostformed", color:"#7de8ff", img:"./images/crystalfang.png" };
+const GLACIA_SPEC:  StarterSpec = { id:"glacia",  name:"Glacia",  type:"Frostformed", color:"#7de8ff", img:"./images/glacia.png" };
+const VOLCIA_SPEC:  StarterSpec = { id:"volcia",  name:"Volcia",  type:"Volcanic",    color:"#ff5520", img:"./images/volcia.png" };
+const FAELIA_SPEC:  StarterSpec = { id:"faelia",  name:"Faelia",  type:"Spirit",      color:"#c070ff", img:"./images/faelia.png" };
 
 type TrainerTier = { team: MonSpec[]; levels: number[] };
 function jayA3Team(wins: number): TrainerTier {
@@ -1119,13 +1128,16 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const [wyrLoyalty,           setWyrLoyalty]           = useState(() => savedWorld?.wyrLoyalty ?? 0);
   const [jayA3Wins,            setJayA3Wins]            = useState(() => savedWorld?.jayA3Wins ?? 0);
   const [liaA3Wins,            setLiaA3Wins]            = useState(() => savedWorld?.liaA3Wins ?? 0);
-  const [trainerEncounter,     setTrainerEncounter]     = useState<{ trainer:"jay"|"lia"; name:string; team:MonSpec[]; levels:number[] } | null>(null);
+  const [trainerEncounter,     setTrainerEncounter]     = useState<{ trainer:"jay"|"lia"|"jerbs"; name:string; team:MonSpec[]; levels:number[] } | null>(null);
   const [nearJayA3,            setNearJayA3]            = useState(false);
   const [jayA3InteractPos,     setJayA3InteractPos]     = useState({ sx: 0, sy: 0 });
   const [nearLiaA3,            setNearLiaA3]            = useState(false);
   const [liaA3InteractPos,     setLiaA3InteractPos]     = useState({ sx: 0, sy: 0 });
   const [cleminusMet,          setCleminusMet]          = useState(() => savedWorld?.cleminusMet ?? false);
   const [demoComplete,         setDemoComplete]         = useState(() => savedWorld?.demoComplete ?? false);
+  const [jerbsBattleDone,      setJerbsBattleDone]      = useState(() => savedWorld?.jerbsBattleDone ?? false);
+  const [hasCrystalFang,       setHasCrystalFang]       = useState(() => savedWorld?.hasCrystalFang ?? false);
+  const [crystalFangEvo,       setCrystalFangEvo]       = useState<"glacia"|"volcia"|"faelia"|null>(() => savedWorld?.crystalFangEvo ?? null);
   const [nearJerbs,            setNearJerbs]            = useState(false);
   const [jerbsInteractPos,     setJerbsInteractPos]     = useState({ sx: 0, sy: 0 });
   const [portalFrame,          setPortalFrame]          = useState(0);
@@ -1364,6 +1376,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     hasObsidianRealmShell, wyvruntCaught, wyvruntForm, wyrLoyalty,
     jayA3Wins, liaA3Wins, roleChosen, checksStreak,
     cleminusMet, demoComplete,
+    jerbsBattleDone, hasCrystalFang, crystalFangEvo,
   });
   const persistWorld = useCallback(() => {
     const safe = lastSafeRef.current;
@@ -1385,6 +1398,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       hasObsidianRealmShell, wyvruntCaught, wyvruntForm, wyrLoyalty,
       jayA3Wins, liaA3Wins, roleChosen, checksStreak,
       cleminusMet, demoComplete,
+      jerbsBattleDone, hasCrystalFang, crystalFangEvo,
     };
     persistWorld();
   }, [
@@ -1394,7 +1408,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     route1Visited, wifeOnPath, wifeIntercepted, route2Greeted, profRoute2Done,
     hasObsidianRealmShell, wyvruntCaught, wyvruntForm, wyrLoyalty,
     jayA3Wins, liaA3Wins, roleChosen, checksStreak,
-    cleminusMet, demoComplete, persistWorld,
+    cleminusMet, demoComplete,
+    jerbsBattleDone, hasCrystalFang, crystalFangEvo, persistWorld,
   ]);
   // On resume with Wyvrunt already caught, seed the follower beside the player
   // so it doesn't visibly fly in from the map origin on the first frame.
@@ -1568,7 +1583,10 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       home:      ["./images/jess_front_idle.png", "./images/kinju_front_idle.png"],
       lia:       ["./images/lia.png", "./images/cindrax.png"],
       area3:     ["./images/jay-sprite.png", "./images/lia.png",
-                  "./images/jerbs_sprite.png", "./images/jerbs_portal.png"],
+                  "./images/jerbs_sprite.png", "./images/jerbs_portal.png",
+                  "./images/crystalfang.png", "./images/glacia.png",
+                  "./images/volcia.png", "./images/faelia.png",
+                  "./images/glacial-stone.png", "./images/earthfire-stone.png", "./images/faestone.png"],
     };
     (sceneNPCs[scene] ?? []).forEach(loadImg);
   }, [scene]);
@@ -2309,7 +2327,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       jerbs_d1: "jerbs_d2", jerbs_d2: "jerbs_d3",
       jerbs_d3: "jerbs_remind",    // default — JSX overrides to jerbs_cards when beatBoth
       jerbs_cards: "jerbs_d4",
-      jerbs_d4: "demo_end",
+      jerbs_d4: "jerbs_battle_intro",
+      jerbs_battle_intro: "jerbs_battle_intro",
+      jerbs_crystal_d1: "jerbs_crystal_d2",
+      jerbs_crystal_d2: "jerbs_crystal_d3",
+      jerbs_crystal_d3: "jerbs_stone_pick",
+      jerbs_stone_pick: "jerbs_stone_pick",
+      jerbs_crystal_evo: "demo_end",
       jerbs_remind: "walk",
       jerbs_return_d1: "jerbs_return_d2",
       jerbs_return_d2: "jerbs_cards",
@@ -2458,6 +2482,12 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     jerbs_return_d1: "There you are! I told you I'd wait. Very productively — I've been cataloging the ruin acoustics. Did you know this stone hums at two frequencies simultaneously? Anyway — you found Jay and Lia. I felt the moment those battles concluded. The resonance settled, like a chord finally resolving. Are you ready?",
     jerbs_return_d2: "Good. Then it is time. Here — your Keeper Trial Card and your Elder Trial Card. More is coming, Keeper. More than you can currently imagine. Keep walking.",
     jerbs_a3_idle: "The ruins talk, if you listen long enough. I've been listening for a very long time. Some days I think they're almost ready to say something new.",
+    jerbs_battle_intro: "Before you go, Keeper — one more thing. I need to see this resonance in action. One match. Fair. My partner is very small, very new, and absolutely not afraid of anything. Shall we?",
+    jerbs_crystal_d1: "...Hm. Even better than I expected. That's good. Alright — I owe you a story. That small one — I call her Crystalfang. Found her three months ago inside a collapsed glacier rift between two realms, curled around a sealed stone, completely unfazed by the cold. I thought she was a ruin artifact. Then she bit me.",
+    jerbs_crystal_d2: "Inside the rift were three stones — ancient catalysts. They shape what a Tayanari grows into, based on elemental affinity. I carried all three. I've been waiting to give them to the right Keeper. Someone the resonance would trust. That's you. Crystalfang is yours now.",
+    jerbs_crystal_d3: "The Glacial Stone calls forward Glacia — Frostformed, precise and proud. The Earthfire Stone calls Volcia — Volcanic, raw and rooted. The Faestone calls Faelia — Spirit-touched, strange and bright. Use one on Crystalfang now. Don't worry too much about which you choose. There will be more of her kind. The world gets bigger.",
+    jerbs_stone_pick: "",
+    jerbs_crystal_evo: "",
     demo_end: "",
   };
 
@@ -2766,12 +2796,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
 
     if (result.kind === "trainerWin") {
       if (enc.trainer === "jay") setJayA3Wins(w => Math.min(3, w + 1));
-      else                       setLiaA3Wins(w => Math.min(3, w + 1));
+      else if (enc.trainer === "lia") setLiaA3Wins(w => Math.min(3, w + 1));
+      else if (enc.trainer === "jerbs") setJerbsBattleDone(true);
       setBattleNotif({ title: `You beat ${enc.name}!`, sub: `+${r.xpGained} XP` });
-      setPhase(enc.trainer === "jay" ? "jay_a3_win" : "lia_a3_win");
+      setPhase(enc.trainer === "jay" ? "jay_a3_win" : enc.trainer === "lia" ? "lia_a3_win" : "jerbs_crystal_d1");
     } else {
       setBattleNotif({ title: `${enc.name} won this round.`, sub: "Come back stronger!" });
-      setPhase(enc.trainer === "jay" ? "jay_a3_lose" : "lia_a3_lose");
+      setPhase(enc.trainer === "jay" ? "jay_a3_lose" : enc.trainer === "lia" ? "lia_a3_lose" : "jerbs_battle_intro");
     }
     setTrainerEncounter(null);
     window.setTimeout(() => setBattleNotif(null), 2800);
@@ -2827,7 +2858,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           shellsCount={shellCount}
           heroImg={heroSideImg}
           opponentKind="keeper"
-          keeperImg={trainerEncounter.trainer === "jay" ? "./images/jay-sprite.png" : "./images/lia.png"}
+          keeperImg={trainerEncounter.trainer === "jay" ? "./images/jay-sprite.png" : trainerEncounter.trainer === "lia" ? "./images/lia.png" : "./images/jerbs_sprite.png"}
           keeperName={trainerEncounter.name}
           keeperTeam={trainerEncounter.team}
           keeperMonLevels={trainerEncounter.levels}
@@ -4643,6 +4674,150 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                 cursor:"pointer", letterSpacing:1,
               }}
             >Accept Trial Licenses ✦</button>
+          </div>
+        )}
+
+        {/* ── JERBS BATTLE INTRO ────────────────────────────────────────── */}
+        {phase === "jerbs_battle_intro" && (
+          <div style={{
+            position:"absolute", bottom:0, left:0, right:0,
+            background:"linear-gradient(to top,rgba(8,5,2,0.97),rgba(18,11,3,0.93))",
+            borderTop:"2px solid rgba(190,140,40,0.6)",
+            padding:"10px 14px 14px",
+            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out",
+          }}>
+            <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+              <div style={{
+                width:36, height:60, borderRadius:6, overflow:"hidden", flexShrink:0,
+                border:"1px solid rgba(190,140,40,0.4)",
+                backgroundImage:"url(./images/jerbs_sprite.png)",
+                backgroundSize:`${36 * 5}px auto`,
+                backgroundPosition:`${-36 * 2}px ${-Math.round(36 * JERBS_FH / JERBS_FW)}px`,
+                backgroundRepeat:"no-repeat",
+              }}/>
+              <div>
+                <span style={{ color:"#e8b840", fontWeight:700, fontSize:13, letterSpacing:1 }}>JERBS</span>
+                <div style={{ color:"#7a6020", fontSize:9, fontWeight:600, letterSpacing:0.8 }}>
+                  Clandestine Jerbeen · Traveler
+                </div>
+              </div>
+            </div>
+            <p style={{ color:"#e8dcc8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>
+              {LINES["jerbs_battle_intro"]}
+            </p>
+            <div style={{ display:"flex", justifyContent:"flex-end" }}>
+              {jerbsBattleDone ? (
+                <button
+                  onClick={() => setPhase(hasCrystalFang ? "demo_end" : "jerbs_stone_pick")}
+                  style={{ background:"rgba(190,140,40,0.15)", border:"1px solid rgba(190,140,40,0.5)",
+                    color:"#e8b840", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}
+                >Next ▶</button>
+              ) : (
+                <button
+                  onClick={() => {
+                    setTrainerEncounter({ trainer:"jerbs", name:"Jerbs",
+                      team:[TR_CRYSTALFANG, TR_CINDRAX], levels:[22, 26] });
+                    transitionTo("battle", worldPos.current.x, worldPos.current.y);
+                  }}
+                  style={{ background:"rgba(220,60,40,0.18)", border:"1px solid rgba(220,60,40,0.55)",
+                    color:"#e87050", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}
+                >Battle! ⚔</button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── JERBS CRYSTALFANG DIALOGUE ────────────────────────────────── */}
+        {(phase === "jerbs_crystal_d1" || phase === "jerbs_crystal_d2" || phase === "jerbs_crystal_d3") && (
+          <div style={{
+            position:"absolute", bottom:0, left:0, right:0,
+            background:"linear-gradient(to top,rgba(4,8,20,0.97),rgba(8,14,30,0.93))",
+            borderTop:"2px solid rgba(100,180,255,0.5)",
+            padding:"10px 14px 14px",
+            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out",
+          }}>
+            <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+              <div style={{
+                width:36, height:60, borderRadius:6, overflow:"hidden", flexShrink:0,
+                border:"1px solid rgba(100,180,255,0.4)",
+                backgroundImage:"url(./images/jerbs_sprite.png)",
+                backgroundSize:`${36 * 5}px auto`,
+                backgroundPosition:`${-36 * 2}px ${-Math.round(36 * JERBS_FH / JERBS_FW)}px`,
+                backgroundRepeat:"no-repeat",
+              }}/>
+              <div>
+                <span style={{ color:"#7de8ff", fontWeight:700, fontSize:13, letterSpacing:1 }}>JERBS</span>
+                <div style={{ color:"#2a5070", fontSize:9, fontWeight:600, letterSpacing:0.8 }}>
+                  Clandestine Jerbeen · Traveler
+                </div>
+              </div>
+            </div>
+            <p style={{ color:"#d4eeff", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>
+              {LINES[phase]}
+            </p>
+            <div style={{ display:"flex", justifyContent:"flex-end" }}>
+              <button onClick={() => advanceDialog(phase)}
+                style={{ background:"rgba(100,180,255,0.12)", border:"1px solid rgba(100,180,255,0.45)",
+                  color:"#7de8ff", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}
+              >Next ▶</button>
+            </div>
+          </div>
+        )}
+
+        {/* ── JERBS STONE PICKER ────────────────────────────────────────── */}
+        {phase === "jerbs_stone_pick" && (
+          <div style={{
+            position:"absolute", inset:0,
+            background:"rgba(2,6,18,0.97)",
+            display:"flex", flexDirection:"column", alignItems:"center",
+            justifyContent:"center", zIndex:30, gap:12, padding:"0 10px",
+          }}>
+            <div style={{ color:"#7de8ff", fontSize:13, fontWeight:800, letterSpacing:2, textAlign:"center" }}>
+              CHOOSE A CATALYST STONE
+            </div>
+            <div style={{ color:"rgba(200,230,255,0.5)", fontSize:10, textAlign:"center", marginTop:-6 }}>
+              This will evolve Crystalfang permanently.
+            </div>
+            <div style={{ display:"flex", gap:10, alignItems:"stretch", justifyContent:"center", maxWidth:380, width:"100%" }}>
+              {([
+                { key:"glacia" as const, stone:"glacial-stone.png", name:"Glacial Stone", evo:"Glacia", type:"Frostformed", desc:"Precise, proud, crystalline.", col:"#7de8ff", border:"rgba(100,200,255,0.6)", bg:"rgba(20,80,120,0.25)" },
+                { key:"volcia" as const, stone:"earthfire-stone.png", name:"Earthfire Stone", evo:"Volcia", type:"Volcanic", desc:"Raw, rooted, burning.", col:"#ff6630", border:"rgba(220,80,30,0.6)", bg:"rgba(80,20,5,0.3)" },
+                { key:"faelia" as const, stone:"faestone.png", name:"Faestone", evo:"Faelia", type:"Spirit", desc:"Strange, bright, boundless.", col:"#d080ff", border:"rgba(160,80,240,0.6)", bg:"rgba(50,10,80,0.3)" },
+              ] as const).map(opt => (
+                <button
+                  key={opt.key}
+                  onClick={() => {
+                    setCrystalFangEvo(opt.key);
+                    setHasCrystalFang(true);
+                    setPhase("jerbs_crystal_evo");
+                  }}
+                  style={{
+                    flex:1, background:opt.bg,
+                    border:`2px solid ${opt.border}`,
+                    borderRadius:12, padding:"10px 6px 12px",
+                    display:"flex", flexDirection:"column", alignItems:"center", gap:6,
+                    cursor:"pointer",
+                  }}
+                >
+                  <img src={`./images/${opt.stone}`} style={{ width:60, height:60, objectFit:"contain" }} alt={opt.name}/>
+                  <div style={{ color:opt.col, fontSize:10, fontWeight:800, letterSpacing:0.5, textAlign:"center" }}>{opt.name}</div>
+                  <div style={{ color:"rgba(200,220,255,0.7)", fontSize:9, fontWeight:600, textAlign:"center" }}>{opt.evo}</div>
+                  <div style={{ color:opt.col, fontSize:8, opacity:0.7, textAlign:"center" }}>{opt.type}</div>
+                  <div style={{ color:"rgba(180,210,240,0.55)", fontSize:8, textAlign:"center", lineHeight:1.4 }}>{opt.desc}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── JERBS CRYSTALFANG EVO SCENE ───────────────────────────────── */}
+        {phase === "jerbs_crystal_evo" && crystalFangEvo && (
+          <div style={{ position:"absolute", inset:0, zIndex:50 }}>
+            <EvoScene
+              preEvoSpec={CRYSTALFANG_STARTER}
+              postEvoSpec={crystalFangEvo === "glacia" ? GLACIA_SPEC : crystalFangEvo === "volcia" ? VOLCIA_SPEC : FAELIA_SPEC}
+              onComplete={() => setPhase("demo_end")}
+            />
           </div>
         )}
 

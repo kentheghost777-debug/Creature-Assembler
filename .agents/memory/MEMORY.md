@@ -4,3 +4,4 @@
 - [Battle sprite facing](battle-sprite-facing.md) — wildFaces/playerFaces = the art's NATIVE direction, not desired; left-facing art needs playerFaces:"left" so the player mon mirrors to face the opponent.
 - [Sprite-sheet slicing & walk norm](sprite-sheet-slicing.md) — slicing AI walk sheets: verify compass via montage, normalize per-frame to constant HEIGHT (rows scale-inconsistent → global scale pulses), keep 300×340 feet-flush canvas.
 - [Battle-handler stale state](battle-handler-stale-state.md) — handleBattleEnd/handleTrainerEnd omit caughtParty from deps; read companion state via caughtPartyRef + functional updaters. Wyvrunt evolves on its OWN level via wyvLevelAfter, not the starter's.
+- [Dual save.ts — WorldSave changes need BOTH files](dual-save-ts.md) — mockup-sandbox has its own save.ts separate from primeria's; any WorldSave type addition must be applied to BOTH or mockup typecheck fails.

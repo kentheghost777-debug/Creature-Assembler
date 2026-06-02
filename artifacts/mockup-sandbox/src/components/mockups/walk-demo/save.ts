@@ -133,6 +133,10 @@ export type WorldSave = {
   // Cleminus / demo end
   cleminusMet: boolean;   // Jerbs has appeared and introduced himself
   demoComplete: boolean;  // player received Trial Cards + saw demo end screen
+  // Jerbs battle + Crystalfang gift
+  jerbsBattleDone: boolean;
+  hasCrystalFang: boolean;
+  crystalFangEvo: "glacia" | "volcia" | "faelia" | null;
 };
 
 export type SaveData = {

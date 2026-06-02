@@ -42,6 +42,42 @@ uri = "file://artifacts/mockup-sandbox/public/images/area3-bg.png"
 type = "image"
 title = "generated_image"
 
+[[generated]]
+id = "3lOiCxPbb--mJdL6wTwnV"
+uri = "file://attached_assets/earthfire_stone.png"
+type = "image"
+title = "earthfire stone item icon"
+
+[[generated]]
+id = "dTfniovnxUjwQZHA-nrdO"
+uri = "file://attached_assets/faestone.png"
+type = "image"
+title = "faestone mystical purple gem icon"
+
+[[generated]]
+id = "I4UPns4bq6vPrEnkSCSFH"
+uri = "file://attached_assets/glacial_stone.png"
+type = "image"
+title = "glacial stone ice crystal icon"
+
+[[generated]]
+id = "vv9xAXIqImsAtDE-KzpGE"
+uri = "file://attached_assets/glacia.png"
+type = "image"
+title = "glacia ice wolf evo sprite"
+
+[[generated]]
+id = "r5m5gbwXi3ONyyHg-evv1"
+uri = "file://attached_assets/volcia.png"
+type = "image"
+title = "volcia fire wolf evo sprite"
+
+[[generated]]
+id = "ps_m_2xL3pWUK6M3EmMpO"
+uri = "file://attached_assets/faelia.png"
+type = "image"
+title = "faelia spirit wolf evo sprite"
+
 [[outputs]]
 id = "hj9mwcgl1Uv9QQTG9g6KL"
 uri = "file://kinju_walk_demo.tar.gz"
