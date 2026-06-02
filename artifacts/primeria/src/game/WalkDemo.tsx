@@ -733,9 +733,9 @@ const FARM_ANIMALS: { src: string; x: number; y: number; w: number; h: number }[
   { src: "./images/goat2.png",    x: 860, y: 770, w: 68, h: 68 },
 ];
 // Townspeople sprite sheet slices (farm-townspeople.png — 1024×512, 4 cols × 2 rows, 256×256 each)
-const SHELLA_SHEET = { sx: 512, sy:   0, sw: 256, sh: 256 }; // purple-apron crafter col2 row0
-const RUNRIK_SHEET = { sx: 768, sy: 256, sw: 256, sh: 256 }; // colourful bard col3 row1
-const MAREN_SHEET  = { sx:   0, sy:   0, sw: 256, sh: 256 }; // elder woman col0 row0
+const SHELLA_IMG = "./images/shella-npc.png";
+const RUNRIK_IMG = "./images/runrik-npc.png";
+const MAREN_IMG  = "./images/maren-npc.png";
 const NO_SOLIDS: Rect[] = [];
 
 // ── Tidemark Shore (south of Route 2 — cliff-edge ocean) ─────────────────────
@@ -1852,12 +1852,6 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const liaA3CanvasRef     = useRef<HTMLCanvasElement>(null);
   const jerbsCanvasRef     = useRef<HTMLCanvasElement>(null);
   // Farm NPC canvas refs
-  const shellaCanvasRef    = useRef<HTMLCanvasElement>(null);
-  const shellaPortraitRef  = useRef<HTMLCanvasElement>(null);
-  const runrikCanvasRef    = useRef<HTMLCanvasElement>(null);
-  const runrikPortraitRef  = useRef<HTMLCanvasElement>(null);
-  const marenCanvasRef     = useRef<HTMLCanvasElement>(null);
-  const marenPortraitRef   = useRef<HTMLCanvasElement>(null);
   // Refs synced from arc state so the game-loop closure stays fresh
   const wifeOnPathRef       = useRef(false);
   const wifeInterceptedRef  = useRef(false);
@@ -2247,53 +2241,6 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     return () => clearInterval(iv);
   }, [portalOpen]);
 
-  // Draw farm NPCs (Shella, Runrik, Maren) from sprite sheet
-  useEffect(() => {
-    if (scene !== "farm") return;
-    const src = "./images/farm-townspeople.png";
-    const drawSheet = (
-      ref: React.RefObject<HTMLCanvasElement | null>,
-      sh: { sx:number; sy:number; sw:number; sh:number },
-    ) => {
-      const c = ref.current;
-      if (!c) return false;
-      const img = imgCache[src];
-      if (!img?.complete || img.naturalWidth === 0) return false;
-      const ctx = c.getContext("2d");
-      if (!ctx) return false;
-      const sz = 72;
-      c.width = sz; c.height = sz;
-      ctx.clearRect(0, 0, sz, sz);
-      ctx.drawImage(img, sh.sx, sh.sy, sh.sw, sh.sh, 0, 0, sz, sz);
-      return true;
-    };
-    if (!imgCache[src]) { const i = new Image(); i.src = src; imgCache[src] = i; }
-    const attempt = () => {
-      if (!drawSheet(shellaCanvasRef, SHELLA_SHEET)) { setTimeout(attempt, 150); return; }
-      drawSheet(runrikCanvasRef, RUNRIK_SHEET);
-      drawSheet(marenCanvasRef, MAREN_SHEET);
-    };
-    attempt();
-  }, [scene]);
-
-  // Draw farm NPC portrait in dialogue box
-  useEffect(() => {
-    if (!phase.startsWith("shella_") && !phase.startsWith("runrik_") && !phase.startsWith("maren_")) return;
-    const src = "./images/farm-townspeople.png";
-    const sh = phase.startsWith("shella_") ? SHELLA_SHEET : phase.startsWith("runrik_") ? RUNRIK_SHEET : MAREN_SHEET;
-    const ref = phase.startsWith("shella_") ? shellaPortraitRef : phase.startsWith("runrik_") ? runrikPortraitRef : marenPortraitRef;
-    const tryDraw = () => {
-      const c = ref.current;
-      if (!c) return;
-      const img = imgCache[src];
-      if (!img?.complete || img.naturalWidth === 0) { setTimeout(tryDraw, 150); return; }
-      const ctx = c.getContext("2d");
-      if (!ctx) return;
-      ctx.clearRect(0, 0, c.width, c.height);
-      ctx.drawImage(img, sh.sx, sh.sy, sh.sw, sh.sh, 0, 0, c.width, c.height);
-    };
-    tryDraw();
-  }, [phase]);
 
   // Draw wife portrait for jess_path_ dialogue phases
   useEffect(() => {
@@ -2375,6 +2322,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       if (!fadingRef.current && phaseRef.current === "walk" && sceneRef.current !== "battle") {
         const h       = heldRef.current;
         const sc      = sceneRef.current;
+        const zoom    = sc === "farm" ? 0.62 : ZOOM;
         const world   = sc === "overworld" ? OW : sc === "lab" ? LB : sc === "route1" ? R1 : sc === "route2" ? R2 : sc === "area3" ? A3 : sc === "maya" ? MY : sc === "jay" ? JY : sc === "ellio" ? EH : sc === "lia" ? LH : PH;
         const zones   = sc === "overworld" ? OW_BLOCKED : sc === "lab" ? LAB_BLOCKED : sc === "route1" ? R1_BLOCKED : sc === "route2" ? R2_BLOCKED : sc === "area3" ? A3_BLOCKED : sc === "maya" ? MAYA_BLOCKED : sc === "jay" ? JAY_BLOCKED : sc === "ellio" ? EH_BLOCKED : sc === "lia" ? LH_BLOCKED : PH_BLOCKED;
 
@@ -2522,8 +2470,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         const vp   = vpRef.current;
         const vpW  = vp?.clientWidth  ?? 390;
         const vpH  = vp?.clientHeight ?? 520;
-        const wvpW = vpW  / ZOOM; // world units visible horizontally
-        const wvpH = vpH  / ZOOM; // world units visible vertically
+        const wvpW = vpW  / zoom; // world units visible horizontally
+        const wvpH = vpH  / zoom; // world units visible vertically
         const px   = worldPos.current.x;
         const py   = worldPos.current.y;
         cam.current.x = Math.max(0, Math.min(px - wvpW / 2, world.w - wvpW));
@@ -2536,7 +2484,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         const spriteH = (canvas?.height && canvas.height > 0) ? canvas.height : SPRITE_PX;
         const spriteW = (canvas?.width  && canvas.width  > 0) ? canvas.width  : SPRITE_PX;
         const topOff = Math.round(spriteH * ANCHOR);
-        if (wd)     wd.style.transform = `scale(${ZOOM}) translate(${-cam.current.x}px,${-cam.current.y}px)`;
+        if (wd)     wd.style.transform = `scale(${zoom}) translate(${-cam.current.x}px,${-cam.current.y}px)`;
         if (canvas) { canvas.style.left = `${px - spriteW/2}px`; canvas.style.top = `${py - topOff}px`; }
         if (shadow) { shadow.style.left = `${px - 18}px`;          shadow.style.top  = `${py + 2}px`; }
 
@@ -2713,8 +2661,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         }
         // Farm NPC proximity
         if (sc === "farm") {
-          const screenX = (px - cam.current.x) * ZOOM;
-          const screenY = (py - cam.current.y - topOff - 28) * ZOOM;
+          const screenX = (px - cam.current.x) * zoom;
+          const screenY = (py - cam.current.y - topOff - 28) * zoom;
           const ds = dist(px, py, SHELLA_POS.x, SHELLA_POS.y);
           setNearShella(ds < 90);
           if (ds < 90) setShellaInteractPos({ sx: screenX, sy: screenY });
@@ -3885,11 +3833,11 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           {/* ── Farm NPCs + animals ─────────────────────────────────────── */}
           {scene === "farm" && (
             <>
-              <canvas ref={shellaCanvasRef} style={{ position:"absolute", imageRendering:"auto", pointerEvents:"none", zIndex:5, left: SHELLA_POS.x - 36, top: SHELLA_POS.y - 72 }}/>
+              <img src={SHELLA_IMG} alt="Shella" style={{ position:"absolute", imageRendering:"auto", pointerEvents:"none", zIndex:5, left: SHELLA_POS.x - 36, top: SHELLA_POS.y - 72, width:72, height:72, objectFit:"contain" }}/>
               <div style={{ position:"absolute", zIndex:6, left: SHELLA_POS.x - 22, top: SHELLA_POS.y - 90, color:"#f5c842", fontSize:8, fontWeight:800, letterSpacing:1, pointerEvents:"none", textShadow:"0 0 4px #000,0 0 8px #000" }}>SHELLA</div>
-              <canvas ref={runrikCanvasRef} style={{ position:"absolute", imageRendering:"auto", pointerEvents:"none", zIndex:5, left: RUNRIK_POS.x - 36, top: RUNRIK_POS.y - 72 }}/>
+              <img src={RUNRIK_IMG} alt="Runrik" style={{ position:"absolute", imageRendering:"auto", pointerEvents:"none", zIndex:5, left: RUNRIK_POS.x - 36, top: RUNRIK_POS.y - 72, width:72, height:72, objectFit:"contain" }}/>
               <div style={{ position:"absolute", zIndex:6, left: RUNRIK_POS.x - 22, top: RUNRIK_POS.y - 90, color:"#8090f0", fontSize:8, fontWeight:800, letterSpacing:1, pointerEvents:"none", textShadow:"0 0 4px #000,0 0 8px #000" }}>RUNRIK</div>
-              <canvas ref={marenCanvasRef} style={{ position:"absolute", imageRendering:"auto", pointerEvents:"none", zIndex:5, left: MAREN_POS.x - 36, top: MAREN_POS.y - 72 }}/>
+              <img src={MAREN_IMG} alt="Maren" style={{ position:"absolute", imageRendering:"auto", pointerEvents:"none", zIndex:5, left: MAREN_POS.x - 36, top: MAREN_POS.y - 72, width:72, height:72, objectFit:"contain" }}/>
               <div style={{ position:"absolute", zIndex:6, left: MAREN_POS.x - 22, top: MAREN_POS.y - 90, color:"#90c060", fontSize:8, fontWeight:800, letterSpacing:1, pointerEvents:"none", textShadow:"0 0 4px #000,0 0 8px #000" }}>MAREN</div>
               {FARM_ANIMALS.map((a, i) => (
                 <img key={i} src={`./images/${a.src}`} alt=""
@@ -4817,7 +4765,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         {(phase === "shella_d1" || phase === "shella_d2" || phase === "shella_d3" || phase === "shella_done" || phase === "shella_idle") && (
           <div style={{ position:"absolute", bottom:0, left:0, right:0, background:"linear-gradient(to top,rgba(14,10,2,0.97),rgba(20,14,4,0.93))", borderTop:"2px solid rgba(245,200,66,0.6)", padding:"10px 14px 14px", zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out" }}>
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
-              <canvas ref={shellaPortraitRef} width={44} height={44} style={{ width:44, height:44, borderRadius:8, background:"#140c02", border:"1px solid rgba(245,200,66,0.4)" }}/>
+              <img src={SHELLA_IMG} alt="Shella" style={{ width:44, height:44, borderRadius:8, objectFit:"contain", border:"1px solid rgba(245,200,66,0.4)" }}/>
               <span style={{ color:"#f5c842", fontWeight:700, fontSize:13, letterSpacing:1 }}>SHELLA</span>
             </div>
             <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>{LINES[phase]}</p>
@@ -4833,7 +4781,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         {(phase === "runrik_d1" || phase === "runrik_d2" || phase === "runrik_d3" || phase === "runrik_d4" || phase === "runrik_done" || phase === "runrik_idle") && (
           <div style={{ position:"absolute", bottom:0, left:0, right:0, background:"linear-gradient(to top,rgba(8,8,20,0.97),rgba(12,12,26,0.93))", borderTop:"2px solid rgba(128,144,240,0.6)", padding:"10px 14px 14px", zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out" }}>
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
-              <canvas ref={runrikPortraitRef} width={44} height={44} style={{ width:44, height:44, borderRadius:8, background:"#08080c", border:"1px solid rgba(128,144,240,0.4)" }}/>
+              <img src={RUNRIK_IMG} alt="Runrik" style={{ width:44, height:44, borderRadius:8, objectFit:"contain", border:"1px solid rgba(128,144,240,0.4)" }}/>
               <span style={{ color:"#8090f0", fontWeight:700, fontSize:13, letterSpacing:1 }}>RUNRIK</span>
             </div>
             <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>{LINES[phase]}</p>
@@ -4856,7 +4804,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         {(phase === "maren_d1" || phase === "maren_d2" || phase === "maren_done" || phase === "maren_idle") && (
           <div style={{ position:"absolute", bottom:0, left:0, right:0, background:"linear-gradient(to top,rgba(4,12,4,0.97),rgba(6,16,6,0.93))", borderTop:"2px solid rgba(144,192,96,0.6)", padding:"10px 14px 14px", zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out" }}>
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
-              <canvas ref={marenPortraitRef} width={44} height={44} style={{ width:44, height:44, borderRadius:8, background:"#040c04", border:"1px solid rgba(144,192,96,0.4)" }}/>
+              <img src={MAREN_IMG} alt="Maren" style={{ width:44, height:44, borderRadius:8, objectFit:"contain", border:"1px solid rgba(144,192,96,0.4)" }}/>
               <span style={{ color:"#90c060", fontWeight:700, fontSize:13, letterSpacing:1 }}>MAREN</span>
             </div>
             <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>{LINES[phase]}</p>
