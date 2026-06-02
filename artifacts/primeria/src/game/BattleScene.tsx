@@ -1021,7 +1021,7 @@ export function BattleScene({
 
         {/* Side-view stage: Keeper (green) + Tayanari (red) face EAST; wild (yellow) faces WEST */}
         {/* Hero / Keeper — green ritual circle, facing east */}
-        <div style={standOn(POS.hero, 40, 4, 84)}>
+        <div style={standOn(POS.hero, 22, 4, 84)}>
           <div style={{
             width:"100%", height:"100%",
             animation: intro ? "introSlide 1.1s ease-out" : "none",
@@ -1036,7 +1036,7 @@ export function BattleScene({
 
         {/* Opposing Keeper — purple ritual circle, facing west (keeper battles only) */}
         {isKeeper && (
-          <div style={standOn(POS.keeper, 26, 4, 84)}>
+          <div style={standOn(POS.keeper, 22, 4, 84)}>
             <div style={{
               width:"100%", height:"100%",
               animation: intro ? "introFloatR 1.1s ease-out" : "none",
