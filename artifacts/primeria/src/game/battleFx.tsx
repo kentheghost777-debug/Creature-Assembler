@@ -54,9 +54,21 @@ function shapeStyle(shape: Shape, size: number, color: string): React.CSSPropert
   }
 }
 
+const EL_FX: Record<string, string> = {
+  Volcanic:    "fx_volcanic",
+  Frostformed: "fx_frostformed",
+  Oceanic:     "fx_oceanic",
+  Stormproven: "fx_stormproven",
+  Nature:      "fx_nature",
+  Earthbound:  "fx_earthbound",
+  Mind:        "fx_mind",
+  Spirit:      "fx_spirit",
+  Chaos:       "fx_chaos",
+};
+
 export function MoveFx({
-  anim, color, from, category,
-}: { anim: MoveAnim; color: string; from: "player" | "wild"; category: MoveCategory }) {
+  anim, color, from, category, element, imgBase = "./images",
+}: { anim: MoveAnim; color: string; from: "player" | "wild"; category: MoveCategory; element?: string; imgBase?: string }) {
   // ── Utility moves: aura centered on the caster ──
   if (category !== "damage") {
     const x = from === "player" ? PLAYER_X : WILD_X;
@@ -160,6 +172,34 @@ export function MoveFx({
             mixBlendMode: "screen",
           }}/>
         ))}
+
+        {/* ── Element FX image: clay-sculpted attack illustration ── */}
+        {element && EL_FX[element] && (
+          <>
+            {/* Glow bloom behind the image */}
+            <div style={{
+              position: "absolute", left: 0, top: 0,
+              width: 200, height: 200, borderRadius: "50%",
+              background: `radial-gradient(circle, ${color}55 0%, transparent 70%)`,
+              transform: "translate(-50%,-50%)",
+              animation: "mvFxImg 0.8s ease-out 0.28s forwards",
+              mixBlendMode: "screen",
+            }}/>
+            <img
+              src={`${imgBase}/${EL_FX[element]}.png`}
+              alt=""
+              style={{
+                position: "absolute", left: 0, top: 0,
+                width: 190, height: 190,
+                objectFit: "contain",
+                transform: "translate(-50%,-50%)",
+                animation: "mvFxImg 0.8s ease-out 0.28s forwards",
+                pointerEvents: "none",
+                filter: `drop-shadow(0 0 14px ${color}) drop-shadow(0 0 6px #fff8)`,
+              }}
+            />
+          </>
+        )}
       </div>
     </div>
   );
@@ -200,5 +240,11 @@ export const MOVE_FX_KEYFRAMES = `
     0%   { transform: translate(-50%,-50%) scale(0.2); opacity: 0; }
     35%  { opacity: 0.95; }
     100% { transform: translate(-50%,-50%) scale(1.6); opacity: 0; }
+  }
+  @keyframes mvFxImg {
+    0%   { transform: translate(-50%,-50%) scale(0.25) rotate(-8deg); opacity: 0; }
+    28%  { opacity: 0.95; }
+    65%  { transform: translate(-50%,-50%) scale(1.08) rotate(2deg);  opacity: 0.92; }
+    100% { transform: translate(-50%,-50%) scale(0.85) rotate(0deg);  opacity: 0; }
   }
 `;

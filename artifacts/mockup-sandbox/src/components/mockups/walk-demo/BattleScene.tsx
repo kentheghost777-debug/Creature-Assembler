@@ -346,7 +346,7 @@ export function BattleScene({
   const wildHpRef   = useRef(wild.maxHp);
 
   // Move animation overlay.
-  type MoveFxState = { anim: Move["anim"]; color: string; from: "player" | "wild"; category: Move["category"]; id: number };
+  type MoveFxState = { anim: Move["anim"]; color: string; from: "player" | "wild"; category: Move["category"]; id: number; element?: string };
   const [moveFx, setMoveFx] = useState<MoveFxState | null>(null);
 
   useEffect(() => {
@@ -385,10 +385,10 @@ export function BattleScene({
     later(() => setAuxFx(curr => (curr?.id === id ? null : curr)), ms);
   }
   function triggerMove(
-    anim: Move["anim"], color: string, from: "player" | "wild", category: Move["category"],
+    anim: Move["anim"], color: string, from: "player" | "wild", category: Move["category"], element?: string,
   ) {
     const id = nextFxId();
-    setMoveFx({ anim, color, from, category, id });
+    setMoveFx({ anim, color, from, category, id, element });
     later(() => setMoveFx(curr => (curr?.id === id ? null : curr)), 1100);
   }
 
@@ -432,7 +432,7 @@ export function BattleScene({
 
       // Utility moves — wild heals or buffs itself, no damage to player.
       if (move.category !== "damage") {
-        triggerMove(move.anim, color, "wild", move.category);
+        triggerMove(move.anim, color, "wild", move.category, move.element);
         if (move.category === "heal" && move.heal) {
           const heal = Math.floor(currentOpponent.maxHp * move.heal);
           setWildHp(hp => { const n = Math.min(currentOpponent.maxHp, hp + heal); wildHpRef.current = n; return n; });
@@ -460,7 +460,7 @@ export function BattleScene({
       const { dmg, crit } = computeDamage({
         power: move.power, attackerAtk: wAtk(), defenderDef: pDef(), stab, effectiveness: eff,
       });
-      triggerMove(move.anim, color, "wild", "damage");
+      triggerMove(move.anim, color, "wild", "damage", move.element);
 
       later(() => {
         setShake("player");
@@ -568,7 +568,7 @@ export function BattleScene({
 
     // Utility — heal / buff / shield the player, then the wild acts.
     if (move.category !== "damage") {
-      triggerMove(move.anim, color, "player", move.category);
+      triggerMove(move.anim, color, "player", move.category, move.element);
       if (move.category === "heal" && move.heal) {
         const heal = Math.floor(playerMaxHp * move.heal);
         setPlayerHp(hp => Math.min(playerMaxHp, hp + heal));
@@ -585,7 +585,7 @@ export function BattleScene({
     }
 
     // Damage — accuracy check (a miss reads as the wild feinting away).
-    triggerMove(move.anim, color, "player", "damage");
+    triggerMove(move.anim, color, "player", "damage", move.element);
     if (Math.random() * 100 > move.accuracy) {
       later(() => {
         triggerAux("feint", undefined, "wild", 750);
@@ -1033,7 +1033,7 @@ export function BattleScene({
         {/* Move animation (elemental projectile / utility aura) */}
         {moveFx && (
           <div key={`mv-${moveFx.id}`} style={{ position:"absolute", inset:0, pointerEvents:"none", zIndex:6 }}>
-            <MoveFx anim={moveFx.anim} color={moveFx.color} from={moveFx.from} category={moveFx.category} />
+            <MoveFx anim={moveFx.anim} color={moveFx.color} from={moveFx.from} category={moveFx.category} element={moveFx.element} />
           </div>
         )}
         {/* Attack streak + impact burst */}

@@ -102,6 +102,60 @@ uri = "file://attached_assets/brightberry.png"
 type = "image"
 title = "brightberry golden radiant"
 
+[[generated]]
+id = "zuHJNuZfJjpDbGm9zARbQ"
+uri = "file://attached_assets/fx_volcanic.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "VYF_WD7upAGhfggeNkaiZ"
+uri = "file://attached_assets/fx_frostformed.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "qpxBzI1f5YmcjNJPfnprL"
+uri = "file://attached_assets/fx_oceanic.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "v5OITH5ruzn6X44Xe0AA3"
+uri = "file://attached_assets/fx_stormproven.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "RnVoOqR1D--mjfXU0ie0E"
+uri = "file://attached_assets/fx_nature.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "bWYrFBtRC93Cf6wEe_O94"
+uri = "file://attached_assets/fx_earthbound.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "1BN6M7L4VzApVheB_8t5a"
+uri = "file://attached_assets/fx_mind.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "cC0fylEA729qU0FJ2W_Mx"
+uri = "file://attached_assets/fx_spirit.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "IE87OgdD31r3bwyi40tn8"
+uri = "file://attached_assets/fx_chaos.png"
+type = "image"
+title = "generated_image"
+
 [[outputs]]
 id = "hj9mwcgl1Uv9QQTG9g6KL"
 uri = "file://kinju_walk_demo.tar.gz"
