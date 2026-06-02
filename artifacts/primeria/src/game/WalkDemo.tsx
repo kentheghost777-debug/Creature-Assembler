@@ -1459,7 +1459,9 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   // Returns where the mon ended up: "party", "box", or "full" (nowhere — both full).
   // A freshly caught mon starts at the level it was fighting at, XP reset.
   const addCaughtMon = useCallback((mon: MonSpec, force = false): "party" | "box" | "full" => {
-    const pm: PartyMon = { ...mon, level: wildLevelFor(mon.rarity) || 5, xp: 0 };
+    const lvl = wildLevelFor(mon.rarity) || 5;
+    const el = asElement(mon.type);
+    const pm: PartyMon = { ...mon, level: lvl, xp: 0, moves: el ? defaultActiveMoves(el, lvl) : [] };
     if (caughtPartyRef.current.length >= PARTY_CAP - 1) {
       if (storageBoxRef.current.length >= STORAGE_CAP && !force) return "full";
       setStorageBox(b => [...b, pm]);
@@ -1475,7 +1477,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     let lvl = m.level, xp = m.xp + award;
     let thr = lvl * 10 + 10;
     while (xp >= thr && lvl < 30) { xp -= thr; lvl += 1; thr = lvl * 10 + 10; }
-    return { ...m, level: lvl, xp };
+    const el = asElement(m.type);
+    // Sanitize the active moveset as new moves may unlock at the new level.
+    // Keeps the player's chosen 4; adds newly-learned moves only when slots are free.
+    const moves = el && lvl !== m.level
+      ? sanitizeActiveMoves(el, lvl, m.moves ?? defaultActiveMoves(el, m.level))
+      : (m.moves ?? (el ? defaultActiveMoves(el, m.level) : []));
+    return { ...m, level: lvl, xp, moves };
   }
 
   // Post-battle report modal (shell recovery + xp + level up)
@@ -2846,7 +2854,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       color: ELEMENT_COLOR[m.type as keyof typeof ELEMENT_COLOR] ?? "#cccccc",
       level: m.level,
       stats: partyBattleStats(m.maxHp, m.baseDmg, m.rarity, m.level),
-      moves: el ? defaultActiveMoves(el, m.level) : [],
+      moves: m.moves ?? (el ? defaultActiveMoves(el, m.level) : []),
       img: m.playerImg,
       sheet: m.playerSheet,
       faces: m.playerFaces,
@@ -5384,121 +5392,149 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                     {/* Caught companions (slots 2…PARTY_CAP) */}
                     {caughtParty.map((mon, i) => {
                       const monEl = asElement(mon.type);
-                      const monMoves = monEl ? defaultActiveMoves(monEl, mon.level) : [];
+                      const monStats = partyBattleStats(mon.maxHp, mon.baseDmg, mon.rarity, mon.level);
+                      const monMoves = mon.moves ?? (monEl ? defaultActiveMoves(monEl, mon.level) : []);
+                      const xpThr = mon.level * 10 + 10;
                       return (
                       <div key={`${mon.id}-${i}`} style={{
-                        padding:"11px 2px",
-                        borderBottom:"1px dashed rgba(100,64,20,0.16)",
-                        display:"flex", alignItems:"center", gap:13,
+                        padding:"12px 2px 4px",
+                        borderBottom:"1px dashed rgba(100,64,20,0.22)",
                       }}>
-                        {mon.playerSheet ? (() => {
-                          const s = mon.playerSheet!;
-                          const SZ = 56;
-                          const sc = Math.min(SZ / s.w, SZ / s.h);
-                          const dW = Math.round(s.w * sc), dH = Math.round(s.h * sc);
-                          const iW = Math.round(s.sheetW * sc), iH = Math.round(s.sheetH * sc);
-                          const oX = Math.round(s.x * sc), oY = Math.round(s.y * sc);
-                          return (
-                            <div style={{ width:SZ, height:SZ, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, background:"rgba(60,30,0,0.05)", borderRadius:8 }}>
-                              <div style={{ width:dW, height:dH, overflow:"hidden", position:"relative", flexShrink:0 }}>
-                                <img src={s.url} alt="" style={{ position:"absolute", left:-oX, top:-oY, width:iW, height:iH, maxWidth:"none"}}/>
+                        {/* Header row: sprite + info + controls */}
+                        <div style={{ display:"flex", alignItems:"flex-start", gap:13 }}>
+                          {/* Sprite */}
+                          {mon.playerSheet ? (() => {
+                            const s = mon.playerSheet!;
+                            const SZ = 56;
+                            const sc = Math.min(SZ / s.w, SZ / s.h);
+                            const dW = Math.round(s.w * sc), dH = Math.round(s.h * sc);
+                            const iW = Math.round(s.sheetW * sc), iH = Math.round(s.sheetH * sc);
+                            const oX = Math.round(s.x * sc), oY = Math.round(s.y * sc);
+                            return (
+                              <div style={{ width:SZ, height:SZ, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, background:"rgba(60,30,0,0.05)", borderRadius:8 }}>
+                                <div style={{ width:dW, height:dH, overflow:"hidden", position:"relative", flexShrink:0 }}>
+                                  <img src={s.url} alt="" style={{ position:"absolute", left:-oX, top:-oY, width:iW, height:iH, maxWidth:"none"}}/>
+                                </div>
                               </div>
+                            );
+                          })() : (
+                            <img src={mon.playerImg} alt={mon.name} style={{
+                              width:56, height:56, objectFit:"contain",
+                              background:"rgba(60,30,0,0.05)", borderRadius:8,
+                              mixBlendMode:"multiply", flexShrink:0,
+                            }}/>
+                          )}
+                          {/* Info */}
+                          <div style={{ flex:1, minWidth:0 }}>
+                            <div style={{ color:"#2a1206", fontWeight:800, fontSize:14, letterSpacing:0.3 }}>
+                              {mon.name}{mon.nameIcon ? ` ${mon.nameIcon}` : ""}
                             </div>
-                          );
-                        })() : (
-                          <img src={mon.playerImg} alt={mon.name} style={{
-                            width:56, height:56, objectFit:"contain",
-                            background:"rgba(60,30,0,0.05)", borderRadius:8,
-                            mixBlendMode:"multiply", flexShrink:0,
-                          }}/>
+                            <div style={{ display:"flex", alignItems:"center", gap:7, marginTop:3 }}>
+                              <span style={{
+                                fontSize:8.5, fontWeight:800, letterSpacing:1.6,
+                                color:"#8a5c22", borderBottom:"1px solid rgba(100,64,20,0.35)", paddingBottom:1,
+                              }}>{mon.type.toUpperCase()}</span>
+                              <span style={{ color: RARITY_COLOR[mon.rarity], fontSize:8.5, fontWeight:800, letterSpacing:0.5 }}>
+                                ◈ {mon.rarity.toUpperCase()}
+                              </span>
+                            </div>
+                            <div style={{ color:"#826040", fontSize:10.5, marginTop:3 }}>
+                              Lv.{mon.level}&emsp;·&emsp;HP {monStats.hp}
+                            </div>
+                            {/* XP bar */}
+                            <div style={{ display:"flex", alignItems:"center", gap:6, marginTop:5 }}>
+                              <div style={{ flex:1, height:4, background:"rgba(100,64,20,0.18)", borderRadius:2, overflow:"hidden" }}>
+                                <div style={{
+                                  height:"100%", borderRadius:2,
+                                  background:"linear-gradient(90deg,#c8a030,#e8c860)",
+                                  width:`${Math.min(100, (mon.xp / Math.max(1, xpThr)) * 100)}%`,
+                                  transition:"width 0.6s",
+                                }}/>
+                              </div>
+                              <span style={{ fontSize:8, color:"#9a7840", fontWeight:700, flexShrink:0 }}>
+                                {mon.xp}/{xpThr} XP
+                              </span>
+                            </div>
+                            {/* Stat row */}
+                            <div style={{ display:"flex", gap:10, marginTop:6 }}>
+                              {(["atk","def","spd"] as const).map(k => (
+                                <div key={k} style={{ display:"flex", flexDirection:"column", alignItems:"center", minWidth:28 }}>
+                                  <span style={{ fontSize:7.5, color:"#7a5c28", fontWeight:800, letterSpacing:1.2 }}>{k.toUpperCase()}</span>
+                                  <span style={{ fontSize:12, color:"#2a1206", fontWeight:800, lineHeight:1.1 }}>{monStats[k]}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          {/* Controls column */}
+                          <div style={{ display:"flex", flexDirection:"column", gap:3, flexShrink:0, alignItems:"flex-end" }}>
+                            <div style={{
+                              color:"#9a7040", fontSize:10, fontWeight:700,
+                              background:"rgba(100,64,20,0.09)",
+                              padding:"3px 9px", borderRadius:20,
+                              border:"1px solid rgba(100,64,20,0.18)", marginBottom:3,
+                            }}>No. {i + 2}</div>
+                            <button
+                              disabled={i === 0}
+                              onClick={() => {
+                                if (i === 0) return;
+                                setCaughtParty(p => {
+                                  const next = [...p];
+                                  [next[i-1], next[i]] = [next[i], next[i-1]];
+                                  return next;
+                                });
+                              }}
+                              style={{
+                                padding:"2px 7px", borderRadius:5, fontSize:10, fontWeight:800,
+                                background:"rgba(100,64,20,0.08)", border:"1px solid rgba(100,64,20,0.25)",
+                                color: i === 0 ? "#c0ab8e" : "#8a5c22",
+                                cursor: i === 0 ? "not-allowed" : "pointer",
+                              }}
+                            >↑</button>
+                            <button
+                              disabled={i >= caughtParty.length - 1}
+                              onClick={() => {
+                                if (i >= caughtParty.length - 1) return;
+                                setCaughtParty(p => {
+                                  const next = [...p];
+                                  [next[i], next[i+1]] = [next[i+1], next[i]];
+                                  return next;
+                                });
+                              }}
+                              style={{
+                                padding:"2px 7px", borderRadius:5, fontSize:10, fontWeight:800,
+                                background:"rgba(100,64,20,0.08)", border:"1px solid rgba(100,64,20,0.25)",
+                                color: i >= caughtParty.length - 1 ? "#c0ab8e" : "#8a5c22",
+                                cursor: i >= caughtParty.length - 1 ? "not-allowed" : "pointer",
+                              }}
+                            >↓</button>
+                            <button
+                              disabled={storageBox.length >= STORAGE_CAP}
+                              onClick={() => {
+                                if (storageBox.length >= STORAGE_CAP) return;
+                                setCaughtParty(p => p.filter((_, j) => j !== i));
+                                setStorageBox(b => [...b, mon]);
+                              }}
+                              style={{
+                                padding:"4px 8px", borderRadius:7,
+                                background:"rgba(100,64,20,0.08)",
+                                border:"1px solid rgba(100,64,20,0.30)",
+                                color: storageBox.length >= STORAGE_CAP ? "#c0ab8e" : "#8a5c22",
+                                fontSize:9, fontWeight:800,
+                                cursor: storageBox.length >= STORAGE_CAP ? "not-allowed" : "pointer",
+                                marginTop:2,
+                              }}
+                            >{storageBox.length >= STORAGE_CAP ? "Box full" : "→ Box"}</button>
+                          </div>
+                        </div>
+                        {/* Move manager — full picker, same as starter */}
+                        {monEl && (
+                          <MoveManager
+                            element={mon.type}
+                            level={mon.level}
+                            active={monMoves}
+                            onChange={next => setCaughtParty(p => p.map((m, j) => j === i ? { ...m, moves: next } : m))}
+                          />
                         )}
-                        <div style={{ flex:1 }}>
-                          <div style={{ color:"#2a1206", fontWeight:800, fontSize:14, letterSpacing:0.3 }}>
-                            {mon.name}{mon.nameIcon ? ` ${mon.nameIcon}` : ""}
-                          </div>
-                          <div style={{
-                            display:"inline-block", marginTop:4,
-                            fontSize:8.5, fontWeight:800, letterSpacing:1.6,
-                            color:"#8a5c22", borderBottom:"1px solid rgba(100,64,20,0.35)",
-                            paddingBottom:2,
-                          }}>{mon.type.toUpperCase()}</div>
-                          <div style={{ display:"flex", alignItems:"center", gap:8, marginTop:4 }}>
-                            <span style={{ color:"#2a1206", fontSize:10, fontWeight:800, letterSpacing:0.3 }}>Lv. {mon.level}</span>
-                            <span style={{ color: RARITY_COLOR[mon.rarity], fontSize:9, fontWeight:800, letterSpacing:0.5 }}>
-                              ◈ {mon.rarity.toUpperCase()}
-                            </span>
-                          </div>
-                          {/* Move preview */}
-                          <div style={{ display:"flex", gap:4, marginTop:4, flexWrap:"wrap" }}>
-                            {monMoves.slice(0,4).map(mid => {
-                              const m = getMove(mid);
-                              return m ? (
-                                <span key={mid} style={{
-                                  fontSize:8, fontWeight:700, color:"#7a5c34",
-                                  background:"rgba(100,64,20,0.08)", padding:"2px 6px", borderRadius:4,
-                                }}>{m.name}</span>
-                              ) : null;
-                            })}
-                          </div>
-                        </div>
-                        <div style={{ display:"flex", flexDirection:"column", gap:3, flexShrink:0 }}>
-                          <button
-                            disabled={i === 0}
-                            onClick={() => {
-                              if (i === 0) return;
-                              setCaughtParty(p => {
-                                const next = [...p];
-                                [next[i-1], next[i]] = [next[i], next[i-1]];
-                                return next;
-                              });
-                            }}
-                            style={{
-                              padding:"2px 6px", borderRadius:5, fontSize:10, fontWeight:800,
-                              background:"rgba(100,64,20,0.08)", border:"1px solid rgba(100,64,20,0.25)",
-                              color: i === 0 ? "#c0ab8e" : "#8a5c22",
-                              cursor: i === 0 ? "not-allowed" : "pointer",
-                            }}
-                          >↑</button>
-                          <button
-                            disabled={i >= caughtParty.length - 1}
-                            onClick={() => {
-                              if (i >= caughtParty.length - 1) return;
-                              setCaughtParty(p => {
-                                const next = [...p];
-                                [next[i], next[i+1]] = [next[i+1], next[i]];
-                                return next;
-                              });
-                            }}
-                            style={{
-                              padding:"2px 6px", borderRadius:5, fontSize:10, fontWeight:800,
-                              background:"rgba(100,64,20,0.08)", border:"1px solid rgba(100,64,20,0.25)",
-                              color: i >= caughtParty.length - 1 ? "#c0ab8e" : "#8a5c22",
-                              cursor: i >= caughtParty.length - 1 ? "not-allowed" : "pointer",
-                            }}
-                          >↓</button>
-                        </div>
-                        <button
-                          disabled={storageBox.length >= STORAGE_CAP}
-                          onClick={() => {
-                            if (storageBox.length >= STORAGE_CAP) return;
-                            setCaughtParty(p => p.filter((_, j) => j !== i));
-                            setStorageBox(b => [...b, mon]);
-                          }}
-                          style={{
-                            padding:"5px 10px", borderRadius:8, flexShrink:0,
-                            background:"rgba(100,64,20,0.08)",
-                            border:"1px solid rgba(100,64,20,0.30)",
-                            color: storageBox.length >= STORAGE_CAP ? "#c0ab8e" : "#8a5c22",
-                            fontSize:9.5, fontWeight:800,
-                            cursor: storageBox.length >= STORAGE_CAP ? "not-allowed" : "pointer",
-                          }}
-                        >{storageBox.length >= STORAGE_CAP ? "Box full" : "→ Box"}</button>
-                        <div style={{
-                          color:"#9a7040", fontSize:10, fontWeight:700,
-                          background:"rgba(100,64,20,0.09)",
-                          padding:"3px 9px", borderRadius:20,
-                          border:"1px solid rgba(100,64,20,0.18)", flexShrink:0,
-                        }}>No. {i + 2}</div>
                       </div>
                       );
                     })}
