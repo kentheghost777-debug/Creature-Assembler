@@ -154,6 +154,10 @@ export type WorldSave = {
   ownedBattleRuneIds: string[];
   slottedBattleRuneId: string | null;
   hasCrucibyx: boolean;
+  // Tidemark Shore — Prof. Irwyn challenger battle + PrimeriaCoin currency
+  primeriaCoin: number;
+  profShoreWins: number;   // times the player has beaten the prof on shore
+  profShorePaid: number;   // times prof has paid out coin (cap 2)
 };
 
 export type SaveData = {

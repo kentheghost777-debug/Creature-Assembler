@@ -263,8 +263,11 @@ type Phase = "walk" | "d1" | "d2" | "pick" | "d3" | "role_pick" | "d4" | "d5"
           // Primeria Farm NPCs
           | "shella_d1" | "shella_d2" | "shella_d3" | "shella_done" | "shella_idle"
           | "runrik_d1" | "runrik_d2" | "runrik_d3" | "runrik_d4" | "runrik_done" | "runrik_idle"
-          | "maren_d1" | "maren_d2" | "maren_done" | "maren_idle";
-type Scene = "overworld" | "lab" | "maya" | "jay" | "home" | "ellio" | "lia" | "route1" | "route2" | "area3" | "battle" | "farm";
+          | "maren_d1" | "maren_d2" | "maren_done" | "maren_idle"
+          // Tidemark Shore — Prof. Irwyn challenger battle
+          | "prof_shore_d1" | "prof_shore_d2" | "prof_shore_battle"
+          | "prof_shore_win" | "prof_shore_lose" | "prof_shore_idle" | "prof_shore_done";
+type Scene = "overworld" | "lab" | "maya" | "jay" | "home" | "ellio" | "lia" | "route1" | "route2" | "area3" | "battle" | "farm" | "shore";
 type Rect  = [number, number, number, number]; // x1 y1 x2 y2 world-px
 
 // ── Bestiary (Route 1 encounter pool) ───────────────────────────────────────
@@ -402,6 +405,38 @@ function liaA3Team(wins: number): TrainerTier {
   if (wins === 1) return { team:[TR_CUNB, TR_DRIFT],                       levels:[18,16] };
   if (wins === 2) return { team:[TR_CUNB, TR_DRIFT, TR_SPRIG],             levels:[24,22,20] };
   return            { team:[TR_CUNB, TR_DRIFT, TR_SPRIG, TR_CINDRAX],     levels:[28,26,24,30] };
+}
+
+// ── Prof. Irwyn shore challenger team (2nd-form mons, high def, earthbound resonance ace) ──
+const TR_PROF_WYRNAK: MonSpec = {
+  id:"tr_wyrnak",   name:"Wyrnak",   type:"Spirit" as const,
+  rarity:"rare" as const,
+  wildImg:"/__mockup/images/wyrnak.png", playerImg:"/__mockup/images/wyrnak.png",
+  wildFaces:"right" as const, playerFaces:"right" as const, maxHp:68, baseDmg:[8,12] as [number,number],
+};
+const TR_PROF_CARAGNAR: MonSpec = {
+  id:"tr_caragnar", name:"Caragnar", type:"Volcanic" as const,
+  rarity:"rare" as const,
+  wildImg:"/__mockup/images/cerepup_evo1.png", playerImg:"/__mockup/images/cerepup_evo1.png",
+  wildFaces:"left" as const, playerFaces:"left" as const, maxHp:72, baseDmg:[7,11] as [number,number],
+};
+const TR_PROF_SANCTYKE: MonSpec = {
+  id:"tr_sanctyke", name:"Sanctyke", type:"Mind" as const,
+  rarity:"rare" as const,
+  wildImg:"/__mockup/images/mentyke_evo1.png", playerImg:"/__mockup/images/mentyke_evo1.png",
+  wildFaces:"left" as const, playerFaces:"left" as const, maxHp:65, baseDmg:[8,13] as [number,number],
+};
+const TR_PROF_GRAVLOCK: MonSpec = {
+  id:"tr_gravlock", name:"Gravlock", type:"Earthbound" as const,
+  rarity:"ultra" as const,
+  wildImg:"/__mockup/images/stonebrute-wild.png", playerImg:"/__mockup/images/stonebrute-wild.png",
+  wildFaces:"left" as const, playerFaces:"left" as const, maxHp:84, baseDmg:[6,10] as [number,number],
+};
+function profShoreTeam(): TrainerTier {
+  return {
+    team:   [TR_PROF_WYRNAK, TR_PROF_CARAGNAR, TR_PROF_SANCTYKE, TR_PROF_GRAVLOCK],
+    levels: [21, 22, 22, 23],
+  };
 }
 
 // NPC positions inside Area 3 (world-px coordinates)
@@ -635,6 +670,39 @@ const BESTIARY_R2: MonSpec[] = [
     wildFaces:"left", playerFaces:"left", maxHp:85, baseDmg:[10,16] },
 ];
 
+// ── Bestiary — Tidemark Shore (coastal cliff wild pool) ──────────────────────
+const BESTIARY_SHORE: MonSpec[] = [
+  // Commons — windy + dirty
+  { id:"galekit",    name:"Galekit",    type:"Skyborne",    rarity:"common",
+    wildImg:"/__mockup/images/hatchick-wild.png",   playerImg:"/__mockup/images/hatchick-player.png",
+    wildFaces:"left", playerFaces:"left", maxHp:27, baseDmg:[3,6] as [number,number] },
+  { id:"muddrift",   name:"Muddrift",   type:"Earthbound",  rarity:"common",
+    wildImg:"/__mockup/images/loth-wild.png",       playerImg:"/__mockup/images/loth-player.png",
+    wildFaces:"left", playerFaces:"left", maxHp:31, baseDmg:[4,7] as [number,number] },
+  // Uncommons — stormy + icy
+  { id:"stormcrest", name:"Stormcrest", type:"Stormproven", rarity:"uncommon",
+    wildImg:"/__mockup/images/voltowl-wild.png",    playerImg:"/__mockup/images/voltowl-player.png",
+    wildFaces:"left", playerFaces:"left", maxHp:36, baseDmg:[5,9] as [number,number] },
+  { id:"shiverclaw", name:"Shiverclaw", type:"Frostformed", rarity:"uncommon",
+    wildImg:"/__mockup/images/stonub-wild.png",     playerImg:"/__mockup/images/stonub-player.png",
+    wildFaces:"left", playerFaces:"left", maxHp:39, baseDmg:[5,10] as [number,number] },
+  // Rares — lonely + proud
+  { id:"loneshade",  name:"Loneshade",  type:"Abyss",       rarity:"rare",
+    wildImg:"/__mockup/images/scavencrow-wild.png", playerImg:"/__mockup/images/scavencrow-player.png",
+    wildFaces:"left", playerFaces:"left", maxHp:46, baseDmg:[6,11] as [number,number] },
+  { id:"crowncrest", name:"Crowncrest", type:"Armored",     rarity:"rare",
+    wildImg:"/__mockup/images/scalel-wild.png",    playerImg:"/__mockup/images/scalel-player.png",
+    wildFaces:"left", playerFaces:"left", maxHp:52, baseDmg:[5,10] as [number,number] },
+  // Ultra — storm giant
+  { id:"tempestral", name:"Tempestral", type:"Stormproven", rarity:"ultra",
+    wildImg:"/__mockup/images/ghosti-wild.png",    playerImg:"/__mockup/images/ghosti-player.png",
+    wildFaces:"right", playerFaces:"right", maxHp:60, baseDmg:[7,13] as [number,number] },
+  // Apex — glacial leviathan
+  { id:"glacivern",  name:"Glacivern",  type:"Frostformed", rarity:"apex",
+    wildImg:"/__mockup/images/potent-wild.png",    playerImg:"/__mockup/images/potent-player.png",
+    wildFaces:"left", playerFaces:"left", maxHp:72, baseDmg:[9,15] as [number,number] },
+];
+
 // ── Route 2 (east of Maya's home) ───────────────────────────────────────────
 // route2-map.png native 1024w × 1536h — vertical scrolling route, enter west.
 const R2 = { w: 1024, h: 1536 };
@@ -669,6 +737,19 @@ const SHELLA_SHEET = { sx: 512, sy:   0, sw: 256, sh: 256 }; // purple-apron cra
 const RUNRIK_SHEET = { sx: 768, sy: 256, sw: 256, sh: 256 }; // colourful bard col3 row1
 const MAREN_SHEET  = { sx:   0, sy:   0, sw: 256, sh: 256 }; // elder woman col0 row0
 const NO_SOLIDS: Rect[] = [];
+
+// ── Tidemark Shore (south of Route 2 — cliff-edge ocean) ─────────────────────
+const SHORE = { w: 1024, h: 768 };
+const SHORE_SPAWN        = { x: 512, y: 690 };   // entering from Route 2 south
+let   SHORE_NORTH_EXIT: Rect = [300, 0, 700, 20]; // north edge → back to Route 2
+const PROF_SHORE_POS     = { x: 510, y: 310 };   // professor on the clifftop
+const SHORE_COIN_GIFT    = 500;                    // PrimeriaCoin per payment
+const SHORE_HOTSPOTS: Hotspot[] = [
+  { x: 160, y: 160, r: 55, kind: "rock" }, { x: 380, y: 200, r: 55, kind: "bush" },
+  { x: 640, y: 180, r: 55, kind: "rock" }, { x: 840, y: 250, r: 55, kind: "bush" },
+  { x: 120, y: 390, r: 55, kind: "rock" }, { x: 700, y: 420, r: 55, kind: "bush" },
+];
+
 // Return-to-overworld trigger (west edge — aligned with the carved gap in the left forest mass)
 let R2_RETURN_OW: Rect    = ld("r2_return", [79, 1028, 169, 1148]); // TEMP door back to town (user-tapped 80,1121) — re-place after map swap
 // Locked future-content beats — show a "blocked"/"locked" toast
@@ -723,7 +804,7 @@ function rollRarity(checksStreak: number): MonRarity {
 }
 
 function pickMonForScene(rarity: MonRarity, sc: string): MonSpec {
-  const list = sc === "area3" ? BESTIARY_A3 : sc === "route2" ? BESTIARY_R2 : BESTIARY;
+  const list = sc === "area3" ? BESTIARY_A3 : sc === "route2" ? BESTIARY_R2 : sc === "shore" ? BESTIARY_SHORE : BESTIARY;
   const pool = list.filter(m => m.rarity === rarity);
   return pool[Math.floor(Math.random() * pool.length)] ?? list[0];
 }
@@ -1235,7 +1316,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   // Saves live in localStorage and could be malformed/tampered, so we validate
   // the scene against the known walkable set and require finite coordinates;
   // anything off falls back to the safe home spawn.
-  const WALKABLE_SCENES: Scene[] = ["overworld","lab","maya","jay","home","ellio","lia","route1","route2","area3","farm"];
+  const WALKABLE_SCENES: Scene[] = ["overworld","lab","maya","jay","home","ellio","lia","route1","route2","area3","farm","shore"];
   const resume = (() => {
     if (!savedWorld) return null;
     const HOME = { scene: "home" as Scene, x: 400, y: 670 };
@@ -1354,7 +1435,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const [wyrLoyalty,           setWyrLoyalty]           = useState(() => savedWorld?.wyrLoyalty ?? 0);
   const [jayA3Wins,            setJayA3Wins]            = useState(() => savedWorld?.jayA3Wins ?? 0);
   const [liaA3Wins,            setLiaA3Wins]            = useState(() => savedWorld?.liaA3Wins ?? 0);
-  const [trainerEncounter,     setTrainerEncounter]     = useState<{ trainer:"jay"|"lia"|"jerbs"; name:string; team:MonSpec[]; levels:number[] } | null>(null);
+  const [trainerEncounter,     setTrainerEncounter]     = useState<{ trainer:"jay"|"lia"|"jerbs"|"prof"; name:string; team:MonSpec[]; levels:number[] } | null>(null);
   const [nearJayA3,            setNearJayA3]            = useState(false);
   const [jayA3InteractPos,     setJayA3InteractPos]     = useState({ sx: 0, sy: 0 });
   const [nearLiaA3,            setNearLiaA3]            = useState(false);
@@ -1381,6 +1462,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const [hasCrucibyx,          setHasCrucibyx]          = useState(() => savedWorld?.hasCrucibyx ?? false);
   const [showShellPicker,      setShowShellPicker]      = useState(false);
   const [showRunePicker,       setShowRunePicker]       = useState(false);
+  const [primeriaCoin,         setPrimeriaCoin]         = useState(() => savedWorld?.primeriaCoin ?? 0);
+  const [profShoreWins,        setProfShoreWins]        = useState(() => savedWorld?.profShoreWins ?? 0);
+  const [profShorePaid,        setProfShorePaid]        = useState(() => savedWorld?.profShorePaid ?? 0);
+  const [nearProfShore,        setNearProfShore]        = useState(false);
+  const [profShoreInteractPos, setProfShoreInteractPos] = useState({ sx: 0, sy: 0 });
+  const profShoreCanvasRef   = useRef<HTMLCanvasElement>(null);
+  const profShorePortraitRef = useRef<HTMLCanvasElement>(null);
   const [nearShella,           setNearShella]           = useState(false);
   const [shellaInteractPos,    setShellaInteractPos]    = useState({ sx: 0, sy: 0 });
   const [nearRunrik,           setNearRunrik]           = useState(false);
@@ -1629,6 +1717,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     hollisGifted, duskberries, thornberries, calmberries, brightberries,
     farmVisited, farmShellsGiven, farmRunesGiven, marenGifted,
     ownedBattleShellIds, equippedBattleShellId, ownedBattleRuneIds, slottedBattleRuneId, hasCrucibyx,
+    primeriaCoin, profShoreWins, profShorePaid,
   });
   const persistWorld = useCallback(() => {
     const safe = lastSafeRef.current;
@@ -1654,6 +1743,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       hollisGifted, duskberries, thornberries, calmberries, brightberries,
       farmVisited, farmShellsGiven, farmRunesGiven, marenGifted,
       ownedBattleShellIds, equippedBattleShellId, ownedBattleRuneIds, slottedBattleRuneId, hasCrucibyx,
+      primeriaCoin, profShoreWins, profShorePaid,
     };
     persistWorld();
   }, [
@@ -1668,6 +1758,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     hollisGifted, duskberries, thornberries, calmberries, brightberries,
     farmVisited, farmShellsGiven, farmRunesGiven, marenGifted,
     ownedBattleShellIds, equippedBattleShellId, ownedBattleRuneIds, slottedBattleRuneId, hasCrucibyx,
+    primeriaCoin, profShoreWins, profShorePaid,
     persistWorld,
   ]);
   // On resume with Wyvrunt already caught, seed the follower beside the player
@@ -1885,7 +1976,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   useEffect(() => {
     if (scene === "battle") {
       playTrack(BATTLE_TRACK);
-    } else if (scene === "route1" || scene === "route2" || scene === "area3") {
+    } else if (scene === "route1" || scene === "route2" || scene === "area3" || scene === "shore") {
       playTrack(ROUTE_TRACK);
     } else {
       playTrack(TOWN_TRACK);
@@ -2082,6 +2173,30 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     const src = "/__mockup/images/prof-irwyn-sprite.png";
     const tryDraw = () => {
       const c = profR2PortraitRef.current;
+      if (!c) return;
+      if (!drawSprite(c, src, false)) setTimeout(tryDraw, 150);
+    };
+    tryDraw();
+  }, [phase]);
+
+  // Draw Prof Irwyn world sprite on Tidemark Shore
+  useEffect(() => {
+    if (scene !== "shore") return;
+    const src = "/__mockup/images/prof-irwyn-sprite.png";
+    const tryDraw = () => {
+      const c = profShoreCanvasRef.current;
+      if (!c) return;
+      if (!drawSprite(c, src, false, 72)) setTimeout(tryDraw, 150);
+    };
+    tryDraw();
+  }, [scene]);
+
+  // Draw Prof Irwyn portrait for shore dialogue
+  useEffect(() => {
+    if (!phase.startsWith("prof_shore_")) return;
+    const src = "/__mockup/images/prof-irwyn-sprite.png";
+    const tryDraw = () => {
+      const c = profShorePortraitRef.current;
       if (!c) return;
       if (!drawSprite(c, src, false)) setTimeout(tryDraw, 150);
     };
@@ -2338,8 +2453,9 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           setLockedDoorNotif("The cliff stairs are sealed for now.");
           window.setTimeout(() => setLockedDoorNotif(null), 1600);
         } else if (sc === "route2" && inRect(worldPos.current.x, worldPos.current.y, R2_SOUTH_BLOCKED)) {
-          worldPos.current.y = R2_SOUTH_BLOCKED[1] - 20;
-          setLockedDoorNotif("The south path is blocked.");
+          transitionTo("shore", SHORE_SPAWN.x, SHORE_SPAWN.y);
+        } else if (sc === "shore" && inRect(worldPos.current.x, worldPos.current.y, SHORE_NORTH_EXIT)) {
+          transitionTo("route2", 480, R2_SOUTH_BLOCKED[1] - 60);
           window.setTimeout(() => setLockedDoorNotif(null), 1600);
         } else if (sc === "route2" && inRect(worldPos.current.x, worldPos.current.y, R2_LOCKED_DOOR)) {
           worldPos.current.y = R2_LOCKED_DOOR[3] + 20;
@@ -2612,6 +2728,15 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             }
           }
         }
+        // Shore — Prof. Irwyn proximity
+        if (sc === "shore") {
+          const screenX = (px - cam.current.x) * ZOOM;
+          const screenY = (py - cam.current.y - topOff - 28) * ZOOM;
+          const dp = dist(px, py, PROF_SHORE_POS.x, PROF_SHORE_POS.y);
+          const nearP = dp < 100;
+          if (nearP !== nearProfShore) setNearProfShore(nearP);
+          if (nearP) setProfShoreInteractPos({ sx: screenX, sy: screenY });
+        }
         // Farm NPC proximity
         if (sc === "farm") {
           const screenX = (px - cam.current.x) * ZOOM;
@@ -2657,6 +2782,10 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       runrik_done: "walk", runrik_idle: "walk",
       maren_d1: "maren_d2", maren_d2: "walk",
       maren_done: "walk", maren_idle: "walk",
+      // Tidemark Shore — Prof. Irwyn challenger battle
+      prof_shore_d1: "prof_shore_d2", prof_shore_d2: "prof_shore_battle",
+      prof_shore_win: "walk", prof_shore_lose: "walk",
+      prof_shore_idle: "walk", prof_shore_done: "walk",
       scripted_t1: "scripted_t2", scripted_t2: "scripted_set",
       scripted_set: "scripted_caught", scripted_caught: "walk",
       // Ambient idle chats just close (no flags touched).
@@ -2855,6 +2984,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     jerbs_stone_pick: "",
     jerbs_crystal_evo: "",
     demo_end: "",
+    prof_shore_d1: "Ah — a Keeper who made it to Tidemark Shore. The waves here test the spirit. I've been waiting for someone worth challenging.",
+    prof_shore_d2: `Before we begin, take ${SHORE_COIN_GIFT} PrimeriaCoin. Win or lose — it's yours. Consider it funding for your journey. Now, shall we?`,
+    prof_shore_battle: "",
+    prof_shore_win: "Well done. Very well done. Your Tayanari fight with real conviction.",
+    prof_shore_lose: "A fine battle. The shore will humble you — that's its gift. Come back whenever you're ready to try again.",
+    prof_shore_idle: "The tide turns on its own schedule. Challenge me whenever the moment feels right.",
+    prof_shore_done: "You've proven yourself here. The sea beyond these cliffs holds deeper mysteries still — keep exploring.",
   };
 
   // ── Encounter handlers & disturbance tick ──────────────────────────────────
@@ -3167,15 +3303,24 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       if (enc.trainer === "jay") setJayA3Wins(w => Math.min(3, w + 1));
       else if (enc.trainer === "lia") setLiaA3Wins(w => Math.min(3, w + 1));
       else if (enc.trainer === "jerbs") setJerbsBattleDone(true);
+      else if (enc.trainer === "prof") {
+        setProfShoreWins(w => w + 1);
+        // Gift: resonance_fill rune on first shore win
+        setOwnedBattleRuneIds(ids => ids.includes("resonance_fill") ? ids : [...ids, "resonance_fill"]);
+      }
       setBattleNotif({ title: `You beat ${enc.name}!`, sub: `+${r.xpGained} XP` });
-      setPhase(enc.trainer === "jay" ? "jay_a3_win" : enc.trainer === "lia" ? "lia_a3_win" : "jerbs_crystal_d1");
+      setPhase(enc.trainer === "jay" ? "jay_a3_win" : enc.trainer === "lia" ? "lia_a3_win" : enc.trainer === "prof" ? "prof_shore_win" : "jerbs_crystal_d1");
     } else {
       setBattleNotif({ title: `${enc.name} won this round.`, sub: "Come back stronger!" });
-      setPhase(enc.trainer === "jay" ? "jay_a3_lose" : enc.trainer === "lia" ? "lia_a3_lose" : "jerbs_battle_intro");
+      setPhase(enc.trainer === "jay" ? "jay_a3_lose" : enc.trainer === "lia" ? "lia_a3_lose" : enc.trainer === "prof" ? "prof_shore_lose" : "jerbs_battle_intro");
     }
     setTrainerEncounter(null);
     window.setTimeout(() => setBattleNotif(null), 2800);
-    transitionTo("area3", returnX, returnY);
+    if (enc.trainer === "prof") {
+      transitionTo("shore", SHORE_SPAWN.x, SHORE_SPAWN.y - 80);
+    } else {
+      transitionTo("area3", returnX, returnY);
+    }
 
     const outcome = result.kind === "trainerWin"
       ? `You defeated ${enc.name}'s team!`
@@ -3228,7 +3373,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           shellsCount={shellCount}
           heroImg={heroSideImg}
           opponentKind="keeper"
-          keeperImg={trainerEncounter.trainer === "jay" ? "/__mockup/images/jay-sprite.png" : trainerEncounter.trainer === "lia" ? "/__mockup/images/lia.png" : "/__mockup/images/jerbs_sprite.png"}
+          keeperImg={trainerEncounter.trainer === "jay" ? "/__mockup/images/jay-sprite.png" : trainerEncounter.trainer === "lia" ? "/__mockup/images/lia.png" : trainerEncounter.trainer === "prof" ? "/__mockup/images/prof-irwyn-sprite.png" : "/__mockup/images/jerbs_sprite.png"}
           keeperName={trainerEncounter.name}
           keeperTeam={trainerEncounter.team}
           keeperMonLevels={trainerEncounter.levels}
@@ -3331,13 +3476,33 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         {/* World container — camera-scrolled + zoomed */}
         <div ref={worldRef} style={{
           position: "absolute",
-          width:  scene === "overworld" ? OW.w : scene === "lab" ? LB.w : scene === "route1" ? R1.w : scene === "route2" ? R2.w : scene === "area3" ? A3.w : scene === "farm" ? FARM.w : scene === "maya" ? MY.w : scene === "jay" ? JY.w : scene === "ellio" ? EH.w : scene === "lia" ? LH.w : PH.w,
-          height: scene === "overworld" ? OW.h : scene === "lab" ? LB.h : scene === "route1" ? R1.h : scene === "route2" ? R2.h : scene === "area3" ? A3.h : scene === "farm" ? FARM.h : scene === "maya" ? MY.h : scene === "jay" ? JY.h : scene === "ellio" ? EH.h : scene === "lia" ? LH.h : PH.h,
+          width:  scene === "overworld" ? OW.w : scene === "lab" ? LB.w : scene === "route1" ? R1.w : scene === "route2" ? R2.w : scene === "area3" ? A3.w : scene === "farm" ? FARM.w : scene === "shore" ? SHORE.w : scene === "maya" ? MY.w : scene === "jay" ? JY.w : scene === "ellio" ? EH.w : scene === "lia" ? LH.w : PH.w,
+          height: scene === "overworld" ? OW.h : scene === "lab" ? LB.h : scene === "route1" ? R1.h : scene === "route2" ? R2.h : scene === "area3" ? A3.h : scene === "farm" ? FARM.h : scene === "shore" ? SHORE.h : scene === "maya" ? MY.h : scene === "jay" ? JY.h : scene === "ellio" ? EH.h : scene === "lia" ? LH.h : PH.h,
           willChange: "transform",
           transformOrigin: "0 0",
           transform: `scale(${ZOOM}) translate(${-cam.current.x}px,${-cam.current.y}px)`,
         }}>
           {/* Map background */}
+          {scene === "shore" ? (
+            <div key="shore-bg" style={{
+              position: "absolute", inset: 0,
+              width: SHORE.w, height: SHORE.h,
+              background: [
+                "linear-gradient(180deg,",
+                "#7ab4d2 0%,",
+                "#9ecce0 18%,",
+                "#b8d8e4 28%,",
+                "#7a9d78 31%,",
+                "#567050 38%,",
+                "#435840 50%,",
+                "#344430 60%,",
+                "#1e3858 64%,",
+                "#152e80 80%,",
+                "#0a1a50 100%",
+                ")",
+              ].join(" "),
+            }}/>
+          ) : (
           <img
             key={scene}
             src={scene === "ellio" ? "/__mockup/images/ellio-home-interior.png"
@@ -3360,6 +3525,30 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             decoding="async"
             style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit: scene === "overworld" ? "fill" : "cover" }}
           />
+          )}
+
+          {/* ── Shore horizon decorations (cliffs + ocean shimmer) ──────── */}
+          {scene === "shore" && (
+            <>
+              <div style={{ position:"absolute", left:0, top:290, width:1024, height:12,
+                background:"linear-gradient(90deg,#344430,#435840 30%,#344430 70%,#2e3c28)",
+                opacity:0.85, borderRadius:2, pointerEvents:"none" }}/>
+              <div style={{ position:"absolute", left:0, top:620, width:1024, height:20,
+                background:"linear-gradient(180deg,#1e3858 0%,#152e80 100%)",
+                opacity:0.6, pointerEvents:"none" }}/>
+              <div style={{ position:"absolute", left:0, top:640, width:1024, height:128,
+                background:"repeating-linear-gradient(90deg,rgba(100,160,220,0.07) 0px,rgba(100,160,220,0.12) 80px,rgba(100,160,220,0.07) 160px)",
+                pointerEvents:"none", animation:"waveScroll 6s linear infinite" }}/>
+            </>
+          )}
+
+          {/* ── Shore — Prof. Irwyn NPC ──────────────────────────────────── */}
+          {scene === "shore" && (
+            <>
+              <canvas ref={profShoreCanvasRef} style={{ position:"absolute", imageRendering:"auto", pointerEvents:"none", zIndex:5, left: PROF_SHORE_POS.x - 36, top: PROF_SHORE_POS.y - 72 }}/>
+              <div style={{ position:"absolute", zIndex:6, left: PROF_SHORE_POS.x - 28, top: PROF_SHORE_POS.y - 92, color:"#e8d060", fontSize:8, fontWeight:800, letterSpacing:1, pointerEvents:"none", textShadow:"0 0 4px #000,0 0 8px #000" }}>PROF. IRWYN</div>
+            </>
+          )}
 
           {/* Dev: collision zone visualiser (hidden while walls are off) */}
           {DEV_COLLISIONS && WALLS_ON && !wallEditMode && (
@@ -3796,8 +3985,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
 
 
           {/* Encounter zone hotspots — rendered in route1, area3, and route2 (after wyvrunt) */}
-          {(scene === "route1" || scene === "area3" || (scene === "route2" && wyvruntCaught)) && (() => {
-            const hs = scene === "area3" ? A3_HOTSPOTS : scene === "route2" ? R2_HOTSPOTS : R1_HOTSPOTS;
+          {(scene === "route1" || scene === "area3" || scene === "shore" || (scene === "route2" && wyvruntCaught)) && (() => {
+            const hs = scene === "area3" ? A3_HOTSPOTS : scene === "route2" ? R2_HOTSPOTS : scene === "shore" ? SHORE_HOTSPOTS : R1_HOTSPOTS;
             return (
               <>
                 {/* Disturbance hotspots — 5-tier rarity-animated encounter circles */}
@@ -4188,6 +4377,30 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           <button onClick={() => setPhase(marenGifted ? "maren_idle" : "maren_d1")}
             style={{ position:"absolute", left: marenInteractPos.sx - 14, top: marenInteractPos.sy - 10, width:28, height:28, borderRadius:"50%", background:"#90c060", border:"2px solid #fff", color:"#fff", fontSize:16, fontWeight:900, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite", zIndex:10 }}
           >!</button>
+        )}
+
+        {/* ── INTERACT BUTTON — Prof. Irwyn (Tidemark Shore) ──────────── */}
+        {scene === "shore" && nearProfShore && phase === "walk" && (
+          <button
+            onClick={() => {
+              if (profShoreWins === 0) {
+                setPhase("prof_shore_d1");
+              } else if (profShoreWins > 0) {
+                setPhase("prof_shore_idle");
+              } else {
+                setPhase("prof_shore_done");
+              }
+            }}
+            style={{
+              position:"absolute",
+              left: profShoreInteractPos.sx - 14, top: profShoreInteractPos.sy - 10,
+              width:28, height:28, borderRadius:"50%",
+              background:"#4080e0", border:"2px solid #fff",
+              color:"#fff", fontSize:16, fontWeight:900,
+              display:"flex", alignItems:"center", justifyContent:"center",
+              cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite", zIndex:10,
+            }}
+          >{profShoreWins === 0 ? "!" : "↺"}</button>
         )}
 
         {/* ── INTERACT BUTTON — Jess ────────────────────────────────────── */}
@@ -4720,6 +4933,47 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               }} style={{ background:"rgba(144,192,96,0.15)", border:"1px solid rgba(144,192,96,0.5)", color:"#90c060", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}>
                 {phase === "maren_d2" && !marenGifted ? "Meet Cruci! ✦" : phase === "maren_done" || phase === "maren_idle" ? "OK" : "Next ▶"}
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── PROF IRWYN — Tidemark Shore challenger dialogue ─────────────── */}
+        {(phase === "prof_shore_d1" || phase === "prof_shore_d2" || phase === "prof_shore_win" || phase === "prof_shore_lose" || phase === "prof_shore_idle" || phase === "prof_shore_done") && (
+          <div style={{ position:"absolute", bottom:0, left:0, right:0, background:"linear-gradient(to top,rgba(10,16,30,0.97),rgba(14,20,38,0.93))", borderTop:"2px solid rgba(64,128,224,0.7)", padding:"10px 14px 14px", zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+              <canvas ref={profShorePortraitRef} width={44} height={44} style={{ width:44, height:44, borderRadius:8, background:"#08101e", border:"1px solid rgba(64,128,224,0.4)" }}/>
+              <div>
+                <span style={{ color:"#78aae8", fontWeight:700, fontSize:13, letterSpacing:1 }}>PROF. IRWYN</span>
+                {primeriaCoin > 0 && <span style={{ marginLeft:10, color:"#f0c830", fontSize:11, fontWeight:700 }}>₡{primeriaCoin}</span>}
+              </div>
+            </div>
+            <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>
+              {phase === "prof_shore_d1" && "Ah — a Keeper who made it to Tidemark Shore. The waves here test the spirit. I've been waiting for someone worth challenging."}
+              {phase === "prof_shore_d2" && `Before we begin, take ${SHORE_COIN_GIFT} PrimeriaCoin. Win or lose — it's yours. Consider it funding for your journey. Now, shall we?`}
+              {phase === "prof_shore_win" && (profShoreWins >= 1 ? "Exceptional. You've bested my team. Take the Resonance Rune — you've more than earned it." : "Well done. Very well done. Your Tayanari fight with real conviction.")}
+              {phase === "prof_shore_lose" && "A fine battle. The shore will humble you — that's its gift. Come back whenever you're ready to try again."}
+              {phase === "prof_shore_idle" && "The tide turns on its own schedule. Challenge me whenever the moment feels right."}
+              {phase === "prof_shore_done" && "You've proven yourself here. The sea beyond these cliffs holds deeper mysteries still — keep exploring."}
+            </p>
+            <div style={{ display:"flex", justifyContent:"flex-end" }}>
+              {phase === "prof_shore_d2" ? (
+                <button onClick={() => {
+                  if (profShorePaid < 2) {
+                    setPrimeriaCoin(c => c + SHORE_COIN_GIFT);
+                    setProfShorePaid(p => p + 1);
+                  }
+                  const tier = profShoreTeam();
+                  setTrainerEncounter({ trainer: "prof", name: "Prof. Irwyn", team: tier.team, levels: tier.levels });
+                  transitionTo("battle", worldPos.current.x, worldPos.current.y);
+                }} style={{ background:"rgba(220,80,40,0.18)", border:"1px solid rgba(220,80,40,0.55)", color:"#e87050", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}>
+                  ⚔ Battle!
+                </button>
+              ) : (
+                <button onClick={() => advanceDialog(phase)}
+                  style={{ background:"rgba(64,128,224,0.15)", border:"1px solid rgba(64,128,224,0.5)", color:"#78aae8", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}>
+                  {phase === "prof_shore_win" || phase === "prof_shore_lose" || phase === "prof_shore_idle" || phase === "prof_shore_done" ? "OK" : "Next ▶"}
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -6758,7 +7012,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           border:"1px solid rgba(240,208,96,0.3)", pointerEvents:"none",
           textTransform:"uppercase", zIndex:5,
         }}>
-          {scene === "overworld" ? "Primeria Village" : scene === "lab" ? "Prof. Irwyn's Lab" : scene === "maya" ? "Maya's Home" : scene === "jay" ? "Jay's Home" : scene === "ellio" ? "Ellio's Home" : scene === "lia" ? "Lia's Home" : scene === "route1" ? "Whisperroot Trail" : scene === "route2" ? "Route 2 — Eastern Path" : scene === "farm" ? "Primeria Farm" : scene === "battle" ? "Battle" : "Your Home"}
+          {scene === "overworld" ? "Primeria Village" : scene === "lab" ? "Prof. Irwyn's Lab" : scene === "maya" ? "Maya's Home" : scene === "jay" ? "Jay's Home" : scene === "ellio" ? "Ellio's Home" : scene === "lia" ? "Lia's Home" : scene === "route1" ? "Whisperroot Trail" : scene === "route2" ? "Route 2 — Eastern Path" : scene === "farm" ? "Primeria Farm" : scene === "shore" ? "Tidemark Shore" : scene === "battle" ? "Battle" : "Your Home"}
         </div>
 
         {/* Role badge — declared path + active boon (hidden until declared) */}
@@ -7143,6 +7397,12 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             <Btn d="down" label="↓" />
             <button onClick={() => { setJournalTab("party"); setShowJournal(true); }} style={{ width:52, height:52, borderRadius:12, background:"rgba(44,26,14,0.75)", border:"1.5px solid rgba(180,130,60,0.45)", color:"#c8a44a", fontSize:20, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:1, cursor:"pointer", backdropFilter:"blur(6px)", boxShadow:"0 2px 8px rgba(0,0,0,0.5)" }} aria-label="START — Menu">📖</button>
             <button onClick={() => { setJournalTab("bag"); setShowJournal(true); }} style={{ width:52, height:52, borderRadius:12, background:"rgba(44,26,14,0.75)", border:"1.5px solid rgba(180,130,60,0.45)", color:"#c8a44a", fontSize:20, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:1, cursor:"pointer", backdropFilter:"blur(6px)", boxShadow:"0 2px 8px rgba(0,0,0,0.5)" }} aria-label="SELECT — Bag">🎒</button>
+            {primeriaCoin > 0 && (
+              <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", width:52, height:52, borderRadius:12, background:"rgba(30,22,4,0.75)", border:"1.5px solid rgba(240,200,50,0.45)", boxShadow:"0 2px 8px rgba(0,0,0,0.5)", backdropFilter:"blur(6px)", pointerEvents:"none" }}>
+                <span style={{ fontSize:18, lineHeight:1 }}>₡</span>
+                <span style={{ fontSize:7, fontWeight:700, color:"#f0c830", letterSpacing:0.5, lineHeight:1.2 }}>{primeriaCoin}</span>
+              </div>
+            )}
             <button onClick={() => { persistWorldRef.current(); setJustSaved(true); window.setTimeout(() => setJustSaved(false), 1600); }} style={{ width:52, height:52, borderRadius:12, background: justSaved ? "rgba(30,60,30,0.85)" : "rgba(14,34,14,0.75)", border: justSaved ? "1.5px solid rgba(80,200,80,0.75)" : "1.5px solid rgba(80,160,80,0.45)", color: justSaved ? "#80e880" : "#70b870", fontSize: justSaved ? 18 : 20, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:1, cursor:"pointer", backdropFilter:"blur(6px)", boxShadow: justSaved ? "0 2px 12px rgba(80,200,80,0.35)" : "0 2px 8px rgba(0,0,0,0.5)", transition:"background 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s" }} aria-label="Save game">{justSaved ? <span style={{ fontSize:16, fontWeight:900, lineHeight:1 }}>✓</span> : "💾"}<span style={{ fontSize:7, letterSpacing:0.5, fontWeight:700, lineHeight:1, color: justSaved ? "#80e880" : "#507850" }}>{justSaved ? "SAVED" : "SAVE"}</span></button>
           </div>
         </div>
