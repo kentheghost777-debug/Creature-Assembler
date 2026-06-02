@@ -313,6 +313,87 @@ export function MoveFx({
   );
 }
 
+export function ResonanceFx({
+  element, color, imgBase = "/__mockup/images",
+}: {
+  element: string; color: string; imgBase?: string;
+}) {
+  const fxKey = EL_FX[element];
+  return (
+    <div style={{ position:"absolute", inset:0, pointerEvents:"none" }}>
+      <div style={{
+        position:"absolute", inset:0, background:"#000",
+        animation:"resDark 1.4s ease-out forwards", zIndex:0,
+      }}/>
+      <div style={{
+        position:"absolute", left:"26%", top:"52%", zIndex:1,
+        width:340, height:340, borderRadius:"50%",
+        background:`radial-gradient(circle, ${color}66 0%, ${color}22 45%, transparent 72%)`,
+        transform:"translate(-50%,-50%)",
+        animation:"resBloom 1.2s ease-out 0.04s forwards",
+        mixBlendMode:"screen",
+      }}/>
+      {[0,1,2].map(i => (
+        <div key={i} style={{
+          position:"absolute", left:"26%", top:"52%", zIndex:1,
+          width:70, height:70, borderRadius:"50%",
+          border:`${3 - i * 0.6}px solid ${color}`,
+          boxShadow:`0 0 22px ${color}, inset 0 0 10px ${color}88`,
+          transform:"translate(-50%,-50%)",
+          animation:`resRing 1.05s ease-out ${i * 0.19}s forwards`,
+          mixBlendMode:"screen",
+        }}/>
+      ))}
+      {fxKey && (
+        <>
+          <div style={{
+            position:"absolute", left:"26%", top:"52%", zIndex:2,
+            width:370, height:370, borderRadius:"50%",
+            background:`radial-gradient(circle, ${color}88 0%, ${color}33 50%, transparent 75%)`,
+            transform:"translate(-50%,-50%)",
+            animation:"resBurst 1.2s ease-out 0.07s forwards",
+            mixBlendMode:"screen",
+          }}/>
+          <img src={`${imgBase}/${fxKey}.png`} alt="" style={{
+            position:"absolute", left:"26%", top:"52%", zIndex:2,
+            width:370, height:370, objectFit:"contain",
+            transform:"translate(-50%,-50%)",
+            animation:"resBurst 1.2s ease-out 0.07s forwards",
+            filter:`drop-shadow(0 0 32px ${color}) drop-shadow(0 0 16px ${color}) drop-shadow(0 0 8px #fff)`,
+            pointerEvents:"none",
+          }}/>
+        </>
+      )}
+      {Array.from({length:8}).map((_,i) => {
+        const a = (i / 8) * Math.PI * 2;
+        const tx = Math.cos(a) * 90;
+        const ty = Math.sin(a) * 90;
+        return (
+          <div key={i} style={{
+            position:"absolute", left:"26%", top:"52%", zIndex:3,
+            ["--tx" as string]:`${tx}px`,
+            ["--ty" as string]:`${ty}px`,
+            width: i % 3 === 0 ? 10 : 7, height: i % 3 === 0 ? 10 : 7, borderRadius:"50%",
+            background: i % 2 === 0 ? color : "#fff",
+            boxShadow:`0 0 12px ${color}, 0 0 5px #fff`,
+            transform:"translate(-50%,-50%)",
+            animation:`resScatter 0.95s ease-out ${i * 0.055}s forwards`,
+            mixBlendMode:"screen",
+          }}/>
+        );
+      })}
+    </div>
+  );
+}
+
+export const RESONANCE_FX_KEYFRAMES = `
+  @keyframes resDark    { 0%{opacity:0} 12%{opacity:0.56} 75%{opacity:0.48} 100%{opacity:0} }
+  @keyframes resBurst   { 0%{transform:translate(-50%,-50%) scale(0.08) rotate(-18deg);opacity:0} 18%{opacity:1} 58%{transform:translate(-50%,-50%) scale(1.24) rotate(5deg);opacity:1} 100%{transform:translate(-50%,-50%) scale(1.6) rotate(9deg);opacity:0} }
+  @keyframes resRing    { 0%{transform:translate(-50%,-50%) scale(0);opacity:1} 100%{transform:translate(-50%,-50%) scale(6.5);opacity:0} }
+  @keyframes resScatter { 0%{transform:translate(-50%,-50%);opacity:0} 18%{opacity:1} 100%{transform:translate(calc(-50% + var(--tx)),calc(-50% + var(--ty)));opacity:0} }
+  @keyframes resBloom   { 0%{transform:translate(-50%,-50%) scale(0);opacity:0.9} 100%{transform:translate(-50%,-50%) scale(3.4);opacity:0} }
+`;
+
 export const MOVE_FX_KEYFRAMES = `
   @keyframes mvTravel {
     0%   { transform: translate(-50%,-50%) translate(0,0) scale(0.5); opacity: 0; }

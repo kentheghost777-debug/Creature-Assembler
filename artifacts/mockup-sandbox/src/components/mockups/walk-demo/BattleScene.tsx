@@ -4,7 +4,7 @@ import {
   type Move, getMove, asElement, computeDamage, effectiveness, effLabel,
   defaultActiveMoves, wildCombatStats, wildLevelFor,
 } from "./moves";
-import { MoveFx, MOVE_FX_KEYFRAMES } from "./battleFx";
+import { MoveFx, MOVE_FX_KEYFRAMES, ResonanceFx, RESONANCE_FX_KEYFRAMES } from "./battleFx";
 
 // Last-resort move when every active move is out of PP.
 const STRUGGLE: Move = {
@@ -349,6 +349,7 @@ export function BattleScene({
   // Move animation overlay.
   type MoveFxState = { anim: Move["anim"]; color: string; from: "player" | "wild"; category: Move["category"]; id: number; element?: string; power?: number };
   const [moveFx, setMoveFx] = useState<MoveFxState | null>(null);
+  const [resonanceFx, setResonanceFx] = useState<{ element: string; color: string; id: number } | null>(null);
 
   useEffect(() => {
     const t1 = window.setTimeout(() => { setIntro(false); setBusy(false); }, 1100);
@@ -644,6 +645,9 @@ export function BattleScene({
     setResBar(0);
     const resColor = typeColor(active.type);
     triggerAux("resonate", resColor, undefined, 900);
+    const rxId = nextFxId();
+    setResonanceFx({ element: active.type, color: resColor, id: rxId });
+    later(() => setResonanceFx(curr => curr?.id === rxId ? null : curr), 1400);
     if (active.type === "Spirit") {
       // Fae-like: revival/cleanse — heals fully. Resonance = Keeper action; player retains turn.
       setBusy(true);
@@ -1046,6 +1050,12 @@ export function BattleScene({
             background: screenFlash === "player" ? "#ff333318" : "#ffffff18",
             animation: "screenFlashFade 0.19s ease-out forwards",
           }}/>
+        )}
+        {/* Resonance burst FX — element-specific cinematic overlay */}
+        {resonanceFx && (
+          <div key={`res-${resonanceFx.id}`} style={{ position:"absolute", inset:0, pointerEvents:"none", zIndex:9 }}>
+            <ResonanceFx element={resonanceFx.element} color={resonanceFx.color} />
+          </div>
         )}
         {/* Attack streak + impact burst */}
         {attackFx && (
@@ -1518,6 +1528,7 @@ export function BattleScene({
           30%  { transform: scale(1.25) rotate(180deg); filter: drop-shadow(0 0 18px #ff6040) brightness(1.5); }
           100% { transform: scale(0) rotate(540deg);    opacity: 0; }
         }
+        ${RESONANCE_FX_KEYFRAMES}
         ${MOVE_FX_KEYFRAMES}
       `}</style>
     </div>

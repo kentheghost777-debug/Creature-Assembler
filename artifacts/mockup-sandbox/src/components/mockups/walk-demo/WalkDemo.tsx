@@ -3520,78 +3520,123 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             const hs = scene === "area3" ? A3_HOTSPOTS : scene === "route2" ? R2_HOTSPOTS : R1_HOTSPOTS;
             return (
               <>
-                {/* Disturbance hotspots — clickable bushes/rocks/stones */}
+                {/* Disturbance hotspots — 5-tier rarity-animated encounter circles */}
                 {hs.map((h, i) => {
                   const dist = activeDisturbances[i];
                   const onCd = !!hotspotCd[i];
                   const rarity = dist?.mon.rarity;
-                  const ringColor = rarity ? RARITY_COLOR[rarity] : "transparent";
+                  const rc = rarity ? RARITY_COLOR[rarity] : "transparent";
                   const distEl = dist ? asElement(dist.mon.type) : null;
-                  const elColor = distEl ? ELEMENT_COLOR[distEl] : ringColor;
-                  const drama = rarity === "apex" ? 1 : rarity === "ultra" ? 0.8 : rarity === "rare" ? 0.55 : rarity === "uncommon" ? 0.4 : rarity === "common" ? 0.25 : 0.15;
+                  const ec = distEl ? ELEMENT_COLOR[distEl] : rc;
+                  const r = h.r * HOTSPOT_VIS;
+                  const cx = h.r; const cy = h.r;
+                  const hsAnim = rarity === "apex" ? "hsApex" : rarity === "ultra" ? "hsUltra" : rarity === "rare" ? "hsRare" : rarity === "uncommon" ? "hsUncommon" : "hsCommon";
+                  const hsDur  = rarity === "apex" ? 0.9 : rarity === "ultra" ? 1.1 : rarity === "rare" ? 1.4 : rarity === "uncommon" ? 1.65 : 2.2;
+                  const glowPx = rarity === "apex" ? 44 : rarity === "ultra" ? 30 : rarity === "rare" ? 22 : rarity === "uncommon" ? 15 : 10;
+                  const symbol = rarity === "apex" ? "✦" : rarity === "ultra" ? "◆" : rarity === "rare" ? "▲" : null;
+                  const rings  = rarity === "apex" ? 3 : rarity === "ultra" ? 2 : rarity === "rare" ? 2 : rarity === "uncommon" ? 1 : 0;
+                  const spkN   = rarity === "apex" ? 6 : rarity === "ultra" ? 4 : rarity === "rare" ? 3 : 0;
                   return (
-                    <button
-                      key={i}
-                      onClick={() => handleHotspotClick(i, h)}
-                      style={{
-                        position:"absolute",
-                        left: h.x - h.r, top: h.y - h.r,
-                        width: h.r * 2, height: h.r * 2,
-                        background:"transparent",
-                        border:"none",
-                        cursor:"pointer",
-                        padding:0,
-                        opacity: onCd ? 0.25 : 1,
-                        zIndex: 4,
-                      }}
-                      aria-label={dist ? `disturbance-${rarity}` : `inspect-${h.kind}`}
-                    >
-                      <div style={{
-                        position:"absolute",
-                        left: h.r * (1 - HOTSPOT_VIS), top: h.r * (1 - HOTSPOT_VIS),
-                        width: h.r * 2 * HOTSPOT_VIS, height: h.r * 2 * HOTSPOT_VIS,
-                        borderRadius:"50%",
-                        background: dist
-                          ? `radial-gradient(circle, ${elColor}88 0%, ${elColor}33 42%, ${ringColor}1c 64%, transparent 80%)`
-                          : "transparent",
-                        border: dist ? `2px solid ${ringColor}` : "2px dashed rgba(180,160,80,0.18)",
-                        boxShadow: dist ? `0 0 ${20 + drama * 30}px ${ringColor}99, inset 0 0 ${10 + drama * 16}px ${elColor}66` : "none",
-                        animation: dist ? `disturb${rarity === "apex" || rarity === "ultra" ? "Big" : "Sml"} ${rarity === "apex" ? "1.0s" : rarity === "ultra" ? "1.2s" : "1.5s"} ease-in-out infinite` : undefined,
-                        pointerEvents:"none",
-                      }}/>
+                    <button key={i} onClick={() => handleHotspotClick(i, h)} style={{
+                      position:"absolute", left: h.x - h.r, top: h.y - h.r,
+                      width: h.r * 2, height: h.r * 2, background:"transparent",
+                      border:"none", cursor:"pointer", padding:0,
+                      opacity: onCd ? 0.18 : 1, zIndex: 4, transition:"opacity 0.45s",
+                    }} aria-label={dist ? `disturbance-${rarity}` : `inspect-${h.kind}`}>
+                      {!dist && (
+                        <div style={{
+                          position:"absolute", left:cx, top:cy,
+                          width: r * 2, height: r * 2, borderRadius:"50%",
+                          border:"1.5px dashed rgba(180,160,80,0.15)",
+                          transform:"translate(-50%,-50%)", pointerEvents:"none",
+                        }}/>
+                      )}
+                      {dist && (
+                        <div style={{
+                          position:"absolute", left:cx, top:cy,
+                          width: r * 2, height: r * 2, borderRadius:"50%",
+                          background:`radial-gradient(circle, ${ec}aa 0%, ${ec}55 38%, ${rc}25 65%, transparent 82%)`,
+                          border:`${rarity === "apex" || rarity === "ultra" ? 2.5 : 1.8}px solid ${rc}dd`,
+                          boxShadow:`0 0 ${glowPx}px ${rc}cc, 0 0 ${glowPx * 0.5}px ${ec}88, inset 0 0 ${glowPx * 0.55}px ${ec}44`,
+                          transform:"translate(-50%,-50%)",
+                          animation:`${hsAnim} ${hsDur}s ease-in-out infinite`,
+                          pointerEvents:"none",
+                        }}>
+                          {symbol && (
+                            <div style={{
+                              position:"absolute", left:"50%", top:"50%",
+                              transform:"translate(-50%,-50%)",
+                              fontSize: rarity === "apex" ? 13 : 10,
+                              color: rc, opacity:0.95,
+                              textShadow:`0 0 10px ${rc}, 0 0 5px #fff`,
+                              fontWeight:900, animation:`pulse ${hsDur * 0.8}s ease-in-out infinite`,
+                              pointerEvents:"none",
+                            }}>{symbol}</div>
+                          )}
+                        </div>
+                      )}
+                      {dist && Array.from({length:rings}).map((_,ri) => (
+                        <div key={ri} style={{
+                          position:"absolute", left:cx, top:cy,
+                          width: r * 2, height: r * 2, borderRadius:"50%",
+                          border:`${ri === 0 ? 1.8 : 1.2}px solid ${ri % 2 === 0 ? rc : ec}`,
+                          transform:"translate(-50%,-50%)",
+                          animation:`hsOuterRing ${hsDur * (1 + ri * 0.35)}s ease-out ${hsDur * ri * 0.28}s infinite`,
+                          pointerEvents:"none",
+                        }}/>
+                      ))}
+                      {dist && Array.from({length:spkN}).map((_,si) => {
+                        const a = (si / spkN) * Math.PI * 2;
+                        const sx = cx + Math.cos(a) * r * 0.85;
+                        const sy = cy + Math.sin(a) * r * 0.85;
+                        const spkDur = rarity === "apex" ? 0.75 : rarity === "ultra" ? 0.9 : 1.1;
+                        return (
+                          <div key={si} style={{
+                            position:"absolute", left:sx, top:sy,
+                            width: rarity === "apex" ? 6 : 5, height: rarity === "apex" ? 6 : 5, borderRadius:"50%",
+                            background: si % 2 === 0 ? rc : ec,
+                            boxShadow:`0 0 8px ${rc}, 0 0 4px #fff`,
+                            transform:"translate(-50%,-50%)",
+                            animation:`hsSparkle ${spkDur}s ease-in-out ${si * (spkDur / spkN)}s infinite`,
+                            pointerEvents:"none",
+                          }}/>
+                        );
+                      })}
                     </button>
                   );
                 })}
 
-                {/* Orbiting element motes (one rotating wrapper per disturbance, skipped for commons) */}
+                {/* Orbiting element motes (one rotating wrapper per active disturbance, skipped for commons) */}
                 {Object.entries(activeDisturbances).map(([k, d]) => {
                   if (d.mon.rarity === "common") return null;
                   const h = hs[Number(k)];
                   if (!h) return null;
                   const el = asElement(d.mon.type);
-                  const c = el ? ELEMENT_COLOR[el] : RARITY_COLOR[d.mon.rarity];
-                  const motes = d.mon.rarity === "apex" || d.mon.rarity === "ultra" ? 4 : 3;
-                  const ringR = h.r * HOTSPOT_VIS + 6;
-                  const spin = d.mon.rarity === "apex" ? "3.2s" : d.mon.rarity === "ultra" ? "4s" : "5.5s";
+                  const c  = el ? ELEMENT_COLOR[el] : RARITY_COLOR[d.mon.rarity];
+                  const rc = RARITY_COLOR[d.mon.rarity];
+                  const motes    = d.mon.rarity === "apex" ? 5 : d.mon.rarity === "ultra" ? 4 : 3;
+                  const moteSize = d.mon.rarity === "apex" ? 7 : d.mon.rarity === "ultra" ? 6 : 5;
+                  const ringR    = h.r * HOTSPOT_VIS + 9;
+                  const spin     = d.mon.rarity === "apex" ? "2.2s" : d.mon.rarity === "ultra" ? "3.0s" : d.mon.rarity === "rare" ? "4.0s" : "5.5s";
                   return (
                     <div key={`motes-${k}`} style={{
                       position:"absolute",
                       left: h.x - ringR, top: h.y - ringR,
                       width: ringR * 2, height: ringR * 2,
-                      pointerEvents:"none",
-                      animation: `runeSpin ${spin} linear infinite`,
-                      zIndex: 5,
+                      pointerEvents:"none", zIndex: 5,
+                      animation:`runeSpin ${spin} linear infinite`,
                     }}>
                       {Array.from({ length: motes }).map((_, m) => {
-                        const ang = (m / motes) * Math.PI * 2;
-                        const dx = ringR + Math.cos(ang) * ringR - 3;
-                        const dy = ringR + Math.sin(ang) * ringR - 3;
+                        const ang  = (m / motes) * Math.PI * 2;
+                        const dx   = ringR + Math.cos(ang) * ringR - moteSize * 0.5;
+                        const dy   = ringR + Math.sin(ang) * ringR - moteSize * 0.5;
+                        const col  = m % 2 === 0 ? c : rc;
                         return (
                           <div key={m} style={{
                             position:"absolute", left: dx, top: dy,
-                            width: 6, height: 6, borderRadius:"50%",
-                            background: c,
-                            boxShadow: `0 0 6px ${c}, 0 0 10px ${c}aa`,
+                            width: moteSize, height: moteSize, borderRadius:"50%",
+                            background: col,
+                            boxShadow:`0 0 ${moteSize + 3}px ${col}, 0 0 ${moteSize * 2}px ${col}88, 0 0 3px #fff8`,
                           }}/>
                         );
                       })}
@@ -6675,8 +6720,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       <style>{`
         @keyframes pulse       { 0%,100%{opacity:.35} 50%{opacity:1} }
         @keyframes bounce      { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
-        @keyframes disturbSml  { 0%,100%{transform:scale(1)} 50%{transform:scale(1.07)} }
-        @keyframes disturbBig  { 0%,100%{transform:scale(1) rotate(0deg)} 50%{transform:scale(1.18) rotate(2deg)} }
+        @keyframes hsCommon   { 0%,100%{transform:translate(-50%,-50%) scale(1.00);opacity:0.62} 50%{transform:translate(-50%,-50%) scale(1.07);opacity:1} }
+        @keyframes hsUncommon { 0%,100%{transform:translate(-50%,-50%) scale(1.00)} 42%{transform:translate(-50%,-50%) scale(1.15)} }
+        @keyframes hsRare     { 0%{transform:translate(-50%,-50%) scale(1.00) rotate(0deg)} 33%{transform:translate(-50%,-50%) scale(1.22) rotate(4deg)} 66%{transform:translate(-50%,-50%) scale(1.16) rotate(-2deg)} 100%{transform:translate(-50%,-50%) scale(1.00) rotate(0deg)} }
+        @keyframes hsUltra    { 0%,100%{transform:translate(-50%,-50%) scale(1.00);filter:brightness(1)} 30%{transform:translate(-50%,-50%) scale(1.32);filter:brightness(1.65)} 68%{transform:translate(-50%,-50%) scale(1.24);filter:brightness(1.38)} }
+        @keyframes hsApex     { 0%,100%{transform:translate(-50%,-50%) scale(1.00) rotate(0deg);filter:brightness(1)} 24%{transform:translate(-50%,-50%) scale(1.42) rotate(5deg);filter:brightness(2.05)} 60%{transform:translate(-50%,-50%) scale(1.32) rotate(-3deg);filter:brightness(1.7)} }
+        @keyframes hsOuterRing{ 0%{transform:translate(-50%,-50%) scale(1);opacity:0.88} 100%{transform:translate(-50%,-50%) scale(2.7);opacity:0} }
+        @keyframes hsSparkle  { 0%,100%{transform:translate(-50%,-50%) scale(0);opacity:0} 35%{transform:translate(-50%,-50%) scale(1.5);opacity:1} 65%{transform:translate(-50%,-50%) scale(1.1);opacity:0.6} }
         @keyframes pillarPulse { 0%,100%{opacity:.55} 50%{opacity:1} }
         @keyframes runeSpin    { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
         @keyframes floatUp     { 0%{opacity:0;transform:translate(-50%,0)} 15%{opacity:1} 100%{opacity:0;transform:translate(-50%,-40px)} }
