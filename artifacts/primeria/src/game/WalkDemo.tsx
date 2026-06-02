@@ -1849,11 +1849,11 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     // landed / been met), otherwise the freshly-mounted canvas stays blank.
   }, [scene, cleminusMet, portalOpen, jerbsAppeared]);
 
-  // Portal frame animation — cycles while portalOpen
+  // Portal frame animation — plays opening sequence (0→5) once, then holds
   useEffect(() => {
     if (!portalOpen) { setPortalFrame(0); return; }
     const iv = window.setInterval(() => {
-      setPortalFrame(f => (f + 1) % 10);
+      setPortalFrame(f => (f < 5 ? f + 1 : 5));
     }, 120);
     return () => clearInterval(iv);
   }, [portalOpen]);
