@@ -3758,14 +3758,10 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             boxShadow:"0 4px 24px rgba(80,200,80,0.25)",
             animation:"notifPop 0.4s ease-out forwards",
           }}>
-            <div style={{
-              width:42, height:42, borderRadius:8, flexShrink:0,
-              background:"radial-gradient(circle at 38% 33%,#1a4a1a,#0a1a0a)",
-              border:"1.5px solid rgba(80,200,80,0.55)",
-              display:"flex", alignItems:"center", justifyContent:"center",
-              fontSize:22, color:"rgba(80,220,80,0.9)",
-              boxShadow:"0 0 10px rgba(80,200,80,0.4)",
-            }}>✦</div>
+            <img src="/__mockup/images/obsidian-healing-rune.png" alt="Obsidian Healing Rune"
+              style={{ width:42, height:42, borderRadius:8, flexShrink:0, objectFit:"contain",
+                filter:"drop-shadow(0 0 8px rgba(120,80,220,0.65))" }}
+            />
             <div>
               <div style={{ color:"#80d080", fontWeight:800, fontSize:13, letterSpacing:0.5 }}>
                 Item Received!
@@ -5466,7 +5462,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                             color: healingRuneEquipped ? "rgba(80,220,80,0.9)" : "rgba(150,120,80,0.35)",
                             boxShadow: healingRuneEquipped ? "0 0 8px rgba(80,200,80,0.3)" : "none",
                             transition:"all 0.25s",
-                          }}>{healingRuneEquipped ? "✦" : "·"}</div>
+                          overflow:"hidden",
+                        }}>
+                          {healingRuneEquipped
+                            ? <img src="/__mockup/images/obsidian-healing-rune.png" alt="" style={{ width:"100%", height:"100%", objectFit:"contain" }}/>
+                            : "·"
+                          }
+                        </div>
                           <div style={{ flex:1 }}>
                             <div style={{ color:"#3a2a14", fontWeight:700, fontSize:11 }}>
                               {healingRuneEquipped ? "Obsidian Healing Rune" : "Rune Slot — empty"}
@@ -5785,14 +5787,11 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                         padding:"10px 2px 13px",
                         borderBottom:"1px dashed rgba(100,64,20,0.28)",
                       }}>
-                        <div style={{
-                          width:44, height:44, borderRadius:9, flexShrink:0,
-                          background:"radial-gradient(circle at 38% 33%,#1a4a1a,#0a1a0a)",
-                          border:"1.5px solid rgba(80,200,80,0.5)",
-                          display:"flex", alignItems:"center", justifyContent:"center",
-                          fontSize:22, color:"rgba(80,220,80,0.9)",
-                          boxShadow:"0 0 8px rgba(80,200,80,0.25)",
-                        }}>✦</div>
+                        <img src="/__mockup/images/obsidian-healing-rune.png" alt="Obsidian Healing Rune"
+                          style={{ width:44, height:44, borderRadius:9, flexShrink:0,
+                            objectFit:"contain",
+                            filter:"drop-shadow(0 0 6px rgba(120,80,220,0.6))" }}
+                        />
                         <div style={{ flex:1 }}>
                           <div style={{ color:"#2a1206", fontWeight:800, fontSize:14 }}>
                             Obsidian Healing Rune
