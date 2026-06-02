@@ -326,7 +326,7 @@ const TR_SAVEN:  MonSpec = { id:"tr_saven",  name:"Scavencrow",type:"Abyss",    
 const TR_MENTY:  MonSpec = { id:"tr_menty",  name:"Mentyke",  type:"Mind",      rarity:"ultra",    wildImg:"./images/mentyke-wild-a.png",    playerImg:"./images/mentyke-wild-b.png",   wildFaces:"left", playerFaces:"left", maxHp:80,  baseDmg:[8,16] };
 // Lia's team (Oceanic Cunbubble as anchor + Nature/Storm support).
 const TR_CUNB:   MonSpec = { id:"tr_cunb",   name:"Cunbubble",type:"Oceanic",   rarity:"uncommon", wildImg:"./images/phantorch.png",          playerImg:"./images/phantorch.png",         wildFaces:"left", playerFaces:"left", maxHp:58,  baseDmg:[6,12] };
-const TR_DRIFT:  MonSpec = { id:"tr_drift",  name:"Driftpaw", type:"Skyborne",  rarity:"uncommon", wildImg:"./images/vixgrim.png",            playerImg:"./images/vixgrim.png",           wildFaces:"left", playerFaces:"left", maxHp:56,  baseDmg:[6,11] };
+const TR_DRIFT:  MonSpec = { id:"tr_drift",  name:"Driftpaw", type:"Skyborne",  rarity:"uncommon", wildImg:"", playerImg:"", wildSheet:{url:"./images/a3-wild-sheet.png",x:0,y:768,w:512,h:384,sheetW:1024,sheetH:1536}, playerSheet:{url:"./images/a3-wild-sheet.png",x:0,y:768,w:512,h:384,sheetW:1024,sheetH:1536}, wildFaces:"left", playerFaces:"left", maxHp:56,  baseDmg:[6,11] };
 const TR_SPRIG:  MonSpec = { id:"tr_sprig",  name:"Sprigget", type:"Nature",    rarity:"common",   wildImg:"", playerImg:"",                          wildSheet:{ url:"./images/a3-wild-sheet.png", x:0, y:0, w:512, h:384, sheetW:1024, sheetH:1536 }, playerSheet:{ url:"./images/a3-wild-sheet.png", x:0, y:0, w:512, h:384, sheetW:1024, sheetH:1536 }, wildFaces:"left", playerFaces:"left", maxHp:52, baseDmg:[5,10] };
 const TR_MURK:   MonSpec = { id:"tr_murk",   name:"Murkspine",type:"Abyss",    rarity:"rare",     wildImg:"", playerImg:"",                          wildSheet:{ url:"./images/a3-new-sheet.png", x:512, y:0, w:512, h:512, sheetW:1536, sheetH:1024 }, playerSheet:{ url:"./images/a3-new-sheet.png", x:512, y:0, w:512, h:512, sheetW:1536, sheetH:1024 }, wildFaces:"left", playerFaces:"left", maxHp:78, baseDmg:[8,15] };
 // Lia's blue-and-grey Wyvburn (Draco) — her ace, strongest battle companion.
@@ -392,10 +392,10 @@ const BESTIARY_A3: MonSpec[] = [
     wildImg:"", playerImg:"", wildSheet:wldF(0,3), playerSheet:wldF(0,3),
     wildFaces:"left", playerFaces:"left", maxHp:38, baseDmg:[5,10] },
   { id:"stoneback_m", name:"Stoneback",  type:"Earthbound", rarity:"uncommon",
-    wildImg:"", playerImg:"", wildSheet:wldF(1,2), playerSheet:wldF(1,2),
+    wildImg:"", playerImg:"", wildSheet:wldF(1,3), playerSheet:wldF(1,3),
     wildFaces:"left", playerFaces:"left", maxHp:44, baseDmg:[4,8] },
   { id:"gloomcap",    name:"Gloomcap",   type:"Abyss",      rarity:"uncommon",
-    wildImg:"", playerImg:"", wildSheet:wldF(1,3), playerSheet:wldF(1,3),
+    wildImg:"", playerImg:"", wildSheet:wldF(1,2), playerSheet:wldF(1,2),
     wildFaces:"left", playerFaces:"left", maxHp:36, baseDmg:[5,11] },
   // ── RARE (A3-exclusive deep-wood spirits) ───────────────────────────────────
   { id:"silkfae_m",   name:"Silkfae",    type:"Spirit",     rarity:"rare",
