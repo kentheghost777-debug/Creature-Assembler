@@ -643,7 +643,7 @@ export function BattleScene({
       later(() => wildTurn(), 850);
       return;
     }
-    const dmg = 5 + Math.floor(Math.random() * 11); // 5-15
+    const dmg = Math.round(6 + starterLevel * 0.6 + Math.random() * (starterLevel * 0.5 + 4));
     later(() => playerHit(dmg, `${active.type} Resonance bursts! ${dmg} damage!`), 350);
   }
 

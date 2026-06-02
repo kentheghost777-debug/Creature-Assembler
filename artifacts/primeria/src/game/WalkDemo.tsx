@@ -5105,7 +5105,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                             <img src="./images/resonance-stone.png" alt="Stone"
                               style={{ width:16, height:16, objectFit:"contain" }}/>
                             <div style={{ color:"#60a0e0", fontSize:10, fontWeight:700 }}>
-                              Resonance Stone · {starter.type} move · 10–20 dmg
+                              Resonance Stone · {starter.type} move · scales with bond
                             </div>
                           </div>
                         ) : hasResonanceStone ? (
@@ -5135,7 +5135,10 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                     </div>
 
                     {/* Caught companions (slots 2…PARTY_CAP) */}
-                    {caughtParty.map((mon, i) => (
+                    {caughtParty.map((mon, i) => {
+                      const monEl = asElement(mon.type);
+                      const monMoves = monEl ? defaultActiveMoves(monEl, mon.level) : [];
+                      return (
                       <div key={`${mon.id}-${i}`} style={{
                         padding:"11px 2px",
                         borderBottom:"1px dashed rgba(100,64,20,0.16)",
@@ -5151,7 +5154,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                           return (
                             <div style={{ width:SZ, height:SZ, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, background:"rgba(60,30,0,0.05)", borderRadius:8 }}>
                               <div style={{ width:dW, height:dH, overflow:"hidden", position:"relative", flexShrink:0 }}>
-                                <img src={s.url} alt="" style={{ position:"absolute", left:-oX, top:-oY, width:iW, height:iH, maxWidth:"none" }}/>
+                                <img src={s.url} alt="" style={{ position:"absolute", left:-oX, top:-oY, width:iW, height:iH, maxWidth:"none"}}/>
                               </div>
                             </div>
                           );
@@ -5178,6 +5181,54 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                               ◈ {mon.rarity.toUpperCase()}
                             </span>
                           </div>
+                          {/* Move preview */}
+                          <div style={{ display:"flex", gap:4, marginTop:4, flexWrap:"wrap" }}>
+                            {monMoves.slice(0,4).map(mid => {
+                              const m = getMove(mid);
+                              return m ? (
+                                <span key={mid} style={{
+                                  fontSize:8, fontWeight:700, color:"#7a5c34",
+                                  background:"rgba(100,64,20,0.08)", padding:"2px 6px", borderRadius:4,
+                                }}>{m.name}</span>
+                              ) : null;
+                            })}
+                          </div>
+                        </div>
+                        <div style={{ display:"flex", flexDirection:"column", gap:3, flexShrink:0 }}>
+                          <button
+                            disabled={i === 0}
+                            onClick={() => {
+                              if (i === 0) return;
+                              setCaughtParty(p => {
+                                const next = [...p];
+                                [next[i-1], next[i]] = [next[i], next[i-1]];
+                                return next;
+                              });
+                            }}
+                            style={{
+                              padding:"2px 6px", borderRadius:5, fontSize:10, fontWeight:800,
+                              background:"rgba(100,64,20,0.08)", border:"1px solid rgba(100,64,20,0.25)",
+                              color: i === 0 ? "#c0ab8e" : "#8a5c22",
+                              cursor: i === 0 ? "not-allowed" : "pointer",
+                            }}
+                          >↑</button>
+                          <button
+                            disabled={i >= caughtParty.length - 1}
+                            onClick={() => {
+                              if (i >= caughtParty.length - 1) return;
+                              setCaughtParty(p => {
+                                const next = [...p];
+                                [next[i], next[i+1]] = [next[i+1], next[i]];
+                                return next;
+                              });
+                            }}
+                            style={{
+                              padding:"2px 6px", borderRadius:5, fontSize:10, fontWeight:800,
+                              background:"rgba(100,64,20,0.08)", border:"1px solid rgba(100,64,20,0.25)",
+                              color: i >= caughtParty.length - 1 ? "#c0ab8e" : "#8a5c22",
+                              cursor: i >= caughtParty.length - 1 ? "not-allowed" : "pointer",
+                            }}
+                          >↓</button>
                         </div>
                         <button
                           disabled={storageBox.length >= STORAGE_CAP}
@@ -5202,7 +5253,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                           border:"1px solid rgba(100,64,20,0.18)", flexShrink:0,
                         }}>No. {i + 2}</div>
                       </div>
-                    ))}
+                      );
+                    })}
 
                     {/* Remaining empty party slots */}
                     {Array.from({ length: Math.max(0, PARTY_CAP - 1 - caughtParty.length) }).map((_, k) => (
@@ -5660,7 +5712,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                           </div>
                           {starter && (
                             <div style={{ color:"#4a80c0", fontSize:10, fontWeight:700, marginTop:4 }}>
-                              Attuned to {starter.type} · 10–20 dmg · scales with bond
+                              Attuned to {starter.type} · scales with bond
                             </div>
                           )}
                         </div>
