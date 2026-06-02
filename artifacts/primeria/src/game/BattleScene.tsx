@@ -173,6 +173,9 @@ type Props = {
   bench?: BattleMon[];
   onConsumeShell: () => void;
   onEnd: (r: BattleResult) => void;
+  /** Hollis field-berries available in battle */
+  berries?: { dusk: number; thorn: number; calm: number; bright: number };
+  onUseBerry?: (type: "dusk" | "thorn" | "calm" | "bright") => void;
 };
 
 // XP rewards: half the wild's maxHp on KO, ×1.10 on capture.
@@ -181,7 +184,7 @@ function xpFor(wild: MonSpec, caught: boolean): number {
   return caught ? Math.round(base * 1.10) : base;
 }
 
-type Menu = "root" | "moves" | "shellConfirm" | "ended" | "switch" | "switchForced";
+type Menu = "root" | "moves" | "shellConfirm" | "ended" | "switch" | "switchForced" | "bag";
 
 const BTN_BG    = "linear-gradient(180deg, rgba(60,40,20,0.92), rgba(36,22,10,0.92))";
 const BTN_BG_HI = "linear-gradient(180deg, rgba(90,62,30,0.96), rgba(56,36,16,0.96))";
@@ -193,6 +196,7 @@ export function BattleScene({
   heroImg = "./images/walk_side_1.png",
   keeperTeam, keeperMonLevels, bench,
   onConsumeShell, onEnd,
+  berries, onUseBerry,
 }: Props) {
   const isKeeper = opponentKind === "keeper";
 
@@ -250,6 +254,7 @@ export function BattleScene({
   const [menu,     setMenu]       = useState<Menu>("root");
   const [healCd,   setHealCd]     = useState(0);              // turns remaining
   const [runeUses, setRuneUses]   = useState(healingRuneEquipped ? 3 : 0);
+  const [berryCount, setBerryCount] = useState(() => berries ?? { dusk:0, thorn:0, calm:0, bright:0 });
   const [resBar,   setResBar]     = useState(0);              // 0..15
   const [intro,    setIntro]      = useState(true);
   const [shake,    setShake]      = useState<"player" | "wild" | null>(null);
@@ -498,7 +503,7 @@ export function BattleScene({
     }, 560);
   }
 
-  function playerHit(dmg: number, msg: string, crit = false, eff = 1, afterCb?: () => void) {
+  function playerHit(dmg: number, msg: string, crit = false, eff = 1, afterCb?: () => void, noWildTurn = false) {
     setBusy(true);
     later(() => setShake(null), 600);
     later(() => {
@@ -544,7 +549,7 @@ export function BattleScene({
             }, 650);
           }
         } else {
-          wildTurn(afterCb);
+          if (noWildTurn) setBusy(false); else wildTurn(afterCb);
         }
         return next;
       });
@@ -624,7 +629,8 @@ export function BattleScene({
     setRuneUses(u => u - 1);
     setLog(`Healing Rune pulses — ${next - playerHp} HP restored.`);
     triggerAux("rune", "#80ffc0", "player", 950);
-    later(() => wildTurn(), 700);
+    // Rune is a Keeper action (not the mon's turn) — player keeps the initiative.
+    later(() => setBusy(false), 700);
   }
 
   function onResonate() {
@@ -636,15 +642,65 @@ export function BattleScene({
     const resColor = typeColor(active.type);
     triggerAux("resonate", resColor, undefined, 900);
     if (active.type === "Spirit") {
-      // Fae-like: revival/cleanse — heals fully
+      // Fae-like: revival/cleanse — heals fully. Resonance = Keeper action; player retains turn.
       setBusy(true);
       setPlayerHp(playerMaxHp);
       setLog(`Spirit Resonance — ${active.name} is fully restored!`);
-      later(() => wildTurn(), 850);
+      later(() => setBusy(false), 850);
       return;
     }
     const dmg = Math.round(6 + starterLevel * 0.6 + Math.random() * (starterLevel * 0.5 + 4));
-    later(() => playerHit(dmg, `${active.type} Resonance bursts! ${dmg} damage!`), 350);
+    // Resonance = Keeper action; pass noWildTurn so player keeps their turn after the burst.
+    later(() => playerHit(dmg, `${active.type} Resonance bursts! ${dmg} damage!`, false, 1, undefined, true), 350);
+  }
+
+  // ── Berry bag handlers (Hollis field-berries) ────────────────────────────
+  function onUseDusk() {
+    if (busy || berryCount.dusk <= 0) return;
+    setBusy(true);
+    const before = playerHp;
+    const heal   = Math.floor(playerMaxHp * 0.30);
+    const next   = Math.min(playerMaxHp, before + heal);
+    setPlayerHp(next);
+    setBerryCount(b => ({ ...b, dusk: b.dusk - 1 }));
+    onUseBerry?.("dusk");
+    setLog(`Duskberry — ${next - before} HP restored!`);
+    triggerAux("heal", "#9860d0", "player", 900);
+    later(() => { setMenu("root"); wildTurn(); }, 800);
+  }
+  function onUseThorn() {
+    if (busy || berryCount.thorn <= 0) return;
+    setBusy(true);
+    setBuffs(b => ({ ...b, pAtk: b.pAtk + 8 }));
+    setBerryCount(b => ({ ...b, thorn: b.thorn - 1 }));
+    onUseBerry?.("thorn");
+    setLog(`Thornberry — ${active.name}'s attack sharpened!`);
+    triggerAux("rune", "#e03030", "player", 850);
+    later(() => { setMenu("root"); wildTurn(); }, 800);
+  }
+  function onUseCalm() {
+    if (busy || berryCount.calm <= 0) return;
+    setBusy(true);
+    setBuffs(b => ({ ...b, pDef: b.pDef + 8 }));
+    setBerryCount(b => ({ ...b, calm: b.calm - 1 }));
+    onUseBerry?.("calm");
+    setLog(`Calmberry — ${active.name}'s guard steadied!`);
+    triggerAux("rune", "#30b870", "player", 850);
+    later(() => { setMenu("root"); wildTurn(); }, 800);
+  }
+  function onUseBright() {
+    if (busy || berryCount.bright <= 0) return;
+    setBusy(true);
+    setHealCd(0);
+    const lowestMove = playerMoves.reduce((a, b) =>
+      (playerPp[a.id] ?? 0) < (playerPp[b.id] ?? 0) ? a : b
+    );
+    setPlayerPp(p => ({ ...p, [lowestMove.id]: lowestMove.pp }));
+    setBerryCount(b => ({ ...b, bright: b.bright - 1 }));
+    onUseBerry?.("bright");
+    setLog(`Brightberry — Cooldowns cleared, ${lowestMove.name} PP restored!`);
+    triggerAux("heal", "#e0c020", "player", 900);
+    later(() => { setMenu("root"); wildTurn(); }, 800);
   }
 
   function onFlee() {
@@ -1280,6 +1336,36 @@ export function BattleScene({
               borderRadius:7, color:"#f0d890", fontSize:11, fontWeight:800, cursor:"pointer",
             }}>← Back</button>
           </div>
+        ) : menu === "bag" ? (
+          <div style={{ marginTop:8 }}>
+            <div style={{ color:"#c8a44a", fontSize:10, fontWeight:900, letterSpacing:1.5, marginBottom:6, textTransform:"uppercase" }}>Field Berries</div>
+            {[
+              { key:"dusk"  as const, label:"Duskberry",   sub:"HP +30%", count:berryCount.dusk,   img:"./images/duskberry.png",   color:"#9860d0", onClick:onUseDusk   },
+              { key:"thorn" as const, label:"Thornberry",  sub:"ATK +8",  count:berryCount.thorn,  img:"./images/thornberry.png",  color:"#e03030", onClick:onUseThorn  },
+              { key:"calm"  as const, label:"Calmberry",   sub:"DEF +8",  count:berryCount.calm,   img:"./images/calmberry.png",   color:"#30b870", onClick:onUseCalm   },
+              { key:"bright"as const, label:"Brightberry", sub:"PP+CD fix",count:berryCount.bright,img:"./images/brightberry.png", color:"#e0c020", onClick:onUseBright },
+            ].map(b => (
+              <button key={b.key} disabled={busy || b.count <= 0} onClick={b.onClick} style={{
+                display:"flex", alignItems:"center", gap:10, width:"100%",
+                background: b.count > 0 ? BTN_BG : "rgba(30,20,10,0.6)",
+                border:`1.5px solid ${b.count > 0 ? "rgba(180,130,60,0.45)" : "rgba(100,70,30,0.2)"}`,
+                borderRadius:8, padding:"7px 10px", marginBottom:5,
+                cursor: b.count > 0 ? "pointer" : "default", opacity: b.count > 0 ? 1 : 0.45,
+              }}>
+                <img src={b.img} alt={b.label} style={{ width:32, height:32, objectFit:"contain", flexShrink:0 }}/>
+                <div style={{ flex:1, textAlign:"left" }}>
+                  <div style={{ color:"#f0d890", fontSize:12, fontWeight:800 }}>{b.label}</div>
+                  <div style={{ color:"#a08050", fontSize:10 }}>{b.sub}</div>
+                </div>
+                <div style={{ color: b.count > 0 ? b.color : "#604020", fontSize:13, fontWeight:900 }}>×{b.count}</div>
+              </button>
+            ))}
+            <button onClick={() => setMenu("root")} style={{
+              width:"100%", padding:"8px",
+              background:BTN_BG, border:"1.5px solid rgba(180,130,60,0.45)",
+              borderRadius:7, color:"#f0d890", fontSize:11, fontWeight:800, cursor:"pointer", marginTop:2,
+            }}>← Back</button>
+          </div>
         ) : (
           <div style={{
             display:"grid",
@@ -1293,6 +1379,7 @@ export function BattleScene({
             <BattleBtn label="Rune"     sub={healingRuneEquipped ? `×${runeUses}` : "—"} disabled={busy || !healingRuneEquipped || runeUses <= 0} onClick={onRune}/>
             <BattleBtn label="Switch"   sub={hasReserve ? "party" : "none"} disabled={busy || !hasReserve} onClick={() => setMenu("switch")}/>
             <BattleBtn label="Flee"     sub={isKeeper ? "locked" : "70%"} disabled={busy || isKeeper} onClick={onFlee}/>
+            <BattleBtn label="Bag"      sub={`×${berryCount.dusk+berryCount.thorn+berryCount.calm+berryCount.bright}`} disabled={busy} onClick={() => setMenu("bag")}/>
           </div>
         )}
       </div>

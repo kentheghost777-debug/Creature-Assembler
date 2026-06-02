@@ -78,6 +78,30 @@ uri = "file://attached_assets/faelia.png"
 type = "image"
 title = "faelia spirit wolf evo sprite"
 
+[[generated]]
+id = "FSJAV6MBjnHI0I200D1sv"
+uri = "file://attached_assets/duskberry.png"
+type = "image"
+title = "duskberry violet magical"
+
+[[generated]]
+id = "WJp7x5tF5FtmFjgG9r8nb"
+uri = "file://attached_assets/thornberry.png"
+type = "image"
+title = "thornberry crimson spiky"
+
+[[generated]]
+id = "ow_bk8TECuT75GIvPksRG"
+uri = "file://attached_assets/calmberry.png"
+type = "image"
+title = "calmberry teal jade"
+
+[[generated]]
+id = "7TRe9oztJN9tkoQBmIR1j"
+uri = "file://attached_assets/brightberry.png"
+type = "image"
+title = "brightberry golden radiant"
+
 [[outputs]]
 id = "hj9mwcgl1Uv9QQTG9g6KL"
 uri = "file://kinju_walk_demo.tar.gz"

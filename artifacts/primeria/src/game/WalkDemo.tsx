@@ -233,7 +233,7 @@ type Phase = "walk" | "d1" | "d2" | "pick" | "d3" | "role_pick" | "d4" | "d5"
            | "lia_d1"  | "lia_d2"  | "lia_d3"  | "lia_d4"  | "lia_d5"  | "lia_done"
            | "jess_path_d1" | "jess_path_d2"
            | "prof2_d1" | "prof2_d2" | "prof2_d3" | "prof2_d4"
-           | "farm_d1" | "farm_d2" | "farm_d3"
+           | "farm_d1" | "farm_d2" | "farm_d3" | "farm_d4" | "farm_idle"
            | "scripted_t1" | "scripted_t2" | "scripted_set" | "scripted_caught"
            // Ambient "always talkable" idle chats (set no flags, never gate quests)
            | "prof_idle" | "jay_idle" | "maya_idle" | "maya_wait"
@@ -1138,6 +1138,11 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const [jerbsBattleDone,      setJerbsBattleDone]      = useState(() => savedWorld?.jerbsBattleDone ?? false);
   const [hasCrystalFang,       setHasCrystalFang]       = useState(() => savedWorld?.hasCrystalFang ?? false);
   const [crystalFangEvo,       setCrystalFangEvo]       = useState<"glacia"|"volcia"|"faelia"|null>(() => savedWorld?.crystalFangEvo ?? null);
+  const [hollisGifted,         setHollisGifted]         = useState(() => savedWorld?.hollisGifted ?? false);
+  const [duskberries,          setDuskberries]          = useState(() => savedWorld?.duskberries ?? 0);
+  const [thornberries,         setThornberries]         = useState(() => savedWorld?.thornberries ?? 0);
+  const [calmberries,          setCalmberries]          = useState(() => savedWorld?.calmberries ?? 0);
+  const [brightberries,        setBrightberries]        = useState(() => savedWorld?.brightberries ?? 0);
   const [nearJerbs,            setNearJerbs]            = useState(false);
   const [jerbsInteractPos,     setJerbsInteractPos]     = useState({ sx: 0, sy: 0 });
   const [portalFrame,          setPortalFrame]          = useState(0);
@@ -1377,6 +1382,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     jayA3Wins, liaA3Wins, roleChosen, checksStreak,
     cleminusMet, demoComplete,
     jerbsBattleDone, hasCrystalFang, crystalFangEvo,
+    hollisGifted, duskberries, thornberries, calmberries, brightberries,
   });
   const persistWorld = useCallback(() => {
     const safe = lastSafeRef.current;
@@ -1399,6 +1405,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       jayA3Wins, liaA3Wins, roleChosen, checksStreak,
       cleminusMet, demoComplete,
       jerbsBattleDone, hasCrystalFang, crystalFangEvo,
+      hollisGifted, duskberries, thornberries, calmberries, brightberries,
     };
     persistWorld();
   }, [
@@ -1409,7 +1416,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     hasObsidianRealmShell, wyvruntCaught, wyvruntForm, wyrLoyalty,
     jayA3Wins, liaA3Wins, roleChosen, checksStreak,
     cleminusMet, demoComplete,
-    jerbsBattleDone, hasCrystalFang, crystalFangEvo, persistWorld,
+    jerbsBattleDone, hasCrystalFang, crystalFangEvo,
+    hollisGifted, duskberries, thornberries, calmberries, brightberries, persistWorld,
   ]);
   // On resume with Wyvrunt already caught, seed the follower beside the player
   // so it doesn't visibly fly in from the map origin on the first frame.
@@ -2309,7 +2317,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       lia_done: "walk",
       jess_path_d1: "jess_path_d2", jess_path_d2: "walk",
       prof2_d1: "prof2_d2", prof2_d2: "prof2_d3", prof2_d3: "prof2_d4", prof2_d4: "walk",
-      farm_d1: "farm_d2", farm_d2: "farm_d3", farm_d3: "walk",
+      farm_d1: "farm_d2", farm_d2: "farm_d3", farm_d3: "farm_d4", farm_d4: "walk",
+      farm_idle: "walk",
       scripted_t1: "scripted_t2", scripted_t2: "scripted_set",
       scripted_set: "scripted_caught", scripted_caught: "walk",
       // Ambient idle chats just close (no flags touched).
@@ -2435,6 +2444,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     farm_d1: "Oh — hello there, Keeper. Don't mind me, I'm just sittin' out here watching the Tayanari play. Best show in the whole valley, and it don't cost a copper.",
     farm_d2: "I keep the farm up north, past the rise where the grass goes gold. Hard work, sure, but come dusk the little ones wander down into my fields. Good company, the lot of 'em.",
     farm_d3: "Funny thing, that Wyvrunt everyone's whispering about... I'm the one who first found it. Half-frozen by my north fence one winter, it was. Fed it scraps till it could fly again. Rare creature — glad it found its way to good hands.",
+    farm_d4: "Say — you look like a Keeper who earns their keep. I've got more field berries than I can use before the season turns. Take some. Duskberry for healing, Thornberry for a sharp edge, Calmberry for a steady guard, Brightberry when your moves run dry. They'll serve you well out there.",
+    farm_idle: "Fine day out here, ain't it? Come back anytime — the valley's always got something worth watching.",
     scripted_t1: "The Wyvrunt is still. Watching you. Its tail-flame ripples but it does not strike. PROF: \"Don't move yet. Let it read you.\"",
     scripted_t2: "Its eyes soften — curiosity replacing caution. The yin-yang sigils on its scales flicker brighter. PROF: \"Now. The shell. It is ready.\"",
     scripted_set: "You set the Obsidianeye Realm Shell open before it. Wyvrunt tilts its head — and waits.",
@@ -2865,6 +2876,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           bench={battleBench}
           onConsumeShell={() => setShellCount(c => Math.max(0, c - 1))}
           onEnd={handleTrainerEnd}
+          berries={{ dusk:duskberries, thorn:thornberries, calm:calmberries, bright:brightberries }}
+          onUseBerry={type => {
+            if (type === "dusk")   setDuskberries(n => Math.max(0, n - 1));
+            if (type === "thorn")  setThornberries(n => Math.max(0, n - 1));
+            if (type === "calm")   setCalmberries(n => Math.max(0, n - 1));
+            if (type === "bright") setBrightberries(n => Math.max(0, n - 1));
+          }}
         />
         {battleNotif && (
           <div style={{
@@ -2903,6 +2921,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           bench={battleBench}
           onConsumeShell={() => setShellCount(c => Math.max(0, c - 1))}
           onEnd={handleBattleEnd}
+          berries={{ dusk:duskberries, thorn:thornberries, calm:calmberries, bright:brightberries }}
+          onUseBerry={type => {
+            if (type === "dusk")   setDuskberries(n => Math.max(0, n - 1));
+            if (type === "thorn")  setThornberries(n => Math.max(0, n - 1));
+            if (type === "calm")   setCalmberries(n => Math.max(0, n - 1));
+            if (type === "bright") setBrightberries(n => Math.max(0, n - 1));
+          }}
         />
         {battleNotif && (
           <div style={{
@@ -3710,7 +3735,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         {/* ── INTERACT BUTTON — Old Hollis (Eastern Path farmer) ────────── */}
         {scene === "route2" && nearFarmerR2 && phase === "walk" && (
           <button
-            onClick={() => setPhase("farm_d1")}
+            onClick={() => setPhase(hollisGifted ? "farm_idle" : "farm_d1")}
             style={{
               position:"absolute",
               left: farmerR2InteractPos.sx - 14, top: farmerR2InteractPos.sy - 10,
@@ -4152,8 +4177,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           </div>
         )}
 
-        {/* ── OLD HOLLIS — Eastern Path farmer (flavor dialogue) ────────── */}
-        {(phase === "farm_d1" || phase === "farm_d2" || phase === "farm_d3") && (
+        {/* ── OLD HOLLIS — Eastern Path farmer (flavor + berry gift dialogue) ── */}
+        {(phase === "farm_d1" || phase === "farm_d2" || phase === "farm_d3" || phase === "farm_d4" || phase === "farm_idle") && (
           <div style={{
             position:"absolute", bottom:0, left:0, right:0,
             background:"linear-gradient(to top,rgba(12,20,6,0.97),rgba(16,26,8,0.93))",
@@ -4171,7 +4196,18 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             </p>
             <div style={{ display:"flex", justifyContent:"flex-end" }}>
               <button
-                onClick={() => advanceDialog(phase)}
+                onClick={() => {
+                  if (phase === "farm_d4") {
+                    setHollisGifted(true);
+                    setDuskberries(n => n + 3);
+                    setThornberries(n => n + 3);
+                    setCalmberries(n => n + 3);
+                    setBrightberries(n => n + 3);
+                    setPhase("walk");
+                  } else {
+                    advanceDialog(phase);
+                  }
+                }}
                 style={{
                   background:"rgba(150,200,90,0.15)",
                   border:"1px solid rgba(150,200,90,0.5)",
@@ -4179,7 +4215,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                   borderRadius:8, fontSize:13, fontWeight:700,
                   cursor:"pointer",
                 }}
-              >{phase === "farm_d3" ? "OK" : "Next ▶"}</button>
+              >{phase === "farm_d4" ? "Take Berries ✦" : phase === "farm_idle" ? "OK" : "Next ▶"}</button>
             </div>
           </div>
         )}
@@ -5849,7 +5885,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                 {/* ── BAG PAGE ────────────────────────────────────── */}
                 {journalTab === "bag" && (
                   <div style={{ display:"flex", flexDirection:"column" }}>
-                    {!shellsCollected && !hasHealingRune && !hasResonanceStone && !hasHearthberries && !hasSatchel && (
+                    {!shellsCollected && !hasHealingRune && !hasResonanceStone && !hasHearthberries && !hasSatchel
+                     && (duskberries + thornberries + calmberries + brightberries === 0) && (
                       <div style={{
                         textAlign:"center", padding:"26px 0",
                         color:"#b09468", fontSize:12, fontStyle:"italic",
@@ -5897,6 +5934,28 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                           border:"1px solid rgba(100,64,20,0.22)",
                           flexShrink:0,
                         }}>×{shellCount}</div>
+                      </div>
+                    )}
+
+                    {/* ── Field Berries (Hollis gift) ── */}
+                    {(duskberries + thornberries + calmberries + brightberries > 0) && (
+                      <div style={{ marginTop:2, marginBottom:2 }}>
+                        <div style={{ color:"#9a6e2e", fontSize:9.5, fontWeight:900, letterSpacing:1.5, textTransform:"uppercase", padding:"8px 2px 2px", borderBottom:"1px solid rgba(120,80,30,0.18)", marginBottom:4 }}>Field Berries</div>
+                        {[
+                          { count: duskberries,   label:"Duskberry",   sub:"HP +30%",   img:"./images/duskberry.png",   color:"#9860d0" },
+                          { count: thornberries,  label:"Thornberry",  sub:"ATK +8",    img:"./images/thornberry.png",  color:"#e03030" },
+                          { count: calmberries,   label:"Calmberry",   sub:"DEF +8",    img:"./images/calmberry.png",   color:"#30b870" },
+                          { count: brightberries, label:"Brightberry", sub:"PP+CD fix", img:"./images/brightberry.png", color:"#e0c020" },
+                        ].filter(b => b.count > 0).map(b => (
+                          <div key={b.label} style={{ display:"flex", alignItems:"center", gap:10, padding:"6px 2px 6px", borderBottom:"1px dashed rgba(100,64,20,0.18)" }}>
+                            <img src={b.img} alt={b.label} style={{ width:36, height:36, objectFit:"contain", flexShrink:0 }}/>
+                            <div style={{ flex:1 }}>
+                              <div style={{ color:"#2a1206", fontWeight:800, fontSize:13 }}>{b.label}</div>
+                              <div style={{ color:"#826040", fontSize:10, marginTop:2 }}>{b.sub}</div>
+                            </div>
+                            <div style={{ color:b.color, fontSize:13, fontWeight:900 }}>×{b.count}</div>
+                          </div>
+                        ))}
                       </div>
                     )}
 

@@ -233,7 +233,7 @@ type Phase = "walk" | "d1" | "d2" | "pick" | "d3" | "role_pick" | "d4" | "d5"
            | "lia_d1"  | "lia_d2"  | "lia_d3"  | "lia_d4"  | "lia_d5"  | "lia_done"
            | "jess_path_d1" | "jess_path_d2"
            | "prof2_d1" | "prof2_d2" | "prof2_d3" | "prof2_d4"
-           | "farm_d1" | "farm_d2" | "farm_d3"
+           | "farm_d1" | "farm_d2" | "farm_d3" | "farm_d4" | "farm_idle"
            | "scripted_t1" | "scripted_t2" | "scripted_set" | "scripted_caught"
            // Ambient "always talkable" idle chats (set no flags, never gate quests)
            | "prof_idle" | "jay_idle" | "maya_idle" | "maya_wait"
@@ -1166,6 +1166,11 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const [jerbsBattleDone,      setJerbsBattleDone]      = useState(() => savedWorld?.jerbsBattleDone ?? false);
   const [hasCrystalFang,       setHasCrystalFang]       = useState(() => savedWorld?.hasCrystalFang ?? false);
   const [crystalFangEvo,       setCrystalFangEvo]       = useState<"glacia"|"volcia"|"faelia"|null>(() => savedWorld?.crystalFangEvo ?? null);
+  const [hollisGifted,         setHollisGifted]         = useState(() => savedWorld?.hollisGifted ?? false);
+  const [duskberries,          setDuskberries]          = useState(() => savedWorld?.duskberries ?? 0);
+  const [thornberries,         setThornberries]         = useState(() => savedWorld?.thornberries ?? 0);
+  const [calmberries,          setCalmberries]          = useState(() => savedWorld?.calmberries ?? 0);
+  const [brightberries,        setBrightberries]        = useState(() => savedWorld?.brightberries ?? 0);
   const [nearJerbs,            setNearJerbs]            = useState(false);
   const [jerbsInteractPos,     setJerbsInteractPos]     = useState({ sx: 0, sy: 0 });
   const [portalFrame,          setPortalFrame]          = useState(0);
@@ -1405,6 +1410,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     jayA3Wins, liaA3Wins, roleChosen, checksStreak,
     cleminusMet, demoComplete,
     jerbsBattleDone, hasCrystalFang, crystalFangEvo,
+    hollisGifted, duskberries, thornberries, calmberries, brightberries,
   });
   const persistWorld = useCallback(() => {
     const safe = lastSafeRef.current;
@@ -1427,6 +1433,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       jayA3Wins, liaA3Wins, roleChosen, checksStreak,
       cleminusMet, demoComplete,
       jerbsBattleDone, hasCrystalFang, crystalFangEvo,
+      hollisGifted, duskberries, thornberries, calmberries, brightberries,
     };
     persistWorld();
   }, [
@@ -1437,7 +1444,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     hasObsidianRealmShell, wyvruntCaught, wyvruntForm, wyrLoyalty,
     jayA3Wins, liaA3Wins, roleChosen, checksStreak,
     cleminusMet, demoComplete,
-    jerbsBattleDone, hasCrystalFang, crystalFangEvo, persistWorld,
+    jerbsBattleDone, hasCrystalFang, crystalFangEvo,
+    hollisGifted, duskberries, thornberries, calmberries, brightberries, persistWorld,
   ]);
   // On resume with Wyvrunt already caught, seed the follower beside the player
   // so it doesn't visibly fly in from the map origin on the first frame.

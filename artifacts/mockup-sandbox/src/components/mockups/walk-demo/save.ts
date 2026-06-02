@@ -137,6 +137,12 @@ export type WorldSave = {
   jerbsBattleDone: boolean;
   hasCrystalFang: boolean;
   crystalFangEvo: "glacia" | "volcia" | "faelia" | null;
+  // Hollis field-berries (Route 2 farmer gift)
+  hollisGifted: boolean;
+  duskberries: number;
+  thornberries: number;
+  calmberries: number;
+  brightberries: number;
 };
 
 export type SaveData = {
