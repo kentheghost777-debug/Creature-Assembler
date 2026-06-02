@@ -3099,6 +3099,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           healingRuneEquipped={healingRuneEquipped}
           catchMult={role.catchMult}
           shellsCount={shellCount}
+          caughtIds={[...caughtParty.map(m => m.id), ...storageBox.map(m => m.id)]}
           heroImg={heroSideImg}
           bench={battleBench}
           onConsumeShell={() => setShellCount(c => Math.max(0, c - 1))}

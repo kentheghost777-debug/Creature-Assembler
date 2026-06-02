@@ -156,6 +156,9 @@ type Props = {
   /** Role boon: capture odds multiplier (Hopeful path raises it). Defaults to 1. */
   catchMult?: number;
   shellsCount: number;
+  /** IDs of mon species the player has already bonded (party + storage). Used
+   *  to show a "bonded" indicator on the wild HP plate. */
+  caughtIds?: string[];
   /** Opponent kind. A "keeper" (trainer) battle pits you against another Keeper's
    *  already-bonded Tayanari — it CANNOT be bonded (no shell), and you cannot flee. */
   opponentKind?: "wild" | "keeper";
@@ -193,7 +196,7 @@ const BTN_BG_HI = "linear-gradient(180deg, rgba(90,62,30,0.96), rgba(56,36,16,0.
 
 export function BattleScene({
   wild, starter, starterLevel, starterStats, starterMoves, hasResonanceStone, healingRuneEquipped,
-  catchMult = 1, shellsCount,
+  catchMult = 1, shellsCount, caughtIds = [] as string[],
   opponentKind = "wild", keeperName = "Keeper", keeperImg = "./images/rowan_side_1.png",
   heroImg = "./images/walk_side_1.png",
   keeperTeam, keeperMonLevels, bench,
@@ -894,6 +897,15 @@ export function BattleScene({
               textTransform:"uppercase", letterSpacing:1,
             }}>{RARITY_LABEL[currentOpponent.rarity]}</span>
           </div>
+          {!isKeeper && caughtIds.includes(currentOpponent.id) && (
+            <div style={{
+              display:"inline-flex", alignItems:"center", gap:3, marginBottom:3,
+              background:"rgba(80,210,110,0.12)", borderRadius:5,
+              padding:"1px 7px", border:"1px solid rgba(80,210,110,0.28)",
+            }}>
+              <span style={{ color:"#70e888", fontSize:8, fontWeight:800, letterSpacing:1, textTransform:"uppercase" }}>✦ bonded</span>
+            </div>
+          )}
           <HpBar hp={wildHp} max={currentOpponent.maxHp} />
           <div style={{ display:"flex", justifyContent:"space-between", marginTop:2 }}>
             <span style={{ color:"#a8c0d0", fontSize:9 }}>{currentOpponent.type}</span>
@@ -1234,6 +1246,38 @@ export function BattleScene({
                 ))}
               </div>
             )}
+            {/* ── Capture burst FX — flash + type radial + BONDED! label ── */}
+            {shellFx.phase === "caught" && (
+              <>
+                {/* Brief white flash */}
+                <div key={`cflash-${shellFx.id}`} style={{
+                  position:"absolute", inset:0,
+                  background:"#fff", pointerEvents:"none", zIndex:12,
+                  animation:"bondFlash 0.5s ease-out forwards",
+                  mixBlendMode:"screen",
+                }}/>
+                {/* Type-colored radial burst from wild's position */}
+                <div key={`cburst-${shellFx.id}`} style={{
+                  position:"absolute", left:"70%", top:"61%",
+                  width:220, height:220, borderRadius:"50%",
+                  background:`radial-gradient(circle, ${typeColor(currentOpponent.type)}ee 0%, ${typeColor(currentOpponent.type)}77 35%, transparent 70%)`,
+                  transform:"translate(-50%,-50%) scale(0)",
+                  pointerEvents:"none", zIndex:9,
+                  animation:"bondBurst 0.9s ease-out 0.05s forwards",
+                  mixBlendMode:"screen",
+                }}/>
+                {/* "BONDED!" rising label */}
+                <div key={`clbl-${shellFx.id}`} style={{
+                  position:"absolute", left:"70%", top:"50%",
+                  color:"#ffe080", fontSize:20, fontWeight:900,
+                  letterSpacing:3, whiteSpace:"nowrap",
+                  textShadow:"0 0 14px #ffc040, 0 0 28px #ff8020, 0 0 4px #fff",
+                  pointerEvents:"none", zIndex:13,
+                  transform:"translate(-50%,-50%) scale(0.5) translateY(20px)",
+                  animation:"bondLabel 1.3s ease-out 0.1s forwards",
+                }}>BONDED!</div>
+              </>
+            )}
           </>
         )}
 
@@ -1529,6 +1573,21 @@ export function BattleScene({
           0%   { transform: scale(1) rotate(0deg); }
           30%  { transform: scale(1.25) rotate(180deg); filter: drop-shadow(0 0 18px #ff6040) brightness(1.5); }
           100% { transform: scale(0) rotate(540deg);    opacity: 0; }
+        }
+        @keyframes bondBurst {
+          0%   { transform: translate(-50%,-50%) scale(0);   opacity: 0.9; }
+          55%  { transform: translate(-50%,-50%) scale(0.9); opacity: 0.75; }
+          100% { transform: translate(-50%,-50%) scale(1.8); opacity: 0; }
+        }
+        @keyframes bondFlash {
+          0%   { opacity: 0.65; }
+          100% { opacity: 0; }
+        }
+        @keyframes bondLabel {
+          0%   { transform: translate(-50%,-50%) translateY(18px) scale(0.5);  opacity: 0; }
+          18%  { transform: translate(-50%,-50%) translateY(0)    scale(1.12); opacity: 1; }
+          68%  { transform: translate(-50%,-50%) translateY(0)    scale(1);    opacity: 1; }
+          100% { transform: translate(-50%,-50%) translateY(-18px) scale(0.88); opacity: 0; }
         }
         ${RESONANCE_FX_KEYFRAMES}
         ${MOVE_FX_KEYFRAMES}
