@@ -196,14 +196,14 @@ const EVO_TABLE: Array<{ from: string; atLevel: number; to: StarterSpec }> = [
   { from:"pebble_2",    atLevel:30, to:{ id:"pebble_3",     name:"Pebble·III",     type:"Earthbound",   color:"#c8a020", img:"./images/pebble_3.png" } },
   { from:"peachi",      atLevel:18, to:{ id:"peachi_2",     name:"Pea-chi·II",     type:"Nature",       color:"#50c040", img:"./images/peachi.png"          } },
   { from:"peachi_2",    atLevel:30, to:{ id:"peachi_3",     name:"Pea-chi·III",    type:"Nature",       color:"#50c040", img:"./images/peachi_3.png"          } },
-  { from:"cerepup",     atLevel:18, to:{ id:"cerepup_2",    name:"Cerepup·II",     type:"Volcanic",     color:"#ff6020", img:"./images/emberfox.png"         } },
-  { from:"cerepup_2",   atLevel:30, to:{ id:"cerepup_3",    name:"Cerepup·III",    type:"Volcanic",     color:"#ff6020", img:"./images/emberfox.png"         } },
+  { from:"cerepup",     atLevel:18, to:{ id:"cerepup_2",    name:"Caragnar",       type:"Volcanic",     color:"#ff5010", img:"./images/cerepup_evo1.png"     } },
+  { from:"cerepup_2",   atLevel:30, to:{ id:"cerepup_3",    name:"Bifernon",       type:"Volcanic",     color:"#ff3000", img:"./images/cerepup_evo2.png"     } },
   { from:"cunbubble",   atLevel:18, to:{ id:"cunbubble_2",  name:"Cun-bubble·II",  type:"Oceanic",      color:"#3080ff", img:"./images/phantorch.png"        } },
   { from:"cunbubble_2", atLevel:30, to:{ id:"cunbubble_3",  name:"Cun-bubble·III", type:"Oceanic",      color:"#3080ff", img:"./images/phantorch.png"        } },
   { from:"shockit",     atLevel:18, to:{ id:"shockit_2",    name:"Shockit·II",     type:"Stormproven",  color:"#ffd000", img:"./images/shockit_2.png"        } },
   { from:"shockit_2",   atLevel:30, to:{ id:"shockit_3",    name:"Shockit·III",    type:"Stormproven",  color:"#ffd000", img:"./images/shockit_3.png"        } },
-  { from:"mentyke",     atLevel:18, to:{ id:"mentyke_2",    name:"Mentyke·II",     type:"Mind",         color:"#c080ff", img:"./images/lumacorn.png"         } },
-  { from:"mentyke_2",   atLevel:30, to:{ id:"mentyke_3",    name:"Mentyke·III",    type:"Mind",         color:"#c080ff", img:"./images/lumacorn.png"         } },
+  { from:"mentyke",     atLevel:18, to:{ id:"mentyke_2",    name:"Sanctyke",       type:"Mind",         color:"#90c0ff", img:"./images/mentyke_evo1.png"     } },
+  { from:"mentyke_2",   atLevel:30, to:{ id:"mentyke_3",    name:"Lumayke",        type:"Mind",         color:"#d0b0ff", img:"./images/mentyke_evo2.png"     } },
   { from:"foxin",       atLevel:18, to:{ id:"foxin_2",      name:"Foxin·II",       type:"Spirit",       color:"#60a070", img:"./images/vixgrim.png"          } },
   { from:"foxin_2",     atLevel:30, to:{ id:"foxin_3",      name:"Foxin·III",      type:"Spirit",       color:"#60a070", img:"./images/vixgrim.png"          } },
 ];
@@ -2607,6 +2607,28 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     return (xpGained > 0 && parts.includes(i + 1)) ? levelUpCaughtMon(cur[i], xpGained).level : cur[i].level;
   }
 
+  // ── Caught-mon evo (cerepup chain only; mentyke is starter-only) ────────
+  function checkCaughtMonEvos(parts: number[], xpGained: number) {
+    if (xpGained <= 0) return;
+    const cur = caughtPartyRef.current;
+    const CAUGHT_EVO_IDS = ["cerepup", "cerepup_2"];
+    const evoMap = new Map<number, StarterSpec>();
+    cur.forEach((m, i) => {
+      if (!parts.includes(i + 1)) return;
+      if (!CAUGHT_EVO_IDS.includes(m.id)) return;
+      const leveled = levelUpCaughtMon(m, xpGained);
+      const entry = EVO_TABLE.find(e => e.from === m.id && leveled.level >= e.atLevel && m.level < e.atLevel);
+      if (entry) evoMap.set(i, entry.to);
+    });
+    if (evoMap.size === 0) return;
+    setCaughtParty(prev => prev.map((m, i) => {
+      const evo = evoMap.get(i);
+      return evo ? { ...m, id: evo.id, name: evo.name, type: evo.type, color: evo.color, img: evo.img } : m;
+    }));
+    const names = [...evoMap.values()].map(e => e.name).join(" & ");
+    window.setTimeout(() => setBattleNotif({ title: `✦ ${names}!`, sub: "Your Tayanari evolved!" }), 1600);
+  }
+
   // ── Starter evo check ────────────────────────────────────────────────────
   function checkStarterEvo(newLevel: number): StarterSpec | null {
     if (!starter) return null;
@@ -2639,6 +2661,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     const parts = ("participants" in result && result.participants) ? result.participants : [0];
     if (r.xpGained > 0 && parts.some(p => p > 0)) {
       setCaughtParty(prev => prev.map((m, i) => parts.includes(i + 1) ? levelUpCaughtMon(m, r.xpGained) : m));
+      checkCaughtMonEvos(parts, r.xpGained);
     }
 
     // Loyalty gains (+3 win, +2 catch)
@@ -2712,6 +2735,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     const parts = ("participants" in result && result.participants) ? result.participants : [0];
     if (r.xpGained > 0 && parts.some(p => p > 0)) {
       setCaughtParty(prev => prev.map((m, i) => parts.includes(i + 1) ? levelUpCaughtMon(m, r.xpGained) : m));
+      checkCaughtMonEvos(parts, r.xpGained);
     }
 
     // Loyalty +3 trainer win
