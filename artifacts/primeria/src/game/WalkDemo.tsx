@@ -172,9 +172,9 @@ const ANCHOR    = 0.75; // fraction of sprite above anchor point
 
 // ── Tayanari starter data ───────────────────────────────────────────────────
 const STARTERS = [
-  { id: "burg",       name: "Burg",       type: "Frostformed",  color: "#7ddeff", img: "./images/burg.png" },
-  { id: "pebble",     name: "Pebble",     type: "Earthbound",   color: "#c8a020", img: "./images/pebble.png" },
-  { id: "peachi",     name: "Pea-chi",    type: "Nature",       color: "#50c040", img: "./images/peachi.png" },
+  { id: "burg",       name: "Burg",       type: "Frostformed",  color: "#7ddeff", img: "./images/frostbite-baby.png" },
+  { id: "pebble",     name: "Pebble",     type: "Earthbound",   color: "#c8a020", img: "./images/grrountain-baby.png" },
+  { id: "peachi",     name: "Pea-chi",    type: "Nature",       color: "#50c040", img: "./images/leafkit.png" },
   { id: "cerepup",    name: "Cerepup",    type: "Volcanic",     color: "#ff6020", img: "./images/emberfox.png" },
   { id: "cunbubble",  name: "Cun-bubble", type: "Oceanic",      color: "#3080ff", img: "./images/phantorch.png" },
   { id: "shockit",    name: "Shockit",    type: "Stormproven",  color: "#ffd000", img: "./images/voltfang.png" },
@@ -281,7 +281,7 @@ const BESTIARY: MonSpec[] = [
     wildFaces:"left", playerFaces:"left", maxHp:58, baseDmg:[6,12] },
   // Apex
   { id:"peachi_w",  name:"Pea-chi",   type:"Nature",       rarity:"apex",
-    wildImg:"./images/peachi.png",  playerImg:"./images/peachi.png",
+    wildImg:"./images/leafkit.png",  playerImg:"./images/leafkit.png",
     wildFaces:"left", playerFaces:"left", maxHp:80, baseDmg:[8,14] },
   // Starter half — Route 1 (Volcanic/Storm — forest trail feel)
   { id:"cerepup_w", name:"Cerepup",   type:"Volcanic",    rarity:"apex",
@@ -441,10 +441,10 @@ const BESTIARY_A3: MonSpec[] = [
     wildImg:"./images/phantorch.png",       playerImg:"./images/phantorch.png",
     wildFaces:"left", playerFaces:"left", maxHp:88, baseDmg:[10,18] },
   { id:"pebble_wa",   name:"Pebble",     type:"Earthbound", rarity:"apex",
-    wildImg:"./images/pebble.png", playerImg:"./images/pebble.png",
+    wildImg:"./images/grrountain-baby.png", playerImg:"./images/grrountain-baby.png",
     wildFaces:"left", playerFaces:"left", maxHp:92, baseDmg:[10,16] },
   { id:"burg_wa",     name:"Burg",       type:"Frostformed",rarity:"ultra",
-    wildImg:"./images/burg.png",  playerImg:"./images/burg.png",
+    wildImg:"./images/frostbite-baby.png",  playerImg:"./images/frostbite-baby.png",
     wildFaces:"left", playerFaces:"left", maxHp:78, baseDmg:[9,17] },
   { id:"foxin_wa",    name:"Foxin",      type:"Spirit",     rarity:"apex",
     wildImg:"./images/vixgrim.png",         playerImg:"./images/vixgrim.png",
