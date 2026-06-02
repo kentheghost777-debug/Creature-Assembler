@@ -172,9 +172,9 @@ const ANCHOR    = 0.75; // fraction of sprite above anchor point
 
 // ── Tayanari starter data ───────────────────────────────────────────────────
 const STARTERS = [
-  { id: "burg",       name: "Burg",       type: "Frostformed",  color: "#7ddeff", img: "/__mockup/images/frostbite-baby.png" },
-  { id: "pebble",     name: "Pebble",     type: "Earthbound",   color: "#c8a020", img: "/__mockup/images/grrountain-baby.png" },
-  { id: "peachi",     name: "Pea-chi",    type: "Nature",       color: "#50c040", img: "/__mockup/images/leafkit.png" },
+  { id: "burg",       name: "Burg",       type: "Frostformed",  color: "#7ddeff", img: "/__mockup/images/burg.png" },
+  { id: "pebble",     name: "Pebble",     type: "Earthbound",   color: "#c8a020", img: "/__mockup/images/pebble.png" },
+  { id: "peachi",     name: "Pea-chi",    type: "Nature",       color: "#50c040", img: "/__mockup/images/peachi.png" },
   { id: "cerepup",    name: "Cerepup",    type: "Volcanic",     color: "#ff6020", img: "/__mockup/images/emberfox.png" },
   { id: "cunbubble",  name: "Cun-bubble", type: "Oceanic",      color: "#3080ff", img: "/__mockup/images/phantorch.png" },
   { id: "shockit",    name: "Shockit",    type: "Stormproven",  color: "#ffd000", img: "/__mockup/images/voltfang.png" },
@@ -190,12 +190,12 @@ type StarterId = typeof STARTERS[number]["id"];
 const EVO_BG_IMG: string | undefined = "/__mockup/images/evo-bg.png";
 
 const EVO_TABLE: Array<{ from: string; atLevel: number; to: StarterSpec }> = [
-  { from:"burg",        atLevel:18, to:{ id:"burg_2",       name:"Burg·II",        type:"Frostformed",  color:"#7ddeff", img:"/__mockup/images/frostbite-baby.png"  } },
-  { from:"burg_2",      atLevel:30, to:{ id:"burg_3",       name:"Burg·III",       type:"Frostformed",  color:"#7ddeff", img:"/__mockup/images/frostbite-baby.png"  } },
-  { from:"pebble",      atLevel:18, to:{ id:"pebble_2",     name:"Pebble·II",      type:"Earthbound",   color:"#c8a020", img:"/__mockup/images/grrountain-baby.png" } },
-  { from:"pebble_2",    atLevel:30, to:{ id:"pebble_3",     name:"Pebble·III",     type:"Earthbound",   color:"#c8a020", img:"/__mockup/images/grrountain-baby.png" } },
-  { from:"peachi",      atLevel:18, to:{ id:"peachi_2",     name:"Pea-chi·II",     type:"Nature",       color:"#50c040", img:"/__mockup/images/leafkit.png"          } },
-  { from:"peachi_2",    atLevel:30, to:{ id:"peachi_3",     name:"Pea-chi·III",    type:"Nature",       color:"#50c040", img:"/__mockup/images/leafkit.png"          } },
+  { from:"burg",        atLevel:18, to:{ id:"burg_2",       name:"Burg·II",        type:"Frostformed",  color:"#7ddeff", img:"/__mockup/images/burg.png"  } },
+  { from:"burg_2",      atLevel:30, to:{ id:"burg_3",       name:"Burg·III",       type:"Frostformed",  color:"#7ddeff", img:"/__mockup/images/burg_3.png"  } },
+  { from:"pebble",      atLevel:18, to:{ id:"pebble_2",     name:"Pebble·II",      type:"Earthbound",   color:"#c8a020", img:"/__mockup/images/pebble.png" } },
+  { from:"pebble_2",    atLevel:30, to:{ id:"pebble_3",     name:"Pebble·III",     type:"Earthbound",   color:"#c8a020", img:"/__mockup/images/pebble_3.png" } },
+  { from:"peachi",      atLevel:18, to:{ id:"peachi_2",     name:"Pea-chi·II",     type:"Nature",       color:"#50c040", img:"/__mockup/images/peachi.png"          } },
+  { from:"peachi_2",    atLevel:30, to:{ id:"peachi_3",     name:"Pea-chi·III",    type:"Nature",       color:"#50c040", img:"/__mockup/images/peachi_3.png"          } },
   { from:"cerepup",     atLevel:18, to:{ id:"cerepup_2",    name:"Cerepup·II",     type:"Volcanic",     color:"#ff6020", img:"/__mockup/images/emberfox.png"         } },
   { from:"cerepup_2",   atLevel:30, to:{ id:"cerepup_3",    name:"Cerepup·III",    type:"Volcanic",     color:"#ff6020", img:"/__mockup/images/emberfox.png"         } },
   { from:"cunbubble",   atLevel:18, to:{ id:"cunbubble_2",  name:"Cun-bubble·II",  type:"Oceanic",      color:"#3080ff", img:"/__mockup/images/phantorch.png"        } },
@@ -281,7 +281,7 @@ const BESTIARY: MonSpec[] = [
     wildFaces:"left", playerFaces:"left", maxHp:58, baseDmg:[6,12] },
   // Apex
   { id:"peachi_w",  name:"Pea-chi",   type:"Nature",       rarity:"apex",
-    wildImg:"/__mockup/images/peachi-wild-a.png",  playerImg:"/__mockup/images/peachi-wild-b.png",
+    wildImg:"/__mockup/images/peachi.png",  playerImg:"/__mockup/images/peachi.png",
     wildFaces:"left", playerFaces:"left", maxHp:80, baseDmg:[8,14] },
   // Starter half — Route 1 (Volcanic/Storm — forest trail feel)
   { id:"cerepup_w", name:"Cerepup",   type:"Volcanic",    rarity:"apex",
@@ -441,10 +441,10 @@ const BESTIARY_A3: MonSpec[] = [
     wildImg:"/__mockup/images/phantorch.png",       playerImg:"/__mockup/images/phantorch.png",
     wildFaces:"left", playerFaces:"left", maxHp:88, baseDmg:[10,18] },
   { id:"pebble_wa",   name:"Pebble",     type:"Earthbound", rarity:"apex",
-    wildImg:"/__mockup/images/grrountain-baby.png", playerImg:"/__mockup/images/grrountain-baby.png",
+    wildImg:"/__mockup/images/pebble.png", playerImg:"/__mockup/images/pebble.png",
     wildFaces:"left", playerFaces:"left", maxHp:92, baseDmg:[10,16] },
   { id:"burg_wa",     name:"Burg",       type:"Frostformed",rarity:"ultra",
-    wildImg:"/__mockup/images/frostbite-baby.png",  playerImg:"/__mockup/images/frostbite-baby.png",
+    wildImg:"/__mockup/images/burg.png",  playerImg:"/__mockup/images/burg.png",
     wildFaces:"left", playerFaces:"left", maxHp:78, baseDmg:[9,17] },
   { id:"foxin_wa",    name:"Foxin",      type:"Spirit",     rarity:"apex",
     wildImg:"/__mockup/images/vixgrim.png",         playerImg:"/__mockup/images/vixgrim.png",
