@@ -1,4 +1,4 @@
-const CACHE_VERSION = "primeria-v29";
+const CACHE_VERSION = "primeria-v30";
 const ASSET_CACHE   = "primeria-assets-v29";
 
 // Same host gate as index.html. A service worker that lingers on a dev preview

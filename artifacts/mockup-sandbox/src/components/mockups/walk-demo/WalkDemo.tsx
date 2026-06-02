@@ -740,7 +740,7 @@ const NO_SOLIDS: Rect[] = [];
 
 // ── Tidemark Shore (south of Route 2 — cliff-edge ocean) ─────────────────────
 const SHORE = { w: 1024, h: 768 };
-const SHORE_SPAWN        = { x: 512, y: 690 };   // entering from Route 2 south
+const SHORE_SPAWN        = { x: 512, y: 80 };    // entering from Route 2 — spawns near north entry
 let   SHORE_NORTH_EXIT: Rect = [300, 0, 700, 20]; // north edge → back to Route 2
 const PROF_SHORE_POS     = { x: 510, y: 310 };   // professor on the clifftop
 const SHORE_COIN_GIFT    = 500;                    // PrimeriaCoin per payment
@@ -3483,32 +3483,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           transform: `scale(${ZOOM}) translate(${-cam.current.x}px,${-cam.current.y}px)`,
         }}>
           {/* Map background */}
-          {scene === "shore" ? (
-            <div key="shore-bg" style={{
-              position: "absolute", inset: 0,
-              width: SHORE.w, height: SHORE.h,
-              background: [
-                "linear-gradient(180deg,",
-                "#7ab4d2 0%,",
-                "#9ecce0 18%,",
-                "#b8d8e4 28%,",
-                "#7a9d78 31%,",
-                "#567050 38%,",
-                "#435840 50%,",
-                "#344430 60%,",
-                "#1e3858 64%,",
-                "#152e80 80%,",
-                "#0a1a50 100%",
-                ")",
-              ].join(" "),
-            }}/>
-          ) : (
           <img
             key={scene}
             src={scene === "ellio" ? "/__mockup/images/ellio-home-interior.png"
               : scene === "lia"    ? "/__mockup/images/lia-home.png"
               : scene === "area3"  ? "/__mockup/images/area3-bg.png"
               : scene === "farm"   ? "/__mockup/images/farm-bg.png"
+              : scene === "shore"  ? "/__mockup/images/shore-bg.png"
               : scene === "route1" ? "/__mockup/images/route1-bg.png"
               : scene === "route2" ? "/__mockup/images/route2-map.png"
               : scene === "overworld"
@@ -3525,22 +3506,6 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             decoding="async"
             style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit: scene === "overworld" ? "fill" : "cover" }}
           />
-          )}
-
-          {/* ── Shore horizon decorations (cliffs + ocean shimmer) ──────── */}
-          {scene === "shore" && (
-            <>
-              <div style={{ position:"absolute", left:0, top:290, width:1024, height:12,
-                background:"linear-gradient(90deg,#344430,#435840 30%,#344430 70%,#2e3c28)",
-                opacity:0.85, borderRadius:2, pointerEvents:"none" }}/>
-              <div style={{ position:"absolute", left:0, top:620, width:1024, height:20,
-                background:"linear-gradient(180deg,#1e3858 0%,#152e80 100%)",
-                opacity:0.6, pointerEvents:"none" }}/>
-              <div style={{ position:"absolute", left:0, top:640, width:1024, height:128,
-                background:"repeating-linear-gradient(90deg,rgba(100,160,220,0.07) 0px,rgba(100,160,220,0.12) 80px,rgba(100,160,220,0.07) 160px)",
-                pointerEvents:"none", animation:"waveScroll 6s linear infinite" }}/>
-            </>
-          )}
 
           {/* ── Shore — Prof. Irwyn NPC ──────────────────────────────────── */}
           {scene === "shore" && (

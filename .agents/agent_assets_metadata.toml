@@ -600,6 +600,12 @@ uri = "file://artifacts/primeria/public/images/crucibyx.png"
 type = "image"
 title = "crucibyx alchemy tayanari sprite"
 
+[[generated]]
+id = "5zgO88u8NuQw5FZtrAuH0"
+uri = "file://attached_assets/shore-bg-gen.png"
+type = "image"
+title = "tidemark-shore-rpg-map"
+
 [[outputs]]
 id = "hj9mwcgl1Uv9QQTG9g6KL"
 uri = "file://kinju_walk_demo.tar.gz"
