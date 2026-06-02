@@ -7,3 +7,4 @@
 - [Dual save.ts — WorldSave changes need BOTH files](dual-save-ts.md) — mockup-sandbox has its own save.ts separate from primeria's; any WorldSave type addition must be applied to BOTH or mockup typecheck fails.
 - [A3 sprite sheet tight-crop fix](a3-sprite-tight-crop.md) — A3 wild/new/mid/apex sheets have large empty top margins per frame; use A3WS/A3NS/A3MS/A3AS tight-bound helpers with measured pixel coords, not the generic grid helpers.
 - [StarterSpec faces field](starter-faces.md) — add faces?:"left"|"right" to StarterSpec for starters whose art natively faces left (Pebble/grrountain-baby.png); BattleScene lead uses starter.faces ?? "right".
+- [farm-townspeople sheet layout](farm-townspeople-sheet.md) — sheet is 1264×843 = 4×2 grid (316×421 cells), NOT 256px; lists which character maps to Shella/Runrik/Maren.

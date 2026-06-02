@@ -732,7 +732,7 @@ const FARM_ANIMALS: { src: string; x: number; y: number; w: number; h: number }[
   { src: "/__mockup/images/goat1.png",    x: 730, y: 790, w: 68, h: 68 },
   { src: "/__mockup/images/goat2.png",    x: 860, y: 770, w: 68, h: 68 },
 ];
-// Townspeople sprite sheet slices (farm-townspeople.png — 1024×512, 4 cols × 2 rows, 256×256 each)
+// Townspeople pre-cropped sprites (cut from farm-townspeople.png 1264×843 4×2 grid, 316×421 cells, bg removed)
 const SHELLA_IMG = "/__mockup/images/shella-npc.png";
 const RUNRIK_IMG = "/__mockup/images/runrik-npc.png";
 const MAREN_IMG  = "/__mockup/images/maren-npc.png";
@@ -3866,7 +3866,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               <img src={MAREN_IMG} alt="Maren" style={{ position:"absolute", imageRendering:"auto", pointerEvents:"none", zIndex:5, left: MAREN_POS.x - 36, top: MAREN_POS.y - 72, width:72, height:72, objectFit:"contain" }}/>
               <div style={{ position:"absolute", zIndex:6, left: MAREN_POS.x - 22, top: MAREN_POS.y - 90, color:"#90c060", fontSize:8, fontWeight:800, letterSpacing:1, pointerEvents:"none", textShadow:"0 0 4px #000,0 0 8px #000" }}>MAREN</div>
               {FARM_ANIMALS.map((a, i) => (
-                <img key={i} src={`/__mockup/images/${a.src}`} alt=""
+                <img key={i} src={a.src} alt=""
                   style={{ position:"absolute", left: a.x - 30, top: a.y - 30, width:60, height:60, objectFit:"contain", imageRendering:"auto", pointerEvents:"none", zIndex:4 }}
                 />
               ))}
