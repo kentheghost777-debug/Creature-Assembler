@@ -970,7 +970,7 @@ export function BattleScene({
 
         {/* Side-view stage: Keeper (green) + Tayanari (red) face EAST; wild (yellow) faces WEST */}
         {/* Hero / Keeper — green ritual circle, facing east */}
-        <div style={standOn(POS.hero, 20, 4, 84)}>
+        <div style={standOn(POS.hero, 40, 4, 84)}>
           <div style={{
             width:"100%", height:"100%",
             animation: intro ? "introSlide 1.1s ease-out" : "none",

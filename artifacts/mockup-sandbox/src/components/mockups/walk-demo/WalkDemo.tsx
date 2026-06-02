@@ -216,6 +216,10 @@ const EVO_TABLE: Array<{ from: string; atLevel: number; to: StarterSpec }> = [
   { from:"driftpaw_f",  atLevel:18, to:{ id:"driftpaw_2",   name:"Gustfang",       type:"Skyborne",     color:"#60a8ff", img:"" } },
   { from:"driftpaw_m",  atLevel:18, to:{ id:"driftpaw_2",   name:"Gustfang",       type:"Skyborne",     color:"#60a8ff", img:"" } },
   { from:"driftpaw_2",  atLevel:30, to:{ id:"driftpaw_3",   name:"Stormayne",      type:"Skyborne",     color:"#4080ff", img:"" } },
+  // ── Secret evo lines (one per area — hidden from player until it happens) ───
+  { from:"pebkin",      atLevel:18, to:{ id:"stonebrute",   name:"Stonebrute",     type:"Earthbound",   color:"#8b7355", img:"/__mockup/images/stonebrute-wild.png" } },
+  { from:"mudtot",      atLevel:18, to:{ id:"mireking",     name:"Mireking",       type:"Oceanic",      color:"#2d7a4a", img:"/__mockup/images/mireking-wild.png"   } },
+  { from:"thornwraith", atLevel:18, to:{ id:"voidwraith",   name:"Voidwraith",     type:"Abyss",        color:"#3d1a5c", img:"/__mockup/images/voidwraith-wild.png" } },
 ];
 
 /** Returns the StarterSpec the starter evolves into when it reaches exactly `atLevel`. */
@@ -303,6 +307,37 @@ const BESTIARY: MonSpec[] = [
   { id:"shockit_wa",name:"Shockit",   type:"Stormproven", rarity:"ultra",
     wildImg:"/__mockup/images/voltfang.png",        playerImg:"/__mockup/images/voltfang.png",
     wildFaces:"left", playerFaces:"left", maxHp:72, baseDmg:[9,16] },
+  // ── Route 1 new additions ──────────────────────────────────────────────────
+  { id:"fluttril",   name:"Fluttril",   type:"Nature",      rarity:"common",
+    wildImg:"/__mockup/images/fluttril-wild.png",    playerImg:"/__mockup/images/fluttril-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:22, baseDmg:[3,6] },
+  { id:"pebkin",     name:"Pebkin",     type:"Earthbound",  rarity:"common",
+    wildImg:"/__mockup/images/pebkin-wild.png",      playerImg:"/__mockup/images/pebkin-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:25, baseDmg:[3,6] },
+  { id:"cindersnap", name:"Cindersnap", type:"Volcanic",    rarity:"uncommon",
+    wildImg:"/__mockup/images/cindersnap-wild.png",  playerImg:"/__mockup/images/cindersnap-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:32, baseDmg:[4,8] },
+  { id:"shimroot",   name:"Shimroot",   type:"Nature",      rarity:"uncommon",
+    wildImg:"/__mockup/images/shimroot-wild.png",    playerImg:"/__mockup/images/shimroot-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:30, baseDmg:[3,7] },
+  { id:"galerix",    name:"Galerix",    type:"Stormproven", rarity:"rare",
+    wildImg:"/__mockup/images/galerix-wild.png",     playerImg:"/__mockup/images/galerix-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:44, baseDmg:[5,10] },
+  { id:"duskpetal",  name:"Duskpetal",  type:"Abyss",       rarity:"rare",
+    wildImg:"/__mockup/images/duskpetal-wild.png",   playerImg:"/__mockup/images/duskpetal-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:40, baseDmg:[5,9] },
+  { id:"stonebrute", name:"Stonebrute", type:"Earthbound",  rarity:"ultra",
+    wildImg:"/__mockup/images/stonebrute-wild.png",  playerImg:"/__mockup/images/stonebrute-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:58, baseDmg:[7,12] },
+  { id:"emberveil",  name:"Emberveil",  type:"Volcanic",    rarity:"ultra",
+    wildImg:"/__mockup/images/emberveil-wild.png",   playerImg:"/__mockup/images/emberveil-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:62, baseDmg:[7,13] },
+  { id:"solarhowl",  name:"Solarhowl",  type:"Stormproven", rarity:"apex",
+    wildImg:"/__mockup/images/solarhowl-wild.png",   playerImg:"/__mockup/images/solarhowl-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:80, baseDmg:[9,15] },
+  { id:"nightbloom", name:"Nightbloom", type:"Spirit",      rarity:"apex",
+    wildImg:"/__mockup/images/nightbloom-wild.png",  playerImg:"/__mockup/images/nightbloom-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:78, baseDmg:[8,14] },
 ];
 
 // ── Wyvrunt — unique scripted-encounter mon (Chaos type, loyal-only) ────────
@@ -466,6 +501,37 @@ const BESTIARY_A3: MonSpec[] = [
   { id:"voidtide",    name:"Voidtide",   type:"Abyss",      rarity:"apex",
     wildImg:"", playerImg:"", wildSheet:A3AS(768,140,768,357), playerSheet:A3AS(768,140,768,357),
     wildFaces:"left", playerFaces:"left", maxHp:95, baseDmg:[11,19] },
+  // ── Area 3 new additions ──────────────────────────────────────────────────
+  { id:"puffwing",    name:"Puffwing",    type:"Skyborne",   rarity:"common",
+    wildImg:"/__mockup/images/puffwing-wild.png",    playerImg:"/__mockup/images/puffwing-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:28, baseDmg:[3,7] },
+  { id:"embergnat",   name:"Embergnat",   type:"Volcanic",   rarity:"common",
+    wildImg:"/__mockup/images/embergnat-wild.png",   playerImg:"/__mockup/images/embergnat-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:30, baseDmg:[3,8] },
+  { id:"thornwraith", name:"Thornwraith", type:"Abyss",      rarity:"uncommon",
+    wildImg:"/__mockup/images/thornwraith-wild.png", playerImg:"/__mockup/images/thornwraith-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:36, baseDmg:[4,9] },
+  { id:"starspore",   name:"Starspore",   type:"Spirit",     rarity:"uncommon",
+    wildImg:"/__mockup/images/starspore-wild.png",   playerImg:"/__mockup/images/starspore-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:34, baseDmg:[4,8] },
+  { id:"crystalback", name:"Crystalback", type:"Armored",    rarity:"rare",
+    wildImg:"/__mockup/images/crystalback-wild.png", playerImg:"/__mockup/images/crystalback-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:52, baseDmg:[6,11] },
+  { id:"nebulite",    name:"Nebulite",    type:"Spirit",     rarity:"rare",
+    wildImg:"/__mockup/images/nebulite-wild.png",    playerImg:"/__mockup/images/nebulite-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:48, baseDmg:[6,12] },
+  { id:"voidwraith",  name:"Voidwraith",  type:"Abyss",      rarity:"ultra",
+    wildImg:"/__mockup/images/voidwraith-wild.png",  playerImg:"/__mockup/images/voidwraith-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:68, baseDmg:[8,14] },
+  { id:"ashflare",    name:"Ashflare",    type:"Volcanic",   rarity:"ultra",
+    wildImg:"/__mockup/images/ashflare-wild.png",    playerImg:"/__mockup/images/ashflare-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:66, baseDmg:[8,14] },
+  { id:"abyssmonk",   name:"Abyssmonk",   type:"Abyss",      rarity:"apex",
+    wildImg:"/__mockup/images/abyssmonk-wild.png",   playerImg:"/__mockup/images/abyssmonk-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:96, baseDmg:[11,18] },
+  { id:"celestine",   name:"Celestine",   type:"Spirit",     rarity:"apex",
+    wildImg:"/__mockup/images/celestine-wild.png",   playerImg:"/__mockup/images/celestine-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:92, baseDmg:[10,17] },
   // Starter half — Area 3 (Oceanic/Earthbound/Frostformed/Spirit — ruins vibes)
   { id:"cunbubble_wa",name:"Cun-bubble", type:"Oceanic",    rarity:"apex",
     wildImg:"/__mockup/images/phantorch.png",       playerImg:"/__mockup/images/phantorch.png",
@@ -532,6 +598,37 @@ const BESTIARY_R2: MonSpec[] = [
   { id:"thalassyn",   name:"Thalassyn",   type:"Oceanic",     rarity:"apex",
     wildImg:"/__mockup/images/thalassyn-wild.png",   playerImg:"/__mockup/images/thalassyn-player.png",
     wildFaces:"left", playerFaces:"right", maxHp:82, baseDmg:[9,16] },
+  // ── Route 2 new additions ──────────────────────────────────────────────────
+  { id:"frostpup",   name:"Frostpup",   type:"Frostformed", rarity:"common",
+    wildImg:"/__mockup/images/frostpup-wild.png",    playerImg:"/__mockup/images/frostpup-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:23, baseDmg:[3,6] },
+  { id:"mudtot",     name:"Mudtot",     type:"Oceanic",     rarity:"common",
+    wildImg:"/__mockup/images/mudtot-wild.png",      playerImg:"/__mockup/images/mudtot-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:26, baseDmg:[3,7] },
+  { id:"cragnite",   name:"Cragnite",   type:"Armored",     rarity:"uncommon",
+    wildImg:"/__mockup/images/cragnite-wild.png",    playerImg:"/__mockup/images/cragnite-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:34, baseDmg:[4,8] },
+  { id:"bleater",    name:"Bleater",    type:"Nature",       rarity:"uncommon",
+    wildImg:"/__mockup/images/bleater-wild.png",     playerImg:"/__mockup/images/bleater-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:30, baseDmg:[3,7] },
+  { id:"thornalisk", name:"Thornalisk", type:"Earthbound",  rarity:"rare",
+    wildImg:"/__mockup/images/thornalisk-wild.png",  playerImg:"/__mockup/images/thornalisk-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:46, baseDmg:[5,10] },
+  { id:"lumifang",   name:"Lumifang",   type:"Stormproven", rarity:"rare",
+    wildImg:"/__mockup/images/lumifang-wild.png",    playerImg:"/__mockup/images/lumifang-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:44, baseDmg:[5,11] },
+  { id:"mireking",   name:"Mireking",   type:"Oceanic",     rarity:"ultra",
+    wildImg:"/__mockup/images/mireking-wild.png",    playerImg:"/__mockup/images/mireking-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:60, baseDmg:[7,13] },
+  { id:"blizzfang",  name:"Blizzfang",  type:"Frostformed", rarity:"ultra",
+    wildImg:"/__mockup/images/blizzfang-wild.png",   playerImg:"/__mockup/images/blizzfang-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:64, baseDmg:[7,14] },
+  { id:"galestrike", name:"Galestrike", type:"Stormproven", rarity:"apex",
+    wildImg:"/__mockup/images/galestrike-wild.png",  playerImg:"/__mockup/images/galestrike-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:82, baseDmg:[10,16] },
+  { id:"thornlord",  name:"Thornlord",  type:"Earthbound",  rarity:"apex",
+    wildImg:"/__mockup/images/thornlord-wild.png",   playerImg:"/__mockup/images/thornlord-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:85, baseDmg:[10,16] },
 ];
 
 // ── Route 2 (east of Maya's home) ───────────────────────────────────────────
@@ -1188,7 +1285,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     return base;
   });
   const [showJournal,      setShowJournal]      = useState(false);
-  const [journalTab,       setJournalTab]       = useState<"party"|"storage"|"shells"|"bag">("party");
+  const [journalTab,       setJournalTab]       = useState<"party"|"storage"|"shells"|"bag"|"guide">("party");
   const [interactPos,      setInteractPos]      = useState({ sx: 0, sy: 0 });
   const [mayaInteractPos,  setMayaInteractPos]  = useState({ sx: 0, sy: 0 });
   const [jayInteractPos,   setJayInteractPos]   = useState({ sx: 0, sy: 0 });
@@ -2778,6 +2875,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       "ashcrawl",   "ashcrawl_2",
       "finwing",    "finwing_2",
       "driftpaw_f", "driftpaw_m", "driftpaw_2",
+      "pebkin", "mudtot", "thornwraith",
     ];
     const evoMap = new Map<number, StarterSpec>();
     cur.forEach((m, i) => {
@@ -2790,7 +2888,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     if (evoMap.size === 0) return;
     setCaughtParty(prev => prev.map((m, i) => {
       const evo = evoMap.get(i);
-      return evo ? { ...m, id: evo.id, name: evo.name, type: evo.type, color: evo.color, img: evo.img } : m;
+      return evo ? { ...m, id: evo.id, name: evo.name, type: evo.type, color: evo.color, img: evo.img, wildImg: evo.img, playerImg: evo.img } : m;
     }));
     const names = [...evoMap.values()].map(e => e.name).join(" & ");
     window.setTimeout(() => setBattleNotif({ title: `✦ ${names}!`, sub: "Your Tayanari evolved!" }), 1600);
@@ -5317,7 +5415,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                     </div>
                     {/* Mobile row 2: tabs full width */}
                     <div style={{ display:"flex", gap:3 }}>
-                      {(["party","storage","shells","bag"] as const).map(tab => (
+                      {(["party","storage","shells","bag","guide"] as const).map(tab => (
                         <button key={tab} onClick={() => setJournalTab(tab)} style={{
                           flex:1, padding:"5px 4px 8px",
                           background: journalTab === tab
@@ -5328,7 +5426,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                           color: journalTab === tab ? "#3d1e04" : "#a08050",
                           fontSize:10, fontWeight:800, letterSpacing:0.8,
                           textTransform:"uppercase", cursor:"pointer",
-                        }}>{tab === "party" ? "Party" : tab === "storage" ? "Box" : tab === "shells" ? "Shells" : "Bag"}</button>
+                        }}>{tab === "party" ? "Party" : tab === "storage" ? "Box" : tab === "shells" ? "Shells" : tab === "guide" ? "Guide" : "Bag"}</button>
                       ))}
                     </div>
                   </>
@@ -5343,7 +5441,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
 
                     {/* Page tabs flush with bottom of spine */}
                     <div style={{ display:"flex", gap:3, alignSelf:"flex-end" }}>
-                      {(["party","storage","shells","bag"] as const).map(tab => (
+                      {(["party","storage","shells","bag","guide"] as const).map(tab => (
                         <button key={tab} onClick={() => setJournalTab(tab)} style={{
                           padding:"5px 11px 8px",
                           background: journalTab === tab
@@ -5354,7 +5452,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                           color: journalTab === tab ? "#3d1e04" : "#a08050",
                           fontSize:10, fontWeight:800, letterSpacing:1.2,
                           textTransform:"uppercase", cursor:"pointer",
-                        }}>{tab === "party" ? "Party" : tab === "storage" ? "Box" : tab === "shells" ? "Shells" : "Bag"}</button>
+                        }}>{tab === "party" ? "Party" : tab === "storage" ? "Box" : tab === "shells" ? "Shells" : tab === "guide" ? "Guide" : "Bag"}</button>
                       ))}
                     </div>
 
@@ -5380,7 +5478,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                   <span style={{
                     color:"#8a5c22", fontSize:9, fontWeight:800,
                     letterSpacing:2.5, textTransform:"uppercase",
-                  }}>{journalTab === "party" ? "Companions" : journalTab === "storage" ? "Storage Box" : "Carried Items"}</span>
+                  }}>{journalTab === "party" ? "Companions" : journalTab === "storage" ? "Storage Box" : journalTab === "guide" ? "Tayanari Field Guide" : "Carried Items"}</span>
                   <div style={{ flex:1, height:1, background:"rgba(100,64,20,0.28)" }}/>
                 </div>
 
@@ -6295,6 +6393,50 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                         borderBottom:"1px dashed rgba(100,64,20,0.16)",
                         color:"#c8a87a", fontSize:11, fontStyle:"italic",
                       }}>— empty slot —</div>
+                    ))}
+                  </div>
+                )}
+
+                {/* ── GUIDE PAGE ──────────────────────────────── */}
+                {journalTab === "guide" && (
+                  <div style={{ display:"flex", flexDirection:"column", gap:2 }}>
+                    {([
+                      { label:"Whisperroot Trail", mons: BESTIARY,    accent:"#50c040" },
+                      { label:"Eastern Path",      mons: BESTIARY_R2, accent:"#40a8ff" },
+                      { label:"Westwood Reaches",  mons: BESTIARY_A3, accent:"#c070ff" },
+                    ]).map(({ label, mons, accent }) => (
+                      <div key={label} style={{ marginBottom:12 }}>
+                        <div style={{
+                          color: accent, fontSize:9.5, fontWeight:900, letterSpacing:1.8,
+                          textTransform:"uppercase", padding:"8px 2px 6px",
+                          borderBottom:`1px solid ${accent}55`, marginBottom:6,
+                        }}>{label}</div>
+                        <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:5 }}>
+                          {mons.map(m => {
+                            const rc = RARITY_COLOR[m.rarity];
+                            const tc = ELEMENT_COLOR[m.type as keyof typeof ELEMENT_COLOR] ?? "#aaa";
+                            return (
+                              <div key={m.id} style={{
+                                display:"flex", flexDirection:"column", alignItems:"center",
+                                background:"rgba(255,248,230,0.5)", borderRadius:7,
+                                padding:"6px 4px 5px", gap:1,
+                                border:`1px solid ${rc}33`,
+                              }}>
+                                {m.wildImg ? (
+                                  <img src={m.wildImg} alt={m.name} style={{ width:52, height:52, objectFit:"contain" }}/>
+                                ) : m.wildSheet ? (
+                                  <div style={{ width:52, height:52, backgroundRepeat:"no-repeat", ...sheetBgStyle(m.wildSheet) }}/>
+                                ) : (
+                                  <div style={{ width:52, height:52, borderRadius:6, background: tc + "33", border:`1px solid ${tc}55` }}/>
+                                )}
+                                <div style={{ fontSize:8, fontWeight:800, color:"#2a1206", textAlign:"center", lineHeight:1.2, maxWidth:70, wordBreak:"break-word", marginTop:2 }}>{m.name}</div>
+                                <div style={{ fontSize:7, color: tc, fontWeight:700 }}>{m.type}</div>
+                                <div style={{ fontSize:7, fontWeight:900, color: rc, textTransform:"uppercase", letterSpacing:0.5 }}>{m.rarity}</div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
                     ))}
                   </div>
                 )}
