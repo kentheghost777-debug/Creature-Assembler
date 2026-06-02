@@ -470,6 +470,59 @@ const BESTIARY_A3: MonSpec[] = [
     wildFaces:"left", playerFaces:"left", maxHp:88, baseDmg:[10,18] },
 ];
 
+// ── Route 2 Bestiary (Farmland Fields + Northern Wilderness) ─────────────────
+// Unlocked after catching the Wyvrunt (wyvruntCaught flag). Higher base stats
+// than Route 1. Apex tier = near-legendary mons: electric, dragon, fae, nature, oceanic.
+const BESTIARY_R2: MonSpec[] = [
+  // Commons
+  { id:"mossback",    name:"Mossback",    type:"Nature",      rarity:"common",
+    wildImg:"/__mockup/images/mossback-wild.png",    playerImg:"/__mockup/images/mossback-player.png",
+    wildFaces:"left", playerFaces:"right", maxHp:26, baseDmg:[3,7] },
+  { id:"sparwing",    name:"Sparwing",    type:"Skyborne",    rarity:"common",
+    wildImg:"/__mockup/images/sparwing-wild.png",    playerImg:"/__mockup/images/sparwing-player.png",
+    wildFaces:"left", playerFaces:"right", maxHp:24, baseDmg:[3,6] },
+  { id:"thornpup",    name:"Thornpup",    type:"Earthbound",  rarity:"common",
+    wildImg:"/__mockup/images/thornpup-wild.png",    playerImg:"/__mockup/images/thornpup-player.png",
+    wildFaces:"left", playerFaces:"right", maxHp:28, baseDmg:[3,7] },
+  // Uncommons
+  { id:"frogling",    name:"Frogling",    type:"Frostformed", rarity:"uncommon",
+    wildImg:"/__mockup/images/frogling-wild.png",    playerImg:"/__mockup/images/frogling-player.png",
+    wildFaces:"left", playerFaces:"right", maxHp:34, baseDmg:[4,8] },
+  { id:"duskrat",     name:"Duskrat",     type:"Abyss",       rarity:"uncommon",
+    wildImg:"/__mockup/images/duskrat-wild.png",     playerImg:"/__mockup/images/duskrat-player.png",
+    wildFaces:"left", playerFaces:"right", maxHp:32, baseDmg:[4,9] },
+  { id:"marshclaw",   name:"Marshclaw",   type:"Oceanic",     rarity:"uncommon",
+    wildImg:"/__mockup/images/marshclaw-wild.png",   playerImg:"/__mockup/images/marshclaw-player.png",
+    wildFaces:"left", playerFaces:"right", maxHp:36, baseDmg:[4,9] },
+  // Rares
+  { id:"emberwyvlet", name:"Emberwyvlet", type:"Chaos",       rarity:"rare",
+    wildImg:"/__mockup/images/emberwyvlet-wild.png", playerImg:"/__mockup/images/emberwyvlet-player.png",
+    wildFaces:"left", playerFaces:"right", maxHp:48, baseDmg:[5,11] },
+  { id:"crysthorn",   name:"Crysthorn",   type:"Frostformed", rarity:"rare",
+    wildImg:"/__mockup/images/crysthorn-wild.png",   playerImg:"/__mockup/images/crysthorn-player.png",
+    wildFaces:"left", playerFaces:"right", maxHp:44, baseDmg:[5,10] },
+  // Ultra
+  { id:"galvern",     name:"Galvern",     type:"Stormproven", rarity:"ultra",
+    wildImg:"/__mockup/images/galvern-wild.png",     playerImg:"/__mockup/images/galvern-player.png",
+    wildFaces:"left", playerFaces:"right", maxHp:62, baseDmg:[7,13] },
+  // Apex / Near-Legendary (electric, dragon, fae, nature, oceanic)
+  { id:"thunderax",   name:"Thunderax",   type:"Stormproven", rarity:"apex",
+    wildImg:"/__mockup/images/thunderax-wild.png",   playerImg:"/__mockup/images/thunderax-player.png",
+    wildFaces:"left", playerFaces:"right", maxHp:80, baseDmg:[9,15] },
+  { id:"dracoveil",   name:"Dracoveil",   type:"Chaos",       rarity:"apex",
+    wildImg:"/__mockup/images/dracoveil-wild.png",   playerImg:"/__mockup/images/dracoveil-player.png",
+    wildFaces:"left", playerFaces:"right", maxHp:85, baseDmg:[10,16] },
+  { id:"sylphara",    name:"Sylphara",    type:"Spirit",      rarity:"apex",
+    wildImg:"/__mockup/images/sylphara-wild.png",    playerImg:"/__mockup/images/sylphara-player.png",
+    wildFaces:"left", playerFaces:"right", maxHp:75, baseDmg:[8,14] },
+  { id:"verdanox",    name:"Verdanox",    type:"Nature",       rarity:"apex",
+    wildImg:"/__mockup/images/verdanox-wild.png",    playerImg:"/__mockup/images/verdanox-player.png",
+    wildFaces:"left", playerFaces:"right", maxHp:88, baseDmg:[9,15] },
+  { id:"thalassyn",   name:"Thalassyn",   type:"Oceanic",     rarity:"apex",
+    wildImg:"/__mockup/images/thalassyn-wild.png",   playerImg:"/__mockup/images/thalassyn-player.png",
+    wildFaces:"left", playerFaces:"right", maxHp:82, baseDmg:[9,16] },
+];
+
 // ── Route 2 (east of Maya's home) ───────────────────────────────────────────
 // route2-map.png native 1024w × 1536h — vertical scrolling route, enter west.
 const R2 = { w: 1024, h: 1536 };
@@ -536,7 +589,7 @@ function rollRarity(checksStreak: number): MonRarity {
 }
 
 function pickMonForScene(rarity: MonRarity, sc: string): MonSpec {
-  const list = sc === "area3" ? BESTIARY_A3 : BESTIARY;
+  const list = sc === "area3" ? BESTIARY_A3 : sc === "route2" ? BESTIARY_R2 : BESTIARY;
   const pool = list.filter(m => m.rarity === rarity);
   return pool[Math.floor(Math.random() * pool.length)] ?? list[0];
 }
@@ -566,6 +619,17 @@ const A3_HOTSPOTS: Hotspot[] = [
   { x: 550, y: 575, r: 40, kind: "bush" },   // lower center clearing
   { x: 720, y: 545, r: 38, kind: "bush" },   // lower-right clearing
   { x: 350, y: 465, r: 36, kind: "rock" },   // left ruin wall base
+];
+
+// ── Route 2 encounter hotspots (farm fields + trail edges, vertical map) ─────
+const R2_HOTSPOTS: Hotspot[] = [
+  { x: 340, y: 400, r: 38, kind: "bush" },   // northern trail edge
+  { x: 510, y: 475, r: 36, kind: "rock" },   // upper central area
+  { x: 370, y: 590, r: 40, kind: "tree" },   // mid-trail tree line
+  { x: 545, y: 680, r: 38, kind: "bush" },   // farmland south edge
+  { x: 420, y: 880, r: 36, kind: "bush" },   // south farm field
+  { x: 295, y: 1055, r: 38, kind: "rock" },  // south forest edge
+  { x: 445, y: 1195, r: 38, kind: "bush" },  // trail near return exit
 ];
 
 const FLAVOR_TRACKS = [
@@ -2545,9 +2609,10 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   useEffect(() => { checksStreakRef.current = checksStreak; },      [checksStreak]);
 
   useEffect(() => {
-    if (scene !== "route1" && scene !== "area3") return;
+    const isR2Active = scene === "route2" && wyvruntCaughtRef.current;
+    if (scene !== "route1" && scene !== "area3" && !isR2Active) return;
     setActiveDisturbances({});
-    const hotspots = scene === "area3" ? A3_HOTSPOTS : R1_HOTSPOTS;
+    const hotspots = scene === "area3" ? A3_HOTSPOTS : scene === "route2" ? R2_HOTSPOTS : R1_HOTSPOTS;
     const id = window.setInterval(() => {
       const now = Date.now();
       const cur = activeDistRef.current;
@@ -2575,7 +2640,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       });
     }, 2000);
     return () => clearInterval(id);
-  }, [scene]);
+  }, [scene, wyvruntCaught]);
 
   const handleHotspotClick = useCallback((idx: number, h: Hotspot) => {
     if (phase !== "walk") return;
@@ -3450,9 +3515,9 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           )}
 
 
-          {/* Encounter zone hotspots — rendered in route1 and area3 */}
-          {(scene === "route1" || scene === "area3") && (() => {
-            const hs = scene === "area3" ? A3_HOTSPOTS : R1_HOTSPOTS;
+          {/* Encounter zone hotspots — rendered in route1, area3, and route2 (after wyvrunt) */}
+          {(scene === "route1" || scene === "area3" || (scene === "route2" && wyvruntCaught)) && (() => {
+            const hs = scene === "area3" ? A3_HOTSPOTS : scene === "route2" ? R2_HOTSPOTS : R1_HOTSPOTS;
             return (
               <>
                 {/* Disturbance hotspots — clickable bushes/rocks/stones */}

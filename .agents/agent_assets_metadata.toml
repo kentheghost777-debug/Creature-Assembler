@@ -264,6 +264,126 @@ uri = "file://attached_assets/fx_buff_chaos.png"
 type = "image"
 title = "generated_image"
 
+[[generated]]
+id = "6LMvoi1osjfI3kWym17sW"
+uri = "file://attached_assets/r2mons/mossback-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "4SRPzsyusImEPgSu4JWC_"
+uri = "file://attached_assets/r2mons/sparwing-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "idMy6pH_34Z-Od7VRQEgW"
+uri = "file://attached_assets/r2mons/mossback-player.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "El-p3CbgaMw0mgD0SLgHY"
+uri = "file://attached_assets/r2mons/sparwing-player.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "rHB9vnITgkvs6tuFcRpdq"
+uri = "file://attached_assets/r2mons/frogling-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "WOK_EeQFuURaeIirpFftG"
+uri = "file://attached_assets/r2mons/duskrat-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "5l9Z3A4GgiCFMtutZpCFD"
+uri = "file://attached_assets/r2mons/duskrat-player.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "MujgTcf1IWLvIKP52z5jb"
+uri = "file://attached_assets/r2mons/marshclaw-player.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "J7_-9v8IZoU-ZbahHkbmL"
+uri = "file://attached_assets/r2mons/crysthorn-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "tDP2vMNkOMB2T8vmtDhaJ"
+uri = "file://attached_assets/r2mons/galvern-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "apBJqnOtpcFZ9eYQvJiiF"
+uri = "file://attached_assets/r2mons/thunderax-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "X36eqnanh-A-I_b8MEOln"
+uri = "file://attached_assets/r2mons/thunderax-player.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "0v0-SLH78pslkEowkFlpn"
+uri = "file://attached_assets/r2mons/dracoveil-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "SOpkm5L_jxz6i7RBVrD2H"
+uri = "file://attached_assets/r2mons/dracoveil-player.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "KXmLHJO5HQ260D0e1M5ka"
+uri = "file://attached_assets/r2mons/sylphara-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "TePi0kdjZB4CPjB7S6z9f"
+uri = "file://attached_assets/r2mons/sylphara-player.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "ZLSVTFRrBSdh9t3ziUf7Q"
+uri = "file://attached_assets/r2mons/verdanox-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "s111Dfu8XmK2LQNznjvRV"
+uri = "file://attached_assets/r2mons/verdanox-player.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "lOkDY2Z5huaYR90Kd_22P"
+uri = "file://attached_assets/r2mons/thalassyn-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "IMDf9HgMbdZ8hMZuPffzM"
+uri = "file://attached_assets/r2mons/thalassyn-player.png"
+type = "image"
+title = "generated_image"
+
 [[outputs]]
 id = "hj9mwcgl1Uv9QQTG9g6KL"
 uri = "file://kinju_walk_demo.tar.gz"
