@@ -767,7 +767,7 @@ const FARMER_SOLIDS: Rect[] = [FARMER_R2_BOX];
 const FARM = { w: 1376, h: 768 };                    // matches farm-bg.png native aspect (no crop)
 const FARM_SPAWN    = { x: 679, y: 713 };           // entering from Route 2 (south)
 const R2_FARM_EXIT: Rect  = [50, 0, 280, 20 ];       // Route 2 top-left → farm
-const FARM_RETURN_R2: Rect = [598, 468, 658, 508 ];  // mid-farm gate → Route 2 (user-placed)
+const FARM_RETURN_R2: Rect = [933, 664, 993, 694];   // south-east farm path → Route 2 (player pos 963,679)
 // NPC world positions (farm scene)
 const SHELLA_POS = { x: 536, y: 487 };   // shell vendor — left side near house
 const RUNRIK_POS = { x: 761, y: 420 };   // rune vendor — centre-right
