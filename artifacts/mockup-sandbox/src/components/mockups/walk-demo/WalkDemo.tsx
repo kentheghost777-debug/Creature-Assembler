@@ -2110,7 +2110,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     const tryDraw = () => {
       const c = profCanvasRef.current;
       if (!c) return;
-      if (!drawSprite(c, src, false, 72)) setTimeout(tryDraw, 150);
+      if (!drawSprite(c, src, false, 96)) setTimeout(tryDraw, 150);
     };
     tryDraw();
   }, [scene]);
@@ -2122,7 +2122,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     const tryDraw = () => {
       const c = mayaCanvasRef.current;
       if (!c) return;
-      if (!drawSprite(c, src, false, 68)) setTimeout(tryDraw, 150);
+      if (!drawSprite(c, src, false, 96)) setTimeout(tryDraw, 150);
     };
     tryDraw();
   }, [scene]);
@@ -2134,7 +2134,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     const tryDraw = () => {
       const c = jayCanvasRef.current;
       if (!c) return;
-      if (!drawSprite(c, src, false, 72)) setTimeout(tryDraw, 150);
+      if (!drawSprite(c, src, false, 96)) setTimeout(tryDraw, 150);
     };
     tryDraw();
   }, [scene]);
@@ -2183,7 +2183,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     const tryDraw = () => {
       const c = ellioCanvasRef.current;
       if (!c) return;
-      if (!drawSprite(c, src, false, 82)) setTimeout(tryDraw, 150);
+      if (!drawSprite(c, src, false, 96)) setTimeout(tryDraw, 150);
     };
     tryDraw();
   }, [scene]);
@@ -2207,7 +2207,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     const tryDraw = () => {
       const c = jessCanvasRef.current;
       if (!c) return;
-      if (!drawSprite(c, src, false, 82)) setTimeout(tryDraw, 150);
+      if (!drawSprite(c, src, false, 96)) setTimeout(tryDraw, 150);
     };
     tryDraw();
   }, [scene]);
@@ -2230,7 +2230,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     const tryDraw = () => {
       const c = rowanLabCanvasRef.current;
       if (!c) return;
-      if (!drawSprite(c, "/__mockup/images/rowan_front_idle.png", false, 78))
+      if (!drawSprite(c, "/__mockup/images/rowan_front_idle.png", false, 96))
         setTimeout(tryDraw, 150);
     };
     tryDraw();
@@ -2242,7 +2242,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     const tryDraw = () => {
       const c = kinjuHomeCanvasRef.current;
       if (!c) return;
-      if (!drawSprite(c, "/__mockup/images/kinju_front_idle.png", false, 82))
+      if (!drawSprite(c, "/__mockup/images/kinju_front_idle.png", false, 96))
         setTimeout(tryDraw, 150);
     };
     tryDraw();
@@ -2275,7 +2275,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     const tryDraw = () => {
       const c = liaCanvasRef.current;
       if (!c) return;
-      if (!drawSprite(c, src, false, 82)) setTimeout(tryDraw, 150);
+      if (!drawSprite(c, src, false, 96)) setTimeout(tryDraw, 150);
     };
     tryDraw();
   }, [scene]);
@@ -2299,7 +2299,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     const tryDraw = () => {
       const c = profR2CanvasRef.current;
       if (!c) return;
-      if (!drawSprite(c, src, false, 72)) setTimeout(tryDraw, 150);
+      if (!drawSprite(c, src, false, 96)) setTimeout(tryDraw, 150);
     };
     tryDraw();
   }, [scene]);
@@ -2323,7 +2323,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     const tryDraw = () => {
       const c = profShoreCanvasRef.current;
       if (!c) return;
-      if (!drawSprite(c, src, false, 72)) setTimeout(tryDraw, 150);
+      if (!drawSprite(c, src, false, 96)) setTimeout(tryDraw, 150);
     };
     tryDraw();
   }, [scene]);
@@ -2347,7 +2347,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     const tryDraw = () => {
       const c = jessPathCanvasRef.current;
       if (!c) return;
-      if (!drawSprite(c, src, false, 68)) setTimeout(tryDraw, 150);
+      if (!drawSprite(c, src, false, 96)) setTimeout(tryDraw, 150);
     };
     tryDraw();
   }, [scene, wifeOnPath]);
@@ -2358,7 +2358,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     const tryDraw = () => {
       const c = jayA3CanvasRef.current;
       if (!c) return;
-      if (!drawSprite(c, "/__mockup/images/jay-sprite.png", false, 68)) setTimeout(tryDraw, 150);
+      if (!drawSprite(c, "/__mockup/images/jay-sprite.png", false, 96)) setTimeout(tryDraw, 150);
     };
     tryDraw();
   }, [scene]);
@@ -2369,7 +2369,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     const tryDraw = () => {
       const c = liaA3CanvasRef.current;
       if (!c) return;
-      if (!drawSprite(c, "/__mockup/images/lia.png", false, 68)) setTimeout(tryDraw, 150);
+      if (!drawSprite(c, "/__mockup/images/lia.png", false, 96)) setTimeout(tryDraw, 150);
     };
     tryDraw();
   }, [scene]);
@@ -3653,7 +3653,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           {/* ── Shore — Prof. Irwyn NPC ──────────────────────────────────── */}
           {scene === "shore" && (
             <>
-              <canvas ref={profShoreCanvasRef} style={{ position:"absolute", imageRendering:"auto", pointerEvents:"none", zIndex:5, left: PROF_SHORE_POS.x - 36, top: PROF_SHORE_POS.y - 72 }}/>
+              <canvas ref={profShoreCanvasRef} style={{ position:"absolute", imageRendering:"auto", pointerEvents:"none", zIndex:5, left: PROF_SHORE_POS.x - 48, top: PROF_SHORE_POS.y - 72 }}/>
               <div style={{ position:"absolute", zIndex:6, left: PROF_SHORE_POS.x - 28, top: PROF_SHORE_POS.y - 92, color:"#e8d060", fontSize:8, fontWeight:800, letterSpacing:1, pointerEvents:"none", textShadow:"0 0 4px #000,0 0 8px #000" }}>PROF. IRWYN</div>
             </>
           )}
@@ -3770,8 +3770,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                 position: "absolute",
                 imageRendering: "auto",
                 pointerEvents: "none",
-                left: PROF.x - 36,
-                top:  PROF.y - 54,
+                left: PROF.x - 48,
+                top:  PROF.y - 72,
               }}
             />
           )}
@@ -3785,13 +3785,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                   position: "absolute",
                   imageRendering: "auto",
                   pointerEvents: "none",
-                  left: PROF.x + 130 - 34,
-                  top:  PROF.y + 6 - 51,
+                  left: PROF.x + 130 - 48,
+                  top:  PROF.y + 6 - 72,
                 }}
               />
               <div style={{
                 position:"absolute",
-                left: PROF.x + 130 - 14, top: PROF.y + 6 - 78,
+                left: PROF.x + 130 - 14, top: PROF.y + 6 - 98,
                 color:"#cdbce8", fontSize:8, fontWeight:800,
                 letterSpacing:1, pointerEvents:"none",
                 textShadow:"0 0 4px #000,0 0 8px #000",
@@ -3805,8 +3805,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             <canvas ref={jayCanvasRef} style={{
               position:"absolute",
               imageRendering:"auto", pointerEvents:"none",
-              left: JAY_POS.x - 36,
-              top:  JAY_POS.y - 54,
+              left: JAY_POS.x - 48,
+              top:  JAY_POS.y - 72,
               animation: jayBounce ? "npcReact 0.5s ease-out" : "none",
             }}/>
           )}
@@ -3818,13 +3818,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               <canvas ref={mayaCanvasRef} style={{
                 position:"absolute",
                 imageRendering:"auto", pointerEvents:"none",
-                left: MAYA_POS.x - 34,
-                top:  MAYA_POS.y - 51,
+                left: MAYA_POS.x - 48,
+                top:  MAYA_POS.y - 72,
                 animation: mayaBounce ? "npcReact 0.5s ease-out" : "none",
               }}/>
               <div style={{
                 position:"absolute",
-                left: MAYA_POS.x - 20, top: MAYA_POS.y - 80,
+                left: MAYA_POS.x - 20, top: MAYA_POS.y - 100,
                 color:"#d4f0c0", fontSize:8, fontWeight:800,
                 letterSpacing:1, pointerEvents:"none",
                 textShadow:"0 0 4px #000,0 0 8px #000",
@@ -3876,13 +3876,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               <canvas ref={ellioCanvasRef} style={{
                 position:"absolute",
                 imageRendering:"auto", pointerEvents:"none",
-                left: ELLIO_POS.x - 34,
-                top:  ELLIO_POS.y - 51,
+                left: ELLIO_POS.x - 48,
+                top:  ELLIO_POS.y - 72,
                 animation: ellioBounce ? "npcReact 0.5s ease-out" : "none",
               }}/>
               <div style={{
                 position:"absolute",
-                left: ELLIO_POS.x - 18, top: ELLIO_POS.y - 80,
+                left: ELLIO_POS.x - 18, top: ELLIO_POS.y - 100,
                 color:"#a8d898", fontSize:8, fontWeight:800,
                 letterSpacing:1, pointerEvents:"none",
                 textShadow:"0 0 4px #000,0 0 8px #000",
@@ -3895,12 +3895,12 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               <canvas ref={jessCanvasRef} style={{
                 position:"absolute",
                 imageRendering:"auto", pointerEvents:"none",
-                left: JESS_POS.x - 34,
-                top:  JESS_POS.y - 51,
+                left: JESS_POS.x - 48,
+                top:  JESS_POS.y - 72,
               }}/>
               <div style={{
                 position:"absolute",
-                left: JESS_POS.x - 16, top: JESS_POS.y - 80,
+                left: JESS_POS.x - 16, top: JESS_POS.y - 100,
                 color:"#f8d8b0", fontSize:8, fontWeight:800,
                 letterSpacing:1, pointerEvents:"none",
                 textShadow:"0 0 4px #000,0 0 8px #000",
@@ -3910,12 +3910,12 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                   <canvas ref={kinjuHomeCanvasRef} style={{
                     position:"absolute",
                     imageRendering:"auto", pointerEvents:"none",
-                    left: JESS_POS.x + 70 - 34,
-                    top:  JESS_POS.y + 4 - 51,
+                    left: JESS_POS.x + 70 - 48,
+                    top:  JESS_POS.y + 4 - 72,
                   }}/>
                   <div style={{
                     position:"absolute",
-                    left: JESS_POS.x + 70 - 16, top: JESS_POS.y + 4 - 80,
+                    left: JESS_POS.x + 70 - 16, top: JESS_POS.y + 4 - 100,
                     color:"#f8d8b0", fontSize:8, fontWeight:800,
                     letterSpacing:1, pointerEvents:"none",
                     textShadow:"0 0 4px #000,0 0 8px #000",
@@ -3931,13 +3931,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               <canvas ref={liaCanvasRef} style={{
                 position:"absolute",
                 imageRendering:"auto", pointerEvents:"none",
-                left: LIA_POS.x - 36,
-                top:  LIA_POS.y - 54,
+                left: LIA_POS.x - 48,
+                top:  LIA_POS.y - 72,
                 animation: liaBounce ? "npcReact 0.5s ease-out" : "none",
               }}/>
               <div style={{
                 position:"absolute",
-                left: LIA_POS.x - 12, top: LIA_POS.y - 80,
+                left: LIA_POS.x - 12, top: LIA_POS.y - 100,
                 color:"#ffaa70", fontSize:8, fontWeight:800,
                 letterSpacing:1, pointerEvents:"none",
                 textShadow:"0 0 4px #000,0 0 8px #000",
@@ -3973,12 +3973,12 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               <canvas ref={profR2CanvasRef} style={{
                 position:"absolute",
                 imageRendering:"auto", pointerEvents:"none",
-                left: PROF_R2_POS.x - 36,
-                top:  PROF_R2_POS.y - 54,
+                left: PROF_R2_POS.x - 48,
+                top:  PROF_R2_POS.y - 72,
               }}/>
               <div style={{
                 position:"absolute",
-                left: PROF_R2_POS.x - 30, top: PROF_R2_POS.y - 82,
+                left: PROF_R2_POS.x - 30, top: PROF_R2_POS.y - 100,
                 color:"#ffe0a0", fontSize:8, fontWeight:800,
                 letterSpacing:1, pointerEvents:"none",
                 textShadow:"0 0 4px #000,0 0 8px #000",
@@ -4026,12 +4026,12 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               <canvas ref={jessPathCanvasRef} style={{
                 position:"absolute",
                 imageRendering:"auto", pointerEvents:"none",
-                left: JESS_PATH_POS.x - 34,
-                top:  JESS_PATH_POS.y - 51,
+                left: JESS_PATH_POS.x - 48,
+                top:  JESS_PATH_POS.y - 72,
               }}/>
               <div style={{
                 position:"absolute",
-                left: JESS_PATH_POS.x - 16, top: JESS_PATH_POS.y - 80,
+                left: JESS_PATH_POS.x - 16, top: JESS_PATH_POS.y - 100,
                 color:"#f8d8b0", fontSize:8, fontWeight:800,
                 letterSpacing:1, pointerEvents:"none",
                 textShadow:"0 0 4px #000,0 0 8px #000",
@@ -4044,22 +4044,22 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             <>
               <canvas ref={jayA3CanvasRef} style={{
                 position:"absolute", imageRendering:"auto", pointerEvents:"none",
-                left: JAY_A3_POS.x - 34, top: JAY_A3_POS.y - 60,
+                left: JAY_A3_POS.x - 48, top: JAY_A3_POS.y - 72,
               }}/>
               <div style={{
                 position:"absolute",
-                left: JAY_A3_POS.x - 12, top: JAY_A3_POS.y - 84,
+                left: JAY_A3_POS.x - 12, top: JAY_A3_POS.y - 100,
                 color:"#8ab0f0", fontSize:8, fontWeight:800,
                 letterSpacing:1, pointerEvents:"none",
                 textShadow:"0 0 4px #000,0 0 8px #000",
               }}>JAY</div>
               <canvas ref={liaA3CanvasRef} style={{
                 position:"absolute", imageRendering:"auto", pointerEvents:"none",
-                left: LIA_A3_POS.x - 34, top: LIA_A3_POS.y - 60,
+                left: LIA_A3_POS.x - 48, top: LIA_A3_POS.y - 72,
               }}/>
               <div style={{
                 position:"absolute",
-                left: LIA_A3_POS.x - 12, top: LIA_A3_POS.y - 84,
+                left: LIA_A3_POS.x - 12, top: LIA_A3_POS.y - 100,
                 color:"#ff9060", fontSize:8, fontWeight:800,
                 letterSpacing:1, pointerEvents:"none",
                 textShadow:"0 0 4px #000,0 0 8px #000",
