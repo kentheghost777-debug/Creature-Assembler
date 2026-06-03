@@ -2544,7 +2544,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         } else if (sc === "area4" && inRect(worldPos.current.x, worldPos.current.y, A4_RETURN_A3)) {
           transitionTo("area3", 490, 600);      // back to south open zone of A3
         } else if (sc === "route2" && inRect(worldPos.current.x, worldPos.current.y, R2_AREA4_EXIT)) {
-          transitionTo("area4", A4_SPAWN_R2.x, A4_SPAWN_R2.y);
+          transitionTo("shore", SHORE_SPAWN.x, SHORE_SPAWN.y);
         } else if (sc === "area4" && inRect(worldPos.current.x, worldPos.current.y, A4_RETURN_R2)) {
           transitionTo("route2", 440, 1490);    // back near the R2 south entrance
         } else if (sc === "route2" && inRect(worldPos.current.x, worldPos.current.y, R2_FARM_EXIT)) {
