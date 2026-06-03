@@ -849,8 +849,8 @@ export function BattleScene({
   // face LEFT (toward player); player mon stands on the LEFT and must face RIGHT.
   const wildScaleX   = currentOpponent.wildFaces === "left"   ? 1 : -1; // flip when native faces right
   const playerScaleX = active.faces === "right" ? 1 : -1; // flip when active mon's native art faces left
-  const wildShake   = shake === "wild"   ? "shakeFx 0.22s" : "none";
-  const playerShake = shake === "player" ? "shakeFx 0.22s" : "none";
+  const wildShake   = shake === "wild"   ? "shakeFx 0.32s" : "none";
+  const playerShake = shake === "player" ? "shakeFx 0.32s" : "none";
 
   // Derived sprite states for the capture sequence and KO
   const wildAbsorbed = shellFx?.phase === "wobble" || shellFx?.phase === "caught";
@@ -1100,7 +1100,7 @@ export function BattleScene({
         {screenFlash && (
           <div key={`sf-${screenFlash}`} style={{
             position:"absolute", inset:0, pointerEvents:"none", zIndex:8,
-            background: screenFlash === "player" ? "#ff333318" : "#ffffff18",
+            background: screenFlash === "player" ? "#ff333345" : "#ffffff40",
             animation: "screenFlashFade 0.19s ease-out forwards",
           }}/>
         )}
@@ -1493,7 +1493,7 @@ export function BattleScene({
       <style>{`
         @keyframes introSlide { 0%{transform:translateX(-200px);opacity:0} 100%{transform:translateX(0);opacity:1} }
         @keyframes introFloat { 0%{transform:translateY(-30px);opacity:0} 100%{transform:translateY(0);opacity:1} }
-        @keyframes shakeFx    { 0%{transform:translate(0,0)} 25%{transform:translate(-4px,2px)} 50%{transform:translate(4px,-2px)} 75%{transform:translate(-3px,1px)} 100%{transform:translate(0,0)} }
+        @keyframes shakeFx    { 0%{transform:translate(0,0)} 20%{transform:translate(-7px,3px)} 45%{transform:translate(7px,-3px)} 65%{transform:translate(-5px,2px)} 82%{transform:translate(3px,-1px)} 100%{transform:translate(0,0)} }
 
         /* Attack streaks — origin set inline */
         @keyframes slashRight {

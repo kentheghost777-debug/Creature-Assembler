@@ -1720,6 +1720,9 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const [showStarterGate, setShowStarterGate] = useState(false);
   const [battleNotif,   setBattleNotif]   = useState<{ title: string; sub: string } | null>(null);
   const [justSaved,     setJustSaved]     = useState(false);
+  const [showDpadHint,  setShowDpadHint]  = useState(() => {
+    try { return !localStorage.getItem("primeria_dpad_hint_seen"); } catch { return true; }
+  });
   // isMobile: computed once — the game runs fullscreen and doesn't layout-shift on resize
   const isMobile = window.innerWidth <= 520;
   // ── Starter progression ───────────────────────────────────────────────────
@@ -2267,6 +2270,16 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     if (scene === "overworld") { setMayaBounce(true); timers.push(setTimeout(() => setMayaBounce(false), 520)); }
     return () => timers.forEach(clearTimeout);
   }, [scene]);
+
+  // D-pad control hint — shown once on very first overworld entry, auto-dismisses after 5s
+  useEffect(() => {
+    if (scene !== "overworld" || !showDpadHint) return;
+    const t = setTimeout(() => {
+      setShowDpadHint(false);
+      try { localStorage.setItem("primeria_dpad_hint_seen", "1"); } catch {}
+    }, 5000);
+    return () => clearTimeout(t);
+  }, [scene, showDpadHint]);
 
   // Draw Lia world sprite inside Lia's home
   useEffect(() => {
@@ -3360,6 +3373,15 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     const loyaltyAfter = Math.min(100, wyrLoyalty + loyaltyDelta);
     checkWyvForms(wyvLevelAfter(allIdxs, r.xpGained), loyaltyAfter);
     void parts;
+    if (loyaltyDelta > 0 && wyvruntCaught) {
+      const isAwakening = wyrLoyalty < 80 && loyaltyAfter >= 80;
+      const loyaltyMsg = isAwakening
+        ? { title: "☯ Bond Awakened", sub: "Your Wyvrunt's true form stirs…" }
+        : loyaltyAfter >= 60
+          ? { title: "☯ Bond deepens", sub: `${loyaltyAfter}/100 — the resonance grows stronger` }
+          : { title: "☯ Bond grows", sub: `${loyaltyAfter}/100 — your Wyvrunt feels it` };
+      window.setTimeout(() => { setBattleNotif(loyaltyMsg); window.setTimeout(() => setBattleNotif(null), 2600); }, 3100);
+    }
 
     const evoTarget = checkStarterEvo(r.newLevel);
 
@@ -3435,6 +3457,15 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     if (loyaltyDelta > 0) setWyrLoyalty(l => Math.min(100, l + loyaltyDelta));
     const loyaltyAfter = Math.min(100, wyrLoyalty + loyaltyDelta);
     checkWyvForms(wyvLevelAfter(allIdxs, r.xpGained), loyaltyAfter);
+    if (loyaltyDelta > 0 && wyvruntCaught) {
+      const isAwakening = wyrLoyalty < 80 && loyaltyAfter >= 80;
+      const loyaltyMsg = isAwakening
+        ? { title: "☯ Bond Awakened", sub: "Your Wyvrunt's true form stirs…" }
+        : loyaltyAfter >= 60
+          ? { title: "☯ Bond deepens", sub: `${loyaltyAfter}/100 — the resonance grows stronger` }
+          : { title: "☯ Bond grows", sub: `${loyaltyAfter}/100 — your Wyvrunt feels it` };
+      window.setTimeout(() => { setBattleNotif(loyaltyMsg); window.setTimeout(() => setBattleNotif(null), 2600); }, 3100);
+    }
 
     const evoTarget = checkStarterEvo(r.newLevel);
 
@@ -3649,6 +3680,64 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             decoding="async"
             style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit: scene === "overworld" ? "fill" : "cover" }}
           />
+
+          {/* ── Ambient scene particles ─────────────────────────────────── */}
+          {(() => {
+            type MoteConf = { left:string; top:string; delay:string; dur:string; size:number; color:string };
+            const ovMotes: MoteConf[] = [
+              { left:"8%",  top:"30%", delay:"0s",   dur:"4.5s", size:2, color:"rgba(120,200,80,0.55)"  },
+              { left:"22%", top:"55%", delay:"1.3s", dur:"5.2s", size:2, color:"rgba(140,220,90,0.45)"  },
+              { left:"45%", top:"20%", delay:"2.8s", dur:"4.0s", size:3, color:"rgba(100,180,60,0.50)"  },
+              { left:"68%", top:"45%", delay:"0.7s", dur:"6.1s", size:2, color:"rgba(160,230,100,0.42)" },
+              { left:"82%", top:"70%", delay:"3.5s", dur:"4.8s", size:2, color:"rgba(110,190,70,0.55)"  },
+              { left:"15%", top:"80%", delay:"1.9s", dur:"5.5s", size:3, color:"rgba(130,210,85,0.38)"  },
+              { left:"55%", top:"65%", delay:"4.2s", dur:"4.3s", size:2, color:"rgba(90,170,55,0.50)"   },
+              { left:"75%", top:"15%", delay:"0.4s", dur:"5.8s", size:2, color:"rgba(150,220,95,0.42)"  },
+            ];
+            const rtMotes: MoteConf[] = [
+              { left:"12%", top:"25%", delay:"0s",   dur:"5.5s", size:2, color:"rgba(200,180,120,0.50)" },
+              { left:"30%", top:"60%", delay:"1.8s", dur:"4.2s", size:3, color:"rgba(180,155,100,0.42)" },
+              { left:"52%", top:"40%", delay:"0.9s", dur:"6.0s", size:2, color:"rgba(210,185,130,0.48)" },
+              { left:"70%", top:"70%", delay:"2.5s", dur:"4.8s", size:2, color:"rgba(175,155,110,0.42)" },
+              { left:"88%", top:"20%", delay:"3.8s", dur:"5.2s", size:2, color:"rgba(195,175,120,0.50)" },
+              { left:"5%",  top:"55%", delay:"1.2s", dur:"4.5s", size:3, color:"rgba(185,160,105,0.42)" },
+            ];
+            const a3Motes: MoteConf[] = [
+              { left:"10%", top:"35%", delay:"0s",   dur:"5.0s", size:2, color:"rgba(130,100,200,0.55)" },
+              { left:"28%", top:"60%", delay:"1.5s", dur:"4.5s", size:2, color:"rgba(150,120,220,0.45)" },
+              { left:"50%", top:"25%", delay:"2.2s", dur:"5.8s", size:3, color:"rgba(100,80,180,0.55)"  },
+              { left:"72%", top:"50%", delay:"0.6s", dur:"4.2s", size:2, color:"rgba(160,130,230,0.48)" },
+              { left:"85%", top:"75%", delay:"3.2s", dur:"5.5s", size:2, color:"rgba(120,90,210,0.45)"  },
+              { left:"18%", top:"80%", delay:"1.0s", dur:"6.0s", size:3, color:"rgba(140,110,220,0.42)" },
+              { left:"60%", top:"15%", delay:"4.0s", dur:"4.8s", size:2, color:"rgba(110,85,195,0.55)"  },
+            ];
+            const motes: MoteConf[] =
+              scene === "route1" || scene === "route2" ? rtMotes :
+              scene === "area3"  || scene === "area4"  ? a3Motes :
+              scene === "overworld" || scene === "home" || scene === "lab" ? ovMotes : [];
+            return motes.map((p, i) => (
+              <div key={`mote-${i}`} style={{
+                position:"absolute", left:p.left, top:p.top,
+                width:p.size, height:p.size, borderRadius:"50%",
+                background:p.color, pointerEvents:"none",
+                animation:`moteFloat ${p.dur} ${p.delay} infinite ease-in-out`, zIndex:1,
+              }}/>
+            ));
+          })()}
+
+          {/* ── D-pad control hint (first overworld visit) ──────────────── */}
+          {showDpadHint && scene === "overworld" && phase === "walk" && (
+            <div style={{
+              position:"absolute", bottom:"22%", left:"50%", transform:"translateX(-50%)",
+              background:"rgba(4,8,16,0.88)", border:"1px solid rgba(255,255,200,0.22)",
+              borderRadius:8, padding:"6px 16px", zIndex:60, pointerEvents:"none",
+              animation:"dialogIn 0.4s ease-out", whiteSpace:"nowrap",
+            }}>
+              <div style={{ color:"#d4c884", fontSize:10, letterSpacing:1.2, fontWeight:700 }}>
+                D-pad to move  ·  ↑ to enter doors
+              </div>
+            </div>
+          )}
 
           {/* ── Shore — Prof. Irwyn NPC ──────────────────────────────────── */}
           {scene === "shore" && (
@@ -6916,6 +7005,56 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                 {/* ── BAG PAGE ────────────────────────────────────── */}
                 {journalTab === "bag" && (
                   <div style={{ display:"flex", flexDirection:"column" }}>
+
+                    {/* ── Keeper's Errand tracker ──────────────────────────── */}
+                    {(() => {
+                      const errands = [
+                        { label:"Weathered Realm Shells", done:shellsCollected, from:"Maya"  },
+                        { label:"Obsidian Healing Rune",  done:hasHealingRune,  from:"Jay"   },
+                        { label:"Resonance Stone",        done:hasResonanceStone, from:"Ellio" },
+                        { label:"Hearthberries",          done:hasHearthberries, from:"Lia"  },
+                        { label:"Keeper's Satchel",       done:hasSatchel,       from:"Lia"  },
+                      ];
+                      const n = errands.filter(e => e.done).length;
+                      const allDone = n === 5;
+                      return (
+                        <div style={{
+                          background: allDone ? "rgba(40,100,30,0.08)" : "rgba(60,40,10,0.06)",
+                          borderRadius:10, padding:"10px 12px", marginBottom:10,
+                          border:`1px solid ${allDone ? "rgba(80,160,60,0.28)" : "rgba(120,80,30,0.15)"}`,
+                        }}>
+                          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:6 }}>
+                            <div style={{ color:"#9a6e2e", fontSize:9.5, fontWeight:900, letterSpacing:1.5, textTransform:"uppercase" }}>
+                              Keeper's Errand
+                            </div>
+                            <div style={{
+                              color: allDone ? "#60b850" : "#9a6e2e",
+                              fontSize:10, fontWeight:900, letterSpacing:0.5,
+                            }}>{n}/5</div>
+                          </div>
+                          {errands.map(e => (
+                            <div key={e.label} style={{ display:"flex", alignItems:"center", gap:7, padding:"2px 0" }}>
+                              <span style={{ color: e.done ? "#58c048" : "#906040", fontSize:11, lineHeight:1, flexShrink:0 }}>
+                                {e.done ? "✓" : "○"}
+                              </span>
+                              <span style={{
+                                color: e.done ? "#4a9038" : "#9a7040", fontSize:10,
+                                fontWeight: e.done ? 700 : 400, flex:1,
+                              }}>{e.label}</span>
+                              {!e.done && (
+                                <span style={{ color:"#7a5830", fontSize:9, flexShrink:0 }}>{e.from}</span>
+                              )}
+                            </div>
+                          ))}
+                          {allDone && (
+                            <div style={{ color:"#60b850", fontSize:9, fontWeight:800, marginTop:5, letterSpacing:0.5 }}>
+                              ✦ Ready for the Lab — speak with Prof. Irwyn
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+
                     {!shellsCollected && !hasHealingRune && !hasResonanceStone && !hasHearthberries && !hasSatchel
                      && (duskberries + thornberries + calmberries + brightberries === 0) && (
                       <div style={{
@@ -7776,6 +7915,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         @keyframes encounterFlash { 0%{opacity:0;transform:scale(0.4)} 18%{opacity:1;transform:scale(1.04)} 55%{opacity:0.75} 100%{opacity:0;transform:scale(1.9)} }
         @keyframes dialogIn        { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
         @keyframes npcReact        { 0%{transform:translateY(0)} 20%{transform:translateY(-10px)} 45%{transform:translateY(-2px)} 65%{transform:translateY(-6px)} 82%{transform:translateY(-1px)} 100%{transform:translateY(0)} }
+        @keyframes moteFloat       { 0%{opacity:0;transform:translateY(0) scale(1)} 35%{opacity:1} 75%{opacity:0.45} 100%{opacity:0;transform:translateY(-55px) scale(0.4)} }
       `}</style>
     </div>
   );

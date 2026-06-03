@@ -310,6 +310,10 @@ export default function GameLauncher() {
               textShadow: "0 2px 10px rgba(0,0,0,0.95)",
               animation: "glPulse 2.4s ease-in-out infinite",
             }}>TAP TO PLAY  ·  PRESS ENTER</div>
+            <div style={{
+              color:"#806820", fontSize:8, letterSpacing:2.5,
+              marginTop:8, textShadow:"0 2px 8px rgba(0,0,0,0.8)",
+            }}>♫ SOUND ON FOR THE FULL EXPERIENCE</div>
           </div>
 
           <div style={{
