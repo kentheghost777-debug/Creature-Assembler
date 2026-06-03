@@ -9,3 +9,4 @@
 - [StarterSpec faces field](starter-faces.md) — add faces?:"left"|"right" to StarterSpec for starters whose art natively faces left (Pebble/grrountain-baby.png); BattleScene lead uses starter.faces ?? "right".
 - [Scene world dims vs bg aspect](scene-world-aspect.md) — world {w,h} must match bg art aspect or cover crops/fill distorts; new/resized scenes must be added to the `const world`/`zones` movement ternaries too, not just render (else clamps to PH 800×800).
 - [farm-townspeople sheet layout](farm-townspeople-sheet.md) — sheet is 1264×843 = 4×2 grid (316×421 cells), NOT 256px; lists which character maps to Shella/Runrik/Maren.
+- [Story deepening plan](story-deepening-plan.md) — full approved NPC/intro overhaul (partner spawn fix, cross-refs, Maya rug, Wyvrunt seed, entry anims, future ambient NPCs). Do ALL at once after doorway session.
