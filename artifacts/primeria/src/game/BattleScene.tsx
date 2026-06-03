@@ -982,17 +982,23 @@ export function BattleScene({
             transition:"opacity 0.45s",
           }}>
             {/* Feint afterimage — a translucent ghost that lingers where it stood */}
-            {feinting && (currentOpponent.wildSheet ? (
-              <div aria-hidden style={{
-                position:"absolute", inset:0,
-                ...sheetBgStyle(currentOpponent.wildSheet),
-                transform: (wildFlip + wildExtra).trim() || "none",
-                transformOrigin:"center center",
-                filter:`drop-shadow(0 0 10px ${typeColor(currentOpponent.type)})`,
-                animation:"feintGhost 0.6s ease-out forwards",
-                pointerEvents:"none",
-              }}/>
-            ) : (
+            {feinting && (currentOpponent.wildSheet ? (() => {
+              const s = currentOpponent.wildSheet!;
+              const wide = s.w >= s.h;
+              return (
+                <div aria-hidden style={{ position:"absolute", inset:0, display:"flex", justifyContent:"center", alignItems:"flex-end", pointerEvents:"none" }}>
+                  <div style={{
+                    ...(wide ? { width:"100%" } : { height:"100%" }),
+                    aspectRatio:`${s.w} / ${s.h}`,
+                    ...sheetBgStyle(s),
+                    transform: (wildFlip + wildExtra).trim() || "none",
+                    transformOrigin:"center center",
+                    filter:`drop-shadow(0 0 10px ${typeColor(currentOpponent.type)})`,
+                    animation:"feintGhost 0.6s ease-out forwards",
+                  }}/>
+                </div>
+              );
+            })() : (
               <img src={currentOpponent.wildImg} alt="" aria-hidden style={{
                 position:"absolute", inset:0,
                 width:"100%", height:"100%", objectFit:"contain",
@@ -1003,16 +1009,23 @@ export function BattleScene({
                 pointerEvents:"none",
               }}/>
             ))}
-            {currentOpponent.wildSheet ? (
-              <div role="img" aria-label={currentOpponent.name} style={{
-                position:"absolute", inset:0,
-                ...sheetBgStyle(currentOpponent.wildSheet),
-                transform: (wildFlip + wildExtra).trim() || "none",
-                transformOrigin:"center center",
-                transition:"transform 0.45s ease-in",
-                filter:"drop-shadow(0 6px 8px rgba(0,0,0,0.5))",
-              }}/>
-            ) : (
+            {currentOpponent.wildSheet ? (() => {
+              const s = currentOpponent.wildSheet!;
+              const wide = s.w >= s.h;
+              return (
+                <div style={{ position:"absolute", inset:0, display:"flex", justifyContent:"center", alignItems:"flex-end" }}>
+                  <div role="img" aria-label={currentOpponent.name} style={{
+                    ...(wide ? { width:"100%" } : { height:"100%" }),
+                    aspectRatio:`${s.w} / ${s.h}`,
+                    ...sheetBgStyle(s),
+                    transform: (wildFlip + wildExtra).trim() || "none",
+                    transformOrigin:"center center",
+                    transition:"transform 0.45s ease-in",
+                    filter:"drop-shadow(0 6px 8px rgba(0,0,0,0.5))",
+                  }}/>
+                </div>
+              );
+            })() : (
               <img src={currentOpponent.wildImg} alt={currentOpponent.name} style={{
                 width:"100%", height:"100%", objectFit:"contain",
                 transform: (wildFlip + wildExtra).trim() || "none",
