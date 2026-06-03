@@ -1146,8 +1146,11 @@ let A3_BLOCKED: Rect[] = [
 // No background yet — reuses area3-bg temporarily; swap in a real area4-bg.png when ready.
 const A4 = { w: 1024, h: 683 };
 const A4_SPAWN      = { x: 490, y: 80 };                          // near north entry from A3
-let A3_AREA4_EXIT: Rect = ld("a3_area4", [430, 625, 570, 655]);   // south of A3 open zone — adjust via DEV door tool
+const A4_SPAWN_R2   = { x: 900, y: 340 };                         // landing from Route 2 east entrance
+let A3_AREA4_EXIT: Rect = ld("a3_area4",  [430, 625, 570, 655]);  // south of A3 open zone — adjust via DEV door tool
 let A4_RETURN_A3: Rect  = ld("a4_return", [430, 10,  570, 40]);   // north edge of A4 — adjust via DEV door tool
+let R2_AREA4_EXIT: Rect = ld("r2_area4",  [393, 1488, 453, 1518]); // Route 2 south path → Area 4 (user-tapped 423,1503)
+let A4_RETURN_R2: Rect  = ld("a4_ret_r2", [984, 290, 1014, 390]); // east edge of A4 → back to Route 2
 let A4_BLOCKED: Rect[] = [
   [0,   0, 1024,  55],  // top border
   [0,   0,   55, 683],  // left edge
@@ -1192,8 +1195,10 @@ const DOOR_LIST: DoorEntry[] = [
   { key: "r2_return",  name: "R2 Return",  scene: "route2",    glowDef: true,  get: () => R2_RETURN_OW,        set: (r) => { R2_RETURN_OW = r; } },
   { key: "r2_locked",  name: "R2 Locked",  scene: "route2",    glowDef: true,  get: () => R2_LOCKED_DOOR,      set: (r) => { R2_LOCKED_DOOR = r; } },
   { key: "a3_return",  name: "A3 Return",  scene: "area3",     glowDef: true,  get: () => A3_RETURN_OW,        set: (r) => { A3_RETURN_OW = r; } },
-  { key: "a3_area4",  name: "A3→A4",      scene: "area3",     glowDef: true,  get: () => A3_AREA4_EXIT,       set: (r) => { A3_AREA4_EXIT = r; } },
-  { key: "a4_return",  name: "A4 Return",  scene: "area4",     glowDef: true,  get: () => A4_RETURN_A3,        set: (r) => { A4_RETURN_A3 = r; } },
+  { key: "a3_area4",   name: "A3→A4",      scene: "area3",     glowDef: true,  get: () => A3_AREA4_EXIT,       set: (r) => { A3_AREA4_EXIT = r; } },
+  { key: "a4_return",  name: "A4→A3",      scene: "area4",     glowDef: true,  get: () => A4_RETURN_A3,        set: (r) => { A4_RETURN_A3 = r; } },
+  { key: "r2_area4",   name: "R2→A4",      scene: "route2",    glowDef: true,  get: () => R2_AREA4_EXIT,       set: (r) => { R2_AREA4_EXIT = r; } },
+  { key: "a4_ret_r2",  name: "A4→R2",      scene: "area4",     glowDef: true,  get: () => A4_RETURN_R2,        set: (r) => { A4_RETURN_R2 = r; } },
   { key: "home_exit",  name: "Home Exit",  scene: "home",      glowDef: true,  get: () => PLAYER_HOME_EXIT,    set: (r) => { PLAYER_HOME_EXIT = r; } },
   { key: "lia_exit",   name: "Lia Exit",   scene: "lia",       glowDef: true,  get: () => LIA_HOME_EXIT,       set: (r) => { LIA_HOME_EXIT = r; } },
   { key: "maya_exit",  name: "Maya Exit",  scene: "maya",      glowDef: true,  get: () => MAYA_HOME_EXIT,      set: (r) => { MAYA_HOME_EXIT = r; } },
@@ -2567,6 +2572,10 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           transitionTo("area4", A4_SPAWN.x, A4_SPAWN.y);
         } else if (sc === "area4" && inRect(worldPos.current.x, worldPos.current.y, A4_RETURN_A3)) {
           transitionTo("area3", 490, 600);      // back to south open zone of A3
+        } else if (sc === "route2" && inRect(worldPos.current.x, worldPos.current.y, R2_AREA4_EXIT)) {
+          transitionTo("area4", A4_SPAWN_R2.x, A4_SPAWN_R2.y);
+        } else if (sc === "area4" && inRect(worldPos.current.x, worldPos.current.y, A4_RETURN_R2)) {
+          transitionTo("route2", 440, 1490);    // back near the R2 south entrance
         } else if (sc === "route2" && inRect(worldPos.current.x, worldPos.current.y, R2_FARM_EXIT)) {
           transitionTo("farm", FARM_SPAWN.x, FARM_SPAWN.y);
           if (!farmVisited) setFarmVisited(true);
