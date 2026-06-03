@@ -77,6 +77,8 @@ export type StarterSpec = {
   maxHp?: number;
   /** Native art direction of the starter's battle sprite (defaults "right"). */
   faces?: "left" | "right";
+  /** Optional sprite-sheet crop; when set EvoScene uses this instead of img. */
+  sheet?: SpriteSheet;
 };
 
 /** A player combatant in battle. The lead is built from the starter props; the
@@ -1045,12 +1047,14 @@ export function BattleScene({
               animation: intro ? "introFloatR 1.1s ease-out" : "none",
             }}>
               {keeperSheet ? (
-                <div aria-label={keeperName} style={{
-                  width:"100%", height:"100%",
-                  ...sheetBgStyle(keeperSheet),
-                  transform:"scaleX(-1)",
-                  filter:"drop-shadow(0 6px 8px rgba(0,0,0,0.5))",
-                }}/>
+                <div style={{ width:"100%", height:"100%", display:"flex", justifyContent:"center", alignItems:"center", transform:"scaleX(-1)" }}>
+                  <div aria-label={keeperName} style={{
+                    height:"100%",
+                    aspectRatio:`${keeperSheet.w} / ${keeperSheet.h}`,
+                    ...sheetBgStyle(keeperSheet),
+                    filter:"drop-shadow(0 6px 8px rgba(0,0,0,0.5))",
+                  }}/>
+                </div>
               ) : (
                 <img src={keeperImg} alt={keeperName} style={{
                   width:"100%", height:"100%", objectFit:"contain",

@@ -439,12 +439,12 @@ const TR_MURK:   MonSpec = { id:"tr_murk",   name:"Murkspine",type:"Abyss",    r
 // Lia's blue-and-grey Wyvburn (Draco) — her ace, strongest battle companion.
 const TR_CINDRAX: MonSpec = { id:"tr_cindrax", name:"Cindrax", type:"Chaos", rarity:"apex", wildImg:"/__mockup/images/cindrax.png", playerImg:"/__mockup/images/cindrax.png", wildFaces:"left", playerFaces:"left", maxHp:92, baseDmg:[12,19] };
 
-// crystalfang.png — 1536×1024 sprite sheet, 2 cols × 2 rows, each frame 768×512
+// crystalfang.png — 1536×1024 sprite sheet, 2 cols × 1 row, each frame 768×1024
 const _CRYF = "/__mockup/images/crystalfang.png";
-const cryF  = (c:number,r:number): SpriteSheet =>
-  ({ url:_CRYF, x:c*768, y:r*512, w:768, h:512, sheetW:1536, sheetH:1024 });
-const TR_CRYSTALFANG: MonSpec = { id:"tr_crystalfang", name:"Crystalfang", type:"Frostformed", rarity:"apex", wildImg:"/__mockup/images/crystalfang.png", playerImg:"/__mockup/images/crystalfang.png", wildSheet:cryF(0,0), playerSheet:cryF(0,0), wildFaces:"right", playerFaces:"right", maxHp:78, baseDmg:[9,16] };
-const CRYSTALFANG_STARTER: StarterSpec = { id:"crystalfang", name:"Crystalfang", type:"Frostformed", color:"#7de8ff", img:"/__mockup/images/crystalfang.png" };
+const cryF  = (c:number): SpriteSheet =>
+  ({ url:_CRYF, x:c*768, y:0, w:768, h:1024, sheetW:1536, sheetH:1024 });
+const TR_CRYSTALFANG: MonSpec = { id:"tr_crystalfang", name:"Crystalfang", type:"Frostformed", rarity:"apex", wildImg:"/__mockup/images/crystalfang.png", playerImg:"/__mockup/images/crystalfang.png", wildSheet:cryF(0), playerSheet:cryF(0), wildFaces:"right", playerFaces:"right", maxHp:78, baseDmg:[9,16] };
+const CRYSTALFANG_STARTER: StarterSpec = { id:"crystalfang", name:"Crystalfang", type:"Frostformed", color:"#7de8ff", img:"/__mockup/images/crystalfang.png", sheet:cryF(0) };
 const GLACIA_SPEC:  StarterSpec = { id:"glacia",  name:"Glacia",  type:"Frostformed", color:"#7de8ff", img:"/__mockup/images/glacia.png" };
 const VOLCIA_SPEC:  StarterSpec = { id:"volcia",  name:"Volcia",  type:"Volcanic",    color:"#ff5520", img:"/__mockup/images/volcia.png" };
 const FAELIA_SPEC:  StarterSpec = { id:"faelia",  name:"Faelia",  type:"Spirit",      color:"#c070ff", img:"/__mockup/images/faelia.png" };
@@ -1559,6 +1559,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const [portalOpen,           setPortalOpen]           = useState(false);
   // Jerbs has landed via portal but the player hasn't spoken to him yet.
   const [jerbsAppeared,        setJerbsAppeared]        = useState(false);
+  const [jerbsFacing,          setJerbsFacing]          = useState<"back"|"front">(() => savedWorld?.cleminusMet ? "front" : "back");
   const [showCardIndex,        setShowCardIndex]        = useState(0); // 0=keeper, 1=elder
   // Role is declared in the lab at starter time. Older saves (pre-change) that
   // already hold a starter are treated as having declared, so their badge shows.
@@ -2086,6 +2087,11 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   useEffect(() => { cleminusMetRef.current = cleminusMet; }, [cleminusMet]);
   const jerbsAppearedRef = useRef(jerbsAppeared);
   useEffect(() => { jerbsAppearedRef.current = jerbsAppeared; }, [jerbsAppeared]);
+  useEffect(() => {
+    if (!jerbsAppeared) return;
+    const t = window.setTimeout(() => setJerbsFacing("front"), 800);
+    return () => clearTimeout(t);
+  }, [jerbsAppeared]);
   useEffect(() => {
     allTownItemsRef.current = shellsCollected && hasHealingRune && hasResonanceStone && hasHearthberries && hasSatchel;
   }, [shellsCollected, hasHealingRune, hasResonanceStone, hasHearthberries, hasSatchel]);
@@ -4152,9 +4158,10 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                   width: 45, height: 112,
                   backgroundImage: "url(/__mockup/images/jerbs_sprite.png)",
                   backgroundSize: "224px 336px",
-                  backgroundPosition: "0px 0px",
+                  backgroundPosition: jerbsFacing === "front" ? "0px -112px" : "0px 0px",
                   backgroundRepeat: "no-repeat",
                   imageRendering: "auto",
+                  transition: "background-position 0.25s steps(1)",
                 }}/>
               )}
               {cleminusMet && (

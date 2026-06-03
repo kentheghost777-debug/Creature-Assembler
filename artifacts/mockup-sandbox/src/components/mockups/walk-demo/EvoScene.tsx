@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import type { StarterSpec } from "./BattleScene";
+import { sheetBgStyle, type StarterSpec } from "./BattleScene";
 
 // ── Phase timeline ──────────────────────────────────────────────────────────
 // rise     0 – 700ms    overlay in, beam + particles ignite
@@ -148,7 +148,28 @@ export function EvoScene({ preEvoSpec, postEvoSpec, evoBg, onComplete }: Props) 
         }} />
 
         {/* ── Pre-evo mon —————————————————————————————————————————————— */}
-        {preVisible && (
+        {preVisible && (preEvoSpec.sheet ? (
+          <div
+            key={`pre-${preEvoSpec.id}`}
+            style={{
+              position: "absolute",
+              width: SZ_MON, height: SZ_MON,
+              marginLeft: MG_MON, marginTop: MG_MON,
+              display: "flex", justifyContent: "center", alignItems: "center",
+              zIndex: 3, pointerEvents: "none",
+              animation:
+                phase === "rise"    ? "evoMonIn 0.65s ease-out forwards" :
+                phase === "flash"   ? "evoFlash 2.5s linear forwards" :
+                                      "evoPreFade 0.6s ease-in forwards",
+            }}
+          >
+            <div style={{
+              height: "100%",
+              aspectRatio: `${preEvoSpec.sheet.w} / ${preEvoSpec.sheet.h}`,
+              ...sheetBgStyle(preEvoSpec.sheet),
+            }}/>
+          </div>
+        ) : (
           <img
             key={`pre-${preEvoSpec.id}`}
             src={preEvoSpec.img}
@@ -165,7 +186,7 @@ export function EvoScene({ preEvoSpec, postEvoSpec, evoBg, onComplete }: Props) 
                                       "evoPreFade 0.6s ease-in forwards",
             }}
           />
-        )}
+        ))}
 
         {/* ── Post-evo mon ————————————————————————————————————————————— */}
         {postVisible && (
