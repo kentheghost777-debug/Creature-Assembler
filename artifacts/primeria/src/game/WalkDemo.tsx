@@ -135,7 +135,7 @@ function MoveManager({
 // ── World sizes (pixels) ────────────────────────────────────────────────────
 const OW = { w: 1124, h: 900 }; // overworld — matches full 1402×1122 map image at 900px height
 const LB = { w: 700, h: 700 }; // lab
-const R1 = { w: 1024, h: 780 }; // Whisperroot Trail (Area 1)
+const R1 = { w: 1024, h: 723 }; // Whisperroot Trail (Area 1) — dims match bg art aspect
 const SPEED     = 3.5;
 const ZOOM      = 0.82; // zoom-out factor — values <1 show more of the world
 
@@ -440,8 +440,8 @@ function profShoreTeam(): TrainerTier {
 }
 
 // NPC positions inside Area 3 (world-px coordinates)
-const JAY_A3_POS = { x: 310, y: 560 };
-const LIA_A3_POS = { x: 670, y: 540 };
+const JAY_A3_POS = { x: 332, y: 498 };
+const LIA_A3_POS = { x: 652, y: 480 };
 
 // ── Area 3 sprite-sheet frame helpers ────────────────────────────────────────
 // Sheets (all background-removed PNGs in /images/):
@@ -739,15 +739,15 @@ const MAREN_IMG  = "./images/maren-npc.png";
 const NO_SOLIDS: Rect[] = [];
 
 // ── Tidemark Shore (south of Route 2 — cliff-edge ocean) ─────────────────────
-const SHORE = { w: 1024, h: 768 };
-const SHORE_SPAWN        = { x: 512, y: 80 };    // entering from Route 2 — spawns near north entry
-let   SHORE_NORTH_EXIT: Rect = [300, 0, 700, 20]; // north edge → back to Route 2
-const PROF_SHORE_POS     = { x: 510, y: 310 };   // professor on the clifftop
+const SHORE = { w: 1024, h: 717 };
+const SHORE_SPAWN        = { x: 513, y: 75 };    // entering from Route 2 — spawns near north entry
+let   SHORE_NORTH_EXIT: Rect = [315, 0, 688, 19]; // north edge → back to Route 2
+const PROF_SHORE_POS     = { x: 511, y: 289 };   // professor on the clifftop
 const SHORE_COIN_GIFT    = 500;                    // PrimeriaCoin per payment
 const SHORE_HOTSPOTS: Hotspot[] = [
-  { x: 160, y: 160, r: 55, kind: "rock" }, { x: 380, y: 200, r: 55, kind: "bush" },
-  { x: 640, y: 180, r: 55, kind: "rock" }, { x: 840, y: 250, r: 55, kind: "bush" },
-  { x: 120, y: 390, r: 55, kind: "rock" }, { x: 700, y: 420, r: 55, kind: "bush" },
+  { x: 184, y: 149, r: 51, kind: "rock" }, { x: 389, y: 187, r: 51, kind: "bush" },
+  { x: 632, y: 168, r: 51, kind: "rock" }, { x: 819, y: 233, r: 51, kind: "bush" },
+  { x: 147, y: 364, r: 51, kind: "rock" }, { x: 688, y: 392, r: 51, kind: "bush" },
 ];
 
 // Return-to-overworld trigger (west edge — aligned with the carved gap in the left forest mass)
@@ -814,26 +814,26 @@ type Hotspot = { x: number; y: number; r: number; kind: "bush" | "rock" | "tree"
 // Visual scale for encounter circles (does not affect any gameplay logic — r is render-only).
 const HOTSPOT_VIS = 0.6;
 const R1_HOTSPOTS: Hotspot[] = [
-  { x: 180, y: 620, r: 38, kind: "bush" },
-  { x: 320, y: 520, r: 36, kind: "rock" },
-  { x: 500, y: 460, r: 42, kind: "tree" },
-  { x: 680, y: 540, r: 38, kind: "bush" },
-  { x: 820, y: 640, r: 38, kind: "rock" },
-  { x: 240, y: 380, r: 38, kind: "tree" },
-  { x: 580, y: 280, r: 40, kind: "bush" },
-  { x: 760, y: 380, r: 38, kind: "bush" },
+  { x: 204, y: 575, r: 35, kind: "bush" },
+  { x: 334, y: 482, r: 33, kind: "rock" },
+  { x: 501, y: 427, r: 39, kind: "tree" },
+  { x: 668, y: 501, r: 35, kind: "bush" },
+  { x: 798, y: 594, r: 35, kind: "rock" },
+  { x: 260, y: 352, r: 35, kind: "tree" },
+  { x: 575, y: 260, r: 37, kind: "bush" },
+  { x: 742, y: 352, r: 35, kind: "bush" },
 ];
 
 // ── Area 3 disturbance hotspots (ancient ruin courtyard + forest clearing) ───
 const A3_HOTSPOTS: Hotspot[] = [
-  { x: 500, y: 370, r: 40, kind: "rock" },   // center courtyard — rune stone
-  { x: 380, y: 420, r: 36, kind: "rock" },   // left courtyard near arch
-  { x: 620, y: 350, r: 36, kind: "rock" },   // right courtyard
-  { x: 430, y: 300, r: 36, kind: "bush" },   // near north arch entrance
-  { x: 280, y: 550, r: 38, kind: "bush" },   // lower-left clearing
-  { x: 550, y: 575, r: 40, kind: "bush" },   // lower center clearing
-  { x: 720, y: 545, r: 38, kind: "bush" },   // lower-right clearing
-  { x: 350, y: 465, r: 36, kind: "rock" },   // left ruin wall base
+  { x: 501, y: 329, r: 36, kind: "rock" },   // center courtyard — rune stone
+  { x: 395, y: 373, r: 32, kind: "rock" },   // left courtyard near arch
+  { x: 608, y: 311, r: 32, kind: "rock" },   // right courtyard
+  { x: 439, y: 267, r: 32, kind: "bush" },   // near north arch entrance
+  { x: 306, y: 489, r: 34, kind: "bush" },   // lower-left clearing
+  { x: 546, y: 511, r: 36, kind: "bush" },   // lower center clearing
+  { x: 697, y: 484, r: 34, kind: "bush" },   // lower-right clearing
+  { x: 368, y: 413, r: 32, kind: "rock" },   // left ruin wall base
 ];
 
 // ── Route 2 encounter hotspots (farm fields + trail edges, vertical map) ─────
@@ -950,7 +950,7 @@ let OW_PROF_DOOR: Rect = ld("ow_lab", [585, 289, 667, 346]); // nudged 8 west of
 
 // ── Whisperroot Trail (Route 1 / Area 1) ─────────────────────────────────────
 // South gate (blue) connects back to town; north continues deeper (future)
-let R1_SOUTH_GATE: Rect = ld("r1_south", [404, 749, 568, 779]); // bottom-center exit → overworld
+let R1_SOUTH_GATE: Rect = ld("r1_south", [412, 683, 564, 722]); // bottom-center exit → overworld (y1 within reachable band; movement clamps y to h-30=693)
 let R1_BLOCKED: Rect[] = [
   // ── OUTER FOREST BORDER ──────────────────────────────────────────────────
   [0,    0,  1024,   50],  // top forest strip
@@ -1047,13 +1047,13 @@ let JAY_BLOCKED: Rect[] = [
 // ── Area 3 — Westwood Reaches (west of Jay's compound, through the forest) ───
 // Enter from the overworld by walking west through the Jay fence + forest gap.
 // 1024×768 landscape map, east entry/exit at x≈960.
-const A3 = { w: 1024, h: 768 };
-const A3_SPAWN      = { x: 920, y: 380 };        // spawn near east entry
+const A3 = { w: 1024, h: 683 };
+const A3_SPAWN      = { x: 875, y: 338 };        // spawn near east entry
 let OW_AREA3_EXIT: Rect = ld("ow_area3", [44, 459, 66, 508]); // moved to user-tapped spot (~55,483 center)
-let A3_RETURN_OW: Rect = ld("a3_return", [960, 370, 1024, 480]); // east-edge door back to town; starts west of the x=994 walk-clamp so it's actually reachable (player tapped ~1001,424)
+let A3_RETURN_OW: Rect = ld("a3_return", [910, 329, 967, 427]); // east-edge door back to town; starts west of the x=994 walk-clamp so it's actually reachable (player tapped ~1001,424)
 // Cleminus "Jerbs" — west closed-door, opposite the east town exit.
 // Player walks west to the x<215 trigger; Jerbs lands here via portal, west of the barrier.
-const JERBS_POS = { x: 150, y: 380 };
+const JERBS_POS = { x: 190, y: 338 };
 // Jerbeen sprite sheet: 1024×1536, 5 cols × 3 rows, each frame ~205×512
 const JERBS_SW = 1024; const JERBS_SH = 1536;
 const JERBS_FW = Math.floor(JERBS_SW / 5); const JERBS_FH = Math.floor(JERBS_SH / 3);
@@ -2350,7 +2350,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             worldPos.current.y = OW_ROUTE1_EXIT[3] + 20;
             setShowStarterGate(true);
           } else {
-            transitionTo("route1", 500, 718);     // enter Whisperroot Trail from south gate
+            transitionTo("route1", 501, 666);     // enter Whisperroot Trail from south gate
             setRoute1Visited(true);
           }
         } else if (sc === "route1" && inRect(worldPos.current.x, worldPos.current.y, R1_SOUTH_GATE)) {
@@ -2436,11 +2436,11 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           if (!farmVisited) setFarmVisited(true);
         } else if (sc === "farm" && inRect(worldPos.current.x, worldPos.current.y, FARM_RETURN_R2)) {
           transitionTo("route2", 165, 45);
-        } else if (sc === "area3" && worldPos.current.x < 215 && phaseRef.current === "walk") {
+        } else if (sc === "area3" && worldPos.current.x < 248 && phaseRef.current === "walk") {
           // Far-west closed door — Jerbs lands here from his portal the first time.
           // The portal plays out (no dialogue yet); the player then walks up to
           // Jerbs and taps to start the conversation.
-          worldPos.current.x = 215;
+          worldPos.current.x = 248;
           if (!cleminusMetRef.current && !jerbsAppearedRef.current) {
             jerbsAppearedRef.current = true;
             setJerbsAppeared(true);

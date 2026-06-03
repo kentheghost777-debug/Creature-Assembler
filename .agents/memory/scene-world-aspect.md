@@ -21,3 +21,8 @@ Changing world dims moves where art features land in world coords, so every plac
 - "art wider than world" mismatches → offsetY≈0, so y barely changes; x gets the offset+rescale.
 
 Remember: apply edits to BOTH WalkDemo copies (primeria src/game + mockup-sandbox), numeric consts identical, only image path prefix differs.
+
+## Movement clamp vs edge-exit triggers (off-by gotcha)
+Movement clamps the player to `x∈[30, w-30]`, `y∈[0, h-30]` (a ~30px sprite buffer at right/bottom, none at top/left). So ANY exit/door trigger rect on the **bottom or right edge** must intersect that reachable domain: a bottom-edge gate needs `y1 ≤ h-30`, a right-edge door needs `x1 ≤ w-30`. When you shrink a scene's world height/width, a bottom/right trigger that was barely reachable can fall entirely outside the clamp and become impossible to hit (silent soft-lock — player can't leave the scene).
+**Why:** Route 1's south gate was a 1px-tight bottom-edge trigger at the old height; rescaling pushed its y1 below `h-30` and locked the player in.
+**How to apply:** after changing any scene's `{w,h}`, check every bottom/right edge exit rect against `h-30`/`w-30` and pull its near edge inward if needed. Top/left edge triggers (y=0 / x=0) are unaffected.
