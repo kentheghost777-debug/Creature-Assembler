@@ -439,7 +439,11 @@ const TR_MURK:   MonSpec = { id:"tr_murk",   name:"Murkspine",type:"Abyss",    r
 // Lia's blue-and-grey Wyvburn (Draco) — her ace, strongest battle companion.
 const TR_CINDRAX: MonSpec = { id:"tr_cindrax", name:"Cindrax", type:"Chaos", rarity:"apex", wildImg:"./images/cindrax.png", playerImg:"./images/cindrax.png", wildFaces:"left", playerFaces:"left", maxHp:92, baseDmg:[12,19] };
 
-const TR_CRYSTALFANG: MonSpec = { id:"tr_crystalfang", name:"Crystalfang", type:"Frostformed", rarity:"apex", wildImg:"./images/crystalfang.png", playerImg:"./images/crystalfang.png", wildFaces:"right", playerFaces:"right", maxHp:78, baseDmg:[9,16] };
+// crystalfang.png — 1536×1024 sprite sheet, 2 cols × 2 rows, each frame 768×512
+const _CRYF = "./images/crystalfang.png";
+const cryF  = (c:number,r:number): SpriteSheet =>
+  ({ url:_CRYF, x:c*768, y:r*512, w:768, h:512, sheetW:1536, sheetH:1024 });
+const TR_CRYSTALFANG: MonSpec = { id:"tr_crystalfang", name:"Crystalfang", type:"Frostformed", rarity:"apex", wildImg:"./images/crystalfang.png", playerImg:"./images/crystalfang.png", wildSheet:cryF(0,0), playerSheet:cryF(0,0), wildFaces:"right", playerFaces:"right", maxHp:78, baseDmg:[9,16] };
 const CRYSTALFANG_STARTER: StarterSpec = { id:"crystalfang", name:"Crystalfang", type:"Frostformed", color:"#7de8ff", img:"./images/crystalfang.png" };
 const GLACIA_SPEC:  StarterSpec = { id:"glacia",  name:"Glacia",  type:"Frostformed", color:"#7de8ff", img:"./images/glacia.png" };
 const VOLCIA_SPEC:  StarterSpec = { id:"volcia",  name:"Volcia",  type:"Volcanic",    color:"#ff5520", img:"./images/volcia.png" };
@@ -1973,7 +1977,6 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const jessPathPortraitRef= useRef<HTMLCanvasElement>(null);
   const jayA3CanvasRef     = useRef<HTMLCanvasElement>(null);
   const liaA3CanvasRef     = useRef<HTMLCanvasElement>(null);
-  const jerbsCanvasRef     = useRef<HTMLCanvasElement>(null);
   // Farm NPC canvas refs
   // Refs synced from arc state so the game-loop closure stays fresh
   const wifeOnPathRef       = useRef(false);
@@ -2357,33 +2360,6 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     };
     tryDraw();
   }, [scene]);
-
-  // Draw Jerbs (Cleminus) in Area 3 — row 1 (front-facing), col 2 of the jerbeen sheet
-  useEffect(() => {
-    if (scene !== "area3") return;
-    const src = "./images/jerbs_sprite.png";
-    const tryDraw = () => {
-      const c = jerbsCanvasRef.current;
-      if (!c) return;
-      const img = imgCache[src];
-      if (!img?.complete || img.naturalWidth === 0) { setTimeout(tryDraw, 150); return; }
-      const fw = img.naturalWidth / 5;
-      const fh = img.naturalHeight / 3;
-      // Frame is ~204.8x512 (aspect ~0.4). The old 56x112 dest (aspect 0.5)
-      // stretched Jerbs ~25% too wide; keep height, narrow width to preserve aspect.
-      const cw = 45, ch = 112;
-      c.width = cw; c.height = ch;
-      const ctx = c.getContext("2d")!;
-      ctx.clearRect(0, 0, cw, ch);
-      // col 2, row 1 = clearest front-standing pose; round exact source coords
-      // (not floor) so a neighbouring frame's lantern doesn't bleed in on the left.
-      ctx.drawImage(img, Math.round(fw * 2), Math.round(fh), Math.round(fw), Math.round(fh), 0, 0, cw, ch);
-    };
-    loadImg(src);
-    tryDraw();
-    // Re-run when Jerbs' canvas actually mounts (it only renders once he has
-    // landed / been met), otherwise the freshly-mounted canvas stays blank.
-  }, [scene, cleminusMet, portalOpen, jerbsAppeared]);
 
   // Portal frame animation — plays opening sequence (0→5) once, then holds
   useEffect(() => {
@@ -3522,6 +3498,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           heroImg={heroSideImg}
           opponentKind="keeper"
           keeperImg={trainerEncounter.trainer === "jay" ? "./images/jay_side_idle.png" : trainerEncounter.trainer === "lia" ? "./images/lia_side_idle.png" : trainerEncounter.trainer === "prof" ? "./images/prof_side_idle.png" : "./images/jerbs_sprite.png"}
+          keeperSheet={trainerEncounter.trainer === "jerbs" ? { url:"./images/jerbs_sprite.png", x:410, y:512, w:205, h:512, sheetW:1024, sheetH:1536 } : undefined}
           keeperName={trainerEncounter.name}
           keeperTeam={trainerEncounter.team}
           keeperMonLevels={trainerEncounter.levels}
@@ -4143,9 +4120,15 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                 }}/>
               )}
               {(cleminusMet || portalOpen || jerbsAppeared) && (
-                <canvas ref={jerbsCanvasRef} style={{
-                  position:"absolute", imageRendering:"auto", pointerEvents:"none", zIndex:5,
+                <div style={{
+                  position:"absolute", pointerEvents:"none", zIndex:5,
                   left: JERBS_POS.x - 22, top: JERBS_POS.y - 112,
+                  width: 45, height: 112,
+                  backgroundImage: "url(./images/jerbs_sprite.png)",
+                  backgroundSize: "224px 336px",
+                  backgroundPosition: "0px 0px",
+                  backgroundRepeat: "no-repeat",
+                  imageRendering: "auto",
                 }}/>
               )}
               {cleminusMet && (

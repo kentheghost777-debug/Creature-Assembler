@@ -166,6 +166,8 @@ type Props = {
   keeperName?: string;
   /** Sprite for the opposing Keeper (faces west). Defaults to Rowan's side art. */
   keeperImg?: string;
+  /** Optional sprite-sheet crop for the Keeper — when set, renders via sheetBgStyle instead of a plain img. */
+  keeperSheet?: SpriteSheet;
   /** Player's own hero sprite (faces east). Defaults to the generic walker. */
   heroImg?: string;
   /** Full team for a trainer battle (wild = team[0]). When set, defeated mons
@@ -201,6 +203,7 @@ export function BattleScene({
   catchMult = 1, shellsCount, caughtIds = [] as string[],
   opponentKind = "wild", keeperName = "Keeper", keeperImg = "/__mockup/images/rowan_side_1.png",
   heroImg = "/__mockup/images/walk_side_1.png",
+  keeperSheet,
   keeperTeam, keeperMonLevels, bench,
   slottedRuneId,
   onConsumeShell, onEnd,
@@ -1041,12 +1044,21 @@ export function BattleScene({
               width:"100%", height:"100%",
               animation: intro ? "introFloatR 1.1s ease-out" : "none",
             }}>
-              <img src={keeperImg} alt={keeperName} style={{
-                width:"100%", height:"100%", objectFit:"contain",
-                transform:"scaleX(-1)",
-                filter:"drop-shadow(0 6px 8px rgba(0,0,0,0.5))",
-                imageRendering:"auto",
-              }}/>
+              {keeperSheet ? (
+                <div aria-label={keeperName} style={{
+                  width:"100%", height:"100%",
+                  ...sheetBgStyle(keeperSheet),
+                  transform:"scaleX(-1)",
+                  filter:"drop-shadow(0 6px 8px rgba(0,0,0,0.5))",
+                }}/>
+              ) : (
+                <img src={keeperImg} alt={keeperName} style={{
+                  width:"100%", height:"100%", objectFit:"contain",
+                  transform:"scaleX(-1)",
+                  filter:"drop-shadow(0 6px 8px rgba(0,0,0,0.5))",
+                  imageRendering:"auto",
+                }}/>
+              )}
             </div>
           </div>
         )}
