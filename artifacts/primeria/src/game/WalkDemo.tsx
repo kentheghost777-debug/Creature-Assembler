@@ -1344,7 +1344,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   // Active character's animation frame set (stable for the session).
   const charFrames = CHAR_FRAMES[characterId] ?? CHAR_FRAMES.kinju;
   // Character-specific side sprite for the battle arena (each character has a full sprite set).
-  const heroSideImg = `./images/${CHAR_IMG_KEY[characterId]}_hero.png`;
+  const heroSideImg = `./images/${CHAR_IMG_KEY[characterId]}_side_idle.png`;
 
   // ── Role / spawn swap ──────────────────────────────────────────────────────
   // The spouse waiting at home is whichever of Kinju/Jess you are NOT playing
@@ -3358,7 +3358,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           shellsCount={shellCount}
           heroImg={heroSideImg}
           opponentKind="keeper"
-          keeperImg={trainerEncounter.trainer === "jay" ? "./images/jay-sprite.png" : trainerEncounter.trainer === "lia" ? "./images/lia.png" : trainerEncounter.trainer === "prof" ? "./images/prof-irwyn-sprite.png" : "./images/jerbs_sprite.png"}
+          keeperImg={trainerEncounter.trainer === "jay" ? "./images/jay_side_idle.png" : trainerEncounter.trainer === "lia" ? "./images/lia_side_idle.png" : trainerEncounter.trainer === "prof" ? "./images/prof_side_idle.png" : "./images/jerbs_sprite.png"}
           keeperName={trainerEncounter.name}
           keeperTeam={trainerEncounter.team}
           keeperMonLevels={trainerEncounter.levels}
