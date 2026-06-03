@@ -800,6 +800,12 @@ const SHORE_HOTSPOTS: Hotspot[] = [
   { x: 632, y: 168, r: 51, kind: "rock" }, { x: 819, y: 233, r: 51, kind: "bush" },
   { x: 147, y: 364, r: 51, kind: "rock" }, { x: 688, y: 392, r: 51, kind: "bush" },
 ];
+const A4_HOTSPOTS: Hotspot[] = [
+  { x: 190, y: 200, r: 51, kind: "rock" }, { x: 420, y: 250, r: 51, kind: "bush" },
+  { x: 660, y: 210, r: 51, kind: "rock" }, { x: 840, y: 310, r: 51, kind: "bush" },
+  { x: 150, y: 420, r: 51, kind: "rock" }, { x: 560, y: 460, r: 51, kind: "bush" },
+  { x: 760, y: 520, r: 51, kind: "rock" }, { x: 330, y: 560, r: 51, kind: "bush" },
+];
 
 // Return-to-overworld trigger (west edge — aligned with the carved gap in the left forest mass)
 let R2_RETURN_OW: Rect    = ld("r2_return", [79, 1028, 169, 1148]); // TEMP door back to town (user-tapped 80,1121) — re-place after map swap
@@ -855,7 +861,7 @@ function rollRarity(checksStreak: number): MonRarity {
 }
 
 function pickMonForScene(rarity: MonRarity, sc: string): MonSpec {
-  const list = sc === "area3" ? BESTIARY_A3 : sc === "route2" ? BESTIARY_R2 : sc === "shore" ? BESTIARY_SHORE : BESTIARY;
+  const list = sc === "area3" ? BESTIARY_A3 : sc === "route2" ? BESTIARY_R2 : sc === "shore" ? BESTIARY_SHORE : sc === "area4" ? BESTIARY_SHORE : BESTIARY;
   const pool = list.filter(m => m.rarity === rarity);
   return pool[Math.floor(Math.random() * pool.length)] ?? list[0];
 }
@@ -1198,7 +1204,7 @@ const DOOR_LIST: DoorEntry[] = [
   { key: "r2_locked",  name: "R2 Locked",  scene: "route2",    glowDef: true,  get: () => R2_LOCKED_DOOR,      set: (r) => { R2_LOCKED_DOOR = r; } },
   { key: "a3_return",  name: "A3 Return",  scene: "area3",     glowDef: true,  get: () => A3_RETURN_OW,        set: (r) => { A3_RETURN_OW = r; } },
   { key: "a3_area4",   name: "A3→A4",      scene: "area3",     glowDef: true,  get: () => A3_AREA4_EXIT,       set: (r) => { A3_AREA4_EXIT = r; } },
-  { key: "a4_return",  name: "A4→A3",      scene: "area4",     glowDef: true,  get: () => A4_RETURN_A3,        set: (r) => { A4_RETURN_A3 = r; } },
+  { key: "a4_return",  name: "A4→R2",      scene: "area4",     glowDef: true,  get: () => A4_RETURN_A3,        set: (r) => { A4_RETURN_A3 = r; } },
   { key: "home_exit",  name: "Home Exit",  scene: "home",      glowDef: true,  get: () => PLAYER_HOME_EXIT,    set: (r) => { PLAYER_HOME_EXIT = r; } },
   { key: "lia_exit",   name: "Lia Exit",   scene: "lia",       glowDef: true,  get: () => LIA_HOME_EXIT,       set: (r) => { LIA_HOME_EXIT = r; } },
   { key: "maya_exit",  name: "Maya Exit",  scene: "maya",      glowDef: true,  get: () => MAYA_HOME_EXIT,      set: (r) => { MAYA_HOME_EXIT = r; } },
@@ -2371,7 +2377,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     const tryDraw = () => {
       const c = jayA3CanvasRef.current;
       if (!c) return;
-      if (!drawSprite(c, "/__mockup/images/jay-sprite.png", false, 96)) setTimeout(tryDraw, 150);
+      if (!drawSprite(c, "/__mockup/images/jay-sprite.png", false, 64)) setTimeout(tryDraw, 150);
     };
     tryDraw();
   }, [scene]);
@@ -2382,7 +2388,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     const tryDraw = () => {
       const c = liaA3CanvasRef.current;
       if (!c) return;
-      if (!drawSprite(c, "/__mockup/images/lia.png", false, 96)) setTimeout(tryDraw, 150);
+      if (!drawSprite(c, "/__mockup/images/lia.png", false, 64)) setTimeout(tryDraw, 150);
     };
     tryDraw();
   }, [scene]);
@@ -2612,7 +2618,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         } else if (sc === "area3" && inRect(worldPos.current.x, worldPos.current.y, A3_AREA4_EXIT)) {
           transitionTo("area4", A4_SPAWN.x, A4_SPAWN.y);
         } else if (sc === "area4" && inRect(worldPos.current.x, worldPos.current.y, A4_RETURN_A3)) {
-          transitionTo("area3", 490, 600);      // back to south open zone of A3
+          transitionTo("route2", 480, R2_SOUTH_BLOCKED[1] - 60); // exits to Route 2 south
         } else if (sc === "route2" && inRect(worldPos.current.x, worldPos.current.y, R2_FARM_EXIT)) {
           transitionTo("farm", FARM_SPAWN.x, FARM_SPAWN.y);
           if (!farmVisited) setFarmVisited(true);
@@ -4133,22 +4139,22 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             <>
               <canvas ref={jayA3CanvasRef} style={{
                 position:"absolute", imageRendering:"auto", pointerEvents:"none",
-                left: JAY_A3_POS.x - 48, top: JAY_A3_POS.y - 72,
+                left: JAY_A3_POS.x - 32, top: JAY_A3_POS.y - 50,
               }}/>
               <div style={{
                 position:"absolute",
-                left: JAY_A3_POS.x - 12, top: JAY_A3_POS.y - 100,
+                left: JAY_A3_POS.x - 10, top: JAY_A3_POS.y - 68,
                 color:"#8ab0f0", fontSize:8, fontWeight:800,
                 letterSpacing:1, pointerEvents:"none",
                 textShadow:"0 0 4px #000,0 0 8px #000",
               }}>JAY</div>
               <canvas ref={liaA3CanvasRef} style={{
                 position:"absolute", imageRendering:"auto", pointerEvents:"none",
-                left: LIA_A3_POS.x - 48, top: LIA_A3_POS.y - 72,
+                left: LIA_A3_POS.x - 32, top: LIA_A3_POS.y - 50,
               }}/>
               <div style={{
                 position:"absolute",
-                left: LIA_A3_POS.x - 12, top: LIA_A3_POS.y - 100,
+                left: LIA_A3_POS.x - 10, top: LIA_A3_POS.y - 68,
                 color:"#ff9060", fontSize:8, fontWeight:800,
                 letterSpacing:1, pointerEvents:"none",
                 textShadow:"0 0 4px #000,0 0 8px #000",
@@ -4225,8 +4231,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
 
 
           {/* Encounter zone hotspots — rendered in route1, area3, and route2 (after wyvrunt) */}
-          {(scene === "route1" || scene === "area3" || scene === "shore" || (scene === "route2" && wyvruntCaught)) && (() => {
-            const hs = scene === "area3" ? A3_HOTSPOTS : scene === "route2" ? R2_HOTSPOTS : scene === "shore" ? SHORE_HOTSPOTS : R1_HOTSPOTS;
+          {(scene === "route1" || scene === "area3" || scene === "shore" || scene === "area4" || (scene === "route2" && wyvruntCaught)) && (() => {
+            const hs = scene === "area3" ? A3_HOTSPOTS : scene === "route2" ? R2_HOTSPOTS : scene === "shore" ? SHORE_HOTSPOTS : scene === "area4" ? A4_HOTSPOTS : R1_HOTSPOTS;
             return (
               <>
                 {/* Disturbance hotspots — 5-tier rarity-animated encounter circles */}
