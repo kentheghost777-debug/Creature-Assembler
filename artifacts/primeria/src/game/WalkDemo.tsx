@@ -314,7 +314,10 @@ type Phase = "walk" | "d1" | "d2" | "pick" | "d3" | "role_pick" | "d4" | "d5"
           | "maren_d1" | "maren_d2" | "maren_done" | "maren_idle"
           // Tidemark Shore — Prof. Irwyn challenger battle
           | "prof_shore_d1" | "prof_shore_d2" | "prof_shore_battle"
-          | "prof_shore_win" | "prof_shore_lose" | "prof_shore_idle" | "prof_shore_done";
+          | "prof_shore_win" | "prof_shore_lose" | "prof_shore_idle" | "prof_shore_done"
+          // Overworld ambient townspeople (lore flavor, set no quest flags)
+          | "tova_d1" | "tova_d2" | "tova_idle"
+          | "senna_d1" | "senna_d2" | "senna_idle";
 type Scene = "overworld" | "lab" | "maya" | "jay" | "home" | "ellio" | "lia" | "route1" | "route2" | "area3" | "area4" | "battle" | "farm" | "shore";
 type Rect  = [number, number, number, number]; // x1 y1 x2 y2 world-px
 
@@ -1035,7 +1038,9 @@ let LAB_EXIT: Rect = ld("lab_exit", [262, 645, 438, 692]); // exit lab
 
 // ── Maya's Home ───────────────────────────────────────────────────────────────
 const MY = { w: 800, h: 800 };
-const MAYA_POS = { x: 870, y: 427 }; // Maya standing at her doorstep
+const MAYA_POS  = { x: 870, y: 427 }; // Maya standing at her doorstep
+const TOVA_POS  = { x: 600, y: 560 }; // ambient townsfolk — center of Primeria village square
+const SENNA_POS = { x: 300, y: 200 }; // ambient townsfolk — near Route 1 north gate
 let OW_MAYA_DOOR: Rect  = ld("ow_maya", [938, 278, 1003, 340]); // nudged +6 east of user-tapped 965,335
 let MAYA_HOME_EXIT: Rect = ld("maya_exit", [310, 722, 490, 790]); // exit trigger at interior door
 const MAYA_SHELL: Rect     = [385, 400, 455, 460]; // pickup zone — center of the living-room rug
@@ -1501,6 +1506,17 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const [primeriaCoin,         setPrimeriaCoin]         = useState(() => savedWorld?.primeriaCoin ?? 0);
   const [profShoreWins,        setProfShoreWins]        = useState(() => savedWorld?.profShoreWins ?? 0);
   const [profShorePaid,        setProfShorePaid]        = useState(() => savedWorld?.profShorePaid ?? 0);
+  const [firstHomeGreeting,    setFirstHomeGreeting]    = useState(() => savedWorld?.firstHomeGreeting ?? false);
+  // Overworld ambient NPC proximity
+  const [nearTova,  setNearTova]  = useState(false);
+  const [tovaInteractPos,  setTovaInteractPos]  = useState({ sx: 0, sy: 0 });
+  const [nearSenna, setNearSenna] = useState(false);
+  const [sennaInteractPos, setSennaInteractPos] = useState({ sx: 0, sy: 0 });
+  // NPC entry bounce animations (one-shot per room entry, no cycle needed)
+  const [jayBounce,  setJayBounce]  = useState(false);
+  const [ellioBounce, setEllioBounce] = useState(false);
+  const [liaBounce,  setLiaBounce]  = useState(false);
+  const [mayaBounce, setMayaBounce] = useState(false);
   const [nearProfShore,        setNearProfShore]        = useState(false);
   const [profShoreInteractPos, setProfShoreInteractPos] = useState({ sx: 0, sy: 0 });
   const profShoreCanvasRef   = useRef<HTMLCanvasElement>(null);
@@ -1745,7 +1761,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const worldSnapRef = useRef<Omit<WorldSave, "scene" | "posX" | "posY">>({
     shellsCollected, hasHealingRune, healingRuneEquipped,
     hasResonanceStone, resonanceStoneEquipped, hasHearthberries, hasSatchel,
-    jessDone, jayDone, mayaInitDone, mayaDone, ellioDone, liaDone,
+    firstHomeGreeting, jessDone, jayDone, mayaInitDone, mayaDone, ellioDone, liaDone,
     route1Visited, wifeOnPath, wifeIntercepted, route2Greeted, profRoute2Done,
     hasObsidianRealmShell, wyvruntCaught, wyvruntForm, wyrLoyalty,
     jayA3Wins, liaA3Wins, roleChosen, checksStreak,
@@ -1771,7 +1787,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     worldSnapRef.current = {
       shellsCollected, hasHealingRune, healingRuneEquipped,
       hasResonanceStone, resonanceStoneEquipped, hasHearthberries, hasSatchel,
-      jessDone, jayDone, mayaInitDone, mayaDone, ellioDone, liaDone,
+      firstHomeGreeting, jessDone, jayDone, mayaInitDone, mayaDone, ellioDone, liaDone,
       route1Visited, wifeOnPath, wifeIntercepted, route2Greeted, profRoute2Done,
       hasObsidianRealmShell, wyvruntCaught, wyvruntForm, wyrLoyalty,
       jayA3Wins, liaA3Wins, roleChosen, checksStreak,
@@ -1786,7 +1802,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   }, [
     scene, shellsCollected, hasHealingRune, healingRuneEquipped,
     hasResonanceStone, resonanceStoneEquipped, hasHearthberries, hasSatchel,
-    jessDone, jayDone, mayaInitDone, mayaDone, ellioDone, liaDone,
+    firstHomeGreeting, jessDone, jayDone, mayaInitDone, mayaDone, ellioDone, liaDone,
     route1Visited, wifeOnPath, wifeIntercepted, route2Greeted, profRoute2Done,
     hasObsidianRealmShell, wyvruntCaught, wyvruntForm, wyrLoyalty,
     jayA3Wins, liaA3Wins, roleChosen, checksStreak,
@@ -2205,6 +2221,26 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     };
     tryDraw();
   }, [scene, kinjuAtHome]);
+
+  // Auto-fire partner greeting on very first home entry (no "!" required)
+  useEffect(() => {
+    if (scene !== "home" || firstHomeGreeting || phase !== "walk") return;
+    const t = setTimeout(() => {
+      setPhase("jess_d1");
+      setFirstHomeGreeting(true);
+    }, 900);
+    return () => clearTimeout(t);
+  }, [scene, firstHomeGreeting, phase]);
+
+  // NPC entry bounce — short one-shot animation when entering a room with an NPC
+  useEffect(() => {
+    let timers: ReturnType<typeof setTimeout>[] = [];
+    if (scene === "jay")   { setJayBounce(true);   timers.push(setTimeout(() => setJayBounce(false),   520)); }
+    if (scene === "ellio") { setEllioBounce(true);  timers.push(setTimeout(() => setEllioBounce(false), 520)); }
+    if (scene === "lia")   { setLiaBounce(true);    timers.push(setTimeout(() => setLiaBounce(false),   520)); }
+    if (scene === "overworld") { setMayaBounce(true); timers.push(setTimeout(() => setMayaBounce(false), 520)); }
+    return () => timers.forEach(clearTimeout);
+  }, [scene]);
 
   // Draw Lia world sprite inside Lia's home
   useEffect(() => {
@@ -2655,14 +2691,19 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             });
           }
         }
-        // Near-Maya check (overworld only)
+        // Near-Maya + ambient NPC check (overworld only)
         if (sc === "overworld") {
-          const d = dist(px, py, MAYA_POS.x, MAYA_POS.y);
-          const near = d < 90;
           const screenX = (px - cam.current.x) * ZOOM;
           const screenY = (py - cam.current.y - topOff - 28) * ZOOM;
-          setNearMaya(near);
-          if (near) setMayaInteractPos({ sx: screenX, sy: screenY });
+          const d = dist(px, py, MAYA_POS.x, MAYA_POS.y);
+          setNearMaya(d < 90);
+          if (d < 90) setMayaInteractPos({ sx: screenX, sy: screenY });
+          const dtova = dist(px, py, TOVA_POS.x, TOVA_POS.y);
+          setNearTova(dtova < 90);
+          if (dtova < 90) setTovaInteractPos({ sx: screenX, sy: screenY });
+          const dsenna = dist(px, py, SENNA_POS.x, SENNA_POS.y);
+          setNearSenna(dsenna < 90);
+          if (dsenna < 90) setSennaInteractPos({ sx: screenX, sy: screenY });
         }
         // Near-Jay check (jay scene)
         if (sc === "jay") {
@@ -2820,6 +2861,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       // Ambient idle chats just close (no flags touched).
       prof_idle: "walk", jay_idle: "walk", maya_idle: "walk", maya_wait: "walk",
       ellio_idle: "walk", lia_idle: "walk", jess_idle: "walk",
+      tova_d1: "tova_d2", tova_d2: "walk", tova_idle: "walk",
+      senna_d1: "senna_d2", senna_d2: "walk", senna_idle: "walk",
       // Rowan's three-line dream-of-becoming-professor chat.
       rowan_d1: "rowan_d2", rowan_d2: "rowan_d3", rowan_d3: "walk",
       // Area 3 Jay/Lia trainer battles.
@@ -2904,7 +2947,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       ? "Trust what you feel right now. The bond between a Keeper and their Tayanari runs deeper than strategy. Your Tayanari will know your heart before they know your name. Now — who is it going to be?"
       : "The bond between a Keeper and their Tayanari deepens through trust, exploration, and challenge. Treat them well and they will never let you down. Consider each one carefully. Who is it going to be?",
     pick: "",
-    d3: starter ? `${starter.name}! A wonderful choice. I can already sense a connection forming. Treat them well — they will never let you down.` : "",
+    d3: starter ? `${starter.name}. Interesting — it moved toward you before I called it. That does not happen often. The bond has already begun. Treat them well.` : "",
     d4: "Head north past the village gate through Route 1 to the Wild Area. Wild Tayanari roam freely there. It is the best place for a new Keeper to earn their first bonds.",
     d5: "But be careful — wild Tayanari are spirited and won't hesitate to test you. Keep your partner healthy and your wits sharp. I'll meet you in the Wild Area. Safe travels, Keeper.",
     maya_d1: "There you are — I was hoping you'd stop by before you left. I've had something set aside for you for a while. My father's collection. I think today is finally the day I hand it over. ...I almost went myself, you know. Put my name in three times. He talked me out of every one. I thought I resented him for it. I don't, anymore.",
@@ -2916,9 +2959,15 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     jay_d3: "But I'm glad it's you out there with me. Nobody else I'd want watching my back. And if we end up on opposite sides of a battle someday — and we might — know that I'll give you everything I've got. That's the only honest thing I can do. Stay sharp.",
     jay_d4: "I don't go into anything blind. While everyone else was sparring in the yard I was reading — Realm theory, bonding science, rune taxonomy. There are rune types out there most Keepers have never even laid eyes on. Common, rare, mythic. Every single one of them has a name on my list. I'm collecting them all.",
     jay_d5: "Here's what they don't teach you early enough — socket a rune into a shell that holds a Tayanari and the bond amplifies. Offensive surge, healing pulse, barrier field. The right rune changes a battle in seconds. This one's yours. An Obsidian Healing Rune. Call it a head start. Don't waste it.",
-    jess_d1: "Professor Irwyn sent word — he's ready for you whenever you are. But before you head to the lab, please stop and say a proper goodbye to everyone. Maya's been up since dawn. Jay has something for you too, though he'll act like it's nothing. I know how they feel — I'd have given anything to walk out that gate with someone worth believing in.",
-    jess_d2: "This whole village has watched you grow up. They love you. Half of them were probably at their windows last night just knowing today was the day. I was one of them. Couldn't sleep. Kept thinking — this is what we were always building toward, even when we didn't know it. Don't you dare sneak out without seeing them first.",
-    jess_d3: "I packed your favorite bread in the outer pocket — you'll find it when you need it most. I love you. Now go. Come home with stories worth telling. And if a Tayanari ever looks at you the way Draco looks at Lia... let them in. That's what the Trial is really for. Just come home.",
+    jess_d1: characterId === "jess"
+      ? "Hey — you're already up. Good. I was about to come drag you out of bed. Irwyn's waiting, but go do the rounds first. Maya's been watching the gate since before dawn. Jay too, though he'd never admit it."
+      : "Professor Irwyn sent word — he's ready for you whenever you are. But before you head to the lab, please stop and say a proper goodbye to everyone. Maya's been up since dawn. Jay has something for you too, though he'll act like it's nothing. I know how they feel — I'd have given anything to walk out that gate with someone worth believing in.",
+    jess_d2: characterId === "jess"
+      ? "I know you've been turning this over for weeks. Stop. Your first Tayanari is going to be whoever it is, and you're going to make it work — because that's what you do. Go say hi to everyone. I'll catch up."
+      : "This whole village has watched you grow up. They love you. Half of them were probably at their windows last night just knowing today was the day. I was one of them. Couldn't sleep. Kept thinking — this is what we were always building toward, even when we didn't know it. Don't you dare sneak out without seeing them first.",
+    jess_d3: characterId === "jess"
+      ? "And hey — I left something in your side pocket. Don't make a thing out of it. Just go. Come back with something worth telling."
+      : "I packed your favorite bread in the outer pocket — you'll find it when you need it most. I love you. Now go. Come home with stories worth telling. And if a Tayanari ever looks at you the way Draco looks at Lia... let them in. That's what the Trial is really for. Just come home.",
     maya_post1: "You found them! Those Weathered Realm Shells have been waiting for someone like you. Here's something my father taught me — Tayanari are drawn to beautiful shells. Place one on the ground and a wild one may stop to investigate.",
     maya_post2: "It's never guaranteed. A calm Tayanari might wander in out of curiosity. Even a rampaging one can blunder straight into a shell and bond with it. The shell becomes its home — if it chooses to accept.",
     maya_post3: "And my father used to say: 'A shell is just a home, but a rune makes it a welcome.' There are many types of shells, each with their own energy — and so many runes to socket inside them. You've already found one, I hear.",
@@ -2933,8 +2982,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     lia_d4: "Here. Ten of them. And take this satchel — good leather, field-grade. A Keeper who can't carry their kit is just a kid with a dragon, and you're not going to be that kid.",
     lia_d5: "Now get out of my house. And don't lose to anything on Route 1, alright? I will absolutely hear about it and I will not let it go. Ever. Go do something worth bragging about.",
     lia_done: "You're still here? Go. If you need more berries later, you know where I live.",
-    jess_path_d1: "There you are! Professor Irwyn was looking for you. He said to meet him on Route 2 — past Maya's house, east of town. Wouldn't tell me why. Only that you'd understand when you got there.",
-    jess_path_d2: "Go on. I'll head back home. ...Just be careful out there, alright?",
+    jess_path_d1: "There you are! Professor Irwyn was looking for you — he said to meet him on Route 2, past Maya's, east of town. Wouldn't tell me why. Oh — and Old Hollis mentioned something this morning. Said he spotted a Wyvrunt near his north fence, half-frozen. Never seen one that far into town territory. Something's drawing them in closer. Just... be aware.",
+    jess_path_d2: "Go on. I'll head home. ...Just be careful out there, alright? And if that Wyvrunt's still around — trust your instincts.",
     prof2_d1: "There you are. I felt you on the wind. ...Or maybe just heard your boots on the path. Either way — come closer. There is something I want you to see.",
     prof2_d2: "I have been tracking a creature for weeks. Chaos-aligned — they do not behave like the others, and their colors come in wrong. Pattern-breakers. Lia bonded with one years ago; Draco is the most remarkable Tayanari I have ever studied, and she still won't let me run a full scan. But this one is rarer still.",
     prof2_d3: "It came down from the high cliffs four nights ago and stopped exactly here. Has not moved. Has not hunted. I believe it has been waiting — for you, specifically. A Tayanari that chooses before the bond is rarer than anything in my journals. Here — take this. An Obsidianeye Realm Shell. Carved for the truly singular.",
@@ -2943,7 +2992,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     farm_d2: "I keep the farm up north, past the rise where the grass goes gold. Hard work, sure, but come dusk the little ones wander down into my fields. Good company, the lot of 'em.",
     farm_d3: "Funny thing, that Wyvrunt everyone's whispering about... I'm the one who first found it. Half-frozen by my north fence one winter, it was. Fed it scraps till it could fly again. Rare creature — glad it found its way to good hands.",
     farm_d4: "Say — you look like a Keeper who earns their keep. I've got more field berries than I can use before the season turns. Take some. Duskberry for healing, Thornberry for a sharp edge, Calmberry for a steady guard, Brightberry when your moves run dry. They'll serve you well out there.",
-    farm_idle: "Fine day out here, ain't it? Come back anytime — the valley's always got something worth watching.",
+    farm_idle: "Fine day out here, ain't it? Whole town's been buzzing since Irwyn announced the Trial selection — haven't seen Primeria this alive in a long time. Good thing too. Come back anytime — the valley's always got something worth watching.",
     shella_d1: "Goodness — a visitor! Most folks pass right through the north gate without stopping. Come closer, I won't bite. Name's Shella. I run the shell workshop — forge Realm Shells out of crystalite shards and valley ore.",
     shella_d2: "My brother-in-law thinks it's too niche. 'Shella,' he says, 'nobody needs custom shells.' But then every Keeper who's bonded a rare Tayanari comes straight to me. Funny how that works.",
     shella_d3: "Actually — you look like a serious Keeper. I've got some premium-grade shells in stock right now. Battle Shells — reinforced for combat use. Give your lead Tayanari a real edge. Want to take a look?",
@@ -2959,6 +3008,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     maren_d2: "We've gotten attached, honestly. But a creature like that belongs with a Keeper. Go on — introduce yourself. I have a feeling it'll take to you just fine.",
     maren_done: "Take good care of little Cruci. Visit anytime — the farm's always open.",
     maren_idle: "Cruci's been in a good mood all morning. Whatever you did, keep doing it.",
+    // ── Overworld ambient townspeople ─────────────────────────────────────────
+    tova_d1: "You must be the one who received the Trial selection. I heard the lab bell before sunrise — couldn't sleep after that. This village hasn't felt this alive in years. Even the Tayanari near the market have been gathering closer to the walls lately. Something's shifting.",
+    tova_d2: "Irwyn hasn't said why, but some of us have noticed — he's been out on the eastern path before dawn these past few mornings. That's not like him. He usually talks through everything he finds. Whatever he's watching out there... he's not ready to say. Just keep your eyes open.",
+    tova_idle: "Safe travels, Keeper. Come back with stories — and come back whole.",
+    senna_d1: "First time heading out through Route 1? I've been running goods through that gate for years. The Tayanari out there haven't been acting the same lately — more curious, less wary. Old Mena on the ridge says they're responding to something deep in the ruins. I don't know about all that. I just know the trail's busier than it's been in a long time.",
+    senna_d2: "Watch the western edge of the trail — the ones that come from that direction move different. Not aggressive. Just... deliberate. Like they've already decided something about you. Anyway. You'll see. Good luck out there, Keeper.",
+    senna_idle: "Still heading out there? Good sign. Means you're not running back in a hurry.",
     scripted_t1: "The Wyvrunt is still. Watching you. Its tail-flame ripples but it does not strike. PROF: \"Don't move yet. Let it read you.\"",
     scripted_t2: "Its eyes soften — curiosity replacing caution. The yin-yang sigils on its scales flicker brighter. PROF: \"Now. The shell. It is ready.\"",
     scripted_set: "You set the Obsidianeye Realm Shell open before it. Wyvrunt tilts its head — and waits.",
@@ -2969,11 +3025,11 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     prof_idle: "Still here? Good — sit a moment. I've been looking at bonding resonance data from last season and something doesn't add up. Tayanari adapting faster than the models predict — not just in behavior, but in elemental expression. Either my instruments are wrong, or the world is changing faster than we thought. Mind your partner out there. Come tell me what you see. Every bond teaches me something I didn't know to ask.",
     prof_shells: "Heading back out? The lab keeps a steady store of Realm Shells — bonding takes patience, and patience takes supplies. Take a handful, and come back whenever you run low.",
     prof_shells_got: "There — ten fresh Realm Shells. Set them well; the wilds are patient, and so should you be. Off you go, Keeper.",
-    jay_idle: "Don't get comfortable. I'm already plotting my route and I am NOT losing to you. ...But hey — watch your back out there. Can't beat you if some wild Tayanari gets you first.",
-    maya_wait: "Did you find them yet? My father's Weathered Realm Shells — they're inside, on the table by the window. Go on in and take them. He'd want them in a real Keeper's hands.",
+    jay_idle: "Don't get comfortable. I'm already plotting my route and I am NOT losing to you. ...Actually — Lia's the one who first told me about rune slots. She'd never admit she taught me anything, but she did. Watch your back out there. Can't beat you if something else gets to you first.",
+    maya_wait: "Did you find them yet? My father's Weathered Realm Shells — they're on the rug, just inside. I meant to hand them to you at the door, but I set them down when I came in and didn't want to pick them back up. Go on in and grab them off the rug. He'd want them in real hands.",
     maya_idle: "Out chasing bonds already? Good. I've been starting my own field notes, actually — just small things from the fence line. A Tayanari came close enough to touch last week. I stood still for twenty minutes. I think I'm starting to understand what he saw out there. Make him proud.",
-    ellio_idle: "Back already? I've been drawing up my first solo route — north past the ruins, east along the ridge, waystation at the Collective's outpost. If the charter signs before winter, I ship out next season. The world's bigger than Primeria. We both know that now. Come find me when you've got stories — I want to know what the ruins look like from the inside.",
-    lia_idle: "You again. Draco hasn't tried to singe you yet — consider that high praise. Berries are in the basket. And for what it's worth: every time you walk through that door looking a little more worn in, a little less like a new Keeper and a little more like one — I notice. Now stop loitering. Go be impressive.",
+    ellio_idle: "Back already? I've been mapping my first solo route — north past the ruins, east along the ridge, waystation at the Collective's outpost. Old Hollis trades with half our suppliers up here — salt, grain, creature feed from across the valley. Man knows every Keeper who's ever passed through. Good person to know. Come find me when you've got stories — I want to know what the ruins look like from the inside.",
+    lia_idle: "You again. Draco hasn't tried to singe you yet — consider that high praise. Berries are in the basket. ...I'll tell you something: Irwyn's been out on the eastern path before sunrise three mornings running. I asked him about it twice. Both times he changed the subject. That's when I started paying attention. Keep your eyes open out there. Now stop loitering. Go be impressive.",
     jess_idle: "There's my heart. Don't mind me — just like seeing your face. One of the wild Tayanari from the east meadow keeps coming to the garden. Small thing, storm-type. Keeps stealing hearthberries. I haven't shooed it off yet. I think it's lonely. ...Come home soon, alright?",
     // ── Rowan — the professor's disciple, dreaming of the Professor's seat ────
     rowan_d1: "Oh — hey! You're the one starting your Trial today. I'm Rowan — Professor Irwyn's disciple. Sweep these floors, log the specimens, cross-reference the field reports. I've read every journal he has, most of them twice. Last week I found a notation from thirty years ago that doesn't match anything in current taxonomy. I've been losing sleep over it.",
@@ -3725,6 +3781,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               imageRendering:"auto", pointerEvents:"none",
               left: JAY_POS.x - 36,
               top:  JAY_POS.y - 54,
+              animation: jayBounce ? "npcReact 0.5s ease-out" : "none",
             }}/>
           )}
 
@@ -3737,6 +3794,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                 imageRendering:"auto", pointerEvents:"none",
                 left: MAYA_POS.x - 34,
                 top:  MAYA_POS.y - 51,
+                animation: mayaBounce ? "npcReact 0.5s ease-out" : "none",
               }}/>
               <div style={{
                 position:"absolute",
@@ -3745,6 +3803,44 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                 letterSpacing:1, pointerEvents:"none",
                 textShadow:"0 0 4px #000,0 0 8px #000",
               }}>MAYA</div>
+              {/* Tova — ambient townsfolk, village square */}
+              <div style={{
+                position:"absolute",
+                left: TOVA_POS.x - 18, top: TOVA_POS.y - 36,
+                width:36, height:36, borderRadius:"50%",
+                background:"linear-gradient(135deg,#8c6a40,#c4a060)",
+                border:"2px solid #e8c878", pointerEvents:"none",
+                display:"flex", alignItems:"center", justifyContent:"center",
+                fontSize:14, fontWeight:900, color:"#fff3d0",
+                textShadow:"0 1px 3px rgba(0,0,0,0.8)",
+                boxShadow:"0 2px 8px rgba(0,0,0,0.5)",
+              }}>T</div>
+              <div style={{
+                position:"absolute",
+                left: TOVA_POS.x - 20, top: TOVA_POS.y - 52,
+                color:"#e8c878", fontSize:8, fontWeight:800,
+                letterSpacing:1, pointerEvents:"none",
+                textShadow:"0 0 4px #000,0 0 8px #000",
+              }}>TOVA</div>
+              {/* Senna — ambient townsfolk, near Route 1 gate */}
+              <div style={{
+                position:"absolute",
+                left: SENNA_POS.x - 18, top: SENNA_POS.y - 36,
+                width:36, height:36, borderRadius:"50%",
+                background:"linear-gradient(135deg,#3a6a5c,#60a888)",
+                border:"2px solid #88d8b0", pointerEvents:"none",
+                display:"flex", alignItems:"center", justifyContent:"center",
+                fontSize:14, fontWeight:900, color:"#d0f4e8",
+                textShadow:"0 1px 3px rgba(0,0,0,0.8)",
+                boxShadow:"0 2px 8px rgba(0,0,0,0.5)",
+              }}>S</div>
+              <div style={{
+                position:"absolute",
+                left: SENNA_POS.x - 22, top: SENNA_POS.y - 52,
+                color:"#88d8b0", fontSize:8, fontWeight:800,
+                letterSpacing:1, pointerEvents:"none",
+                textShadow:"0 0 4px #000,0 0 8px #000",
+              }}>SENNA</div>
             </>
           )}
 
@@ -3756,6 +3852,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                 imageRendering:"auto", pointerEvents:"none",
                 left: ELLIO_POS.x - 34,
                 top:  ELLIO_POS.y - 51,
+                animation: ellioBounce ? "npcReact 0.5s ease-out" : "none",
               }}/>
               <div style={{
                 position:"absolute",
@@ -3810,6 +3907,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                 imageRendering:"auto", pointerEvents:"none",
                 left: LIA_POS.x - 36,
                 top:  LIA_POS.y - 54,
+                animation: liaBounce ? "npcReact 0.5s ease-out" : "none",
               }}/>
               <div style={{
                 position:"absolute",
@@ -4278,6 +4376,40 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             >{active ? "!" : "…"}</button>
           );
         })()}
+
+        {/* ── INTERACT BUTTON — Tova (overworld ambient) ───────────────── */}
+        {scene === "overworld" && nearTova && phase === "walk" && (
+          <button
+            onClick={() => setPhase(phase === "walk" ? "tova_d1" : "tova_idle")}
+            style={{
+              position:"absolute",
+              left: tovaInteractPos.sx - 14,
+              top:  tovaInteractPos.sy - 10,
+              width:28, height:28, borderRadius:"50%",
+              background:"#c4a060", border:"2px solid #fff",
+              color:"#2a1800", fontSize:16, fontWeight:900,
+              display:"flex", alignItems:"center", justifyContent:"center",
+              cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite",
+              zIndex:10,
+            }}>!</button>
+        )}
+
+        {/* ── INTERACT BUTTON — Senna (overworld ambient) ──────────────── */}
+        {scene === "overworld" && nearSenna && phase === "walk" && (
+          <button
+            onClick={() => setPhase(phase === "walk" ? "senna_d1" : "senna_idle")}
+            style={{
+              position:"absolute",
+              left: sennaInteractPos.sx - 14,
+              top:  sennaInteractPos.sy - 10,
+              width:28, height:28, borderRadius:"50%",
+              background:"#60a888", border:"2px solid #fff",
+              color:"#001a0e", fontSize:16, fontWeight:900,
+              display:"flex", alignItems:"center", justifyContent:"center",
+              cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite",
+              zIndex:10,
+            }}>!</button>
+        )}
 
         {/* ── INTERACT BUTTON — Ellio ───────────────────────────────────── */}
         {scene === "ellio" && nearEllio && phase === "walk" && (
@@ -5690,7 +5822,9 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           || phase === "maya_wait" || phase === "ellio_idle" || phase === "lia_idle"
           || phase === "jess_idle" || phase === "rowan_d1" || phase === "rowan_d2"
           || phase === "rowan_d3" || phase === "jay_a3_idle" || phase === "lia_a3_idle"
-          || phase === "jerbs_a3_idle") && (() => {
+          || phase === "jerbs_a3_idle"
+          || phase === "tova_d1" || phase === "tova_d2" || phase === "tova_idle"
+          || phase === "senna_d1" || phase === "senna_d2" || phase === "senna_idle") && (() => {
           const speaker =
             phase === "prof_idle" ? { name: "PROF. IRWYN", color: "#f0d060" } :
             (phase === "jay_idle" || phase === "jay_a3_idle") ? { name: "JAY", color: "#6090e0" } :
@@ -5699,8 +5833,11 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             (phase === "lia_idle" || phase === "lia_a3_idle") ? { name: "LIA", color: "#ff7a44" } :
             phase === "jess_idle" ? { name: "JESS", color: "#f0a050" } :
             phase === "jerbs_a3_idle" ? { name: "JERBS", color: "#e8b840" } :
+            (phase === "tova_d1" || phase === "tova_d2" || phase === "tova_idle") ? { name: "TOVA", color: "#e8c878" } :
+            (phase === "senna_d1" || phase === "senna_d2" || phase === "senna_idle") ? { name: "SENNA", color: "#88d8b0" } :
             { name: "ROWAN", color: "#b8a0e0" };
-          const more = phase === "rowan_d1" || phase === "rowan_d2";
+          const more = phase === "rowan_d1" || phase === "rowan_d2"
+            || phase === "tova_d1" || phase === "senna_d1";
           return (
             <div style={{
               position:"absolute", bottom:0, left:0, right:0,
@@ -7646,6 +7783,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         @keyframes notifPop    { 0%{opacity:0;transform:translate(-50%,-50%) scale(0.85)} 25%{opacity:1;transform:translate(-50%,-50%) scale(1.05)} 100%{opacity:1;transform:translate(-50%,-50%) scale(1)} }
         @keyframes encounterFlash { 0%{opacity:0;transform:scale(0.4)} 18%{opacity:1;transform:scale(1.04)} 55%{opacity:0.75} 100%{opacity:0;transform:scale(1.9)} }
         @keyframes dialogIn        { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes npcReact        { 0%{transform:translateY(0)} 20%{transform:translateY(-10px)} 45%{transform:translateY(-2px)} 65%{transform:translateY(-6px)} 82%{transform:translateY(-1px)} 100%{transform:translateY(0)} }
       `}</style>
     </div>
   );

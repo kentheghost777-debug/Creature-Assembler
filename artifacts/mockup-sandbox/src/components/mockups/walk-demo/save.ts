@@ -105,6 +105,7 @@ export type WorldSave = {
   hasHearthberries: boolean;
   hasSatchel: boolean;
   // NPC arc completion (clears their "!" bubble)
+  firstHomeGreeting: boolean;  // partner spoke on very first home spawn
   jessDone: boolean;
   jayDone: boolean;
   mayaInitDone: boolean;
