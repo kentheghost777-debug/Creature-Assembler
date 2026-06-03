@@ -812,7 +812,7 @@ const A4_HOTSPOTS: Hotspot[] = [
 let R2_RETURN_OW: Rect    = ld("r2_return", [79, 1028, 169, 1148]); // TEMP door back to town (user-tapped 80,1121) — re-place after map swap
 // Locked future-content beats — show a "blocked"/"locked" toast
 // R2_NORTH_BLOCKED removed — area converted to farm entrance (R2_FARM_EXIT)
-const R2_SOUTH_BLOCKED: Rect = [360, 1510, 600,1536]; // south continuation
+let R2_SOUTH_BLOCKED: Rect = [360, 1510, 600,1536]; // south → Tidemark Shore entrance
 let R2_LOCKED_DOOR: Rect   = ld("r2_locked", [820, 760, 900, 830]); // locked house door
 let R2_BLOCKED: Rect[] = [
   // outer borders
@@ -1206,6 +1206,7 @@ const DOOR_LIST: DoorEntry[] = [
   { key: "ow_area3",   name: "Area3 W",    scene: "overworld", glowDef: true,  get: () => OW_AREA3_EXIT,       set: (r) => { OW_AREA3_EXIT = r; } },
   { key: "r1_south",   name: "R1 South",   scene: "route1",    glowDef: true,  get: () => R1_SOUTH_GATE,       set: (r) => { R1_SOUTH_GATE = r; } },
   { key: "r2_return",  name: "R2 Return",  scene: "route2",    glowDef: true,  get: () => R2_RETURN_OW,        set: (r) => { R2_RETURN_OW = r; } },
+  { key: "r2_shore",   name: "R2→Shore",   scene: "route2",    glowDef: true,  get: () => R2_SOUTH_BLOCKED,    set: (r) => { R2_SOUTH_BLOCKED = r; } },
   { key: "r2_locked",  name: "R2 Locked",  scene: "route2",    glowDef: true,  get: () => R2_LOCKED_DOOR,      set: (r) => { R2_LOCKED_DOOR = r; } },
   { key: "a3_return",  name: "A3 Return",  scene: "area3",     glowDef: true,  get: () => A3_RETURN_OW,        set: (r) => { A3_RETURN_OW = r; } },
   { key: "a3_area4",   name: "A3→A4",      scene: "area3",     glowDef: true,  get: () => A3_AREA4_EXIT,       set: (r) => { A3_AREA4_EXIT = r; } },
