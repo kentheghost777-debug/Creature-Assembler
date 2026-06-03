@@ -319,7 +319,7 @@ type Phase = "walk" | "d1" | "d2" | "pick" | "d3" | "role_pick" | "d4" | "d5"
           | "tova_d1" | "tova_d2" | "tova_idle"
           | "senna_d1" | "senna_d2" | "senna_idle"
           | "corvin_d1" | "corvin_d2" | "corvin_idle";
-type Scene = "overworld" | "lab" | "maya" | "jay" | "home" | "ellio" | "lia" | "route1" | "route2" | "area3" | "area4" | "battle" | "farm" | "shore";
+type Scene = "overworld" | "lab" | "maya" | "jay" | "home" | "ellio" | "lia" | "route1" | "route2" | "area3" | "battle" | "farm" | "shore";
 type Rect  = [number, number, number, number]; // x1 y1 x2 y2 world-px
 
 // ── Bestiary (Route 1 encounter pool) ───────────────────────────────────────
@@ -801,18 +801,12 @@ const SHORE_HOTSPOTS: Hotspot[] = [
   { x: 632, y: 168, r: 51, kind: "rock" }, { x: 819, y: 233, r: 51, kind: "bush" },
   { x: 147, y: 364, r: 51, kind: "rock" }, { x: 688, y: 392, r: 51, kind: "bush" },
 ];
-const A4_HOTSPOTS: Hotspot[] = [
-  { x: 190, y: 200, r: 51, kind: "rock" }, { x: 420, y: 250, r: 51, kind: "bush" },
-  { x: 660, y: 210, r: 51, kind: "rock" }, { x: 840, y: 310, r: 51, kind: "bush" },
-  { x: 150, y: 420, r: 51, kind: "rock" }, { x: 560, y: 460, r: 51, kind: "bush" },
-  { x: 760, y: 520, r: 51, kind: "rock" }, { x: 330, y: 560, r: 51, kind: "bush" },
-];
 
 // Return-to-overworld trigger (west edge — aligned with the carved gap in the left forest mass)
 let R2_RETURN_OW: Rect    = ld("r2_return", [79, 1028, 169, 1148]); // TEMP door back to town (user-tapped 80,1121) — re-place after map swap
 // Locked future-content beats — show a "blocked"/"locked" toast
 // R2_NORTH_BLOCKED removed — area converted to farm entrance (R2_FARM_EXIT)
-let R2_SOUTH_BLOCKED: Rect = [360, 1510, 600,1536]; // south → Tidemark Shore entrance
+let R2_SOUTH_BLOCKED: Rect = [100, 1490, 924, 1510]; // south → Tidemark Shore entrance
 let R2_LOCKED_DOOR: Rect   = ld("r2_locked", [820, 760, 900, 830]); // locked house door
 let R2_BLOCKED: Rect[] = [
   // outer borders
@@ -862,7 +856,7 @@ function rollRarity(checksStreak: number): MonRarity {
 }
 
 function pickMonForScene(rarity: MonRarity, sc: string): MonSpec {
-  const list = sc === "area3" ? BESTIARY_A3 : sc === "route2" ? BESTIARY_R2 : sc === "shore" ? BESTIARY_SHORE : sc === "area4" ? BESTIARY_SHORE : BESTIARY;
+  const list = sc === "area3" ? BESTIARY_A3 : sc === "route2" ? BESTIARY_R2 : sc === "shore" ? BESTIARY_SHORE : BESTIARY;
   const pool = list.filter(m => m.rarity === rarity);
   return pool[Math.floor(Math.random() * pool.length)] ?? list[0];
 }
@@ -1159,18 +1153,6 @@ let A3_BLOCKED: Rect[] = [
 ];
 
 // ── Area 4 — placeholder (connects south of Westwood Reaches / Area 3) ───────
-// Area 4 "Deep Reaches" — coastal clifftop ruins (area4-bg.png, 1280×896). Entrance on the north yellow path (from Area 3); ocean cliff on the lower-right.
-const A4 = { w: 1024, h: 717 };
-const A4_SPAWN      = { x: 390, y: 80 };                          // spawns on the north yellow path (entering from Area 3)
-let A3_AREA4_EXIT: Rect = ld("a3_area4",  [430, 625, 570, 655]);  // south of A3 open zone → Area 4 (adjust via DEV door tool)
-let A4_RETURN_A3: Rect  = ld("a4_return", [330, 0,   450, 35]);   // north yellow-path edge of A4 → back to A3
-let A4_BLOCKED: Rect[] = [
-  [0,   0, 1024,  55],  // top border
-  [0,   0,   55, 717],  // left edge
-  [969, 0, 1024, 717],  // right edge
-  [0,  672, 1024, 717], // bottom border
-];
-
 // ── Ellio's Home ─────────────────────────────────────────────────────────────
 const EH = { w: 800, h: 800 };
 const ELLIO_POS = { x: 400, y: 350 };
@@ -1209,8 +1191,6 @@ const DOOR_LIST: DoorEntry[] = [
   { key: "r2_shore",   name: "R2→Shore",   scene: "route2",    glowDef: true,  get: () => R2_SOUTH_BLOCKED,    set: (r) => { R2_SOUTH_BLOCKED = r; } },
   { key: "r2_locked",  name: "R2 Locked",  scene: "route2",    glowDef: true,  get: () => R2_LOCKED_DOOR,      set: (r) => { R2_LOCKED_DOOR = r; } },
   { key: "a3_return",  name: "A3 Return",  scene: "area3",     glowDef: true,  get: () => A3_RETURN_OW,        set: (r) => { A3_RETURN_OW = r; } },
-  { key: "a3_area4",   name: "A3→A4",      scene: "area3",     glowDef: true,  get: () => A3_AREA4_EXIT,       set: (r) => { A3_AREA4_EXIT = r; } },
-  { key: "a4_return",  name: "A4→R2",      scene: "area4",     glowDef: true,  get: () => A4_RETURN_A3,        set: (r) => { A4_RETURN_A3 = r; } },
   { key: "home_exit",  name: "Home Exit",  scene: "home",      glowDef: true,  get: () => PLAYER_HOME_EXIT,    set: (r) => { PLAYER_HOME_EXIT = r; } },
   { key: "lia_exit",   name: "Lia Exit",   scene: "lia",       glowDef: true,  get: () => LIA_HOME_EXIT,       set: (r) => { LIA_HOME_EXIT = r; } },
   { key: "maya_exit",  name: "Maya Exit",  scene: "maya",      glowDef: true,  get: () => MAYA_HOME_EXIT,      set: (r) => { MAYA_HOME_EXIT = r; } },
@@ -1280,7 +1260,6 @@ const WALL_SCENES: { scene: Scene; key: string; arr: string; get: () => Rect[]; 
   { scene: "route1",    key: "route1",    arr: "R1_BLOCKED",   get: () => R1_BLOCKED,   set: (r) => { R1_BLOCKED = r; } },
   { scene: "route2",    key: "route2",    arr: "R2_BLOCKED",   get: () => R2_BLOCKED,   set: (r) => { R2_BLOCKED = r; } },
   { scene: "area3",     key: "area3",     arr: "A3_BLOCKED",   get: () => A3_BLOCKED,   set: (r) => { A3_BLOCKED = r; } },
-  { scene: "area4",     key: "area4",     arr: "A4_BLOCKED",   get: () => A4_BLOCKED,   set: (r) => { A4_BLOCKED = r; } },
   { scene: "lab",       key: "lab",       arr: "LAB_BLOCKED",  get: () => LAB_BLOCKED,  set: (r) => { LAB_BLOCKED = r; } },
   { scene: "jay",       key: "jay",       arr: "JAY_BLOCKED",  get: () => JAY_BLOCKED,  set: (r) => { JAY_BLOCKED = r; } },
   { scene: "maya",      key: "maya",      arr: "MAYA_BLOCKED", get: () => MAYA_BLOCKED, set: (r) => { MAYA_BLOCKED = r; } },
@@ -1397,7 +1376,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   // Saves live in localStorage and could be malformed/tampered, so we validate
   // the scene against the known walkable set and require finite coordinates;
   // anything off falls back to the safe home spawn.
-  const WALKABLE_SCENES: Scene[] = ["overworld","lab","maya","jay","home","ellio","lia","route1","route2","area3","area4","farm","shore"];
+  const WALKABLE_SCENES: Scene[] = ["overworld","lab","maya","jay","home","ellio","lia","route1","route2","area3","farm","shore"];
   const resume = (() => {
     if (!savedWorld) return null;
     const HOME = { scene: "home" as Scene, x: 400, y: 670 };
@@ -1627,7 +1606,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     setDoorEditTick((t) => t + 1);
   };
   const copyDoorLayout = () => {
-    const order: Scene[] = ["overworld", "route1", "route2", "area3", "area4", "home", "lia", "maya", "jay", "ellio", "lab"];
+    const order: Scene[] = ["overworld", "route1", "route2", "area3", "home", "lia", "maya", "jay", "ellio", "lab"];
     const out: string[] = ["PRIMERIA DOOR LAYOUT — paste this back to the assistant"];
     order.forEach((sc) => {
       const inScene = DOOR_LIST.filter((d) => d.scene === sc);
@@ -2114,7 +2093,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   useEffect(() => {
     if (scene === "battle") {
       playTrack(BATTLE_TRACK);
-    } else if (scene === "route1" || scene === "route2" || scene === "area3" || scene === "area4" || scene === "shore") {
+    } else if (scene === "route1" || scene === "route2" || scene === "area3" || scene === "shore") {
       playTrack(ROUTE_TRACK);
     } else {
       playTrack(TOWN_TRACK);
@@ -2523,8 +2502,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         const h       = heldRef.current;
         const sc      = sceneRef.current;
         const zoom    = sc === "farm" ? 0.62 : ZOOM;
-        const world   = sc === "overworld" ? OW : sc === "lab" ? LB : sc === "route1" ? R1 : sc === "route2" ? R2 : sc === "area3" ? A3 : sc === "area4" ? A4 : sc === "farm" ? FARM : sc === "shore" ? SHORE : sc === "maya" ? MY : sc === "jay" ? JY : sc === "ellio" ? EH : sc === "lia" ? LH : PH;
-        const zones   = sc === "overworld" ? OW_BLOCKED : sc === "lab" ? LAB_BLOCKED : sc === "route1" ? R1_BLOCKED : sc === "route2" ? R2_BLOCKED : sc === "area3" ? A3_BLOCKED : sc === "area4" ? A4_BLOCKED : sc === "farm" ? NO_SOLIDS : sc === "shore" ? NO_SOLIDS : sc === "maya" ? MAYA_BLOCKED : sc === "jay" ? JAY_BLOCKED : sc === "ellio" ? EH_BLOCKED : sc === "lia" ? LH_BLOCKED : PH_BLOCKED;
+        const world   = sc === "overworld" ? OW : sc === "lab" ? LB : sc === "route1" ? R1 : sc === "route2" ? R2 : sc === "area3" ? A3 : sc === "farm" ? FARM : sc === "shore" ? SHORE : sc === "maya" ? MY : sc === "jay" ? JY : sc === "ellio" ? EH : sc === "lia" ? LH : PH;
+        const zones   = sc === "overworld" ? OW_BLOCKED : sc === "lab" ? LAB_BLOCKED : sc === "route1" ? R1_BLOCKED : sc === "route2" ? R2_BLOCKED : sc === "area3" ? A3_BLOCKED : sc === "farm" ? NO_SOLIDS : sc === "shore" ? NO_SOLIDS : sc === "maya" ? MAYA_BLOCKED : sc === "jay" ? JAY_BLOCKED : sc === "ellio" ? EH_BLOCKED : sc === "lia" ? LH_BLOCKED : PH_BLOCKED;
 
         let newAnim = lastDirRef.current; // stay in last-faced direction when idle
         let newFlip = flipRef.current;
@@ -2627,10 +2606,6 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           }
         } else if (sc === "area3" && inRect(worldPos.current.x, worldPos.current.y, A3_RETURN_OW)) {
           transitionTo("overworld", 170, 453);  // Jay's SW courtyard — walk east back into town
-        } else if (sc === "area3" && inRect(worldPos.current.x, worldPos.current.y, A3_AREA4_EXIT)) {
-          transitionTo("area4", A4_SPAWN.x, A4_SPAWN.y);
-        } else if (sc === "area4" && inRect(worldPos.current.x, worldPos.current.y, A4_RETURN_A3)) {
-          transitionTo("route2", 480, R2_SOUTH_BLOCKED[1] - 60); // exits to Route 2 south
         } else if (sc === "route2" && inRect(worldPos.current.x, worldPos.current.y, R2_FARM_EXIT)) {
           transitionTo("farm", FARM_SPAWN.x, FARM_SPAWN.y);
           if (!farmVisited) setFarmVisited(true);
@@ -3675,8 +3650,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         {/* World container — camera-scrolled + zoomed */}
         <div ref={worldRef} style={{
           position: "absolute",
-          width:  scene === "overworld" ? OW.w : scene === "lab" ? LB.w : scene === "route1" ? R1.w : scene === "route2" ? R2.w : scene === "area3" ? A3.w : scene === "area4" ? A4.w : scene === "farm" ? FARM.w : scene === "shore" ? SHORE.w : scene === "maya" ? MY.w : scene === "jay" ? JY.w : scene === "ellio" ? EH.w : scene === "lia" ? LH.w : PH.w,
-          height: scene === "overworld" ? OW.h : scene === "lab" ? LB.h : scene === "route1" ? R1.h : scene === "route2" ? R2.h : scene === "area3" ? A3.h : scene === "area4" ? A4.h : scene === "farm" ? FARM.h : scene === "shore" ? SHORE.h : scene === "maya" ? MY.h : scene === "jay" ? JY.h : scene === "ellio" ? EH.h : scene === "lia" ? LH.h : PH.h,
+          width:  scene === "overworld" ? OW.w : scene === "lab" ? LB.w : scene === "route1" ? R1.w : scene === "route2" ? R2.w : scene === "area3" ? A3.w : scene === "farm" ? FARM.w : scene === "shore" ? SHORE.w : scene === "maya" ? MY.w : scene === "jay" ? JY.w : scene === "ellio" ? EH.w : scene === "lia" ? LH.w : PH.w,
+          height: scene === "overworld" ? OW.h : scene === "lab" ? LB.h : scene === "route1" ? R1.h : scene === "route2" ? R2.h : scene === "area3" ? A3.h : scene === "farm" ? FARM.h : scene === "shore" ? SHORE.h : scene === "maya" ? MY.h : scene === "jay" ? JY.h : scene === "ellio" ? EH.h : scene === "lia" ? LH.h : PH.h,
           willChange: "transform",
           transformOrigin: "0 0",
           transform: `scale(${ZOOM}) translate(${-cam.current.x}px,${-cam.current.y}px)`,
@@ -3687,9 +3662,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             src={scene === "ellio" ? "/__mockup/images/ellio-home-interior.png"
               : scene === "lia"    ? "/__mockup/images/lia-home.png"
               : scene === "area3"  ? "/__mockup/images/area3-bg.png"
-              : scene === "area4"  ? "/__mockup/images/area4-bg.png"
               : scene === "farm"   ? "/__mockup/images/farm-bg.png"
-              : scene === "shore"  ? "/__mockup/images/shore-bg.png"
+              : scene === "shore"  ? "/__mockup/images/area4-bg.png"
               : scene === "route1" ? "/__mockup/images/route1-bg.png"
               : scene === "route2" ? "/__mockup/images/route2-map.png"
               : scene === "overworld"
@@ -3739,7 +3713,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             ];
             const motes: MoteConf[] =
               scene === "route1" || scene === "route2" ? rtMotes :
-              scene === "area3"  || scene === "area4"  ? a3Motes :
+              scene === "area3"  ? a3Motes :
               scene === "overworld" || scene === "home" || scene === "lab" ? ovMotes : [];
             return motes.map((p, i) => (
               <div key={`mote-${i}`} style={{
@@ -3779,7 +3753,6 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
              scene === "route1"   ? R1_BLOCKED :
              scene === "route2"   ? R2_BLOCKED :
              scene === "area3"    ? A3_BLOCKED :
-             scene === "area4"    ? A4_BLOCKED :
              scene === "lab"      ? LAB_BLOCKED :
              scene === "jay"      ? JAY_BLOCKED :
              scene === "maya"     ? MAYA_BLOCKED :
@@ -4255,8 +4228,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
 
 
           {/* Encounter zone hotspots — rendered in route1, area3, and route2 (after wyvrunt) */}
-          {(scene === "route1" || scene === "area3" || scene === "shore" || scene === "area4" || (scene === "route2" && wyvruntCaught)) && (() => {
-            const hs = scene === "area3" ? A3_HOTSPOTS : scene === "route2" ? R2_HOTSPOTS : scene === "shore" ? SHORE_HOTSPOTS : scene === "area4" ? A4_HOTSPOTS : R1_HOTSPOTS;
+          {(scene === "route1" || scene === "area3" || scene === "shore" || (scene === "route2" && wyvruntCaught)) && (() => {
+            const hs = scene === "area3" ? A3_HOTSPOTS : scene === "route2" ? R2_HOTSPOTS : scene === "shore" ? SHORE_HOTSPOTS : R1_HOTSPOTS;
             return (
               <>
                 {/* Disturbance hotspots — 5-tier rarity-animated encounter circles */}
@@ -7409,7 +7382,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           border:"1px solid rgba(240,208,96,0.3)", pointerEvents:"none",
           textTransform:"uppercase", zIndex:5,
         }}>
-          {scene === "overworld" ? "Primeria Village" : scene === "lab" ? "Prof. Irwyn's Lab" : scene === "maya" ? "Maya's Home" : scene === "jay" ? "Jay's Home" : scene === "ellio" ? "Ellio's Home" : scene === "lia" ? "Lia's Home" : scene === "route1" ? "Whisperroot Trail" : scene === "route2" ? "Route 2 — Eastern Path" : scene === "area3" ? "Westwood Reaches" : scene === "area4" ? "Deep Reaches" : scene === "farm" ? "Primeria Farm" : scene === "shore" ? "Tidemark Shore" : scene === "battle" ? "Battle" : "Your Home"}
+          {scene === "overworld" ? "Primeria Village" : scene === "lab" ? "Prof. Irwyn's Lab" : scene === "maya" ? "Maya's Home" : scene === "jay" ? "Jay's Home" : scene === "ellio" ? "Ellio's Home" : scene === "lia" ? "Lia's Home" : scene === "route1" ? "Whisperroot Trail" : scene === "route2" ? "Route 2 — Eastern Path" : scene === "area3" ? "Westwood Reaches" : scene === "farm" ? "Primeria Farm" : scene === "shore" ? "Tidemark Shore" : scene === "battle" ? "Battle" : "Your Home"}
         </div>
 
         {/* Quest hint — current main objective */}
