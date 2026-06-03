@@ -834,6 +834,12 @@ uri = "file://artifacts/primeria/public/images/verdhorn-wild.png"
 type = "image"
 title = "generated_image"
 
+[[generated]]
+id = "_49-KrO1TyL02-11GOe1s"
+uri = "file://artifacts/primeria/public/images/area4-bg.png"
+type = "image"
+title = "generated_image"
+
 [[outputs]]
 id = "hj9mwcgl1Uv9QQTG9g6KL"
 uri = "file://kinju_walk_demo.tar.gz"
