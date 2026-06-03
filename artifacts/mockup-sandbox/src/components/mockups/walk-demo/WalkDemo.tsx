@@ -7093,7 +7093,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           border:"1px solid rgba(240,208,96,0.3)", pointerEvents:"none",
           textTransform:"uppercase", zIndex:5,
         }}>
-          {scene === "overworld" ? "Primeria Village" : scene === "lab" ? "Prof. Irwyn's Lab" : scene === "maya" ? "Maya's Home" : scene === "jay" ? "Jay's Home" : scene === "ellio" ? "Ellio's Home" : scene === "lia" ? "Lia's Home" : scene === "route1" ? "Whisperroot Trail" : scene === "route2" ? "Route 2 — Eastern Path" : scene === "farm" ? "Primeria Farm" : scene === "shore" ? "Tidemark Shore" : scene === "battle" ? "Battle" : "Your Home"}
+          {scene === "overworld" ? "Primeria Village" : scene === "lab" ? "Prof. Irwyn's Lab" : scene === "maya" ? "Maya's Home" : scene === "jay" ? "Jay's Home" : scene === "ellio" ? "Ellio's Home" : scene === "lia" ? "Lia's Home" : scene === "route1" ? "Whisperroot Trail" : scene === "route2" ? "Route 2 — Eastern Path" : scene === "area3" ? "Westwood Reaches" : scene === "area4" ? "Deep Reaches" : scene === "farm" ? "Primeria Farm" : scene === "shore" ? "Tidemark Shore" : scene === "battle" ? "Battle" : "Your Home"}
         </div>
 
         {/* Quest hint — current main objective */}
