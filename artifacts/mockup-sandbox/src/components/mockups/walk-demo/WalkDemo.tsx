@@ -1842,6 +1842,46 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     return { ...m, level: lvl, xp, moves };
   }
 
+  // Swap any caught companion into the No. 1 lead slot.
+  // Computes equivalent base values so partyBattleStats gives ~the same HP/ATK
+  // as the starter's accumulated stats, keeping the bench mon balanced.
+  function promoteToLead(i: number) {
+    if (!starter) return;
+    const mon = caughtParty[i];
+    const el  = asElement(mon.type);
+
+    // New starter derived from the chosen companion
+    const newStarter: StarterSpec = {
+      id: mon.id, name: mon.name, type: mon.type,
+      color: ELEMENT_COLOR[mon.type as keyof typeof ELEMENT_COLOR] ?? "#888888",
+      img: mon.playerImg,
+      faces: mon.playerFaces ?? "right",
+    };
+    const mbs = partyBattleStats(mon.maxHp, mon.baseDmg, mon.rarity, mon.level);
+    const newStarterStats: StarterStats = { hp: mbs.hp, atk: mbs.atk, def: mbs.def, spd: mbs.spd };
+
+    // Old starter → bench PartyMon; back-compute base values that reproduce current stats
+    const baseHp  = Math.max(20, Math.round(starterStats.hp / Math.max(0.001, 1 + starterLevel * 0.04)));
+    const atkBase = Math.max(1,  starterStats.atk - Math.floor(starterLevel * 0.6));
+    const oldStarterAsMon: PartyMon = {
+      id: starter.id, name: starter.name, type: starter.type,
+      rarity: "rare" as MonRarity,
+      wildImg: starter.img, playerImg: starter.img,
+      wildFaces: starter.faces ?? "right",
+      playerFaces: starter.faces ?? "right",
+      maxHp: baseHp,
+      baseDmg: [atkBase, atkBase + 4] as [number, number],
+      level: starterLevel, xp: starterXp, moves: starterMoves,
+    };
+
+    setStarter(newStarter);
+    setStarterLevel(mon.level);
+    setStarterXp(mon.xp);
+    setStarterMoves(mon.moves ?? (el ? defaultActiveMoves(el, mon.level) : []));
+    setStarterStats(newStarterStats);
+    setCaughtParty(prev => prev.map((m, j) => j === i ? oldStarterAsMon : m));
+  }
+
   // Post-battle report modal (shell recovery + xp + level up)
   const [battleReport, setBattleReport] = useState<{
     outcome: string;
@@ -3177,17 +3217,20 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
 
     // Award the same XP to every caught companion that joined the fight.
     // participant 0 is the starter (handled above); idx>0 → caughtParty[idx-1].
-    const parts = ("participants" in result && result.participants) ? result.participants : [0];
-    if (r.xpGained > 0 && parts.some(p => p > 0)) {
-      setCaughtParty(prev => prev.map((m, i) => parts.includes(i + 1) ? levelUpCaughtMon(m, r.xpGained) : m));
-      checkCaughtMonEvos(parts, r.xpGained);
+    // EXP Share — every caught companion earns the same XP as the lead
+    const allIdxs = [0, ...caughtPartyRef.current.map((_, idx) => idx + 1)];
+    if (r.xpGained > 0 && caughtPartyRef.current.length > 0) {
+      setCaughtParty(prev => prev.map(m => levelUpCaughtMon(m, r.xpGained)));
+      checkCaughtMonEvos(allIdxs, r.xpGained);
     }
 
-    // Loyalty gains (+3 win, +2 catch)
+    // Loyalty gains (+3 win, +2 catch) — still tracks actual participants
+    const parts = ("participants" in result && result.participants) ? result.participants : [0];
     const loyaltyDelta = result.kind === "ko" ? 3 : result.kind === "caught" ? 2 : 0;
     if (loyaltyDelta > 0) setWyrLoyalty(l => Math.min(100, l + loyaltyDelta));
     const loyaltyAfter = Math.min(100, wyrLoyalty + loyaltyDelta);
-    checkWyvForms(wyvLevelAfter(parts, r.xpGained), loyaltyAfter);
+    checkWyvForms(wyvLevelAfter(allIdxs, r.xpGained), loyaltyAfter);
+    void parts;
 
     const evoTarget = checkStarterEvo(r.newLevel);
 
@@ -3250,18 +3293,18 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     const r = calcBattleXp(rawXp, role.xpMult, starterLevel, starterXp, starterMoves);
     applyLevelUp(r);
 
-    // Award the same XP to every caught companion that joined the fight.
-    const parts = ("participants" in result && result.participants) ? result.participants : [0];
-    if (r.xpGained > 0 && parts.some(p => p > 0)) {
-      setCaughtParty(prev => prev.map((m, i) => parts.includes(i + 1) ? levelUpCaughtMon(m, r.xpGained) : m));
-      checkCaughtMonEvos(parts, r.xpGained);
+    // EXP Share — every caught companion earns the same XP as the lead
+    const allIdxs = [0, ...caughtPartyRef.current.map((_, idx) => idx + 1)];
+    if (r.xpGained > 0 && caughtPartyRef.current.length > 0) {
+      setCaughtParty(prev => prev.map(m => levelUpCaughtMon(m, r.xpGained)));
+      checkCaughtMonEvos(allIdxs, r.xpGained);
     }
 
     // Loyalty +3 trainer win
     const loyaltyDelta = result.kind === "trainerWin" ? 3 : 0;
     if (loyaltyDelta > 0) setWyrLoyalty(l => Math.min(100, l + loyaltyDelta));
     const loyaltyAfter = Math.min(100, wyrLoyalty + loyaltyDelta);
-    checkWyvForms(wyvLevelAfter(parts, r.xpGained), loyaltyAfter);
+    checkWyvForms(wyvLevelAfter(allIdxs, r.xpGained), loyaltyAfter);
 
     const evoTarget = checkStarterEvo(r.newLevel);
 
@@ -6158,6 +6201,15 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                               padding:"3px 9px", borderRadius:20,
                               border:"1px solid rgba(100,64,20,0.18)", marginBottom:3,
                             }}>No. {i + 2}</div>
+                            <button
+                              title="Set as battle lead (swaps with No. 1)"
+                              onClick={() => promoteToLead(i)}
+                              style={{
+                                padding:"2px 7px", borderRadius:5, fontSize:9, fontWeight:800,
+                                background:"rgba(200,160,20,0.12)", border:"1px solid rgba(200,160,20,0.40)",
+                                color:"#b08010", cursor:"pointer", letterSpacing:0.2,
+                              }}
+                            >★ Lead</button>
                             <button
                               disabled={i === 0}
                               onClick={() => {
