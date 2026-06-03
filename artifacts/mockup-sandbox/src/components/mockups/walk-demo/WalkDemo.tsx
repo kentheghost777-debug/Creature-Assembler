@@ -419,9 +419,9 @@ const WYVRUNT_SPEC: MonSpec = {
 
 // ── Wyvrunt evolution chain forms (loyalty + level gated) ───────────────────
 // Forms 0-2 cap at lv30 (when wyvruntCaught). Form 3 (Aureyvant) has no cap.
-const WYRNAK_SPEC:    MonSpec = { ...WYVRUNT_SPEC, id:"wyrnak",    name:"Wyvrunt II",    nameIcon:"☯", wildImg:"/__mockup/images/wyrnak.png",    playerImg:"/__mockup/images/wyrnak.png",    maxHp:80,  baseDmg:[11,18] };
-const WYRVAST_SPEC:   MonSpec = { ...WYVRUNT_SPEC, id:"wyrvast",   name:"Wyvrunt III",   nameIcon:"☯", wildImg:"/__mockup/images/wyrvast.png",   playerImg:"/__mockup/images/wyrvast.png",   maxHp:100, baseDmg:[13,22] };
-const AUREYVANT_SPEC: MonSpec = { ...WYVRUNT_SPEC, id:"aureyvant", name:"Wyvrunt IV", nameIcon:"✦", wildImg:"/__mockup/images/aureyvant.png", playerImg:"/__mockup/images/aureyvant.png", maxHp:120, baseDmg:[16,26] };
+const WYRNAK_SPEC:    MonSpec = { ...WYVRUNT_SPEC, id:"wyrnak",    name:"Wyburn",      nameIcon:"☯", wildImg:"/__mockup/images/wyrnak.png",    playerImg:"/__mockup/images/wyrnak.png",    maxHp:80,  baseDmg:[11,18] };
+const WYRVAST_SPEC:   MonSpec = { ...WYVRUNT_SPEC, id:"wyrvast",   name:"Wyvlord",     nameIcon:"☯", wildImg:"/__mockup/images/wyrvast.png",   playerImg:"/__mockup/images/wyrvast.png",   maxHp:100, baseDmg:[13,22] };
+const AUREYVANT_SPEC: MonSpec = { ...WYVRUNT_SPEC, id:"aureyvant", name:"DiviniDrake", nameIcon:"✦", wildImg:"/__mockup/images/aureyvant.png", playerImg:"/__mockup/images/aureyvant.png", maxHp:120, baseDmg:[16,26] };
 const WYV_FORMS: MonSpec[] = [WYVRUNT_SPEC, WYRNAK_SPEC, WYRVAST_SPEC, AUREYVANT_SPEC];
 
 // ── Area 3 trainer battle MonSpecs ───────────────────────────────────────────
@@ -1886,8 +1886,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   // overflowing into the storage box (which itself caps at STORAGE_CAP).
   // Returns where the mon ended up: "party", "box", or "full" (nowhere — both full).
   // A freshly caught mon starts at the level it was fighting at, XP reset.
-  const addCaughtMon = useCallback((mon: MonSpec, force = false): "party" | "box" | "full" => {
-    const lvl = wildLevelFor(mon.rarity) || 5;
+  const addCaughtMon = useCallback((mon: MonSpec, force = false, startLevel?: number): "party" | "box" | "full" => {
+    const lvl = startLevel ?? wildLevelFor(mon.rarity) ?? 5;
     const el = asElement(mon.type);
     const pm: PartyMon = { ...mon, level: lvl, xp: 0, moves: el ? defaultActiveMoves(el, lvl) : [] };
     if (caughtPartyRef.current.length >= PARTY_CAP - 1) {
@@ -5379,7 +5379,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                       window.setTimeout(() => setPhase("scripted_caught"), 650);
                     } else if (phase === "scripted_caught") {
                       setWyvruntCaught(true);
-                      addCaughtMon(WYVRUNT_SPEC, true); // story creature — bypasses the box cap
+                      addCaughtMon(WYVRUNT_SPEC, true, 10); // story creature — level 10 baby form
                       // Seed the follower beside the player so it activates in-place
                       breadcrumbsRef.current   = [];
                       followPosRef.current     = {
