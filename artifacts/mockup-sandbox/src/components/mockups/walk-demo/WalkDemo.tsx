@@ -1940,12 +1940,14 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     newLevel: number;
     statGains: Partial<Record<StatKey, number>>;
     newMoves: string[];
+    companionCount?: number;
   } | null>(null);
   const [pendingEvo,   setPendingEvo]   = useState<StarterSpec | null>(null);
   const pendingEvoDataRef = useRef<{
     outcome: string; xpGained: number; recovered: number; lostToBond: number;
     levelUps: number; newLevel: number;
     statGains: Partial<Record<StatKey, number>>; newMoves: string[];
+    companionCount?: number;
   } | null>(null);
 
   const canvasRef          = useRef<HTMLCanvasElement>(null);
@@ -3344,6 +3346,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     const reportData = {
       outcome, xpGained: r.xpGained, recovered, lostToBond: lostBond,
       levelUps: r.levelUps, newLevel: r.newLevel, statGains: r.totalGains, newMoves: r.newMoves,
+      companionCount: r.xpGained > 0 ? caughtPartyRef.current.length : 0,
     };
     const evo = evoTarget;
     if (evo && (thrown > 0 || r.xpGained > 0)) {
@@ -3413,6 +3416,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     const reportData = {
       outcome, xpGained: r.xpGained, recovered: thrown, lostToBond: 0,
       levelUps: r.levelUps, newLevel: r.newLevel, statGains: r.totalGains, newMoves: r.newMoves,
+      companionCount: r.xpGained > 0 ? caughtPartyRef.current.length : 0,
     };
     const evo = evoTarget;
     if (evo && r.xpGained > 0) {
@@ -6077,7 +6081,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                               }}/>
                             </div>
                             <span style={{ fontSize:8, color:"#9a7840", fontWeight:700, flexShrink:0, letterSpacing:0.3 }}>
-                              {starterXp}/{starterLevel * 10 + 10} XP
+                              {starterLevel >= ((wyvruntCaught && wyvruntForm < 3) ? 30 : 25) && !(wyvruntCaught && wyvruntForm >= 3) ? "MAX LV" : `${starterXp}/${starterLevel * 10 + 10} XP`}
                             </span>
                           </div>
                           {/* Stat row */}
@@ -6254,7 +6258,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                                 }}/>
                               </div>
                               <span style={{ fontSize:8, color:"#9a7840", fontWeight:700, flexShrink:0 }}>
-                                {mon.xp}/{xpThr} XP
+                                {mon.level >= 30 ? "MAX LV" : `${mon.xp}/${xpThr} XP`}
                               </span>
                             </div>
                             {/* Stat row */}
@@ -7044,6 +7048,16 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                                 <div style={{ fontSize:8, fontWeight:800, color:"#2a1206", textAlign:"center", lineHeight:1.2, maxWidth:70, wordBreak:"break-word", marginTop:2 }}>{m.name}</div>
                                 <div style={{ fontSize:7, color: tc, fontWeight:700 }}>{m.type}</div>
                                 <div style={{ fontSize:7, fontWeight:900, color: rc, textTransform:"uppercase", letterSpacing:0.5 }}>{m.rarity}</div>
+                                {(() => {
+                                  const e1 = EVO_TABLE.find(e => e.from === m.id);
+                                  if (!e1) return null;
+                                  const e2 = EVO_TABLE.find(e => e.from === e1.to.id);
+                                  return (
+                                    <div style={{ fontSize:6, color:"#4a7a5a", fontWeight:700, marginTop:2, textAlign:"center", lineHeight:1.3, maxWidth:70 }}>
+                                      →{e1.to.name}{e2 ? ` →${e2.to.name}` : ""}
+                                    </div>
+                                  );
+                                })()}
                               </div>
                             );
                           })}
@@ -7075,6 +7089,42 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         }}>
           {scene === "overworld" ? "Primeria Village" : scene === "lab" ? "Prof. Irwyn's Lab" : scene === "maya" ? "Maya's Home" : scene === "jay" ? "Jay's Home" : scene === "ellio" ? "Ellio's Home" : scene === "lia" ? "Lia's Home" : scene === "route1" ? "Whisperroot Trail" : scene === "route2" ? "Route 2 — Eastern Path" : scene === "farm" ? "Primeria Farm" : scene === "shore" ? "Tidemark Shore" : scene === "battle" ? "Battle" : "Your Home"}
         </div>
+
+        {/* Quest hint — current main objective */}
+        {scene !== "battle" && !demoComplete && (() => {
+          let hint = "";
+          if (!starter)
+            hint = "Visit the Lab — choose your first partner";
+          else if (!shellsCollected)
+            hint = "Maya — gather the Weathered Realm Shells";
+          else if (!hasHealingRune)
+            hint = "Jay — the Healing Rune awaits";
+          else if (!hasResonanceStone)
+            hint = "Ellio — pick up the Resonance Stone";
+          else if (!hasHearthberries || !hasSatchel)
+            hint = "Lia — Hearthberries & the Keeper's Satchel";
+          else if (!route1Visited)
+            hint = "Head north — Whisperroot Trail awaits";
+          else if (!wifeIntercepted)
+            hint = "Head east — explore the Eastern Path";
+          else if (!route2Greeted)
+            hint = "Speak with the farmer on the Eastern Path";
+          else if (jayA3Wins === 0 && liaA3Wins === 0)
+            hint = "Find the way west — Westwood Reaches";
+          else if (jayA3Wins === 0 || liaA3Wins === 0)
+            hint = "Face the remaining Keeper in Westwood Reaches";
+          if (!hint) return null;
+          return (
+            <div style={{
+              position:"absolute", top:36, left:"50%", transform:"translateX(-50%)",
+              background:"rgba(0,0,0,0.52)", backdropFilter:"blur(5px)",
+              color:"#b8e890", fontSize:9.5, fontWeight:700, letterSpacing:0.5,
+              padding:"3px 13px", borderRadius:14,
+              border:"1px solid rgba(100,180,60,0.3)", pointerEvents:"none",
+              whiteSpace:"nowrap", zIndex:5,
+            }}>▶ {hint}</div>
+          );
+        })()}
 
         {/* Role badge — declared path + active boon (hidden until declared) */}
         {roleChosen && (
@@ -7279,8 +7329,18 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                     ✦ {starter?.name ?? "Tayanari"} earned +{battleReport.xpGained} XP
                   </div>
                   <div style={{ color:"#7090c0", fontSize:10, marginTop:2 }}>
-                    Now Lv.{battleReport.newLevel} · {starterXp}/{battleReport.newLevel * 12} XP
+                    {(() => {
+                      const cap = (wyvruntCaught && wyvruntForm >= 3) ? Infinity : (wyvruntCaught && wyvruntForm < 3) ? 30 : 25;
+                      return (isFinite(cap) && battleReport.newLevel >= cap)
+                        ? `Lv.${battleReport.newLevel} — MAX LEVEL`
+                        : `Now Lv.${battleReport.newLevel} · ${starterXp}/${battleReport.newLevel * 10 + 10} XP`;
+                    })()}
                   </div>
+                  {(battleReport.companionCount ?? 0) > 0 && (
+                    <div style={{ color:"#8ab0e0", fontSize:10, marginTop:4, borderTop:"1px solid rgba(100,160,255,0.2)", paddingTop:4 }}>
+                      ✦ {battleReport.companionCount} companion{battleReport.companionCount === 1 ? "" : "s"} also earned +{battleReport.xpGained} XP
+                    </div>
+                  )}
                 </div>
               )}
 
