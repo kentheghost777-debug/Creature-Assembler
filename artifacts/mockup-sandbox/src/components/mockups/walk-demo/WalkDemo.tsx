@@ -716,21 +716,21 @@ const FARMER_R2_BOX: Rect = [651, 689, 680, 752]; // solid collider (user-tapped
 const FARMER_SOLIDS: Rect[] = [FARMER_R2_BOX];
 
 // ── Primeria Farm (north of Route 2) ─────────────────────────────────────────
-const FARM = { w: 1024, h: 1024 };
-const FARM_SPAWN    = { x: 500, y: 950 };           // entering from Route 2 (south)
+const FARM = { w: 1376, h: 768 };                    // matches farm-bg.png native aspect (no crop)
+const FARM_SPAWN    = { x: 679, y: 713 };           // entering from Route 2 (south)
 const R2_FARM_EXIT: Rect  = [50, 0, 280, 20 ];       // Route 2 top-left → farm
-const FARM_RETURN_R2: Rect = [370, 1005, 660, 1024 ]; // farm south edge → Route 2
+const FARM_RETURN_R2: Rect = [598, 468, 658, 508 ];  // mid-farm gate → Route 2 (user-placed)
 // NPC world positions (farm scene)
-const SHELLA_POS = { x: 310, y: 650 };   // shell vendor — left side near house
-const RUNRIK_POS = { x: 610, y: 560 };   // rune vendor — centre-right
-const MAREN_POS  = { x: 780, y: 700 };   // berry elder — right side
+const SHELLA_POS = { x: 536, y: 487 };   // shell vendor — left side near house
+const RUNRIK_POS = { x: 761, y: 420 };   // rune vendor — centre-right
+const MAREN_POS  = { x: 889, y: 525 };   // berry elder — right side
 // Farm animal decorations (src, world x/y, display size)
 const FARM_ANIMALS: { src: string; x: number; y: number; w: number; h: number }[] = [
-  { src: "/__mockup/images/chicken1.png", x: 175, y: 810, w: 50, h: 50 },
-  { src: "/__mockup/images/chicken2.png", x: 315, y: 840, w: 50, h: 50 },
-  { src: "/__mockup/images/chicken3.png", x: 200, y: 760, w: 50, h: 50 },
-  { src: "/__mockup/images/goat1.png",    x: 730, y: 790, w: 68, h: 68 },
-  { src: "/__mockup/images/goat2.png",    x: 860, y: 770, w: 68, h: 68 },
+  { src: "/__mockup/images/chicken1.png", x: 435, y: 608, w: 50, h: 50 },
+  { src: "/__mockup/images/chicken2.png", x: 540, y: 630, w: 50, h: 50 },
+  { src: "/__mockup/images/chicken3.png", x: 454, y: 570, w: 50, h: 50 },
+  { src: "/__mockup/images/goat1.png",    x: 851, y: 593, w: 68, h: 68 },
+  { src: "/__mockup/images/goat2.png",    x: 949, y: 578, w: 68, h: 68 },
 ];
 // Townspeople pre-cropped sprites (cut from farm-townspeople.png 1264×843 4×2 grid, 316×421 cells, bg removed)
 const SHELLA_IMG = "/__mockup/images/shella-npc.png";
@@ -2349,8 +2349,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         const h       = heldRef.current;
         const sc      = sceneRef.current;
         const zoom    = sc === "farm" ? 0.62 : ZOOM;
-        const world   = sc === "overworld" ? OW : sc === "lab" ? LB : sc === "route1" ? R1 : sc === "route2" ? R2 : sc === "area3" ? A3 : sc === "maya" ? MY : sc === "jay" ? JY : sc === "ellio" ? EH : sc === "lia" ? LH : PH;
-        const zones   = sc === "overworld" ? OW_BLOCKED : sc === "lab" ? LAB_BLOCKED : sc === "route1" ? R1_BLOCKED : sc === "route2" ? R2_BLOCKED : sc === "area3" ? A3_BLOCKED : sc === "maya" ? MAYA_BLOCKED : sc === "jay" ? JAY_BLOCKED : sc === "ellio" ? EH_BLOCKED : sc === "lia" ? LH_BLOCKED : PH_BLOCKED;
+        const world   = sc === "overworld" ? OW : sc === "lab" ? LB : sc === "route1" ? R1 : sc === "route2" ? R2 : sc === "area3" ? A3 : sc === "farm" ? FARM : sc === "shore" ? SHORE : sc === "maya" ? MY : sc === "jay" ? JY : sc === "ellio" ? EH : sc === "lia" ? LH : PH;
+        const zones   = sc === "overworld" ? OW_BLOCKED : sc === "lab" ? LAB_BLOCKED : sc === "route1" ? R1_BLOCKED : sc === "route2" ? R2_BLOCKED : sc === "area3" ? A3_BLOCKED : sc === "farm" ? NO_SOLIDS : sc === "shore" ? NO_SOLIDS : sc === "maya" ? MAYA_BLOCKED : sc === "jay" ? JAY_BLOCKED : sc === "ellio" ? EH_BLOCKED : sc === "lia" ? LH_BLOCKED : PH_BLOCKED;
 
         let newAnim = lastDirRef.current; // stay in last-faced direction when idle
         let newFlip = flipRef.current;
