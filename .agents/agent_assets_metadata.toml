@@ -606,6 +606,234 @@ uri = "file://attached_assets/shore-bg-gen.png"
 type = "image"
 title = "tidemark-shore-rpg-map"
 
+[[generated]]
+id = "9m2br0iTsPrfaYOSSbB8Z"
+uri = "file://artifacts/primeria/public/images/ramorisk-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "hrV5y9IlRnvfb9sKsUN0w"
+uri = "file://artifacts/primeria/public/images/lumivast-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "rW7D_bRAhj1i9BXWjWc65"
+uri = "file://artifacts/primeria/public/images/ignaub-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "pN5EsOr0DJE6n15ZZCsw6"
+uri = "file://artifacts/primeria/public/images/infernub-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "eZQ-DKb-uPaPs7AQqhC1F"
+uri = "file://artifacts/primeria/public/images/brewant-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "s-tbArojQQoMONM1dqbQ4"
+uri = "file://artifacts/primeria/public/images/alchemor-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "tp96dBrEltzpMtQ-xIHaM"
+uri = "file://artifacts/primeria/public/images/fledgral-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "WADS5Sh1Aa4icxCO9JMtO"
+uri = "file://artifacts/primeria/public/images/havencrow-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "skxHffYWeZkQAMGyl_VWZ"
+uri = "file://artifacts/primeria/public/images/blomath-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "vRRqPgp884HfR7xOi7EGw"
+uri = "file://artifacts/primeria/public/images/emberclaw-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "wD9fabIcRE3RUV7xNFyMm"
+uri = "file://artifacts/primeria/public/images/fernback-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "a5lfe49o00x8tvheeTA6w"
+uri = "file://artifacts/primeria/public/images/frogmar-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "K-JOYt6M_8k9oTbv3yIpn"
+uri = "file://artifacts/primeria/public/images/moltensnap-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "WsZqU8u18whsmd3oFvN4c"
+uri = "file://artifacts/primeria/public/images/groveback-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "335UW_EMwd_7CzvERxuZH"
+uri = "file://artifacts/primeria/public/images/glacitoad-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "f3kWtr6q_20CZ99afh6hD"
+uri = "file://artifacts/primeria/public/images/thunderowl-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "ZdK9Ns0al1A2b6OMsJyJH"
+uri = "file://artifacts/primeria/public/images/glowroot-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "LavElFn_IiPZiR2YwnqNS"
+uri = "file://artifacts/primeria/public/images/swiftwing-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "MhiPc7weuxjk_EjePzenE"
+uri = "file://artifacts/primeria/public/images/duskfang-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "wTy1JlAiUcPTGFGj-Kbgx"
+uri = "file://artifacts/primeria/public/images/windriel-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "DmDp78t4m01Eqk89rS1yd"
+uri = "file://artifacts/primeria/public/images/lumivine-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "jQ8Z6KaFtZKJO1A5IsxmO"
+uri = "file://artifacts/primeria/public/images/galewing-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "pAtnfOQC20CWtyU4NMFm1"
+uri = "file://artifacts/primeria/public/images/voidrat-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "eYGbnjabljwIE967GiBPL"
+uri = "file://artifacts/primeria/public/images/zephyriel-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "1A-bwTsI3BAZ2XKFKyBrX"
+uri = "file://artifacts/primeria/public/images/thornhound-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "e9tONnd7auf0LobA7b1X7"
+uri = "file://artifacts/primeria/public/images/tidalclaw-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "nri69IOqR2MPB-c5hgGio"
+uri = "file://artifacts/primeria/public/images/spectrael-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "zi3767Z_UTXuXbdcy7CEd"
+uri = "file://artifacts/primeria/public/images/bramblerex-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "mI7Hg035Uwgz9OZ6yZ6ti"
+uri = "file://artifacts/primeria/public/images/torrential-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "oEDF6-AHsdkbifF41IFGt"
+uri = "file://artifacts/primeria/public/images/scalvorn-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "-HDRa2G6c83j77s2zOVZS"
+uri = "file://artifacts/primeria/public/images/frosthound-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "PKI8BeKxhhI_cWysWmcGr"
+uri = "file://artifacts/primeria/public/images/cragmite-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "Ccr_6OOjAMYu0TPXeGd62"
+uri = "file://artifacts/primeria/public/images/glaciend-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "RbWwWV1z16KZ_N7fcuJiF"
+uri = "file://artifacts/primeria/public/images/cragvast-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "Rgcv5dhB5lnierlbf3EuB"
+uri = "file://artifacts/primeria/public/images/wyrmblaze-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "-XpFD3zHMaTu2k0b3whtu"
+uri = "file://artifacts/primeria/public/images/rammid-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "awb5N773bff3pAfNcLtWr"
+uri = "file://artifacts/primeria/public/images/glacihorn-wild.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "VRtPz397oH2IPdgevwlO6"
+uri = "file://artifacts/primeria/public/images/verdhorn-wild.png"
+type = "image"
+title = "generated_image"
+
 [[outputs]]
 id = "hj9mwcgl1Uv9QQTG9g6KL"
 uri = "file://kinju_walk_demo.tar.gz"

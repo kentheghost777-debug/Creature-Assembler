@@ -220,6 +220,54 @@ const EVO_TABLE: Array<{ from: string; atLevel: number; to: StarterSpec }> = [
   { from:"pebkin",      atLevel:18, to:{ id:"stonebrute",   name:"Stonebrute",     type:"Earthbound",   color:"#8b7355", img:"/__mockup/images/stonebrute-wild.png" } },
   { from:"mudtot",      atLevel:18, to:{ id:"mireking",     name:"Mireking",       type:"Oceanic",      color:"#2d7a4a", img:"/__mockup/images/mireking-wild.png"   } },
   { from:"thornwraith", atLevel:18, to:{ id:"voidwraith",   name:"Voidwraith",     type:"Abyss",        color:"#3d1a5c", img:"/__mockup/images/voidwraith-wild.png" } },
+  // ── Route 1 commons evo lines ─────────────────────────────────────────────
+  { from:"hatchick",   atLevel:18, to:{ id:"fledgral",   name:"Fledgral",   type:"Skyborne",    color:"#60a8ff", img:"/__mockup/images/fledgral-wild.png"   } },
+  { from:"fledgral",   atLevel:30, to:{ id:"skyvast",    name:"Skyvast",    type:"Skyborne",    color:"#3090ff", img:"/__mockup/images/skyvast-wild.png"    } },
+  { from:"loth",       atLevel:18, to:{ id:"blomath",    name:"Blomath",    type:"Nature",      color:"#50c040", img:"/__mockup/images/blomath-wild.png"    } },
+  { from:"blomath",    atLevel:30, to:{ id:"fernloth",   name:"Fernloth",   type:"Nature",      color:"#2a8820", img:"/__mockup/images/fernloth-wild.png"   } },
+  { from:"voltowl",    atLevel:18, to:{ id:"strikorn",   name:"Strikorn",   type:"Stormproven", color:"#ffd000", img:"/__mockup/images/strikorn-wild.png"   } },
+  { from:"strikorn",   atLevel:30, to:{ id:"thunderowl", name:"Thunderowl", type:"Stormproven", color:"#e8a000", img:"/__mockup/images/thunderowl-wild.png" } },
+  { from:"fluttril",   atLevel:18, to:{ id:"windriel",   name:"Windriel",   type:"Nature",      color:"#40b040", img:"/__mockup/images/windriel-wild.png"   } },
+  { from:"windriel",   atLevel:30, to:{ id:"zephyriel",  name:"Zephyriel",  type:"Nature",      color:"#30a030", img:"/__mockup/images/zephyriel-wild.png"  } },
+  // ── Route 1 uncommons evo lines ───────────────────────────────────────────
+  { from:"stonub",     atLevel:18, to:{ id:"ignaub",     name:"Ignaub",     type:"Volcanic",    color:"#ff5010", img:"/__mockup/images/ignaub-wild.png"     } },
+  { from:"ignaub",     atLevel:30, to:{ id:"infernub",   name:"Infernub",   type:"Volcanic",    color:"#ff3000", img:"/__mockup/images/infernub-wild.png"   } },
+  { from:"potent",     atLevel:18, to:{ id:"brewant",    name:"Brewant",    type:"Alchemy",     color:"#9040c0", img:"/__mockup/images/brewant-wild.png"    } },
+  { from:"brewant",    atLevel:30, to:{ id:"alchemor",   name:"Alchemor",   type:"Alchemy",     color:"#6020a0", img:"/__mockup/images/alchemor-wild.png"   } },
+  { from:"scavencrow", atLevel:18, to:{ id:"havencrow",  name:"Havencrow",  type:"Abyss",       color:"#5020a0", img:"/__mockup/images/havencrow-wild.png"  } },
+  { from:"havencrow",  atLevel:30, to:{ id:"dreadcrow",  name:"Dreadcrow",  type:"Abyss",       color:"#3d1a5c", img:"/__mockup/images/dreadcrow-wild.png"  } },
+  { from:"cindersnap", atLevel:18, to:{ id:"emberclaw",  name:"Emberclaw",  type:"Volcanic",    color:"#ff4000", img:"/__mockup/images/emberclaw-wild.png"  } },
+  { from:"emberclaw",  atLevel:30, to:{ id:"moltensnap", name:"Moltensnap", type:"Volcanic",    color:"#cc2000", img:"/__mockup/images/moltensnap-wild.png" } },
+  { from:"shimroot",   atLevel:18, to:{ id:"glowroot",   name:"Glowroot",   type:"Nature",      color:"#30c090", img:"/__mockup/images/glowroot-wild.png"   } },
+  { from:"glowroot",   atLevel:30, to:{ id:"lumivine",   name:"Lumivine",   type:"Nature",      color:"#40a870", img:"/__mockup/images/lumivine-wild.png"   } },
+  // ── Route 1 rares evo lines ───────────────────────────────────────────────
+  { from:"ghosti",     atLevel:22, to:{ id:"spectrael",  name:"Spectrael",  type:"Spirit",      color:"#c070ff", img:"/__mockup/images/spectrael-wild.png"  } },
+  { from:"scalel",     atLevel:22, to:{ id:"scalvorn",   name:"Scalvorn",   type:"Armored",     color:"#7a8a9a", img:"/__mockup/images/scalvorn-wild.png"   } },
+  // ── Route 2 commons evo lines ─────────────────────────────────────────────
+  { from:"mossback",   atLevel:18, to:{ id:"fernback",   name:"Fernback",   type:"Nature",      color:"#50c040", img:"/__mockup/images/fernback-wild.png"   } },
+  { from:"fernback",   atLevel:30, to:{ id:"groveback",  name:"Groveback",  type:"Nature",      color:"#2a8820", img:"/__mockup/images/groveback-wild.png"  } },
+  { from:"sparwing",   atLevel:18, to:{ id:"swiftwing",  name:"Swiftwing",  type:"Skyborne",    color:"#60a8ff", img:"/__mockup/images/swiftwing-wild.png"  } },
+  { from:"swiftwing",  atLevel:30, to:{ id:"galewing",   name:"Galewing",   type:"Skyborne",    color:"#3090ff", img:"/__mockup/images/galewing-wild.png"   } },
+  { from:"thornpup",   atLevel:18, to:{ id:"thornhound", name:"Thornhound", type:"Earthbound",  color:"#c8a020", img:"/__mockup/images/thornhound-wild.png" } },
+  { from:"thornhound", atLevel:30, to:{ id:"bramblerex", name:"Bramblerex", type:"Earthbound",  color:"#a07010", img:"/__mockup/images/bramblerex-wild.png" } },
+  { from:"frostpup",   atLevel:18, to:{ id:"frosthound", name:"Frosthound", type:"Frostformed", color:"#7ddeff", img:"/__mockup/images/frosthound-wild.png" } },
+  { from:"frosthound", atLevel:30, to:{ id:"glaciend",   name:"Glaciend",   type:"Frostformed", color:"#50c0ff", img:"/__mockup/images/glaciend-wild.png"   } },
+  // ── Route 2 uncommons evo lines ───────────────────────────────────────────
+  { from:"frogling",   atLevel:18, to:{ id:"frogmar",    name:"Frogmar",    type:"Frostformed", color:"#7ddeff", img:"/__mockup/images/frogmar-wild.png"    } },
+  { from:"frogmar",    atLevel:30, to:{ id:"glacitoad",  name:"Glacitoad",  type:"Frostformed", color:"#50c0ff", img:"/__mockup/images/glacitoad-wild.png"  } },
+  { from:"duskrat",    atLevel:18, to:{ id:"duskfang",   name:"Duskfang",   type:"Abyss",       color:"#5020a0", img:"/__mockup/images/duskfang-wild.png"   } },
+  { from:"duskfang",   atLevel:30, to:{ id:"voidrat",    name:"Voidrat",    type:"Abyss",       color:"#3d1a5c", img:"/__mockup/images/voidrat-wild.png"    } },
+  { from:"marshclaw",  atLevel:18, to:{ id:"tidalclaw",  name:"Tidalclaw",  type:"Oceanic",     color:"#3080ff", img:"/__mockup/images/tidalclaw-wild.png"  } },
+  { from:"tidalclaw",  atLevel:30, to:{ id:"torrential", name:"Torrential", type:"Oceanic",     color:"#2060d0", img:"/__mockup/images/torrential-wild.png" } },
+  { from:"cragnite",   atLevel:18, to:{ id:"cragmite",   name:"Cragmite",   type:"Armored",     color:"#7a8a9a", img:"/__mockup/images/cragmite-wild.png"   } },
+  { from:"cragmite",   atLevel:30, to:{ id:"cragvast",   name:"Cragvast",   type:"Armored",     color:"#5a6a7a", img:"/__mockup/images/cragvast-wild.png"   } },
+  { from:"bleater",    atLevel:18, to:{ id:"rammid",     name:"Rammid",     type:"Nature",      color:"#50c040", img:"/__mockup/images/rammid-wild.png"     } },
+  { from:"rammid",     atLevel:30, to:{ id:"verdhorn",   name:"Verdhorn",   type:"Nature",      color:"#3a9828", img:"/__mockup/images/verdhorn-wild.png"   } },
+  // ── Route 2 rares evo lines ───────────────────────────────────────────────
+  { from:"emberwyvlet",atLevel:22, to:{ id:"wyrmblaze",  name:"Wyrmblaze",  type:"Chaos",       color:"#cc44cc", img:"/__mockup/images/wyrmblaze-wild.png"  } },
+  { from:"crysthorn",  atLevel:22, to:{ id:"glacihorn",  name:"Glacihorn",  type:"Frostformed", color:"#50c0ff", img:"/__mockup/images/glacihorn-wild.png"  } },
+  { from:"thornalisk", atLevel:22, to:{ id:"ramorisk",   name:"Ramorisk",   type:"Earthbound",  color:"#a07010", img:"/__mockup/images/ramorisk-wild.png"   } },
+  { from:"lumifang",   atLevel:22, to:{ id:"lumivast",   name:"Lumivast",   type:"Stormproven", color:"#e8a000", img:"/__mockup/images/lumivast-wild.png"   } },
 ];
 
 /** Returns the StarterSpec the starter evolves into when it reaches exactly `atLevel`. */
@@ -3169,6 +3217,32 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       "finwing",    "finwing_2",
       "driftpaw_f", "driftpaw_m", "driftpaw_2",
       "pebkin", "mudtot", "thornwraith",
+      // Route 1 commons
+      "hatchick", "fledgral",
+      "loth",     "blomath",
+      "voltowl",  "strikorn",
+      "fluttril", "windriel",
+      // Route 1 uncommons
+      "stonub",     "ignaub",
+      "potent",     "brewant",
+      "scavencrow", "havencrow",
+      "cindersnap", "emberclaw",
+      "shimroot",   "glowroot",
+      // Route 1 rares
+      "ghosti", "scalel",
+      // Route 2 commons
+      "mossback",  "fernback",
+      "sparwing",  "swiftwing",
+      "thornpup",  "thornhound",
+      "frostpup",  "frosthound",
+      // Route 2 uncommons
+      "frogling",  "frogmar",
+      "duskrat",   "duskfang",
+      "marshclaw", "tidalclaw",
+      "cragnite",  "cragmite",
+      "bleater",   "rammid",
+      // Route 2 rares
+      "emberwyvlet", "crysthorn", "thornalisk", "lumifang",
     ];
     const evoMap = new Map<number, StarterSpec>();
     cur.forEach((m, i) => {
