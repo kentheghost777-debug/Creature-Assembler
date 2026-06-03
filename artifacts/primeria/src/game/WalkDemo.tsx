@@ -766,7 +766,7 @@ const FARMER_SOLIDS: Rect[] = [FARMER_R2_BOX];
 // ── Primeria Farm (north of Route 2) ─────────────────────────────────────────
 const FARM = { w: 1376, h: 768 };                    // matches farm-bg.png native aspect (no crop)
 const FARM_SPAWN    = { x: 679, y: 713 };           // entering from Route 2 (south)
-const R2_FARM_EXIT: Rect  = [50, 0, 280, 20 ];       // Route 2 top-left → farm
+const R2_FARM_EXIT: Rect  = [520, 0, 780, 40];       // Route 2 north cliff stairs → farm
 const FARM_RETURN_R2: Rect = [933, 664, 993, 694];   // south-east farm path → Route 2 (player pos 963,679)
 // NPC world positions (farm scene)
 const SHELLA_POS = { x: 536, y: 487 };   // shell vendor — left side near house
@@ -801,7 +801,7 @@ const SHORE_HOTSPOTS: Hotspot[] = [
 // Return-to-overworld trigger (west edge — aligned with the carved gap in the left forest mass)
 let R2_RETURN_OW: Rect    = ld("r2_return", [79, 1028, 169, 1148]); // TEMP door back to town (user-tapped 80,1121) — re-place after map swap
 // Locked future-content beats — show a "blocked"/"locked" toast
-const R2_NORTH_BLOCKED: Rect = [520,   0, 780,  40]; // cliff stairs (top-right)
+// R2_NORTH_BLOCKED removed — area converted to farm entrance (R2_FARM_EXIT)
 const R2_SOUTH_BLOCKED: Rect = [360, 1510, 600,1536]; // south continuation
 let R2_LOCKED_DOOR: Rect   = ld("r2_locked", [820, 760, 900, 830]); // locked house door
 let R2_BLOCKED: Rect[] = [
@@ -1540,6 +1540,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const [encounterFlash, setEncounterFlash] = useState<{ color: string; key: number } | null>(null);
   // ── Dev: visual debug overlay — doors, collisions, tap-to-probe coords ────
   const [devMode, setDevMode] = useState(false);
+  const [devCollapsed, setDevCollapsed] = useState(false);
   const [devProbe, setDevProbe] = useState<{ x: number; y: number } | null>(null);
   // ── DEV door editor: drag-to-move + glow toggle + COPY export ──────────────
   const [, setDoorEditTick] = useState(0);
@@ -2481,10 +2482,6 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           }
         } else if (sc === "route2" && inRect(worldPos.current.x, worldPos.current.y, R2_RETURN_OW)) {
           transitionTo("overworld", 1050, 645);   // west of OW_EAST_EXIT so we don't instantly bounce back
-        } else if (sc === "route2" && inRect(worldPos.current.x, worldPos.current.y, R2_NORTH_BLOCKED)) {
-          worldPos.current.y = R2_NORTH_BLOCKED[3] + 20;
-          setLockedDoorNotif("The cliff stairs are sealed for now.");
-          window.setTimeout(() => setLockedDoorNotif(null), 1600);
         } else if (sc === "route2" && inRect(worldPos.current.x, worldPos.current.y, R2_SOUTH_BLOCKED)) {
           transitionTo("shore", SHORE_SPAWN.x, SHORE_SPAWN.y);
         } else if (sc === "shore" && inRect(worldPos.current.x, worldPos.current.y, SHORE_NORTH_EXIT)) {
@@ -7589,44 +7586,56 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       {devMode && (
         <div style={{
           position:"fixed", top:8, left:64, right:8, zIndex:9999,
-          padding:"8px 10px", borderRadius:8,
+          padding: devCollapsed ? "5px 10px" : "8px 10px", borderRadius:8,
           background:"rgba(10,10,14,0.82)", border:"1px solid #2a78ff",
           color:"#dfe8ff", fontSize:12, fontFamily:"monospace", lineHeight:1.45,
         }}>
-          <div style={{ fontWeight:800, color:"#7fb0ff" }}>DOOR TOOL</div>
-          <div style={{ color:"#9fb0d0" }}>Drag blue boxes to move doors · tap ✦ to toggle glow per door</div>
-          <div>Player: <b style={{color:"#fff"}}>{devPlayerPos.x}, {devPlayerPos.y}</b> · Tapped: <b style={{color:"#ffd400"}}>{devProbe ? `${devProbe.x}, ${devProbe.y}` : "—"}</b></div>
-          <button onClick={copyDoorLayout} style={{
-            marginTop:6, padding:"5px 12px", borderRadius:6,
-            border:"1px solid #2a78ff", background: doorCopied ? "#1f7a36" : "#2a78ff",
-            color:"#fff", fontWeight:800, fontSize:12, fontFamily:"monospace", cursor:"pointer",
-          }}>{doorCopied ? "✓ COPIED — paste it to me" : "COPY door layout"}</button>
-          <div style={{ marginTop:8, paddingTop:8, borderTop:"1px solid rgba(127,176,255,0.3)" }}>
-            <div style={{ fontWeight:800, color:"#ff9a7f" }}>WALL TOOL</div>
-            <div style={{ display:"flex", gap:6, marginTop:4, flexWrap:"wrap" }}>
-              <button onClick={toggleWalls} style={{
-                padding:"5px 10px", borderRadius:6, border:"1px solid #ff5a3c",
-                background: WALLS_ON ? "#b5341f" : "rgba(20,12,10,0.7)",
-                color:"#fff", fontWeight:800, fontSize:12, fontFamily:"monospace", cursor:"pointer",
-              }}>Walls: {WALLS_ON ? "ON" : "OFF"}</button>
-              <button onClick={() => { setWallEditMode((v) => !v); setWallPendA(null); setDevProbe(null); }} style={{
-                padding:"5px 10px", borderRadius:6, border:"1px solid #ff5a3c",
-                background: wallEditMode ? "#b5341f" : "rgba(20,12,10,0.7)",
-                color:"#fff", fontWeight:800, fontSize:12, fontFamily:"monospace", cursor:"pointer",
-              }}>Edit: {wallEditMode ? "ON" : "OFF"}</button>
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:6 }}>
+            <div style={{ flex:1, minWidth:0 }}>
+              Player: <b style={{color:"#fff"}}>{devPlayerPos.x}, {devPlayerPos.y}</b>
+              {" · "}Tapped: <b style={{color:"#ffd400"}}>{devProbe ? `${devProbe.x}, ${devProbe.y}` : "—"}</b>
             </div>
-            {wallEditMode && (
-              <div style={{ color:"#e0b0a0", marginTop:4 }}>
-                Tap two corners to draw a wall · drag a box to move · double-tap a box to delete.
-                {" "}First corner: <b style={{color:"#39ff88"}}>{wallPendA ? `${wallPendA.x}, ${wallPendA.y}` : "—"}</b>
-              </div>
-            )}
-            <button onClick={copyWallLayout} style={{
-              marginTop:6, padding:"5px 12px", borderRadius:6,
-              border:"1px solid #ff5a3c", background: wallsCopied ? "#1f7a36" : "#ff5a3c",
-              color:"#fff", fontWeight:800, fontSize:12, fontFamily:"monospace", cursor:"pointer",
-            }}>{wallsCopied ? "✓ COPIED — paste it to me" : "COPY wall layout"}</button>
+            <button onClick={() => setDevCollapsed(v => !v)} style={{
+              flexShrink:0, padding:"2px 8px", borderRadius:5,
+              border:"1px solid #2a78ff", background:"rgba(42,120,255,0.2)",
+              color:"#7fb0ff", fontWeight:800, fontSize:11, fontFamily:"monospace", cursor:"pointer",
+            }}>{devCollapsed ? "▼" : "▲"}</button>
           </div>
+          {!devCollapsed && (<>
+            <div style={{ fontWeight:800, color:"#7fb0ff", marginTop:6 }}>DOOR TOOL</div>
+            <div style={{ color:"#9fb0d0" }}>Drag blue boxes to move doors · tap ✦ to toggle glow per door</div>
+            <button onClick={copyDoorLayout} style={{
+              marginTop:6, padding:"5px 12px", borderRadius:6,
+              border:"1px solid #2a78ff", background: doorCopied ? "#1f7a36" : "#2a78ff",
+              color:"#fff", fontWeight:800, fontSize:12, fontFamily:"monospace", cursor:"pointer",
+            }}>{doorCopied ? "✓ COPIED — paste it to me" : "COPY door layout"}</button>
+            <div style={{ marginTop:8, paddingTop:8, borderTop:"1px solid rgba(127,176,255,0.3)" }}>
+              <div style={{ fontWeight:800, color:"#ff9a7f" }}>WALL TOOL</div>
+              <div style={{ display:"flex", gap:6, marginTop:4, flexWrap:"wrap" }}>
+                <button onClick={toggleWalls} style={{
+                  padding:"5px 10px", borderRadius:6, border:"1px solid #ff5a3c",
+                  background: WALLS_ON ? "#b5341f" : "rgba(20,12,10,0.7)",
+                  color:"#fff", fontWeight:800, fontSize:12, fontFamily:"monospace", cursor:"pointer",
+                }}>Walls: {WALLS_ON ? "ON" : "OFF"}</button>
+                <button onClick={() => { setWallEditMode((v) => !v); setWallPendA(null); setDevProbe(null); }} style={{
+                  padding:"5px 10px", borderRadius:6, border:"1px solid #ff5a3c",
+                  background: wallEditMode ? "#b5341f" : "rgba(20,12,10,0.7)",
+                  color:"#fff", fontWeight:800, fontSize:12, fontFamily:"monospace", cursor:"pointer",
+                }}>Edit: {wallEditMode ? "ON" : "OFF"}</button>
+              </div>
+              {wallEditMode && (
+                <div style={{ color:"#e0b0a0", marginTop:4 }}>
+                  Tap two corners to draw a wall · drag a box to move · double-tap a box to delete.
+                  {" "}First corner: <b style={{color:"#39ff88"}}>{wallPendA ? `${wallPendA.x}, ${wallPendA.y}` : "—"}</b>
+                </div>
+              )}
+              <button onClick={copyWallLayout} style={{
+                marginTop:6, padding:"5px 12px", borderRadius:6,
+                border:"1px solid #ff5a3c", background: wallsCopied ? "#1f7a36" : "#ff5a3c",
+                color:"#fff", fontWeight:800, fontSize:12, fontFamily:"monospace", cursor:"pointer",
+              }}>{wallsCopied ? "✓ COPIED — paste it to me" : "COPY wall layout"}</button>
+            </div>
+          </>)}
         </div>
       )}
 
