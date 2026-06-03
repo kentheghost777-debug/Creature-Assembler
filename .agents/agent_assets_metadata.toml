@@ -840,6 +840,48 @@ uri = "file://artifacts/primeria/public/images/area4-bg.png"
 type = "image"
 title = "generated_image"
 
+[[generated]]
+id = "nyppU3cH3E4WIeFSlr5Mg"
+uri = "file://artifacts/primeria/public/images/tova-npc.png"
+type = "image"
+title = "tova npc portrait"
+
+[[generated]]
+id = "oXab88FTm002G3xV11Mhr"
+uri = "file://artifacts/primeria/public/images/senna-npc.png"
+type = "image"
+title = "senna npc portrait"
+
+[[generated]]
+id = "OuniSobCoOXyEHkM6gGGZ"
+uri = "file://artifacts/primeria/public/images/corvin-npc.png"
+type = "image"
+title = "corvin npc portrait"
+
+[[generated]]
+id = "gCO2odm1dDrEwI5507imi"
+uri = "file://artifacts/primeria/public/images/shella-npc.png"
+type = "image"
+title = "shella npc portrait"
+
+[[generated]]
+id = "UqUkTbvZeVLXkFS36sm_6"
+uri = "file://artifacts/primeria/public/images/runrik-npc.png"
+type = "image"
+title = "runrik npc portrait"
+
+[[generated]]
+id = "TrKhTSUv2cOoVnJ2mG2Ko"
+uri = "file://artifacts/primeria/public/images/maren-npc.png"
+type = "image"
+title = "maren npc portrait"
+
+[[generated]]
+id = "93b6tzSBf9vQeGCPjBqZ5"
+uri = "file://artifacts/primeria/public/images/lunberry.png"
+type = "image"
+title = "lunberry item icon"
+
 [[outputs]]
 id = "hj9mwcgl1Uv9QQTG9g6KL"
 uri = "file://kinju_walk_demo.tar.gz"

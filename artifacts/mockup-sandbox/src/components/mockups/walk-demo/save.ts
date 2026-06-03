@@ -159,6 +159,8 @@ export type WorldSave = {
   primeriaCoin: number;
   profShoreWins: number;   // times the player has beaten the prof on shore
   profShorePaid: number;   // times prof has paid out coin (cap 2)
+  // Overworld NPCs
+  corvinMet: boolean;      // Corvin (traveling naturalist) has introduced himself
 };
 
 export type SaveData = {

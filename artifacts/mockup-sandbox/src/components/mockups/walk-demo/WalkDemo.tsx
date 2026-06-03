@@ -317,7 +317,8 @@ type Phase = "walk" | "d1" | "d2" | "pick" | "d3" | "role_pick" | "d4" | "d5"
           | "prof_shore_win" | "prof_shore_lose" | "prof_shore_idle" | "prof_shore_done"
           // Overworld ambient townspeople (lore flavor, set no quest flags)
           | "tova_d1" | "tova_d2" | "tova_idle"
-          | "senna_d1" | "senna_d2" | "senna_idle";
+          | "senna_d1" | "senna_d2" | "senna_idle"
+          | "corvin_d1" | "corvin_d2" | "corvin_idle";
 type Scene = "overworld" | "lab" | "maya" | "jay" | "home" | "ellio" | "lia" | "route1" | "route2" | "area3" | "area4" | "battle" | "farm" | "shore";
 type Rect  = [number, number, number, number]; // x1 y1 x2 y2 world-px
 
@@ -1045,8 +1046,12 @@ let LAB_EXIT: Rect = ld("lab_exit", [262, 645, 438, 692]); // exit lab
 // ── Maya's Home ───────────────────────────────────────────────────────────────
 const MY = { w: 800, h: 800 };
 const MAYA_POS  = { x: 870, y: 427 }; // Maya standing at her doorstep
-const TOVA_POS  = { x: 600, y: 560 }; // ambient townsfolk — center of Primeria village square
-const SENNA_POS = { x: 300, y: 200 }; // ambient townsfolk — near Route 1 north gate
+const TOVA_POS   = { x: 600, y: 560 }; // ambient townsfolk — center of Primeria village square
+const SENNA_POS  = { x: 300, y: 200 }; // ambient townsfolk — near Route 1 north gate
+const CORVIN_POS = { x: 790, y: 310 }; // traveling naturalist — northeast near east road
+const TOVA_IMG   = "/__mockup/images/tova-npc.png";
+const SENNA_IMG  = "/__mockup/images/senna-npc.png";
+const CORVIN_IMG = "/__mockup/images/corvin-npc.png";
 let OW_MAYA_DOOR: Rect  = ld("ow_maya", [938, 278, 1003, 340]); // nudged +6 east of user-tapped 965,335
 let MAYA_HOME_EXIT: Rect = ld("maya_exit", [310, 722, 490, 790]); // exit trigger at interior door
 const MAYA_SHELL: Rect     = [385, 400, 455, 460]; // pickup zone — center of the living-room rug
@@ -1546,6 +1551,9 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const [tovaInteractPos,  setTovaInteractPos]  = useState({ sx: 0, sy: 0 });
   const [nearSenna, setNearSenna] = useState(false);
   const [sennaInteractPos, setSennaInteractPos] = useState({ sx: 0, sy: 0 });
+  const [nearCorvin, setNearCorvin] = useState(false);
+  const [corvinInteractPos, setCorvinInteractPos] = useState({ sx: 0, sy: 0 });
+  const [corvinMet, setCorvinMet] = useState(() => savedWorld?.corvinMet ?? false);
   // NPC entry bounce animations (one-shot per room entry, no cycle needed)
   const [jayBounce,  setJayBounce]  = useState(false);
   const [ellioBounce, setEllioBounce] = useState(false);
@@ -1808,6 +1816,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     farmVisited, farmShellsGiven, farmRunesGiven, marenGifted,
     ownedBattleShellIds, equippedBattleShellId, ownedBattleRuneIds, slottedBattleRuneId, hasCrucibyx,
     primeriaCoin, profShoreWins, profShorePaid,
+    corvinMet,
   });
   const persistWorld = useCallback(() => {
     const safe = lastSafeRef.current;
@@ -1834,6 +1843,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       farmVisited, farmShellsGiven, farmRunesGiven, marenGifted,
       ownedBattleShellIds, equippedBattleShellId, ownedBattleRuneIds, slottedBattleRuneId, hasCrucibyx,
       primeriaCoin, profShoreWins, profShorePaid,
+      corvinMet,
     };
     persistWorld();
   }, [
@@ -1849,6 +1859,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     farmVisited, farmShellsGiven, farmRunesGiven, marenGifted,
     ownedBattleShellIds, equippedBattleShellId, ownedBattleRuneIds, slottedBattleRuneId, hasCrucibyx,
     primeriaCoin, profShoreWins, profShorePaid,
+    corvinMet,
     persistWorld,
   ]);
   // On resume with Wyvrunt already caught, seed the follower beside the player
@@ -2066,7 +2077,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   useEffect(() => {
     const sceneNPCs: Partial<Record<Scene, string[]>> = {
       lab:       ["/__mockup/images/prof-irwyn-sprite.png", "/__mockup/images/rowan_front_idle.png"],
-      overworld: ["/__mockup/images/maya-sprite.png"],
+      overworld: ["/__mockup/images/maya-sprite.png", "/__mockup/images/tova-npc.png", "/__mockup/images/senna-npc.png", "/__mockup/images/corvin-npc.png"],
       jay:       ["/__mockup/images/jay-sprite.png"],
       ellio:     ["/__mockup/images/ellio-sprite.png"],
       home:      ["/__mockup/images/jess_front_idle.png", "/__mockup/images/kinju_front_idle.png"],
@@ -2749,6 +2760,9 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           const dsenna = dist(px, py, SENNA_POS.x, SENNA_POS.y);
           setNearSenna(dsenna < 90);
           if (dsenna < 90) setSennaInteractPos({ sx: screenX, sy: screenY });
+          const dcorvin = dist(px, py, CORVIN_POS.x, CORVIN_POS.y);
+          setNearCorvin(dcorvin < 90);
+          if (dcorvin < 90) setCorvinInteractPos({ sx: screenX, sy: screenY });
         }
         // Near-Jay check (jay scene)
         if (sc === "jay") {
@@ -2908,6 +2922,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       ellio_idle: "walk", lia_idle: "walk", jess_idle: "walk",
       tova_d1: "tova_d2", tova_d2: "walk", tova_idle: "walk",
       senna_d1: "senna_d2", senna_d2: "walk", senna_idle: "walk",
+      corvin_d1: "corvin_d2", corvin_d2: "walk", corvin_idle: "walk",
       // Rowan's three-line dream-of-becoming-professor chat.
       rowan_d1: "rowan_d2", rowan_d2: "rowan_d3", rowan_d3: "walk",
       // Area 3 Jay/Lia trainer battles.
@@ -2935,6 +2950,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     };
     if (from === "shella_d3") { setShowShellPicker(true); return; }
     if (from === "runrik_d3") { setShowRunePicker(true); return; }
+    if (from === "corvin_d2" && !corvinMet) { setCorvinMet(true); setPrimeriaCoin(c => c + 75); }
     const next = map[from];
     if (next) setPhase(next);
   }, []);
@@ -3060,6 +3076,9 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     senna_d1: "First time heading out through Route 1? I've been running goods through that gate for years. The Tayanari out there haven't been acting the same lately — more curious, less wary. Old Mena on the ridge says they're responding to something deep in the ruins. I don't know about all that. I just know the trail's busier than it's been in a long time.",
     senna_d2: "Watch the western edge of the trail — the ones that come from that direction move different. Not aggressive. Just... deliberate. Like they've already decided something about you. Anyway. You'll see. Good luck out there, Keeper.",
     senna_idle: "Still heading out there? Good sign. Means you're not running back in a hurry.",
+    corvin_d1: "Ah! Perfect timing — a Keeper, and a fresh one at that. Name's Corvin. Traveling naturalist, Tayanari researcher, and occasional purveyor of useful things. I've just come back from the eastern ridge. The species patterns out there are extraordinary — totally different layering than the north routes. I documented twelve new behavior markers this season alone.",
+    corvin_d2: "Here — take this. Field courtesy. Every naturalist I've met who shared their notes early ended up documenting something worth sharing. I figure the same principle applies to Keepers. Consider it a head start. Come find me if you catalogue something unusual out in the reaches. I'll be around.",
+    corvin_idle: "The ruins east of here have the most consistent Tayanari congregation patterns I've ever recorded. Something in the geology, maybe. Or something older.",
     scripted_t1: "The Wyvrunt is completely still. Its tail-flame ripples in slow arcs but it doesn't move. The yin-yang sigils on its scales pulse — reading you. PROF: \"Don't move yet. Let it finish its read.\"",
     scripted_t2: "Something in its posture shifts — the tension releasing by degrees, curiosity replacing caution. The sigils brighten. It has made a decision. PROF: \"Now. The shell. Set it down. It's ready.\"",
     scripted_set: "You place the Obsidianeye Realm Shell open on the ground before it. The Wyvrunt tilts its head — considers — and doesn't move away.",
@@ -3925,43 +3944,47 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                 textShadow:"0 0 4px #000,0 0 8px #000",
               }}>MAYA</div>
               {/* Tova — ambient townsfolk, village square */}
+              <img src={TOVA_IMG} alt="Tova" style={{
+                position:"absolute",
+                left: TOVA_POS.x - 32, top: TOVA_POS.y - 64,
+                width:64, height:64, objectFit:"contain",
+                pointerEvents:"none", imageRendering:"auto",
+              }} />
               <div style={{
                 position:"absolute",
-                left: TOVA_POS.x - 18, top: TOVA_POS.y - 36,
-                width:36, height:36, borderRadius:"50%",
-                background:"linear-gradient(135deg,#8c6a40,#c4a060)",
-                border:"2px solid #e8c878", pointerEvents:"none",
-                display:"flex", alignItems:"center", justifyContent:"center",
-                fontSize:14, fontWeight:900, color:"#fff3d0",
-                textShadow:"0 1px 3px rgba(0,0,0,0.8)",
-                boxShadow:"0 2px 8px rgba(0,0,0,0.5)",
-              }}>T</div>
-              <div style={{
-                position:"absolute",
-                left: TOVA_POS.x - 20, top: TOVA_POS.y - 52,
+                left: TOVA_POS.x - 20, top: TOVA_POS.y - 72,
                 color:"#e8c878", fontSize:8, fontWeight:800,
                 letterSpacing:1, pointerEvents:"none",
                 textShadow:"0 0 4px #000,0 0 8px #000",
               }}>TOVA</div>
               {/* Senna — ambient townsfolk, near Route 1 gate */}
+              <img src={SENNA_IMG} alt="Senna" style={{
+                position:"absolute",
+                left: SENNA_POS.x - 32, top: SENNA_POS.y - 64,
+                width:64, height:64, objectFit:"contain",
+                pointerEvents:"none", imageRendering:"auto",
+              }} />
               <div style={{
                 position:"absolute",
-                left: SENNA_POS.x - 18, top: SENNA_POS.y - 36,
-                width:36, height:36, borderRadius:"50%",
-                background:"linear-gradient(135deg,#3a6a5c,#60a888)",
-                border:"2px solid #88d8b0", pointerEvents:"none",
-                display:"flex", alignItems:"center", justifyContent:"center",
-                fontSize:14, fontWeight:900, color:"#d0f4e8",
-                textShadow:"0 1px 3px rgba(0,0,0,0.8)",
-                boxShadow:"0 2px 8px rgba(0,0,0,0.5)",
-              }}>S</div>
-              <div style={{
-                position:"absolute",
-                left: SENNA_POS.x - 22, top: SENNA_POS.y - 52,
+                left: SENNA_POS.x - 24, top: SENNA_POS.y - 72,
                 color:"#88d8b0", fontSize:8, fontWeight:800,
                 letterSpacing:1, pointerEvents:"none",
                 textShadow:"0 0 4px #000,0 0 8px #000",
               }}>SENNA</div>
+              {/* Corvin — traveling naturalist, northeast near east road */}
+              <img src={CORVIN_IMG} alt="Corvin" style={{
+                position:"absolute",
+                left: CORVIN_POS.x - 32, top: CORVIN_POS.y - 64,
+                width:64, height:64, objectFit:"contain",
+                pointerEvents:"none", imageRendering:"auto",
+              }} />
+              <div style={{
+                position:"absolute",
+                left: CORVIN_POS.x - 24, top: CORVIN_POS.y - 72,
+                color:"#c8a8f8", fontSize:8, fontWeight:800,
+                letterSpacing:1, pointerEvents:"none",
+                textShadow:"0 0 4px #000,0 0 8px #000",
+              }}>CORVIN</div>
             </>
           )}
 
@@ -4530,6 +4553,23 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite",
               zIndex:10,
             }}>!</button>
+        )}
+
+        {/* ── INTERACT BUTTON — Corvin (overworld traveling naturalist) ─── */}
+        {scene === "overworld" && nearCorvin && phase === "walk" && (
+          <button
+            onClick={() => setPhase(corvinMet ? "corvin_idle" : "corvin_d1")}
+            style={{
+              position:"absolute",
+              left: corvinInteractPos.sx - 14,
+              top:  corvinInteractPos.sy - 10,
+              width:28, height:28, borderRadius:"50%",
+              background:"#7a60c8", border:"2px solid #fff",
+              color:"#f0e8ff", fontSize:16, fontWeight:900,
+              display:"flex", alignItems:"center", justifyContent:"center",
+              cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite",
+              zIndex:10,
+            }}>{corvinMet ? "…" : "!"}</button>
         )}
 
         {/* ── INTERACT BUTTON — Ellio ───────────────────────────────────── */}
@@ -5945,7 +5985,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           || phase === "rowan_d3" || phase === "jay_a3_idle" || phase === "lia_a3_idle"
           || phase === "jerbs_a3_idle"
           || phase === "tova_d1" || phase === "tova_d2" || phase === "tova_idle"
-          || phase === "senna_d1" || phase === "senna_d2" || phase === "senna_idle") && (() => {
+          || phase === "senna_d1" || phase === "senna_d2" || phase === "senna_idle"
+          || phase === "corvin_d1" || phase === "corvin_d2" || phase === "corvin_idle") && (() => {
           const speaker =
             phase === "prof_idle" ? { name: "PROF. IRWYN", color: "#f0d060" } :
             (phase === "jay_idle" || phase === "jay_a3_idle") ? { name: "JAY", color: "#6090e0" } :
@@ -5956,9 +5997,10 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             phase === "jerbs_a3_idle" ? { name: "JERBS", color: "#e8b840" } :
             (phase === "tova_d1" || phase === "tova_d2" || phase === "tova_idle") ? { name: "TOVA", color: "#e8c878" } :
             (phase === "senna_d1" || phase === "senna_d2" || phase === "senna_idle") ? { name: "SENNA", color: "#88d8b0" } :
+            (phase === "corvin_d1" || phase === "corvin_d2" || phase === "corvin_idle") ? { name: "CORVIN", color: "#c8a8f8" } :
             { name: "ROWAN", color: "#b8a0e0" };
           const more = phase === "rowan_d1" || phase === "rowan_d2"
-            || phase === "tova_d1" || phase === "senna_d1";
+            || phase === "tova_d1" || phase === "senna_d1" || phase === "corvin_d1";
           return (
             <div style={{
               position:"absolute", bottom:0, left:0, right:0,
