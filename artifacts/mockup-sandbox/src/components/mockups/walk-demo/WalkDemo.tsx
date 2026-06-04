@@ -433,7 +433,7 @@ const TR_SAVEN:  MonSpec = { id:"tr_saven",  name:"Scavencrow",type:"Abyss",    
 const TR_MENTY:  MonSpec = { id:"tr_menty",  name:"Mentyke",  type:"Mind",      rarity:"ultra",    wildImg:"/__mockup/images/mentyke-wild-a.png",    playerImg:"/__mockup/images/mentyke-wild-b.png",   wildFaces:"left", playerFaces:"left", maxHp:80,  baseDmg:[8,16] };
 // Lia's team (Oceanic Cunbubble as anchor + Nature/Storm support).
 const TR_CUNB:   MonSpec = { id:"tr_cunb",   name:"Cunbubble",type:"Oceanic",   rarity:"uncommon", wildImg:"/__mockup/images/phantorch.png",          playerImg:"/__mockup/images/phantorch.png",         wildFaces:"left", playerFaces:"left", maxHp:58,  baseDmg:[6,12] };
-const TR_DRIFT:  MonSpec = { id:"tr_drift",  name:"Driftpaw", type:"Skyborne",  rarity:"uncommon", wildImg:"", playerImg:"", wildSheet:{url:"/__mockup/images/a3-wild-sheet.png",x:0,y:780,w:512,h:140,sheetW:1024,sheetH:1536}, playerSheet:{url:"/__mockup/images/a3-wild-sheet.png",x:0,y:780,w:512,h:140,sheetW:1024,sheetH:1536}, wildFaces:"left", playerFaces:"left", maxHp:56,  baseDmg:[6,11] };
+const TR_DRIFT:  MonSpec = { id:"tr_drift",  name:"Driftpaw", type:"Skyborne",  rarity:"uncommon", wildImg:"/__mockup/images/driftpaw-wild.png", playerImg:"/__mockup/images/driftpaw-player.png", wildFaces:"left", playerFaces:"left", maxHp:56,  baseDmg:[6,11] };
 const TR_SPRIG:  MonSpec = { id:"tr_sprig",  name:"Sprigget", type:"Nature",    rarity:"common",   wildImg:"", playerImg:"",                          wildSheet:{ url:"/__mockup/images/a3-wild-sheet.png", x:0, y:0, w:512, h:384, sheetW:1024, sheetH:1536 }, playerSheet:{ url:"/__mockup/images/a3-wild-sheet.png", x:0, y:0, w:512, h:384, sheetW:1024, sheetH:1536 }, wildFaces:"left", playerFaces:"left", maxHp:52, baseDmg:[5,10] };
 const TR_MURK:   MonSpec = { id:"tr_murk",   name:"Murkspine",type:"Abyss",    rarity:"rare",     wildImg:"", playerImg:"",                          wildSheet:{ url:"/__mockup/images/a3-new-sheet.png", x:512, y:0, w:512, h:512, sheetW:1536, sheetH:1024 }, playerSheet:{ url:"/__mockup/images/a3-new-sheet.png", x:512, y:0, w:512, h:512, sheetW:1536, sheetH:1024 }, wildFaces:"left", playerFaces:"left", maxHp:78, baseDmg:[8,15] };
 // Lia's blue-and-grey Wyvburn (Draco) — her ace, strongest battle companion.
@@ -539,17 +539,17 @@ const BESTIARY_A3: MonSpec[] = [
     wildImg:"", playerImg:"", wildSheet:A3WS(512,164,512,208), playerSheet:A3WS(512,164,512,208),
     wildFaces:"left", playerFaces:"left", maxHp:35, baseDmg:[5,9] },
   { id:"finwing",     name:"Finwing",    type:"Oceanic",    rarity:"common",
-    wildImg:"", playerImg:"", wildSheet:wldF(0,1), playerSheet:wldF(0,1),
+    wildImg:"/__mockup/images/finwing-wild.png", playerImg:"/__mockup/images/finwing-player.png",
     wildFaces:"left", playerFaces:"left", maxHp:30, baseDmg:[4,8] },
   { id:"stoneback",   name:"Stoneback",  type:"Earthbound", rarity:"common",
     wildImg:"", playerImg:"", wildSheet:A3WS(512,612,512,143), playerSheet:A3WS(512,612,512,143),
     wildFaces:"left", playerFaces:"left", maxHp:40, baseDmg:[4,7] },
   // ── UNCOMMON ───────────────────────────────────────────────────────────────
   { id:"driftpaw_f",  name:"Driftpaw",   type:"Skyborne",   rarity:"uncommon",
-    wildImg:"", playerImg:"", wildSheet:A3WS(0,780,512,140), playerSheet:A3WS(0,780,512,140),
+    wildImg:"/__mockup/images/driftpaw-wild.png", playerImg:"/__mockup/images/driftpaw-player.png",
     wildFaces:"left", playerFaces:"left", maxHp:38, baseDmg:[5,10] },
   { id:"driftpaw_m",  name:"Driftpaw",   type:"Skyborne",   rarity:"uncommon",
-    wildImg:"", playerImg:"", wildSheet:A3WS(0,1036,512,104), playerSheet:A3WS(0,1036,512,104),
+    wildImg:"/__mockup/images/driftpaw-wild.png", playerImg:"/__mockup/images/driftpaw-player.png",
     wildFaces:"left", playerFaces:"left", maxHp:38, baseDmg:[5,10] },
   { id:"stoneback_m", name:"Stoneback",  type:"Earthbound", rarity:"uncommon",
     wildImg:"", playerImg:"", wildSheet:A3WS(512,612,512,143), playerSheet:A3WS(512,612,512,143),
