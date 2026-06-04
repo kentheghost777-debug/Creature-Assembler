@@ -555,7 +555,7 @@ const BESTIARY_A3: MonSpec[] = [
     wildImg:"", playerImg:"", wildSheet:A3WS(512,612,512,143), playerSheet:A3WS(512,612,512,143),
     wildFaces:"left", playerFaces:"left", maxHp:44, baseDmg:[4,8] },
   { id:"gloomcap",    name:"Gloomcap",   type:"Abyss",      rarity:"uncommon",
-    wildImg:"", playerImg:"", wildSheet:wldF(1,2), playerSheet:wldF(1,2),
+    wildImg:"/__mockup/images/gloomcap-wild.png", playerImg:"/__mockup/images/gloomcap-player.png",
     wildFaces:"left", playerFaces:"left", maxHp:36, baseDmg:[5,11] },
   // ── RARE (A3-exclusive deep-wood spirits) ───────────────────────────────────
   { id:"silkfae_m",   name:"Silkfae",    type:"Spirit",     rarity:"rare",
