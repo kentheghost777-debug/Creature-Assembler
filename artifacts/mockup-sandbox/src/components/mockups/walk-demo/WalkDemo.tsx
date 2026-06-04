@@ -7313,7 +7313,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                           borderBottom:`1px solid ${accent}55`, marginBottom:6,
                         }}>{label}</div>
                         <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:5 }}>
-                          {mons.map(m => {
+                          {mons.filter((m, i, arr) => arr.findIndex(x => x.name === m.name) === i).map(m => {
                             const rc = RARITY_COLOR[m.rarity];
                             const tc = ELEMENT_COLOR[m.type as keyof typeof ELEMENT_COLOR] ?? "#aaa";
                             return (

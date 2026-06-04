@@ -984,11 +984,12 @@ export function BattleScene({
             {/* Feint afterimage — a translucent ghost that lingers where it stood */}
             {feinting && (currentOpponent.wildSheet ? (() => {
               const s = currentOpponent.wildSheet!;
-              const wide = s.w >= s.h;
+              const ar = s.w / s.h;
+              const sizing = ar > 1.8 ? { height:"55%" } : ar > 1 ? { width:"100%" } : { height:"100%" };
               return (
-                <div aria-hidden style={{ position:"absolute", inset:0, display:"flex", justifyContent:"center", alignItems:"flex-end", pointerEvents:"none" }}>
+                <div aria-hidden style={{ position:"absolute", inset:0, display:"flex", justifyContent:"center", alignItems:"center", pointerEvents:"none" }}>
                   <div style={{
-                    ...(wide ? { width:"100%" } : { height:"100%" }),
+                    ...sizing,
                     aspectRatio:`${s.w} / ${s.h}`,
                     ...sheetBgStyle(s),
                     transform: (wildFlip + wildExtra).trim() || "none",
@@ -1011,11 +1012,12 @@ export function BattleScene({
             ))}
             {currentOpponent.wildSheet ? (() => {
               const s = currentOpponent.wildSheet!;
-              const wide = s.w >= s.h;
+              const ar = s.w / s.h;
+              const sizing = ar > 1.8 ? { height:"55%" } : ar > 1 ? { width:"100%" } : { height:"100%" };
               return (
-                <div style={{ position:"absolute", inset:0, display:"flex", justifyContent:"center", alignItems:"flex-end" }}>
+                <div style={{ position:"absolute", inset:0, display:"flex", justifyContent:"center", alignItems:"center" }}>
                   <div role="img" aria-label={currentOpponent.name} style={{
-                    ...(wide ? { width:"100%" } : { height:"100%" }),
+                    ...sizing,
                     aspectRatio:`${s.w} / ${s.h}`,
                     ...sheetBgStyle(s),
                     transform: (wildFlip + wildExtra).trim() || "none",
