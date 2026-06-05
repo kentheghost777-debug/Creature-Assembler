@@ -882,6 +882,12 @@ uri = "file://artifacts/primeria/public/images/lunberry.png"
 type = "image"
 title = "lunberry item icon"
 
+[[generated]]
+id = "XCc2aSCVRpRUdi7g8h1Lr"
+uri = "file://attached_assets/town_map_clean.png"
+type = "image"
+title = "fantasy town map no text"
+
 [[outputs]]
 id = "hj9mwcgl1Uv9QQTG9g6KL"
 uri = "file://kinju_walk_demo.tar.gz"
@@ -929,3 +935,9 @@ id = "tG0QYY-wKYquV8146zwsU"
 uri = "file://attached_assets/generated_audio/primeria_catch.mp3"
 type = "audio"
 title = "primeria_catch"
+
+[[outputs]]
+id = "EDCGJdv_-waUurU_488Mw"
+uri = "file://attached_assets/town_map_clean.png"
+type = "image"
+title = "Town Map (no labels)"
