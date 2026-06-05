@@ -1026,6 +1026,42 @@ uri = "file://attached_assets/town-left-regen.png"
 type = "image"
 title = "generated_image"
 
+[[generated]]
+id = "izYrUOHGYT0meOfPsAyoP"
+uri = "file://attached_assets/npc_tova.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "t8r6pSWtm-Mdbvz29Ftda"
+uri = "file://attached_assets/npc_senna.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "iIypr1EHRwv_vg8sFBDS9"
+uri = "file://attached_assets/npc_corvin.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "_WqZq4woojx4IS9Rd_m_8"
+uri = "file://attached_assets/npc_shella.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "t2FXLN2rEbT50qq1L3nqz"
+uri = "file://attached_assets/npc_runrik.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "XiT1gCdkHMqQ3UcP0ban0"
+uri = "file://attached_assets/npc_maren.png"
+type = "image"
+title = "generated_image"
+
 [[outputs]]
 id = "hj9mwcgl1Uv9QQTG9g6KL"
 uri = "file://kinju_walk_demo.tar.gz"

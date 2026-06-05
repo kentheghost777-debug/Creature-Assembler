@@ -4243,13 +4243,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               {/* Tova — ambient townsfolk, village square */}
               <img src={TOVA_IMG} alt="Tova" style={{
                 position:"absolute",
-                left: TOVA_POS.x - 32, top: TOVA_POS.y - 128,
-                width:64, height:91, objectFit:"contain",
+                left: TOVA_POS.x - 40, top: TOVA_POS.y - 106,
+                width:80, height:114, objectFit:"contain",
                 pointerEvents:"none", imageRendering:"auto",
               }} />
               <div style={{
                 position:"absolute",
-                left: TOVA_POS.x - 20, top: TOVA_POS.y - 140,
+                left: TOVA_POS.x - 20, top: TOVA_POS.y - 120,
                 color:"#e8c878", fontSize:8, fontWeight:800,
                 letterSpacing:1, pointerEvents:"none",
                 textShadow:"0 0 4px #000,0 0 8px #000",
@@ -4257,13 +4257,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               {/* Senna — ambient townsfolk, near Route 1 gate */}
               <img src={SENNA_IMG} alt="Senna" style={{
                 position:"absolute",
-                left: SENNA_POS.x - 32, top: SENNA_POS.y - 128,
-                width:64, height:91, objectFit:"contain",
+                left: SENNA_POS.x - 40, top: SENNA_POS.y - 106,
+                width:80, height:114, objectFit:"contain",
                 pointerEvents:"none", imageRendering:"auto",
               }} />
               <div style={{
                 position:"absolute",
-                left: SENNA_POS.x - 24, top: SENNA_POS.y - 140,
+                left: SENNA_POS.x - 24, top: SENNA_POS.y - 120,
                 color:"#88d8b0", fontSize:8, fontWeight:800,
                 letterSpacing:1, pointerEvents:"none",
                 textShadow:"0 0 4px #000,0 0 8px #000",
@@ -4271,13 +4271,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               {/* Corvin — traveling naturalist, northeast near east road */}
               <img src={CORVIN_IMG} alt="Corvin" style={{
                 position:"absolute",
-                left: CORVIN_POS.x - 32, top: CORVIN_POS.y - 128,
-                width:64, height:91, objectFit:"contain",
+                left: CORVIN_POS.x - 40, top: CORVIN_POS.y - 106,
+                width:80, height:114, objectFit:"contain",
                 pointerEvents:"none", imageRendering:"auto",
               }} />
               <div style={{
                 position:"absolute",
-                left: CORVIN_POS.x - 24, top: CORVIN_POS.y - 140,
+                left: CORVIN_POS.x - 24, top: CORVIN_POS.y - 120,
                 color:"#c8a8f8", fontSize:8, fontWeight:800,
                 letterSpacing:1, pointerEvents:"none",
                 textShadow:"0 0 4px #000,0 0 8px #000",
@@ -4547,12 +4547,12 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           {/* ── Farm NPCs + animals ─────────────────────────────────────── */}
           {scene === "farm" && (
             <>
-              <img src={SHELLA_IMG} alt="Shella" style={{ position:"absolute", imageRendering:"auto", pointerEvents:"none", zIndex:5, left: SHELLA_POS.x - 36, top: SHELLA_POS.y - 144, width:72, height:103, objectFit:"contain" }}/>
-              <div style={{ position:"absolute", zIndex:6, left: SHELLA_POS.x - 22, top: SHELLA_POS.y - 156, color:"#f5c842", fontSize:8, fontWeight:800, letterSpacing:1, pointerEvents:"none", textShadow:"0 0 4px #000,0 0 8px #000" }}>SHELLA</div>
-              <img src={RUNRIK_IMG} alt="Runrik" style={{ position:"absolute", imageRendering:"auto", pointerEvents:"none", zIndex:5, left: RUNRIK_POS.x - 36, top: RUNRIK_POS.y - 144, width:72, height:103, objectFit:"contain" }}/>
-              <div style={{ position:"absolute", zIndex:6, left: RUNRIK_POS.x - 22, top: RUNRIK_POS.y - 156, color:"#8090f0", fontSize:8, fontWeight:800, letterSpacing:1, pointerEvents:"none", textShadow:"0 0 4px #000,0 0 8px #000" }}>RUNRIK</div>
-              <img src={MAREN_IMG} alt="Maren" style={{ position:"absolute", imageRendering:"auto", pointerEvents:"none", zIndex:5, left: MAREN_POS.x - 36, top: MAREN_POS.y - 144, width:72, height:103, objectFit:"contain" }}/>
-              <div style={{ position:"absolute", zIndex:6, left: MAREN_POS.x - 22, top: MAREN_POS.y - 156, color:"#90c060", fontSize:8, fontWeight:800, letterSpacing:1, pointerEvents:"none", textShadow:"0 0 4px #000,0 0 8px #000" }}>MAREN</div>
+              <img src={SHELLA_IMG} alt="Shella" style={{ position:"absolute", imageRendering:"auto", pointerEvents:"none", zIndex:5, left: SHELLA_POS.x - 40, top: SHELLA_POS.y - 106, width:80, height:114, objectFit:"contain" }}/>
+              <div style={{ position:"absolute", zIndex:6, left: SHELLA_POS.x - 22, top: SHELLA_POS.y - 120, color:"#f5c842", fontSize:8, fontWeight:800, letterSpacing:1, pointerEvents:"none", textShadow:"0 0 4px #000,0 0 8px #000" }}>SHELLA</div>
+              <img src={RUNRIK_IMG} alt="Runrik" style={{ position:"absolute", imageRendering:"auto", pointerEvents:"none", zIndex:5, left: RUNRIK_POS.x - 40, top: RUNRIK_POS.y - 106, width:80, height:114, objectFit:"contain" }}/>
+              <div style={{ position:"absolute", zIndex:6, left: RUNRIK_POS.x - 22, top: RUNRIK_POS.y - 120, color:"#8090f0", fontSize:8, fontWeight:800, letterSpacing:1, pointerEvents:"none", textShadow:"0 0 4px #000,0 0 8px #000" }}>RUNRIK</div>
+              <img src={MAREN_IMG} alt="Maren" style={{ position:"absolute", imageRendering:"auto", pointerEvents:"none", zIndex:5, left: MAREN_POS.x - 40, top: MAREN_POS.y - 106, width:80, height:114, objectFit:"contain" }}/>
+              <div style={{ position:"absolute", zIndex:6, left: MAREN_POS.x - 22, top: MAREN_POS.y - 120, color:"#90c060", fontSize:8, fontWeight:800, letterSpacing:1, pointerEvents:"none", textShadow:"0 0 4px #000,0 0 8px #000" }}>MAREN</div>
               {FARM_ANIMALS.map((a, i) => (
                 <img key={i} src={a.src} alt=""
                   style={{ position:"absolute", left: a.x - 30, top: a.y - 30, width:60, height:60, objectFit:"contain", imageRendering:"auto", pointerEvents:"none", zIndex:4 }}
