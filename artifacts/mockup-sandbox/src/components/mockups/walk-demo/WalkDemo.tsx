@@ -611,8 +611,8 @@ function profShoreTeam(wins: number, playerLevel: number): TrainerTier {
 }
 
 // NPC positions inside Area 3 (world-px coordinates)
-const JAY_A3_POS = { x: 332, y: 498 };
-const LIA_A3_POS = { x: 652, y: 480 };
+let JAY_A3_POS = { x: 332, y: 498 };
+let LIA_A3_POS = { x: 652, y: 480 };
 
 // ── Area 3 sprite-sheet frame helpers ────────────────────────────────────────
 // Sheets (all background-removed PNGs in /images/):
@@ -978,11 +978,11 @@ const BESTIARY_SHORE: MonSpec[] = [
 // route2-map.png native 1024w × 1536h — vertical scrolling route, enter west.
 const R2 = { w: 1024, h: 1536 };
 const R2_SPAWN     = { x: 290, y: 1180 };   // red cross — west-side path entry
-const PROF_R2_POS  = { x: 470, y: 1040 };   // yellow X — prof at signpost
+let PROF_R2_POS  = { x: 470, y: 1040 };   // yellow X — prof at signpost
 const WYV_R2_POS   = { x: 620, y: 780 };    // wyvrunt appears north of prof
 // Old Hollis — farmer painted into route2-map.png; tends the farm up north,
 // watches the Tayanari play, and first found the rare Wyvrunt. Made interactive.
-const FARMER_R2_POS = { x: 665, y: 740 };
+let FARMER_R2_POS = { x: 665, y: 740 };
 const FARMER_R2_BOX: Rect = [651, 689, 680, 752]; // solid collider (user-tapped corners)
 const FARMER_SOLIDS: Rect[] = [FARMER_R2_BOX];
 
@@ -1160,7 +1160,7 @@ const BESTIARY_FC: MonSpec[] = [
 const SHORE = { w: 1024, h: 717 };
 const SHORE_SPAWN        = { x: 513, y: 75 };    // entering from Route 2 — spawns near north entry
 let   SHORE_NORTH_EXIT: Rect = [315, 0, 688, 19]; // north edge → back to Route 2
-const PROF_SHORE_POS     = { x: 651, y: 471 };   // professor on the clifftop
+let PROF_SHORE_POS     = { x: 651, y: 471 };   // professor on the clifftop
 const SHORE_COIN_GIFT    = 500;                    // PrimeriaCoin per payment
 const SHORE_HOTSPOTS: Hotspot[] = [
   { x: 184, y: 149, r: 51, kind: "rock" }, { x: 389, y: 187, r: 51, kind: "bush" },
@@ -1196,7 +1196,7 @@ let R2_BLOCKED: Rect[] = [
 // East overworld exit → Route 2 (opens only after wife intercept)
 let OW_EAST_EXIT: Rect = ld("ow_east", [1092, 433, 1136, 523]); // moved to user-tapped spot (1091,482); player x clamps to 1094 so the east edge always lands inside the trigger
 // Wife intercepts on the open central plaza (reachable open ground, not inside any building body)
-const JESS_PATH_POS = { x: 430, y: 500 };
+let JESS_PATH_POS = { x: 430, y: 500 };
 
 const RARITY_BASE: Record<MonRarity, number> = {
   common: 53, uncommon: 30, rare: 11, ultra: 5, apex: 1,
@@ -1410,7 +1410,7 @@ let OW_BLOCKED: Rect[] = [
 
 // ── Lia's Home ─────────────────────────────────────────────────────────────
 const LH = { w: 800, h: 800 };
-const LIA_POS = { x: 385, y: 355 }; // Lia near the center rug
+let LIA_POS = { x: 385, y: 355 }; // Lia near the center rug
 let OW_LIA_DOOR: Rect  = ld("ow_lia", [919, 714, 979, 744]); // moved to user-tapped spot (945,738)
 let LIA_HOME_EXIT: Rect = ld("lia_exit", [310, 722, 490, 790]); // bottom-center door
 let LH_BLOCKED: Rect[] = [
@@ -1482,7 +1482,7 @@ let LAB_EXIT: Rect = ld("lab_exit", [262, 645, 438, 692]); // exit lab
 
 // ── Maya's Home ───────────────────────────────────────────────────────────────
 const MY = { w: 800, h: 800 };
-const MAYA_POS  = { x: 870, y: 427 }; // Maya standing at her doorstep
+let MAYA_POS  = { x: 870, y: 427 }; // Maya standing at her doorstep
 let TOVA_POS   = { x: 549, y: 451 }; // ambient townsfolk — center of Primeria village square
 let SENNA_POS  = { x: 398, y: 217 }; // ambient townsfolk — near Route 1 north gate
 let CORVIN_POS = { x: 835, y: 830 }; // traveling naturalist — northeast near east road
@@ -1575,7 +1575,7 @@ let MAYA_BLOCKED: Rect[] = [
 
 // ── Jay's Home ────────────────────────────────────────────────────────────────
 const JY = { w: 800, h: 800 };
-const JAY_POS = { x: 370, y: 310 }; // Jay standing in the center of his room
+let JAY_POS = { x: 370, y: 310 }; // Jay standing in the center of his room
 let OW_JAY_DOOR: Rect  = ld("ow_jay", [165, 297, 233, 345]); // user-tapped spot (195,349)
 let JAY_HOME_EXIT: Rect = ld("jay_exit", [310, 725, 490, 790]); // interior door at bottom
 let JAY_BLOCKED: Rect[] = [
@@ -1611,7 +1611,7 @@ let OW_AREA3_EXIT: Rect = ld("ow_area3", [44, 459, 66, 508]); // moved to user-t
 let A3_RETURN_OW: Rect = ld("a3_return", [910, 329, 967, 427]); // east-edge door back to town; starts west of the x=994 walk-clamp so it's actually reachable (player tapped ~1001,424)
 // Cleminus "Jerbs" — west closed-door, opposite the east town exit.
 // Player walks west to the x<215 trigger; Jerbs lands here via portal, west of the barrier.
-const JERBS_POS = { x: 190, y: 338 };
+let JERBS_POS = { x: 190, y: 338 };
 // Jerbeen sprite sheet: 1024×1536, 5 cols × 3 rows, each frame ~205×512
 const JERBS_SW = 1024; const JERBS_SH = 1536;
 const JERBS_FW = Math.floor(JERBS_SW / 5); const JERBS_FH = Math.floor(JERBS_SH / 3);
@@ -1655,7 +1655,7 @@ let A3_BLOCKED: Rect[] = [
 // ── Area 4 — placeholder (connects south of Westwood Reaches / Area 3) ───────
 // ── Ellio's Home ─────────────────────────────────────────────────────────────
 const EH = { w: 800, h: 800 };
-const ELLIO_POS = { x: 400, y: 350 };
+let ELLIO_POS = { x: 400, y: 350 };
 let OW_ELLIO_DOOR: Rect  = ld("ow_ellio", [177, 680, 237, 740]); // moved to the spot the user tapped in the door tool (204,739); requires "up" key (anti walk-by)
 let ELLIO_HOME_EXIT: Rect = ld("ellio_exit", [305, 725, 505, 790]);
 let EH_BLOCKED: Rect[] = [
@@ -1670,7 +1670,7 @@ let EH_BLOCKED: Rect[] = [
 
 // ── Player's Home ────────────────────────────────────────────────────────────
 const PH = { w: 800, h: 800 };
-const JESS_POS = { x: 395, y: 370 }; // Jess standing in the open center of the home
+let JESS_POS = { x: 395, y: 370 }; // Jess standing in the open center of the home
 let OW_PLAYER_HOME_DOOR: Rect = ld("ow_home", [520, 718, 580, 748]); // nudged +6 east; also requires "up" key to enter (anti walk-by)
 let PLAYER_HOME_EXIT: Rect = ld("home_exit", [305, 725, 505, 790]); // bottom-center door
 
@@ -1868,7 +1868,38 @@ function dist(ax: number, ay: number, bx: number, by: number) {
 }
 
 // ── Prof Irwyn NPC world position in lab ────────────────────────────────────
-const PROF = { x: 350, y: 268 }; // feet position in lab world
+let PROF = { x: 350, y: 268 }; // feet position in lab world
+
+// ── DEV CAST placer ───────────────────────────────────────────────────────────
+const DEV_CAST_KEY = "primeria_dev_cast";
+const CAST_LIST: NpcReg[] = [
+  { key:"prof",       label:"PROF",   scene:"lab",         color:"#a0d8ff", get:()=>({x:PROF.x,y:PROF.y}),  set:(p)=>{PROF={...PROF,...p};}  },
+  { key:"maya",       label:"MAYA",   scene:"overworld",   color:"#f07878", get:()=>MAYA_POS,                set:(p)=>{MAYA_POS=p;}            },
+  { key:"jay",        label:"JAY",    scene:"jay",         color:"#7ab8f0", get:()=>JAY_POS,                 set:(p)=>{JAY_POS=p;}             },
+  { key:"lia",        label:"LIA",    scene:"lia",         color:"#e880b8", get:()=>LIA_POS,                 set:(p)=>{LIA_POS=p;}             },
+  { key:"ellio",      label:"ELLIO",  scene:"ellio",       color:"#98e898", get:()=>ELLIO_POS,               set:(p)=>{ELLIO_POS=p;}           },
+  { key:"jess_home",  label:"JESS",   scene:"home",        color:"#f0c860", get:()=>JESS_POS,                set:(p)=>{JESS_POS=p;}            },
+  { key:"jess_path",  label:"JESS",   scene:"forest_path", color:"#90e0a0", get:()=>JESS_PATH_POS,           set:(p)=>{JESS_PATH_POS=p;}       },
+  { key:"jay_a3",     label:"JAY",    scene:"area3",       color:"#50b8f0", get:()=>JAY_A3_POS,              set:(p)=>{JAY_A3_POS=p;}          },
+  { key:"lia_a3",     label:"LIA",    scene:"area3",       color:"#e860a8", get:()=>LIA_A3_POS,              set:(p)=>{LIA_A3_POS=p;}          },
+  { key:"jerbs",      label:"JERBS",  scene:"area3",       color:"#e8b840", get:()=>JERBS_POS,               set:(p)=>{JERBS_POS=p;}           },
+  { key:"prof_r2",    label:"PROF",   scene:"route2",      color:"#80c8ff", get:()=>PROF_R2_POS,             set:(p)=>{PROF_R2_POS=p;}         },
+  { key:"farmer_r2",  label:"HOLLIS", scene:"route2",      color:"#d0a060", get:()=>FARMER_R2_POS,           set:(p)=>{FARMER_R2_POS=p;}       },
+  { key:"prof_shore", label:"PROF",   scene:"shore",       color:"#70b8e8", get:()=>PROF_SHORE_POS,          set:(p)=>{PROF_SHORE_POS=p;}      },
+];
+(() => {
+  try {
+    const s: Record<string,{x:number;y:number}> = JSON.parse(localStorage.getItem(DEV_CAST_KEY) ?? "{}");
+    CAST_LIST.forEach(c => { if (s[c.key]) c.set(s[c.key]); });
+  } catch { /* ignore */ }
+})();
+function saveDevCasts() {
+  try {
+    const m: Record<string,{x:number;y:number}> = {};
+    CAST_LIST.forEach(c => { m[c.key] = c.get(); });
+    localStorage.setItem(DEV_CAST_KEY, JSON.stringify(m));
+  } catch { /* ignore */ }
+}
 
 // Party holds the starter (slot 1) plus up to PARTY_CAP-1 caught companions.
 const PARTY_CAP = 8;
@@ -2299,9 +2330,42 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   };
   const copyNpcLayout = () => {
     const out: string[] = ["PRIMERIA NPC POSITIONS — paste to assistant to bake in"];
-    NPC_LIST.forEach(n => { const p = n.get(); out.push("  " + n.key.padEnd(8) + " {x:" + p.x + ", y:" + p.y + "}  scene:" + n.scene); });
+    NPC_LIST.forEach(n => { const p = n.get(); out.push("  " + n.key.padEnd(12) + " {x:" + p.x + ", y:" + p.y + "}  scene:" + n.scene); });
     const txt = out.join("\n");
     const done = () => { setNpcCopied(true); window.setTimeout(() => setNpcCopied(false), 1800); };
+    if (navigator.clipboard?.writeText) navigator.clipboard.writeText(txt).then(done).catch(() => fallbackCopy(txt, done));
+    else fallbackCopy(txt, done);
+  };
+  // ── DEV CAST placer handlers ──────────────────────────────────────────────
+  const onCastDown = (key: string) => (e: React.PointerEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    const c = CAST_LIST.find(x => x.key === key)!;
+    const pos = c.get();
+    castMovedRef.current = false;
+    castDragRef.current = { key, sx: e.clientX, sy: e.clientY, ox: pos.x, oy: pos.y };
+  };
+  const onCastMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const d = castDragRef.current; if (!d) return;
+    e.stopPropagation();
+    const dx = Math.round((e.clientX - d.sx) / ZOOM);
+    const dy = Math.round((e.clientY - d.sy) / ZOOM);
+    if (dx !== 0 || dy !== 0) castMovedRef.current = true;
+    const c = CAST_LIST.find(x => x.key === d.key)!;
+    c.set({ x: d.ox + dx, y: d.oy + dy });
+    setCastEditTick(t => t + 1);
+  };
+  const onCastUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!castDragRef.current) return;
+    e.stopPropagation();
+    castDragRef.current = null;
+    saveDevCasts();
+  };
+  const copyCastLayout = () => {
+    const out: string[] = ["PRIMERIA CAST POSITIONS — paste to assistant to bake in"];
+    CAST_LIST.forEach(c => { const p = c.get(); out.push("  " + c.key.padEnd(12) + " {x:" + p.x + ", y:" + p.y + "}  scene:" + c.scene); });
+    const txt = out.join("\n");
+    const done = () => { setCastCopied(true); window.setTimeout(() => setCastCopied(false), 1800); };
     if (navigator.clipboard?.writeText) navigator.clipboard.writeText(txt).then(done).catch(() => fallbackCopy(txt, done));
     else fallbackCopy(txt, done);
   };
@@ -2322,6 +2386,12 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const [npcCopied, setNpcCopied] = useState(false);
   const npcDragRef = useRef<{ key: string; sx: number; sy: number; ox: number; oy: number } | null>(null);
   const npcMovedRef = useRef(false);
+  // DEV CAST placer
+  const [, setCastEditTick] = useState(0);
+  const [castEditMode, setCastEditMode] = useState(false);
+  const [castCopied, setCastCopied] = useState(false);
+  const castDragRef = useRef<{ key: string; sx: number; sy: number; ox: number; oy: number } | null>(null);
+  const castMovedRef = useRef(false);
   // DEV spawn setter
   const [, setSpawnEditTick] = useState(0);
   const [spawnEditMode, setSpawnEditMode] = useState(false);
@@ -4624,6 +4694,36 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               <div style={{ position:"absolute", left:4, top:4, width:12, height:12, borderRadius:"50%", border:"2px solid #39ff88" }}/>
             </div>
           )}
+
+          {/* Dev: CAST placer — draggable rings for main cast characters in current scene */}
+          {devMode && castEditMode && CAST_LIST.filter(c => c.scene === scene).map(c => {
+            const pos = c.get();
+            return (
+              <div key={c.key}
+                onPointerDown={onCastDown(c.key)}
+                onPointerMove={onCastMove}
+                onPointerUp={onCastUp}
+                onPointerCancel={onCastUp}
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  position:"absolute",
+                  left: pos.x - 24, top: pos.y - 24,
+                  width: 48, height: 48,
+                  border: `2.5px dashed ${c.color}`,
+                  borderRadius: "50%",
+                  background: c.color + "1a",
+                  cursor: "grab",
+                  zIndex: 951,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 7, color: c.color, fontWeight: 800, fontFamily: "monospace",
+                  boxShadow: `0 0 12px ${c.color}99`,
+                  touchAction: "none",
+                }}
+              >
+                <span style={{ pointerEvents:"none", userSelect:"none" }}>{c.label}</span>
+              </div>
+            );
+          })}
 
           {/* Dev: NPC placer — draggable rings for each NPC in the current scene */}
           {devMode && npcEditMode && NPC_LIST.filter(n => n.scene === scene).map(n => {
@@ -9576,6 +9676,22 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                   background: npcCopied ? "#1f7a36" : "#7a5800",
                   color:"#fff", fontWeight:800, fontSize:12, fontFamily:"monospace", cursor:"pointer",
                 }}>{npcCopied ? "✓ COPIED — paste it to me" : "COPY NPC positions"}</button>
+              </div>
+            </div>
+            <div style={{ marginTop:8, paddingTop:8, borderTop:"1px solid rgba(127,176,255,0.3)" }}>
+              <div style={{ fontWeight:800, color:"#a0d8ff" }}>CAST TOOL</div>
+              <div style={{ color:"#90b8d0", marginTop:2 }}>Drag dashed rings to reposition main cast (Prof, Jay, Lia, Ellio, Jess, Jerbs, Hollis…).</div>
+              <div style={{ display:"flex", gap:6, marginTop:4, flexWrap:"wrap" }}>
+                <button onClick={() => setCastEditMode(v => !v)} style={{
+                  padding:"5px 10px", borderRadius:6, border:"1px solid #a0d8ff",
+                  background: castEditMode ? "#1a4060" : "rgba(4,16,20,0.7)",
+                  color:"#fff", fontWeight:800, fontSize:12, fontFamily:"monospace", cursor:"pointer",
+                }}>Edit: {castEditMode ? "ON" : "OFF"}</button>
+                <button onClick={copyCastLayout} style={{
+                  padding:"5px 12px", borderRadius:6, border:"1px solid #a0d8ff",
+                  background: castCopied ? "#1f7a36" : "#1a4060",
+                  color:"#fff", fontWeight:800, fontSize:12, fontFamily:"monospace", cursor:"pointer",
+                }}>{castCopied ? "✓ COPIED — paste it to me" : "COPY CAST positions"}</button>
               </div>
             </div>
             <div style={{ marginTop:8, paddingTop:8, borderTop:"1px solid rgba(127,176,255,0.3)" }}>
