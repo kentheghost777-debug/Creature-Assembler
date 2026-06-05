@@ -3121,7 +3121,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             window.setTimeout(() => setEastGateNotif(false), 1800);
           }
         } else if (sc === "route2" && inRect(worldPos.current.x, worldPos.current.y, R2_RETURN_OW)) {
-          transitionTo("overworld", 1050, 645);   // west of OW_EAST_EXIT so we don't instantly bounce back
+          transitionTo("overworld", 1044, 511);   // user-placed: near Lia's home, west of OW_EAST_EXIT
         } else if (sc === "route2" && inRect(worldPos.current.x, worldPos.current.y, R2_SOUTH_BLOCKED)) {
           transitionTo("shore", SHORE_SPAWN.x, SHORE_SPAWN.y);
         } else if (sc === "shore" && inRect(worldPos.current.x, worldPos.current.y, SHORE_NORTH_EXIT)) {
