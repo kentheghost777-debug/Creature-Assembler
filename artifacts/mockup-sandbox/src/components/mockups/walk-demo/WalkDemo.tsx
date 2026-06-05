@@ -3880,7 +3880,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   useEffect(() => { checksStreakRef.current = checksStreak; },      [checksStreak]);
 
   useEffect(() => {
-    const isR2Active = scene === "route2" && wyvruntCaughtRef.current;
+    const isR2Active = scene === "route2";
     const isFPActive = scene === "forest_path";
     const isFCActive = scene === "forest_clear";
     if (scene !== "route1" && scene !== "area3" && !isR2Active && !isFPActive && !isFCActive) return;
