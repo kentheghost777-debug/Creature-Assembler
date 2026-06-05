@@ -948,11 +948,11 @@ const BESTIARY_SHORE: MonSpec[] = [
     wildFaces:"left", playerFaces:"left",  maxHp:50, baseDmg:[5,11] as [number,number] },
   // Galefledge — storm eagle fledgling; crackling wing-feathers (thunderbird myth); Stormproven
   { id:"galefledge",  name:"Galefledge",  type:"Stormproven", rarity:"rare",
-    wildImg:"/__mockup/images/strikorn-wild.png",     playerImg:"/__mockup/images/strikorn-wild.png",
+    wildImg:"/__mockup/images/galewing-wild.png",     playerImg:"/__mockup/images/galewing-wild.png",
     wildFaces:"left", playerFaces:"left",  maxHp:46, baseDmg:[5,10] as [number,number] },
   // Misthorn — misty unicorn-deer with icy crystalline horn; coastal fog spirit; Frostformed
   { id:"misthorn",    name:"Misthorn",    type:"Frostformed", rarity:"rare",
-    wildImg:"/__mockup/images/crysthorn-wild.png",    playerImg:"/__mockup/images/crysthorn-player.png",
+    wildImg:"/__mockup/images/mistwalker-wild.png",   playerImg:"/__mockup/images/mistwalker-wild.png",
     wildFaces:"left", playerFaces:"left",  maxHp:48, baseDmg:[5,10] as [number,number] },
   // ── ULTRA — mid-evolved legends seen at the cliff edge ──────────────────────
   // Coralcoil — mid-form sea serpent; vast iridescent coils; reef guardian; Oceanic
@@ -970,7 +970,7 @@ const BESTIARY_SHORE: MonSpec[] = [
     wildFaces:"left", playerFaces:"left",  maxHp:100, baseDmg:[11,18] as [number,number] },
   // Celestgriff — legendary Griffon King; eldest of the coastal cliffs; Nature
   { id:"celestgriff", name:"Celestgriff", type:"Nature",      rarity:"apex",
-    wildImg:"/__mockup/images/verdanox-player.png",   playerImg:"/__mockup/images/verdanox-player.png",
+    wildImg:"/__mockup/images/celestine-wild.png",    playerImg:"/__mockup/images/celestine-wild.png",
     wildFaces:"left", playerFaces:"left",  maxHp:96, baseDmg:[10,17] as [number,number] },
 ];
 
