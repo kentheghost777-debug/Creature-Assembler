@@ -178,7 +178,7 @@ const STARTERS = [
   { id: "cerepup",    name: "Cerepup",    type: "Volcanic",     color: "#ff6020", img: "./images/emberfox.png" },
   { id: "cunbubble",  name: "Cun-bubble", type: "Oceanic",      color: "#3080ff", img: "./images/phantorch.png" },
   { id: "shockit",    name: "Shockit",    type: "Stormproven",  color: "#ffd000", img: "./images/voltfang.png" },
-  { id: "mentyke",    name: "Mentyke",    type: "Mind",         color: "#c080ff", img: "./images/mentyke-wild-a.png" },
+  { id: "mentyke",    name: "Mentyke",    type: "Mind",         color: "#c080ff", img: "./images/lumacorn.png" },
   { id: "foxin",      name: "Foxin",      type: "Spirit",       color: "#60a070", img: "./images/vixgrim.png" },
 ] as const;
 type StarterId = typeof STARTERS[number]["id"];
@@ -922,7 +922,7 @@ const BESTIARY_SHORE: MonSpec[] = [
     wildFaces:"left", playerFaces:"left",  maxHp:28, baseDmg:[3,6] as [number,number] },
   // Lumecolt — glowing foal with a nub light-horn; holy newborn of coastal mist; Radiant
   { id:"lumecolt",    name:"Lumecolt",    type:"Radiant",     rarity:"common",
-    wildImg:"./images/lumacorn-clean.png",    playerImg:"./images/lumacorn-clean.png",
+    wildImg:"./images/lumecolt-wild.png",     playerImg:"./images/lumecolt-wild.png",
     wildFaces:"right", playerFaces:"right", maxHp:26, baseDmg:[3,7] as [number,number] },
   // Gryfling — fluffy baby griffon (eagle beak + lion cub body); Nature
   { id:"gryfling",    name:"Gryfling",    type:"Nature",      rarity:"common",

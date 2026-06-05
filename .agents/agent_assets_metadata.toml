@@ -1254,6 +1254,12 @@ uri = "file://artifacts/primeria/public/images/mindwraith-wild.png"
 type = "image"
 title = "mindwraith psychic phantom mind type"
 
+[[generated]]
+id = "czsm_eyIHyQRMliQwoGg_"
+uri = "file://artifacts/primeria/public/images/lumecolt-wild.png"
+type = "image"
+title = "lumecolt radiant horse foal"
+
 [[outputs]]
 id = "hj9mwcgl1Uv9QQTG9g6KL"
 uri = "file://kinju_walk_demo.tar.gz"
