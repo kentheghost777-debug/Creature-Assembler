@@ -900,6 +900,18 @@ uri = "file://attached_assets/town_v2_wide.png"
 type = "image"
 title = "town map wide v2"
 
+[[generated]]
+id = "V7rh0p7KQRUrg8xORwwKv"
+uri = "file://attached_assets/town_left_wing.png"
+type = "image"
+title = "town left wing district"
+
+[[generated]]
+id = "dWTSaBA78a2ndOusewzIl"
+uri = "file://attached_assets/town_right_wing.png"
+type = "image"
+title = "town right wing district"
+
 [[outputs]]
 id = "hj9mwcgl1Uv9QQTG9g6KL"
 uri = "file://kinju_walk_demo.tar.gz"
@@ -965,3 +977,15 @@ id = "9Jfnq-d8NlfYINn7LGTXO"
 uri = "file://attached_assets/town_v2_wide.png"
 type = "image"
 title = "Option B — Wide (16:9, more space to explore)"
+
+[[outputs]]
+id = "LTqVAZ90dHuwA8-OCbm3P"
+uri = "file://attached_assets/town_left_wing.png"
+type = "image"
+title = "Left Wing — Artisan & Residential quarter"
+
+[[outputs]]
+id = "jPN56r7_fd79ig3f9obxm"
+uri = "file://attached_assets/town_right_wing.png"
+type = "image"
+title = "Right Wing — Mystical & Sacred quarter"
