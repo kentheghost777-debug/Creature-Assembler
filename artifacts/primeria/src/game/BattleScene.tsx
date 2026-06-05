@@ -113,9 +113,9 @@ type Outcome = "trap" | "curious" | "critical" | "perfect";
 // Tayanari are never thrown at — per the Elders' lore they "can only be bonded".
 // A Realm Shell is SET open before the wild; bonding succeeds if it steps in.
 const SHELL_OUTCOMES: { kind: Outcome; weight: number; pct: number; flavor: string }[] = [
-  { kind: "trap",     weight: 55, pct: 0.74, flavor: "You set the shell open before it, like a waiting hollow." },
-  { kind: "curious",  weight: 30, pct: 0.82, flavor: "You set the shell near it. Curiosity gets the better of it…" },
-  { kind: "critical", weight: 12, pct: 0.91, flavor: "Critical placement! The shell settles right beside it." },
+  { kind: "trap",     weight: 55, pct: 0.58, flavor: "You set the shell open before it, like a waiting hollow." },
+  { kind: "curious",  weight: 30, pct: 0.72, flavor: "You set the shell near it. Curiosity gets the better of it…" },
+  { kind: "critical", weight: 12, pct: 0.85, flavor: "Critical placement! The shell settles right beside it." },
   { kind: "perfect",  weight:  3, pct: 1.00, flavor: "Perfect! The shell settles open at its feet." },
 ];
 

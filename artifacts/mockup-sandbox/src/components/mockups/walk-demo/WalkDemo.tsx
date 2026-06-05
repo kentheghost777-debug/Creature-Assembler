@@ -433,7 +433,7 @@ const TR_STONUB_EVO: MonSpec = { id:"tr_stonub_evo",name:"Stonbrute", type:"Eart
 const TR_SAVEN:      MonSpec = { id:"tr_saven",     name:"Scavencrow",type:"Abyss",      rarity:"uncommon", wildImg:"/__mockup/images/scavencrow-wild.png",   playerImg:"/__mockup/images/scavencrow-player.png", wildFaces:"left", playerFaces:"left", maxHp:62,  baseDmg:[7,14] };
 const TR_MENTY:      MonSpec = { id:"tr_menty",     name:"Mentyke",   type:"Mind",       rarity:"ultra",    wildImg:"/__mockup/images/mentyke-wild-a.png",    playerImg:"/__mockup/images/mentyke-wild-b.png",    wildFaces:"left", playerFaces:"left", maxHp:80,  baseDmg:[8,16] };
 // Lia's team — Oceanic anchor + escalating support; evo forms unlock at tier 2+
-const TR_CUNB:       MonSpec = { id:"tr_cunb",      name:"Cunbubble", type:"Oceanic",    rarity:"uncommon", wildImg:"/__mockup/images/phantorch.png",          playerImg:"/__mockup/images/phantorch.png",         wildFaces:"left", playerFaces:"left", maxHp:58,  baseDmg:[6,12] };
+const TR_CUNB:       MonSpec = { id:"tr_cunb",      name:"Cub-bubble", type:"Oceanic",    rarity:"uncommon", wildImg:"/__mockup/images/phantorch.png",          playerImg:"/__mockup/images/phantorch.png",         wildFaces:"left", playerFaces:"left", maxHp:58,  baseDmg:[6,12] };
 const TR_DRIFT:      MonSpec = { id:"tr_drift",     name:"Driftpaw",  type:"Skyborne",   rarity:"uncommon", wildImg:"/__mockup/images/driftpaw-wild.png",      playerImg:"/__mockup/images/driftpaw-player.png",   wildFaces:"left", playerFaces:"left", maxHp:56,  baseDmg:[6,11] };
 const TR_DRIFT_EVO:  MonSpec = { id:"tr_drift_evo", name:"Galerix",   type:"Skyborne",   rarity:"ultra",    wildImg:"/__mockup/images/galerix-wild.png",      playerImg:"/__mockup/images/galerix-wild.png",      wildFaces:"left", playerFaces:"left", maxHp:80,  baseDmg:[9,15] };
 const TR_SPRIG:      MonSpec = { id:"tr_sprig",     name:"Sprigget",  type:"Nature",     rarity:"common",   wildImg:"", playerImg:"", wildSheet:{ url:"/__mockup/images/a3-wild-sheet.png", x:0, y:0, w:512, h:384, sheetW:1024, sheetH:1536 }, playerSheet:{ url:"/__mockup/images/a3-wild-sheet.png", x:0, y:0, w:512, h:384, sheetW:1024, sheetH:1536 }, wildFaces:"left", playerFaces:"left", maxHp:52, baseDmg:[5,10] };
@@ -835,7 +835,7 @@ let OW_EAST_EXIT: Rect = ld("ow_east", [1092, 433, 1136, 523]); // moved to user
 const JESS_PATH_POS = { x: 430, y: 500 };
 
 const RARITY_BASE: Record<MonRarity, number> = {
-  common: 55, uncommon: 30, rare: 11, ultra: 3.5, apex: 0.5,
+  common: 53, uncommon: 30, rare: 11, ultra: 5, apex: 1,
 };
 
 function rollRarity(checksStreak: number): MonRarity {
