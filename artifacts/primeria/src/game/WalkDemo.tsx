@@ -7548,60 +7548,6 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                       />
                     )}
 
-                    {/* ── Player (Keeper) equipment row ── */}
-                    <div style={{
-                      display:"flex", alignItems:"center", gap:13,
-                      padding:"10px 2px 13px",
-                      borderBottom:"1px dashed rgba(100,64,20,0.28)",
-                    }}>
-                      <div style={{
-                        width:56, height:56, borderRadius:8, flexShrink:0,
-                        background:"rgba(40,60,20,0.10)",
-                        border:"1px solid rgba(80,140,40,0.22)",
-                        display:"flex", alignItems:"center", justifyContent:"center",
-                        fontSize:26,
-                      }}>🧭</div>
-                      <div style={{ flex:1 }}>
-                        <div style={{ color:"#2a1206", fontWeight:800, fontSize:14, letterSpacing:0.3 }}>
-                          You (Keeper)
-                        </div>
-                        <div style={{ color:"#826040", fontSize:10, marginTop:4 }}>
-                          Player equipment
-                        </div>
-                        {resonanceStoneEquipped && starter ? (
-                          <div style={{ display:"flex", alignItems:"center", gap:6, marginTop:5 }}>
-                            <img src="./images/resonance-stone.png" alt="Stone"
-                              style={{ width:16, height:16, objectFit:"contain" }}/>
-                            <div style={{ color:"#60a0e0", fontSize:10, fontWeight:700 }}>
-                              Resonance Stone · {starter.type} move · scales with bond
-                            </div>
-                          </div>
-                        ) : hasResonanceStone ? (
-                          <div style={{ color:"#a07848", fontSize:10, marginTop:5, fontStyle:"italic" }}>
-                            Resonance Stone — not equipped
-                          </div>
-                        ) : (
-                          <div style={{ color:"#c0a070", fontSize:10, marginTop:5, fontStyle:"italic" }}>
-                            No equipment
-                          </div>
-                        )}
-                      </div>
-                      {hasResonanceStone && (
-                        <button
-                          onClick={() => setResonanceStoneEquipped(v => !v)}
-                          style={{
-                            padding:"5px 11px", borderRadius:8, flexShrink:0,
-                            background: resonanceStoneEquipped
-                              ? "rgba(180,60,60,0.10)" : "rgba(40,80,160,0.10)",
-                            border: resonanceStoneEquipped
-                              ? "1px solid rgba(180,60,60,0.40)" : "1px solid rgba(80,140,200,0.40)",
-                            color: resonanceStoneEquipped ? "#c04040" : "#5090c0",
-                            fontSize:10, fontWeight:800, cursor:"pointer",
-                          }}
-                        >{resonanceStoneEquipped ? "Unequip" : "Equip"}</button>
-                      )}
-                    </div>
-
                     {/* Caught companions (slots 2…PARTY_CAP) */}
                     {caughtParty.map((mon, i) => {
                       const monEl = asElement(mon.type);
