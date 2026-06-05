@@ -1670,6 +1670,39 @@ let EH_BLOCKED: Rect[] = [
 
 // ── Player's Home ────────────────────────────────────────────────────────────
 const PH = { w: 800, h: 800 };
+
+// ── Ground Items — world-space collectibles ────────────────────────────────
+type GroundItemType = "bshell" | "brune" | "gear" | "berry";
+type GroundItemDef = {
+  id: string; scene: string; wx: number; wy: number;
+  itemType: GroundItemType; itemId: string; count: number;
+  label: string; icon: string; color: string; flavor: string;
+};
+const GROUND_ITEMS: readonly GroundItemDef[] = [
+  // ── Overworld (1124×900) ──────────────────────────────────────────────────
+  { id:"gi_ow_1",    scene:"overworld",    wx:615, wy:615, itemType:"bshell", itemId:"bshell_moss",     count:1, label:"Mosscap Shell",     icon:"🌿", color:"#5ac070", flavor:"A shell grown from living moss. Left at the edge of the trail." },
+  { id:"gi_ow_2",    scene:"overworld",    wx:870, wy:740, itemType:"berry",  itemId:"dusk",            count:3, label:"Duskberry ×3",       icon:"🍇", color:"#9860d0", flavor:"Three duskberries, ripe and heavy on the vine." },
+  // ── Route 1 (1024×723) ───────────────────────────────────────────────────
+  { id:"gi_r1_1",    scene:"route1",       wx:280, wy:260, itemType:"brune",  itemId:"brune_warden",    count:1, label:"Warden Rune",        icon:"🛡", color:"#60d080", flavor:"A protective rune chiselled from old trail-marker stone." },
+  { id:"gi_r1_2",    scene:"route1",       wx:680, wy:480, itemType:"berry",  itemId:"thorn",           count:2, label:"Thornberry ×2",      icon:"🫐", color:"#e03030", flavor:"Two thornberries caught in the tall grass." },
+  // ── Route 2 (1024×1536) ──────────────────────────────────────────────────
+  { id:"gi_r2_1",    scene:"route2",       wx:310, wy:750, itemType:"bshell", itemId:"bshell_storm",    count:1, label:"Stormhusk",           icon:"⚡", color:"#ffd040", flavor:"A crackling husk left after a Stormproven encounter." },
+  { id:"gi_r2_2",    scene:"route2",       wx:680, wy:1100,itemType:"berry",  itemId:"calm",            count:2, label:"Calmberry ×2",       icon:"🍋", color:"#30b870", flavor:"Calming berries growing by the eastern fence." },
+  // ── Area 3 — Westwood Reaches (1024×683) ─────────────────────────────────
+  { id:"gi_a3_1",    scene:"area3",        wx:210, wy:440, itemType:"brune",  itemId:"brune_soulforge", count:1, label:"Soulforge Rune",     icon:"✧", color:"#ffd060", flavor:"Ancient rune etched into fallen ruin stone. Glows faintly." },
+  { id:"gi_a3_2",    scene:"area3",        wx:750, wy:210, itemType:"berry",  itemId:"bright",          count:3, label:"Brightberry ×3",     icon:"⭐", color:"#e0c020", flavor:"Brightberries growing in a crack between the ruin walls." },
+  { id:"gi_a3_gear", scene:"area3",        wx:580, wy:550, itemType:"gear",   itemId:"tb_wristband",    count:1, label:"Trailblazer Wraps",  icon:"🪬", color:"#f0c830", flavor:"Wraps etched with ten thousand steps. Kept here a long time." },
+  // ── Tidemark Shore (1024×717) ────────────────────────────────────────────
+  { id:"gi_sh_1",    scene:"shore",        wx:200, wy:420, itemType:"bshell", itemId:"bshell_tide",     count:1, label:"Tideshell",           icon:"🌊", color:"#3a90ff", flavor:"A shell washed up on the clifftop. Still smells of tide." },
+  { id:"gi_sh_2",    scene:"shore",        wx:760, wy:560, itemType:"brune",  itemId:"brune_lifesteal", count:1, label:"Bloodvine Rune",     icon:"❤", color:"#ff6060", flavor:"A red rune half-buried in ruin rubble. Ancient and hungry." },
+  // ── Forest Path (1024×820) ────────────────────────────────────────────────
+  { id:"gi_fp_1",    scene:"forest_path",  wx:400, wy:450, itemType:"bshell", itemId:"bshell_spirit",   count:1, label:"Veilshell",           icon:"✦", color:"#b890e0", flavor:"A translucent shell left on the mossy path. Barely visible." },
+  // ── Forest Clearing (1024×516) ───────────────────────────────────────────
+  { id:"gi_fc_1",    scene:"forest_clear", wx:300, wy:220, itemType:"brune",  itemId:"brune_resonance", count:1, label:"Resonance Rune",     icon:"◈", color:"#c0a0ff", flavor:"A rune humming with resonance. Left here by some old Keeper." },
+  { id:"gi_fc_2",    scene:"forest_clear", wx:730, wy:390, itemType:"berry",  itemId:"dusk",            count:2, label:"Duskberry ×2",       icon:"🍇", color:"#9860d0", flavor:"Two duskberries nestled by a mossy stone." },
+  { id:"gi_fc_gear", scene:"forest_clear", wx:160, wy:390, itemType:"gear",   itemId:"rs_headband",     count:1, label:"Resonant Crown",     icon:"💜", color:"#c080ff", flavor:"A crown left in the clearing. Hums with the forest's resonance." },
+];
+
 let JESS_POS = { x: 395, y: 370 }; // Jess standing in the open center of the home
 let OW_PLAYER_HOME_DOOR: Rect = ld("ow_home", [520, 718, 580, 748]); // nudged +6 east; also requires "up" key to enter (anti walk-by)
 let PLAYER_HOME_EXIT: Rect = ld("home_exit", [305, 725, 505, 790]); // bottom-center door
@@ -2135,6 +2168,10 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const [marenInteractPos,     setMarenInteractPos]     = useState({ sx: 0, sy: 0 });
   const [nearJerbs,            setNearJerbs]            = useState(false);
   const [jerbsInteractPos,     setJerbsInteractPos]     = useState({ sx: 0, sy: 0 });
+  const [nearGroundItem,        setNearGroundItem]        = useState<string | null>(null);
+  const [groundItemInteractPos, setGroundItemInteractPos] = useState({ sx: 0, sy: 0 });
+  const [collectedGroundItems,  setCollectedGroundItems]  = useState<string[]>(() => savedWorld?.collectedGroundItems ?? []);
+  const [baseGearGranted,       setBaseGearGranted]       = useState(() => savedWorld?.baseGearGranted ?? false);
   const [portalFrame,          setPortalFrame]          = useState(0);
   const [portalOpen,           setPortalOpen]           = useState(false);
   // Jerbs has landed via portal but the player hasn't spoken to him yet.
@@ -2486,6 +2523,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     ownedPrismStoneIds, slottedPrismStoneId,
     primeriaCoin, profShoreWins, profShorePaid,
     corvinMet,
+    collectedGroundItems, baseGearGranted,
   });
   const persistWorld = useCallback(() => {
     const safe = lastSafeRef.current;
@@ -2514,6 +2552,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       ownedPrismStoneIds, slottedPrismStoneId,
       primeriaCoin, profShoreWins, profShorePaid,
       corvinMet,
+      collectedGroundItems, baseGearGranted,
       visitedScenes: Array.from(visitedScenes),
     };
     persistWorld();
@@ -2532,6 +2571,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     ownedPrismStoneIds, slottedPrismStoneId,
     primeriaCoin, profShoreWins, profShorePaid,
     corvinMet,
+    collectedGroundItems, baseGearGranted,
     visitedScenes,
     persistWorld,
   ]);
@@ -2551,6 +2591,52 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     if (savedParty?.starterId != null && !roleChosen) setPhase("role_pick");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Mirror collectedGroundItems into a ref so the game loop can read it without stale closure.
+  const collectedGroundItemsRef = useRef<string[]>(collectedGroundItems);
+  useEffect(() => { collectedGroundItemsRef.current = collectedGroundItems; }, [collectedGroundItems]);
+
+  // Base gear grant — on first starter receipt, hand out the Keeper starter pack.
+  useEffect(() => {
+    if (!starter || baseGearGranted) return;
+    setOwnedGearIds(prev => {
+      if (prev.includes("tb_headband")) return prev;
+      const next = [...prev, "tb_headband"];
+      localStorage.setItem("primeria_owned_gear", JSON.stringify(next));
+      return next;
+    });
+    setOwnedBattleShellIds(prev => prev.includes("bshell_tide") ? prev : [...prev, "bshell_tide"]);
+    setBaseGearGranted(true);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [starter, baseGearGranted]);
+
+  // Pick up a ground item, grant it to inventory, and record it as collected.
+  function pickupGroundItem(id: string) {
+    const gi = GROUND_ITEMS.find(g => g.id === id);
+    if (!gi || collectedGroundItemsRef.current.includes(id)) return;
+    setCollectedGroundItems(prev => [...prev, id]);
+    if (gi.itemType === "bshell") {
+      setOwnedBattleShellIds(prev => prev.includes(gi.itemId) ? prev : [...prev, gi.itemId]);
+    } else if (gi.itemType === "brune") {
+      setOwnedBattleRuneIds(prev => prev.includes(gi.itemId) ? prev : [...prev, gi.itemId]);
+    } else if (gi.itemType === "gear") {
+      setOwnedGearIds(prev => {
+        if (prev.includes(gi.itemId)) return prev;
+        const next = [...prev, gi.itemId];
+        localStorage.setItem("primeria_owned_gear", JSON.stringify(next));
+        return next;
+      });
+    } else if (gi.itemType === "berry") {
+      if (gi.itemId === "dusk")        setDuskberries(n => n + gi.count);
+      else if (gi.itemId === "thorn")  setThornberries(n => n + gi.count);
+      else if (gi.itemId === "calm")   setCalmberries(n => n + gi.count);
+      else if (gi.itemId === "bright") setBrightberries(n => n + gi.count);
+    }
+    const screenX = (gi.wx - (cam as React.MutableRefObject<{x:number;y:number}>).current.x) * ZOOM;
+    const screenY = (gi.wy - (cam as React.MutableRefObject<{x:number;y:number}>).current.y) * ZOOM - 20;
+    setFloatMsg({ x: screenX, y: screenY, text: `Found ${gi.label}!`, key: Date.now() });
+    window.setTimeout(() => setFloatMsg(null), 2500);
+  }
 
   // Final flush when leaving the page so the last few steps are never lost.
   useEffect(() => {
@@ -3574,7 +3660,25 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           const drv = dist(px, py, RUNE_VENDOR_POS.x, RUNE_VENDOR_POS.y);
           setNearRuneVendor(drv < 90); if (drv < 90) setRuneVendorInteractPos({ sx: screenX, sy: screenY });
         } else { setNearRuneVendor(false); }
+
+        // ── Ground item proximity ───────────────────────────────────────────
+        {
+          const sceneItems = GROUND_ITEMS.filter(gi => gi.scene === sc && !collectedGroundItemsRef.current.includes(gi.id));
+          let foundId: string | null = null;
+          for (const gi of sceneItems) {
+            const d = dist(px, py, gi.wx, gi.wy);
+            if (d < 60) {
+              foundId = gi.id;
+              const sx = (gi.wx - cam.current.x) * zoom;
+              const sy = (gi.wy - cam.current.y - topOff - 38) * zoom;
+              setGroundItemInteractPos({ sx, sy });
+              break;
+            }
+          }
+          setNearGroundItem(foundId);
+        }
       }
+
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
@@ -4571,6 +4675,32 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             ));
           })()}
 
+          {/* ── Ground item sparkles (world-space) ───────────────────────── */}
+          {GROUND_ITEMS
+            .filter(gi => gi.scene === scene && !collectedGroundItems.includes(gi.id))
+            .map(gi => (
+              <div key={gi.id} style={{
+                position:"absolute", left: gi.wx - 18, top: gi.wy - 18,
+                width:36, height:36, zIndex:5, pointerEvents:"none",
+              }}>
+                <div style={{
+                  position:"absolute", inset:-6, borderRadius:"50%",
+                  border:`2px solid ${gi.color}`, opacity:0.7,
+                  animation:"giPulse 2s ease-in-out infinite",
+                }}/>
+                <div style={{
+                  position:"absolute", inset:0, borderRadius:"50%",
+                  background:`${gi.color}22`,
+                  animation:"giPulse 2s ease-in-out infinite 0.3s",
+                }}/>
+                <div style={{
+                  position:"absolute", inset:0, display:"flex",
+                  alignItems:"center", justifyContent:"center",
+                  fontSize:16, animation:"giBob 2.5s ease-in-out infinite",
+                }}>{gi.icon}</div>
+              </div>
+            ))}
+
           {/* ── D-pad control hint (first overworld visit) ──────────────── */}
           {showDpadHint && scene === "overworld" && phase === "walk" && (
             <div style={{
@@ -5566,6 +5696,29 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             }}
           >{!cleminusMet ? "!" : demoComplete ? "…" : (jayA3Wins > 0 && liaA3Wins > 0) ? "!" : "?"}</button>
         )}
+
+        {/* ── INTERACT BUTTON — Ground item pickup ──────────────────────── */}
+        {nearGroundItem && phase === "walk" && (() => {
+          const gi = GROUND_ITEMS.find(g => g.id === nearGroundItem);
+          if (!gi || collectedGroundItems.includes(nearGroundItem)) return null;
+          return (
+            <button
+              onClick={() => pickupGroundItem(nearGroundItem)}
+              style={{
+                position:"absolute",
+                left: groundItemInteractPos.sx - 28, top: groundItemInteractPos.sy,
+                padding:"3px 10px", borderRadius:14,
+                background: gi.color, border:"2px solid rgba(255,255,255,0.9)",
+                color:"#fff", fontSize:10, fontWeight:900,
+                cursor:"pointer", letterSpacing:0.5,
+                boxShadow:`0 0 10px ${gi.color}aa`,
+                animation:"bounce 0.7s ease-in-out infinite",
+                zIndex:12, whiteSpace:"nowrap",
+                textShadow:"0 1px 3px #0008",
+              }}
+            >✦ {gi.label}</button>
+          );
+        })()}
 
         {/* ── INTERACT BUTTON — Old Hollis (Eastern Path farmer) ────────── */}
         {scene === "route2" && nearFarmerR2 && phase === "walk" && (
@@ -9790,6 +9943,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       <style>{`
         @keyframes pulse       { 0%,100%{opacity:.35} 50%{opacity:1} }
         @keyframes bounce      { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+        @keyframes giPulse     { 0%,100%{transform:scale(1);opacity:0.7} 50%{transform:scale(1.28);opacity:0.32} }
+        @keyframes giBob       { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
         @keyframes hsCommon   { 0%,100%{transform:translate(-50%,-50%) scale(1.00);opacity:0.62} 50%{transform:translate(-50%,-50%) scale(1.07);opacity:1} }
         @keyframes hsUncommon { 0%,100%{transform:translate(-50%,-50%) scale(1.00)} 42%{transform:translate(-50%,-50%) scale(1.15)} }
         @keyframes hsRare     { 0%{transform:translate(-50%,-50%) scale(1.00) rotate(0deg)} 33%{transform:translate(-50%,-50%) scale(1.22) rotate(4deg)} 66%{transform:translate(-50%,-50%) scale(1.16) rotate(-2deg)} 100%{transform:translate(-50%,-50%) scale(1.00) rotate(0deg)} }

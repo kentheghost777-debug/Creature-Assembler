@@ -131,6 +131,8 @@ export type WorldSave = {
   profShoreWins: number;
   profShorePaid: number;
   corvinMet: boolean;
+  collectedGroundItems: string[];
+  baseGearGranted: boolean;
   visitedScenes?: string[];
 };
 
