@@ -8729,7 +8729,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                   ];
 
                   return (
-                    <div style={{ display:"flex", flexDirection:"column" }}>
+                    <div style={{ display:"flex", flexDirection:"column", maxWidth:560, margin:"0 auto", width:"100%" }}>
                       {/* sub-tab pills */}
                       <div style={{ display:"flex", gap:4, marginBottom:10, paddingBottom:8, borderBottom:"1px solid rgba(100,60,20,0.18)" }}>
                         {(["dex","evo"] as const).map(t => (
@@ -8756,7 +8756,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                                 <div style={{ color:accent, fontSize:9.5, fontWeight:900, letterSpacing:1.8, textTransform:"uppercase", padding:"8px 2px 6px", borderBottom:`1px solid ${accent}55`, marginBottom:6 }}>
                                   {label} <span style={{ opacity:0.55, fontSize:8 }}>({uniq.length})</span>
                                 </div>
-                                <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:5 }}>
+                                <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(85px,1fr))", gap:5 }}>
                                   {uniq.map(m => {
                                     const rc = RARITY_COLOR[m.rarity];
                                     const tc = ELEMENT_COLOR[m.type as keyof typeof ELEMENT_COLOR] ?? "#aaa";
