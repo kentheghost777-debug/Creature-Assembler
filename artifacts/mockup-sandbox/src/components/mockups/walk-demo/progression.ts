@@ -497,3 +497,185 @@ export const BATTLE_RUNES: readonly BattleRuneItem[] = [
 
 export const BATTLE_RUNES_BY_ID: Record<BattleRuneId, BattleRuneItem> =
   Object.fromEntries(BATTLE_RUNES.map(r => [r.id, r])) as Record<BattleRuneId, BattleRuneItem>;
+
+// ── Keeper Gear System (Clearbell Town shops) ─────────────────────────────────
+
+export type GearSlot = "headband" | "armor" | "wristband" | "shoes" | "backpack";
+
+export type GearSet = "trailblazer" | "resonant" | "ironclad";
+
+export type GearEffect = {
+  xpMult?:       number;   // multiplier on all XP earned (1.10 = +10%)
+  resonanceMult?: number;  // multiplier on Resonate ability power
+  defBonus?:     number;   // flat DEF bonus in battle
+  catchBonus?:   number;   // flat catch rate bonus
+  bagSlots?:     number;   // extra item carry slots
+};
+
+export type GearItem = {
+  id: string;
+  name: string;
+  slot: GearSlot;
+  set: GearSet;
+  price: number;           // in PrimeriaCoin
+  flavor: string;
+  effect: GearEffect;
+  icon: string;
+};
+
+export const GEAR_ITEMS: readonly GearItem[] = [
+  // ── Trailblazer Set (XP boost) ──────────────────────────
+  { id:"tb_headband",  name:"Trailblazer Headband", slot:"headband",  set:"trailblazer", price:80,
+    flavor:"Worn by those who sprint toward every horizon.", icon:"🎯",
+    effect:{ xpMult:1.10 } },
+  { id:"tb_armor",     name:"Trailblazer Vest",     slot:"armor",     set:"trailblazer", price:120,
+    flavor:"Light enough to never slow the chase.",          icon:"🧥",
+    effect:{ xpMult:1.15 } },
+  { id:"tb_wristband", name:"Trailblazer Wraps",    slot:"wristband", set:"trailblazer", price:70,
+    flavor:"Etched with the sigil of ten thousand steps.",   icon:"🪬",
+    effect:{ xpMult:1.10 } },
+  { id:"tb_shoes",     name:"Trailblazer Treads",   slot:"shoes",     set:"trailblazer", price:90,
+    flavor:"Soles never truly wear out. Keepers call them lucky.", icon:"👟",
+    effect:{ xpMult:1.12 } },
+  { id:"tb_backpack",  name:"Trailblazer Pack",     slot:"backpack",  set:"trailblazer", price:150,
+    flavor:"Holds more than it should. Feels lighter by sunset.", icon:"🎒",
+    effect:{ xpMult:1.08, bagSlots:4 } },
+
+  // ── Resonant Set (Resonate power boost) ─────────────────
+  { id:"rs_headband",  name:"Resonant Crown",       slot:"headband",  set:"resonant", price:90,
+    flavor:"Hums with the same frequency as a Tayanari's bond.", icon:"💜",
+    effect:{ resonanceMult:1.20 } },
+  { id:"rs_armor",     name:"Resonant Mantle",      slot:"armor",     set:"resonant", price:140,
+    flavor:"Channels keeper energy into every stored breath.",    icon:"🌀",
+    effect:{ resonanceMult:1.25 } },
+  { id:"rs_wristband", name:"Resonant Bracers",     slot:"wristband", set:"resonant", price:80,
+    flavor:"Vibrate gently when a Tayanari is near.",            icon:"🔮",
+    effect:{ resonanceMult:1.20 } },
+  { id:"rs_shoes",     name:"Resonant Walkers",     slot:"shoes",     set:"resonant", price:100,
+    flavor:"Each step leaves a faint harmonic echo.",            icon:"👣",
+    effect:{ resonanceMult:1.15 } },
+  { id:"rs_backpack",  name:"Resonant Satchel",     slot:"backpack",  set:"resonant", price:160,
+    flavor:"Woven with shell-thread. Amplifies keeper aura.",    icon:"🎒",
+    effect:{ resonanceMult:1.15, bagSlots:3 } },
+
+  // ── Ironclad Set (DEF boost) ─────────────────────────────
+  { id:"ic_headband",  name:"Ironclad Helm",        slot:"headband",  set:"ironclad", price:85,
+    flavor:"Forged from Primeria's northern iron veins.",        icon:"⛏",
+    effect:{ defBonus:8 } },
+  { id:"ic_armor",     name:"Ironclad Plate",       slot:"armor",     set:"ironclad", price:130,
+    flavor:"Heavy, but the security is worth every step.",       icon:"🛡",
+    effect:{ defBonus:15 } },
+  { id:"ic_wristband", name:"Ironclad Gauntlets",   slot:"wristband", set:"ironclad", price:75,
+    flavor:"The forge's mark never leaves the steel.",           icon:"🤜",
+    effect:{ defBonus:7 } },
+  { id:"ic_shoes",     name:"Ironclad Stompers",    slot:"shoes",     set:"ironclad", price:95,
+    flavor:"Planted. Immovable. Nobody moves you.",              icon:"🥾",
+    effect:{ defBonus:6 } },
+  { id:"ic_backpack",  name:"Ironclad Pack",        slot:"backpack",  set:"ironclad", price:155,
+    flavor:"Reinforced sides. Doubles as a shield if needed.",   icon:"🎒",
+    effect:{ defBonus:5, bagSlots:2 } },
+];
+
+export const GEAR_BY_ID: Record<string, GearItem> =
+  Object.fromEntries(GEAR_ITEMS.map(g => [g.id, g]));
+
+// ── Clearbell Berry Shop ──────────────────────────────────────────────────────
+
+export type BerryItem = {
+  id: string;
+  name: string;
+  price: number;
+  icon: string;
+  desc: string;
+  color: string;
+};
+
+export const CLEARBELL_BERRIES: readonly BerryItem[] = [
+  { id:"berry_heart",   name:"Heartberry",    price:18, icon:"🍓", color:"#ff6688",
+    desc:"Restores 40% of max HP mid-battle. Sweet but sour at the core." },
+  { id:"berry_blaze",   name:"Blazeberry",    price:22, icon:"🫐", color:"#ff7030",
+    desc:"+30% ATK for 3 turns. Burns the throat going down." },
+  { id:"berry_shell",   name:"Shellberry",    price:20, icon:"🍇", color:"#7060c0",
+    desc:"+25% DEF for 3 turns. Tough rind, tougher bond." },
+  { id:"berry_flash",   name:"Flashberry",    price:24, icon:"🍋", color:"#ffd040",
+    desc:"Guarantees first-strike for one turn. Tastes electric." },
+  { id:"berry_revive",  name:"Wakewort",      price:55, icon:"🌿", color:"#50c060",
+    desc:"Revives a fainted Tayanari with 25% HP. Rare and bitter." },
+  { id:"berry_full",    name:"Fullbloom",     price:80, icon:"🌸", color:"#ffaad0",
+    desc:"Fully restores HP of one Tayanari. Smells like the old forests." },
+];
+
+// ── Clearbell Shell Shop (growth shells with 1 rune slot) ────────────────────
+
+export type ShopShellItem = {
+  id: string;
+  name: string;
+  price: number;
+  icon: string;
+  color: string;
+  growthTrack: "xp" | "atk" | "def" | "spd";
+  desc: string;
+  flavor: string;
+};
+
+export const CLEARBELL_SHELLS: readonly ShopShellItem[] = [
+  { id:"cshell_soulwing",  name:"Soulwing Shell",  price:90,  icon:"✦", color:"#ffd060", growthTrack:"xp",
+    desc:"+15% XP gain for equipped Tayanari.", flavor:"Lighter than air. Grows with every victory." },
+  { id:"cshell_thornfang", name:"Thornfang Shell",  price:100, icon:"⚔", color:"#ff6020", growthTrack:"atk",
+    desc:"+8 ATK growth per level for equipped Tayanari.", flavor:"Smells of iron and old battles." },
+  { id:"cshell_wardite",   name:"Wardite Shell",    price:100, icon:"🛡", color:"#80d0ff", growthTrack:"def",
+    desc:"+8 DEF growth per level for equipped Tayanari.", flavor:"Dense as stone. Never chips." },
+  { id:"cshell_zephyr",    name:"Zephyr Shell",     price:95,  icon:"💨", color:"#a0f0c0", growthTrack:"spd",
+    desc:"+6 SPD growth per level for equipped Tayanari.", flavor:"Trembles in even the faintest breeze." },
+];
+
+export const CLEARBELL_SHELLS_BY_ID: Record<string, ShopShellItem> =
+  Object.fromEntries(CLEARBELL_SHELLS.map(s => [s.id, s]));
+
+// ── Clearbell Rune Shop ───────────────────────────────────────────────────────
+
+export type ShopRuneItem = {
+  id: string;
+  name: string;
+  price: number;
+  icon: string;
+  color: string;
+  desc: string;
+  flavor: string;
+  // Stat effect applied when slotted into a Tayanari shell
+  statBonus?: Partial<Record<"hp"|"atk"|"def"|"spd", number>>;
+  xpBonus?: number;     // flat XP bonus per battle
+};
+
+export const CLEARBELL_RUNES: readonly ShopRuneItem[] = [
+  { id:"crune_root",    name:"Root Rune",      price:40,  icon:"🌱", color:"#60c860",
+    desc:"+20 max HP for the bonded Tayanari.", flavor:"Grows where planted. Holds what it loves.",
+    statBonus:{ hp:20 } },
+  { id:"crune_edge",    name:"Edge Rune",       price:45,  icon:"⚔", color:"#ff7040",
+    desc:"+6 ATK for the bonded Tayanari.", flavor:"A rune that remembers every wound it caused.",
+    statBonus:{ atk:6 } },
+  { id:"crune_guard",   name:"Guard Rune",      price:45,  icon:"🛡", color:"#60a0ff",
+    desc:"+6 DEF for the bonded Tayanari.", flavor:"The old smiths called it 'unflinching faith'.",
+    statBonus:{ def:6 } },
+  { id:"crune_swift",   name:"Swift Rune",      price:42,  icon:"💨", color:"#80ffcc",
+    desc:"+4 SPD for the bonded Tayanari.", flavor:"Carve it right and the wind never leaves.",
+    statBonus:{ spd:4 } },
+  { id:"crune_soul",    name:"Soul Rune",        price:60,  icon:"✧", color:"#ffd060",
+    desc:"+20 flat XP per battle for the bonded Tayanari.", flavor:"Remembers every fight. Feeds on experience.",
+    xpBonus:20 },
+  { id:"crune_nature",  name:"Nature Rune",     price:50,  icon:"🌿", color:"#5ac070",
+    desc:"+8 ATK when facing Nature-type opponents.", flavor:"The forest always answers its own.",
+    statBonus:{ atk:8 } },
+  { id:"crune_volcanic",name:"Volcanic Rune",   price:50,  icon:"🔥", color:"#ff6020",
+    desc:"+8 ATK when facing Volcanic-type opponents.", flavor:"Carved from a cinder that never cooled.",
+    statBonus:{ atk:8 } },
+  { id:"crune_frost",   name:"Frost Rune",      price:50,  icon:"❄", color:"#7ddeff",
+    desc:"+8 ATK when facing Frostformed-type opponents.", flavor:"Bites the hand that holds it. Worth it.",
+    statBonus:{ atk:8 } },
+  { id:"crune_tide",    name:"Tide Rune",        price:50,  icon:"🌊", color:"#3a90ff",
+    desc:"+8 ATK when facing Oceanic-type opponents.", flavor:"Pulls with the moon. Pushes with the wave.",
+    statBonus:{ atk:8 } },
+  { id:"crune_storm",   name:"Storm Rune",       price:50,  icon:"⚡", color:"#ffd040",
+    desc:"+8 ATK when facing Stormproven-type opponents.", flavor:"Still crackles. Still hungry.",
+    statBonus:{ atk:8 } },
+];

@@ -912,6 +912,48 @@ uri = "file://attached_assets/town_right_wing.png"
 type = "image"
 title = "town right wing district"
 
+[[generated]]
+id = "en7NnNJZ-B_MVKlaeGDFX"
+uri = "file://attached_assets/npc_blacksmith.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "XKfOgZtgKFTDfpqzIMaDy"
+uri = "file://attached_assets/npc_berry_vendor.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "xeB0h6TVHi9Njx-ySjPLT"
+uri = "file://attached_assets/npc_shell_vendor.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "TjZmvvx3xqYkYYj4JAcOY"
+uri = "file://attached_assets/npc_rune_vendor.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "A45KppnHC7kXyucDvJZ8r"
+uri = "file://attached_assets/npc_town_kid.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "Bu8GEIR2RBUPSOmMrT7jU"
+uri = "file://attached_assets/npc_town_scholar.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "nQuiPAGnaQMrFEs2nqJ9-"
+uri = "file://attached_assets/npc_town_elder.png"
+type = "image"
+title = "generated_image"
+
 [[outputs]]
 id = "hj9mwcgl1Uv9QQTG9g6KL"
 uri = "file://kinju_walk_demo.tar.gz"

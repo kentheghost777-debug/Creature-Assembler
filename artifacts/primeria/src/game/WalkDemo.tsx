@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback, type PointerEvent as RPointerEvent, type MouseEvent as RMouseEvent } from "react";
 import { BattleScene, RARITY_COLOR, sheetBgStyle, type SpriteSheet, type MonSpec, type MonRarity, type BattleResult, type StarterStats, type StarterSpec, type BattleMon } from "./BattleScene";
 import { EvoScene } from "./EvoScene";
-import { SHELLS, ELEMENT_COLOR, BATTLE_SHELLS, BATTLE_RUNES, BATTLE_SHELLS_BY_ID, BATTLE_RUNES_BY_ID } from "./progression";
+import { SHELLS, ELEMENT_COLOR, BATTLE_SHELLS, BATTLE_RUNES, BATTLE_SHELLS_BY_ID, BATTLE_RUNES_BY_ID, GEAR_ITEMS, GEAR_BY_ID, CLEARBELL_BERRIES, CLEARBELL_SHELLS, CLEARBELL_SHELLS_BY_ID, CLEARBELL_RUNES, type GearSlot, type GearItem } from "./progression";
 import {
   getMove, moveName, asElement,
   learnedMoveIds, movesLearnedAt, defaultActiveMoves, sanitizeActiveMoves,
@@ -343,7 +343,15 @@ type Phase = "walk" | "d1" | "d2" | "pick" | "d3" | "role_pick" | "d4" | "d5"
           // Overworld ambient townspeople (lore flavor, set no quest flags)
           | "tova_d1" | "tova_d2" | "tova_idle"
           | "senna_d1" | "senna_d2" | "senna_idle"
-          | "corvin_d1" | "corvin_d2" | "corvin_idle";
+          | "corvin_d1" | "corvin_d2" | "corvin_idle"
+          // Clearbell Town NPCs
+          | "blacksmith_d1" | "blacksmith_d2" | "blacksmith_shop" | "blacksmith_idle"
+          | "berry_vendor_d1" | "berry_vendor_shop" | "berry_vendor_idle"
+          | "shell_vendor_d1" | "shell_vendor_shop" | "shell_vendor_idle"
+          | "rune_vendor_d1" | "rune_vendor_shop" | "rune_vendor_idle"
+          | "town_kid_d1" | "town_kid_idle"
+          | "town_scholar_d1" | "town_scholar_d2" | "town_scholar_idle"
+          | "town_elder_d1" | "town_elder_d2" | "town_elder_idle";
 type Scene = "overworld" | "lab" | "maya" | "jay" | "home" | "ellio" | "lia" | "route1" | "route2" | "area3" | "battle" | "farm" | "shore" | "town" | "town_left" | "town_right";
 type Rect  = [number, number, number, number]; // x1 y1 x2 y2 world-px
 
@@ -1237,6 +1245,26 @@ const CORVIN_POS = { x: 790, y: 310 }; // traveling naturalist — northeast nea
 const TOVA_IMG   = "./images/tova-npc.png";
 const SENNA_IMG  = "./images/senna-npc.png";
 const CORVIN_IMG = "./images/corvin-npc.png";
+
+// ── Clearbell Town NPCs ───────────────────────────────────────────────────────
+// Central hub
+const BERRY_VENDOR_POS  = { x: 500, y: 580 };   // center hub, left of arena
+const SHELL_VENDOR_POS  = { x: 1000, y: 580 };  // center hub, right of arena
+const TOWN_KID_POS      = { x: 768, y: 700 };   // near south exit path
+const TOWN_SCHOLAR_POS  = { x: 400, y: 360 };   // northwest corner
+// Left wing — blacksmith + ambient elder
+const BLACKSMITH_POS    = { x: 640, y: 430 };   // left wing, near forge building
+const TOWN_ELDER_POS    = { x: 300, y: 500 };   // left wing, sitting near well
+// Right wing — rune vendor
+const RUNE_VENDOR_POS   = { x: 900, y: 430 };   // right wing, near shrine
+
+const BLACKSMITH_IMG    = "./images/blacksmith-npc.png";
+const BERRY_VENDOR_IMG  = "./images/berry-vendor-npc.png";
+const SHELL_VENDOR_IMG  = "./images/shell-vendor-npc.png";
+const RUNE_VENDOR_IMG   = "./images/rune-vendor-npc.png";
+const TOWN_KID_IMG      = "./images/town-kid-npc.png";
+const TOWN_SCHOLAR_IMG  = "./images/town-scholar-npc.png";
+const TOWN_ELDER_IMG    = "./images/town-elder-npc.png";
 let OW_MAYA_DOOR: Rect  = ld("ow_maya", [938, 278, 1003, 340]); // nudged +6 east of user-tapped 965,335
 let MAYA_HOME_EXIT: Rect = ld("maya_exit", [310, 722, 490, 790]); // exit trigger at interior door
 const MAYA_SHELL: Rect     = [385, 400, 455, 460]; // pickup zone — center of the living-room rug
@@ -1713,6 +1741,38 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const [runrikInteractPos,    setRunrikInteractPos]    = useState({ sx: 0, sy: 0 });
   const [nearMaren,            setNearMaren]            = useState(false);
   const [marenInteractPos,     setMarenInteractPos]     = useState({ sx: 0, sy: 0 });
+  // Clearbell Town NPC proximity + shops
+  const [nearBlacksmith,       setNearBlacksmith]       = useState(false);
+  const [blacksmithInteractPos,setBlacksmithInteractPos]= useState({ sx: 0, sy: 0 });
+  const [nearBerryVendor,      setNearBerryVendor]      = useState(false);
+  const [berryVendorInteractPos,setBerryVendorInteractPos] = useState({ sx: 0, sy: 0 });
+  const [nearShellVendor,      setNearShellVendor]      = useState(false);
+  const [shellVendorInteractPos,setShellVendorInteractPos] = useState({ sx: 0, sy: 0 });
+  const [nearRuneVendor,       setNearRuneVendor]       = useState(false);
+  const [runeVendorInteractPos,setRuneVendorInteractPos]= useState({ sx: 0, sy: 0 });
+  const [nearTownKid,          setNearTownKid]          = useState(false);
+  const [townKidInteractPos,   setTownKidInteractPos]   = useState({ sx: 0, sy: 0 });
+  const [nearTownScholar,      setNearTownScholar]      = useState(false);
+  const [townScholarInteractPos,setTownScholarInteractPos] = useState({ sx: 0, sy: 0 });
+  const [nearTownElder,        setNearTownElder]        = useState(false);
+  const [townElderInteractPos, setTownElderInteractPos] = useState({ sx: 0, sy: 0 });
+  // Active shop overlay: "blacksmith" | "berries" | "shells" | "runes" | null
+  const [activeShop,           setActiveShop]           = useState<"blacksmith"|"berries"|"shells"|"runes"|null>(null);
+  // Equipped gear — one item per slot (stores gear id or null)
+  const [equippedGear, setEquippedGear] = useState<Record<GearSlot, string|null>>(() => {
+    try { const s = localStorage.getItem("primeria_gear"); return s ? JSON.parse(s) : { headband:null, armor:null, wristband:null, shoes:null, backpack:null }; } catch { return { headband:null, armor:null, wristband:null, shoes:null, backpack:null }; }
+  });
+  // Owned shop items (ids purchased)
+  const [ownedGearIds,         setOwnedGearIds]         = useState<string[]>(() => { try { const s = localStorage.getItem("primeria_owned_gear"); return s ? JSON.parse(s) : []; } catch { return []; } });
+  const [ownedClearbellShellIds, setOwnedClearbellShellIds] = useState<string[]>(() => { try { const s = localStorage.getItem("primeria_cshells"); return s ? JSON.parse(s) : []; } catch { return []; } });
+  const [ownedClearbellRuneIds,  setOwnedClearbellRuneIds]  = useState<string[]>(() => { try { const s = localStorage.getItem("primeria_crunes"); return s ? JSON.parse(s) : []; } catch { return []; } });
+  // Berry counts from Clearbell shop
+  const [heartberries,  setHeartberries]  = useState<number>(() => { try { const s = localStorage.getItem("primeria_berries"); const b = s ? JSON.parse(s) : {}; return b.heart ?? 0; } catch { return 0; } });
+  const [blazeberries,  setBlazeberries]  = useState<number>(() => { try { const s = localStorage.getItem("primeria_berries"); const b = s ? JSON.parse(s) : {}; return b.blaze ?? 0; } catch { return 0; } });
+  const [shellberries,  setShellberries]  = useState<number>(() => { try { const s = localStorage.getItem("primeria_berries"); const b = s ? JSON.parse(s) : {}; return b.shell ?? 0; } catch { return 0; } });
+  const [flashberries,  setFlashberries]  = useState<number>(() => { try { const s = localStorage.getItem("primeria_berries"); const b = s ? JSON.parse(s) : {}; return b.flash ?? 0; } catch { return 0; } });
+  const [wakeberries,   setWakeberries]   = useState<number>(() => { try { const s = localStorage.getItem("primeria_berries"); const b = s ? JSON.parse(s) : {}; return b.wake ?? 0; } catch { return 0; } });
+  const [fullblooms,    setFullblooms]    = useState<number>(() => { try { const s = localStorage.getItem("primeria_berries"); const b = s ? JSON.parse(s) : {}; return b.full ?? 0; } catch { return 0; } });
   const [nearJerbs,            setNearJerbs]            = useState(false);
   const [jerbsInteractPos,     setJerbsInteractPos]     = useState({ sx: 0, sy: 0 });
   const [portalFrame,          setPortalFrame]          = useState(0);
@@ -3016,6 +3076,33 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           setNearMaren(dm < 90);
           if (dm < 90) setMarenInteractPos({ sx: screenX, sy: screenY });
         }
+        // Clearbell Town NPC proximity
+        if (sc === "town") {
+          const screenX = (px - cam.current.x) * zoom;
+          const screenY = (py - cam.current.y - topOff - 28) * zoom;
+          const dbv = dist(px, py, BERRY_VENDOR_POS.x, BERRY_VENDOR_POS.y);
+          setNearBerryVendor(dbv < 90); if (dbv < 90) setBerryVendorInteractPos({ sx: screenX, sy: screenY });
+          const dsv = dist(px, py, SHELL_VENDOR_POS.x, SHELL_VENDOR_POS.y);
+          setNearShellVendor(dsv < 90); if (dsv < 90) setShellVendorInteractPos({ sx: screenX, sy: screenY });
+          const dkid = dist(px, py, TOWN_KID_POS.x, TOWN_KID_POS.y);
+          setNearTownKid(dkid < 80); if (dkid < 80) setTownKidInteractPos({ sx: screenX, sy: screenY });
+          const dsch = dist(px, py, TOWN_SCHOLAR_POS.x, TOWN_SCHOLAR_POS.y);
+          setNearTownScholar(dsch < 80); if (dsch < 80) setTownScholarInteractPos({ sx: screenX, sy: screenY });
+        }
+        if (sc === "town_left") {
+          const screenX = (px - cam.current.x) * zoom;
+          const screenY = (py - cam.current.y - topOff - 28) * zoom;
+          const dbs = dist(px, py, BLACKSMITH_POS.x, BLACKSMITH_POS.y);
+          setNearBlacksmith(dbs < 90); if (dbs < 90) setBlacksmithInteractPos({ sx: screenX, sy: screenY });
+          const eld = dist(px, py, TOWN_ELDER_POS.x, TOWN_ELDER_POS.y);
+          setNearTownElder(eld < 80); if (eld < 80) setTownElderInteractPos({ sx: screenX, sy: screenY });
+        }
+        if (sc === "town_right") {
+          const screenX = (px - cam.current.x) * zoom;
+          const screenY = (py - cam.current.y - topOff - 28) * zoom;
+          const drv = dist(px, py, RUNE_VENDOR_POS.x, RUNE_VENDOR_POS.y);
+          setNearRuneVendor(drv < 90); if (drv < 90) setRuneVendorInteractPos({ sx: screenX, sy: screenY });
+        }
       }
       raf = requestAnimationFrame(loop);
     };
@@ -3059,6 +3146,14 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       tova_d1: "tova_d2", tova_d2: "walk", tova_idle: "walk",
       senna_d1: "senna_d2", senna_d2: "walk", senna_idle: "walk",
       corvin_d1: "corvin_d2", corvin_d2: "walk", corvin_idle: "walk",
+      // Clearbell Town NPCs
+      blacksmith_d1: "blacksmith_d2", blacksmith_d2: "blacksmith_shop", blacksmith_idle: "walk",
+      berry_vendor_d1: "berry_vendor_shop", berry_vendor_idle: "walk",
+      shell_vendor_d1: "shell_vendor_shop", shell_vendor_idle: "walk",
+      rune_vendor_d1: "rune_vendor_shop", rune_vendor_idle: "walk",
+      town_kid_d1: "walk", town_kid_idle: "walk",
+      town_scholar_d1: "town_scholar_d2", town_scholar_d2: "walk", town_scholar_idle: "walk",
+      town_elder_d1: "town_elder_d2", town_elder_d2: "walk", town_elder_idle: "walk",
       // Rowan's three-line dream-of-becoming-professor chat.
       rowan_d1: "rowan_d2", rowan_d2: "rowan_d3", rowan_d3: "walk",
       // Area 3 Jay/Lia trainer battles.
@@ -3087,6 +3182,10 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     if (from === "shella_d3") { setShowShellPicker(true); return; }
     if (from === "runrik_d3") { setShowRunePicker(true); return; }
     if (from === "corvin_d2" && !corvinMet) { setCorvinMet(true); setPrimeriaCoin(c => c + 75); }
+    if (from === "blacksmith_shop" || from === "blacksmith_d2") { setActiveShop("blacksmith"); setPhase("walk"); return; }
+    if (from === "berry_vendor_shop" || from === "berry_vendor_d1") { setActiveShop("berries"); setPhase("walk"); return; }
+    if (from === "shell_vendor_shop" || from === "shell_vendor_d1") { setActiveShop("shells"); setPhase("walk"); return; }
+    if (from === "rune_vendor_shop" || from === "rune_vendor_d1") { setActiveShop("runes"); setPhase("walk"); return; }
     const next = map[from];
     if (next) { playSfx("btn"); setPhase(next); }
   }, []);
@@ -3277,6 +3376,28 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     prof_shore_lose: "A fine battle. The shore will humble you — that's its gift. Come back whenever you're ready to try again.",
     prof_shore_idle: "The tide turns on its own schedule. Challenge me whenever the moment feels right.",
     prof_shore_done: "You've proven yourself here. The sea beyond these cliffs holds deeper mysteries still — keep exploring.",
+    // ── Clearbell Town NPCs ─────────────────────────────────────────────────
+    blacksmith_d1: "Clearbell's forge has been burning since before any of us were born. Name's Darro. I work the anvil — Keeper gear mostly, but I'll outfit anyone who looks like they're serious about the road ahead. The ruins east of here have been pulling more Keepers through lately. I like seeing that.",
+    blacksmith_d2: "Gear makes the difference on long hauls — not glamour, not reputation. The right fit for your pack, the right brace for your wrists when you're throwing shells all day. Take a look at what I've got in stock.",
+    blacksmith_shop: "",
+    blacksmith_idle: "The forge doesn't rest and neither do I. Swing by anytime you need something new on your back.",
+    berry_vendor_d1: "Step up, Keeper! Nessa's the name — I run the berry stall right here in the heart of Clearbell. Every berry in this basket I grew myself, picked at peak season, packed the same day. No shortcuts, no shelf stock.",
+    berry_vendor_shop: "",
+    berry_vendor_idle: "Fresh today, gone tomorrow. Well — not quite, they last longer than that. But you get the idea.",
+    shell_vendor_d1: "Hello there! I'm Brynn. I trade in quality Clearbell Shells — different from the standard Realm Shells you'd find at the lab. These are forged with local crystalite for deeper resonance and better catch odds. Serious Keepers keep a stock.",
+    shell_vendor_shop: "",
+    shell_vendor_idle: "The best bonds start with the right shell. Don't shortchange yourself.",
+    rune_vendor_d1: "Keeper — over here. Kaela. I specialize in Clearbell Runes — field-grade, triple-checked, every script verified by hand. I've seen sloppy rune-work fail mid-battle. Mine doesn't fail.",
+    rune_vendor_shop: "",
+    rune_vendor_idle: "The right rune slots before the right battle. Don't wait until you need it.",
+    town_kid_d1: "Wow — you're a real Keeper! My dad says Clearbell used to have its own Keeper team before the Trial routes changed. Maybe someday I'll go to Primeria and get my own Tayanari!",
+    town_kid_idle: "I can name every Tayanari type and their weaknesses. Want me to quiz you?",
+    town_scholar_d1: "Ah — a Keeper passing through Clearbell. We don't get many. I study the old resonance texts — the ones that say Tayanari were once called to this region in numbers that haven't been seen in two generations. Something changed the patterns. The ruins east of here may be part of it.",
+    town_scholar_d2: "Keep your field notes, Keeper. The small observations — type expressions, bonding behavior, anything that surprises you. Those are the ones that rewrite the textbooks. Irwyn's been saying the same thing for years. I'm starting to believe him.",
+    town_scholar_idle: "The old texts don't lie. They just require more patience than most people have.",
+    town_elder_d1: "Well now. A Keeper in Clearbell — that's not something I see every season. Sit with me a moment. I've watched four generations of Keepers pass through this town. Every one of them came through with that same look you've got. Like you know something big is coming and you're not quite sure you're ready.",
+    town_elder_d2: "Here's what I've learned: you're never quite ready. But the Tayanari know. They always know when someone's worth bonding with. The fact that yours chose you — that already says more than any Trial card ever could. Be kind to them. That's all the wisdom I've got left. Go on.",
+    town_elder_idle: "A long life in Clearbell teaches you to read the weather and the people in equal measure. Both are telling me something about you.",
   };
 
   // ── Encounter handlers & disturbance tick ──────────────────────────────────
@@ -4096,13 +4217,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               {/* Tova — ambient townsfolk, village square */}
               <img src={TOVA_IMG} alt="Tova" style={{
                 position:"absolute",
-                left: TOVA_POS.x - 32, top: TOVA_POS.y - 64,
-                width:64, height:64, objectFit:"contain",
+                left: TOVA_POS.x - 32, top: TOVA_POS.y - 128,
+                width:64, height:91, objectFit:"contain",
                 pointerEvents:"none", imageRendering:"auto",
               }} />
               <div style={{
                 position:"absolute",
-                left: TOVA_POS.x - 20, top: TOVA_POS.y - 72,
+                left: TOVA_POS.x - 20, top: TOVA_POS.y - 140,
                 color:"#e8c878", fontSize:8, fontWeight:800,
                 letterSpacing:1, pointerEvents:"none",
                 textShadow:"0 0 4px #000,0 0 8px #000",
@@ -4110,13 +4231,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               {/* Senna — ambient townsfolk, near Route 1 gate */}
               <img src={SENNA_IMG} alt="Senna" style={{
                 position:"absolute",
-                left: SENNA_POS.x - 32, top: SENNA_POS.y - 64,
-                width:64, height:64, objectFit:"contain",
+                left: SENNA_POS.x - 32, top: SENNA_POS.y - 128,
+                width:64, height:91, objectFit:"contain",
                 pointerEvents:"none", imageRendering:"auto",
               }} />
               <div style={{
                 position:"absolute",
-                left: SENNA_POS.x - 24, top: SENNA_POS.y - 72,
+                left: SENNA_POS.x - 24, top: SENNA_POS.y - 140,
                 color:"#88d8b0", fontSize:8, fontWeight:800,
                 letterSpacing:1, pointerEvents:"none",
                 textShadow:"0 0 4px #000,0 0 8px #000",
@@ -4124,13 +4245,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               {/* Corvin — traveling naturalist, northeast near east road */}
               <img src={CORVIN_IMG} alt="Corvin" style={{
                 position:"absolute",
-                left: CORVIN_POS.x - 32, top: CORVIN_POS.y - 64,
-                width:64, height:64, objectFit:"contain",
+                left: CORVIN_POS.x - 32, top: CORVIN_POS.y - 128,
+                width:64, height:91, objectFit:"contain",
                 pointerEvents:"none", imageRendering:"auto",
               }} />
               <div style={{
                 position:"absolute",
-                left: CORVIN_POS.x - 24, top: CORVIN_POS.y - 72,
+                left: CORVIN_POS.x - 24, top: CORVIN_POS.y - 140,
                 color:"#c8a8f8", fontSize:8, fontWeight:800,
                 letterSpacing:1, pointerEvents:"none",
                 textShadow:"0 0 4px #000,0 0 8px #000",
@@ -4369,15 +4490,43 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             </>
           )}
 
+          {/* ── Clearbell Town NPCs ─────────────────────────────────────── */}
+          {scene === "town" && (
+            <>
+              <img src={BERRY_VENDOR_IMG} alt="Berry Vendor" style={{ position:"absolute", imageRendering:"auto", pointerEvents:"none", zIndex:5, left: BERRY_VENDOR_POS.x - 36, top: BERRY_VENDOR_POS.y - 144, width:72, height:103, objectFit:"contain" }}/>
+              <div style={{ position:"absolute", zIndex:6, left: BERRY_VENDOR_POS.x - 22, top: BERRY_VENDOR_POS.y - 156, color:"#e85080", fontSize:8, fontWeight:800, letterSpacing:1, pointerEvents:"none", textShadow:"0 0 4px #000,0 0 8px #000" }}>NESSA</div>
+              <img src={SHELL_VENDOR_IMG} alt="Shell Vendor" style={{ position:"absolute", imageRendering:"auto", pointerEvents:"none", zIndex:5, left: SHELL_VENDOR_POS.x - 36, top: SHELL_VENDOR_POS.y - 144, width:72, height:103, objectFit:"contain" }}/>
+              <div style={{ position:"absolute", zIndex:6, left: SHELL_VENDOR_POS.x - 22, top: SHELL_VENDOR_POS.y - 156, color:"#50b8e8", fontSize:8, fontWeight:800, letterSpacing:1, pointerEvents:"none", textShadow:"0 0 4px #000,0 0 8px #000" }}>BRYNN</div>
+              <img src={TOWN_KID_IMG} alt="Town Kid" style={{ position:"absolute", imageRendering:"auto", pointerEvents:"none", zIndex:5, left: TOWN_KID_POS.x - 28, top: TOWN_KID_POS.y - 110, width:56, height:80, objectFit:"contain" }}/>
+              <div style={{ position:"absolute", zIndex:6, left: TOWN_KID_POS.x - 16, top: TOWN_KID_POS.y - 122, color:"#ffd84a", fontSize:8, fontWeight:800, letterSpacing:1, pointerEvents:"none", textShadow:"0 0 4px #000,0 0 8px #000" }}>KID</div>
+              <img src={TOWN_SCHOLAR_IMG} alt="Scholar" style={{ position:"absolute", imageRendering:"auto", pointerEvents:"none", zIndex:5, left: TOWN_SCHOLAR_POS.x - 32, top: TOWN_SCHOLAR_POS.y - 128, width:64, height:91, objectFit:"contain" }}/>
+              <div style={{ position:"absolute", zIndex:6, left: TOWN_SCHOLAR_POS.x - 26, top: TOWN_SCHOLAR_POS.y - 140, color:"#a070e8", fontSize:8, fontWeight:800, letterSpacing:1, pointerEvents:"none", textShadow:"0 0 4px #000,0 0 8px #000" }}>SCHOLAR</div>
+            </>
+          )}
+          {scene === "town_left" && (
+            <>
+              <img src={BLACKSMITH_IMG} alt="Blacksmith" style={{ position:"absolute", imageRendering:"auto", pointerEvents:"none", zIndex:5, left: BLACKSMITH_POS.x - 36, top: BLACKSMITH_POS.y - 144, width:72, height:103, objectFit:"contain" }}/>
+              <div style={{ position:"absolute", zIndex:6, left: BLACKSMITH_POS.x - 20, top: BLACKSMITH_POS.y - 156, color:"#f07020", fontSize:8, fontWeight:800, letterSpacing:1, pointerEvents:"none", textShadow:"0 0 4px #000,0 0 8px #000" }}>DARRO</div>
+              <img src={TOWN_ELDER_IMG} alt="Elder" style={{ position:"absolute", imageRendering:"auto", pointerEvents:"none", zIndex:5, left: TOWN_ELDER_POS.x - 32, top: TOWN_ELDER_POS.y - 128, width:64, height:91, objectFit:"contain" }}/>
+              <div style={{ position:"absolute", zIndex:6, left: TOWN_ELDER_POS.x - 22, top: TOWN_ELDER_POS.y - 140, color:"#c8a850", fontSize:8, fontWeight:800, letterSpacing:1, pointerEvents:"none", textShadow:"0 0 4px #000,0 0 8px #000" }}>ELDER</div>
+            </>
+          )}
+          {scene === "town_right" && (
+            <>
+              <img src={RUNE_VENDOR_IMG} alt="Rune Vendor" style={{ position:"absolute", imageRendering:"auto", pointerEvents:"none", zIndex:5, left: RUNE_VENDOR_POS.x - 36, top: RUNE_VENDOR_POS.y - 144, width:72, height:103, objectFit:"contain" }}/>
+              <div style={{ position:"absolute", zIndex:6, left: RUNE_VENDOR_POS.x - 20, top: RUNE_VENDOR_POS.y - 156, color:"#30c890", fontSize:8, fontWeight:800, letterSpacing:1, pointerEvents:"none", textShadow:"0 0 4px #000,0 0 8px #000" }}>KAELA</div>
+            </>
+          )}
+
           {/* ── Farm NPCs + animals ─────────────────────────────────────── */}
           {scene === "farm" && (
             <>
-              <img src={SHELLA_IMG} alt="Shella" style={{ position:"absolute", imageRendering:"auto", pointerEvents:"none", zIndex:5, left: SHELLA_POS.x - 36, top: SHELLA_POS.y - 72, width:72, height:72, objectFit:"contain" }}/>
-              <div style={{ position:"absolute", zIndex:6, left: SHELLA_POS.x - 22, top: SHELLA_POS.y - 90, color:"#f5c842", fontSize:8, fontWeight:800, letterSpacing:1, pointerEvents:"none", textShadow:"0 0 4px #000,0 0 8px #000" }}>SHELLA</div>
-              <img src={RUNRIK_IMG} alt="Runrik" style={{ position:"absolute", imageRendering:"auto", pointerEvents:"none", zIndex:5, left: RUNRIK_POS.x - 36, top: RUNRIK_POS.y - 72, width:72, height:72, objectFit:"contain" }}/>
-              <div style={{ position:"absolute", zIndex:6, left: RUNRIK_POS.x - 22, top: RUNRIK_POS.y - 90, color:"#8090f0", fontSize:8, fontWeight:800, letterSpacing:1, pointerEvents:"none", textShadow:"0 0 4px #000,0 0 8px #000" }}>RUNRIK</div>
-              <img src={MAREN_IMG} alt="Maren" style={{ position:"absolute", imageRendering:"auto", pointerEvents:"none", zIndex:5, left: MAREN_POS.x - 36, top: MAREN_POS.y - 72, width:72, height:72, objectFit:"contain" }}/>
-              <div style={{ position:"absolute", zIndex:6, left: MAREN_POS.x - 22, top: MAREN_POS.y - 90, color:"#90c060", fontSize:8, fontWeight:800, letterSpacing:1, pointerEvents:"none", textShadow:"0 0 4px #000,0 0 8px #000" }}>MAREN</div>
+              <img src={SHELLA_IMG} alt="Shella" style={{ position:"absolute", imageRendering:"auto", pointerEvents:"none", zIndex:5, left: SHELLA_POS.x - 36, top: SHELLA_POS.y - 144, width:72, height:103, objectFit:"contain" }}/>
+              <div style={{ position:"absolute", zIndex:6, left: SHELLA_POS.x - 22, top: SHELLA_POS.y - 156, color:"#f5c842", fontSize:8, fontWeight:800, letterSpacing:1, pointerEvents:"none", textShadow:"0 0 4px #000,0 0 8px #000" }}>SHELLA</div>
+              <img src={RUNRIK_IMG} alt="Runrik" style={{ position:"absolute", imageRendering:"auto", pointerEvents:"none", zIndex:5, left: RUNRIK_POS.x - 36, top: RUNRIK_POS.y - 144, width:72, height:103, objectFit:"contain" }}/>
+              <div style={{ position:"absolute", zIndex:6, left: RUNRIK_POS.x - 22, top: RUNRIK_POS.y - 156, color:"#8090f0", fontSize:8, fontWeight:800, letterSpacing:1, pointerEvents:"none", textShadow:"0 0 4px #000,0 0 8px #000" }}>RUNRIK</div>
+              <img src={MAREN_IMG} alt="Maren" style={{ position:"absolute", imageRendering:"auto", pointerEvents:"none", zIndex:5, left: MAREN_POS.x - 36, top: MAREN_POS.y - 144, width:72, height:103, objectFit:"contain" }}/>
+              <div style={{ position:"absolute", zIndex:6, left: MAREN_POS.x - 22, top: MAREN_POS.y - 156, color:"#90c060", fontSize:8, fontWeight:800, letterSpacing:1, pointerEvents:"none", textShadow:"0 0 4px #000,0 0 8px #000" }}>MAREN</div>
               {FARM_ANIMALS.map((a, i) => (
                 <img key={i} src={a.src} alt=""
                   style={{ position:"absolute", left: a.x - 30, top: a.y - 30, width:60, height:60, objectFit:"contain", imageRendering:"auto", pointerEvents:"none", zIndex:4 }}
@@ -4854,6 +5003,47 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           <button onClick={() => setPhase(marenGifted ? "maren_idle" : "maren_d1")}
             style={{ position:"absolute", left: marenInteractPos.sx - 14, top: marenInteractPos.sy - 10, width:28, height:28, borderRadius:"50%", background:"#90c060", border:"2px solid #fff", color:"#fff", fontSize:16, fontWeight:900, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite", zIndex:10 }}
           >!</button>
+        )}
+
+        {/* ── INTERACT BUTTONS — Clearbell Town NPCs ───────────────────── */}
+        {(scene === "town" || scene === "town_left" || scene === "town_right") && (
+          <>
+            {scene === "town" && nearBerryVendor && phase === "walk" && (
+              <button onClick={() => setPhase("berry_vendor_d1")}
+                style={{ position:"absolute", left: berryVendorInteractPos.sx - 14, top: berryVendorInteractPos.sy - 10, width:28, height:28, borderRadius:"50%", background:"#e85080", border:"2px solid #fff", color:"#fff", fontSize:16, fontWeight:900, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite", zIndex:10 }}
+              >!</button>
+            )}
+            {scene === "town" && nearShellVendor && phase === "walk" && (
+              <button onClick={() => setPhase("shell_vendor_d1")}
+                style={{ position:"absolute", left: shellVendorInteractPos.sx - 14, top: shellVendorInteractPos.sy - 10, width:28, height:28, borderRadius:"50%", background:"#50b8e8", border:"2px solid #fff", color:"#fff", fontSize:16, fontWeight:900, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite", zIndex:10 }}
+              >!</button>
+            )}
+            {scene === "town" && nearTownKid && phase === "walk" && (
+              <button onClick={() => setPhase("town_kid_d1")}
+                style={{ position:"absolute", left: townKidInteractPos.sx - 14, top: townKidInteractPos.sy - 10, width:28, height:28, borderRadius:"50%", background:"#ffd84a", border:"2px solid #fff", color:"#222", fontSize:16, fontWeight:900, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite", zIndex:10 }}
+              >!</button>
+            )}
+            {scene === "town" && nearTownScholar && phase === "walk" && (
+              <button onClick={() => setPhase("town_scholar_d1")}
+                style={{ position:"absolute", left: townScholarInteractPos.sx - 14, top: townScholarInteractPos.sy - 10, width:28, height:28, borderRadius:"50%", background:"#a070e8", border:"2px solid #fff", color:"#fff", fontSize:16, fontWeight:900, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite", zIndex:10 }}
+              >!</button>
+            )}
+            {scene === "town_left" && nearBlacksmith && phase === "walk" && (
+              <button onClick={() => setPhase("blacksmith_d1")}
+                style={{ position:"absolute", left: blacksmithInteractPos.sx - 14, top: blacksmithInteractPos.sy - 10, width:28, height:28, borderRadius:"50%", background:"#f07020", border:"2px solid #fff", color:"#fff", fontSize:16, fontWeight:900, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite", zIndex:10 }}
+              >!</button>
+            )}
+            {scene === "town_left" && nearTownElder && phase === "walk" && (
+              <button onClick={() => setPhase("town_elder_d1")}
+                style={{ position:"absolute", left: townElderInteractPos.sx - 14, top: townElderInteractPos.sy - 10, width:28, height:28, borderRadius:"50%", background:"#c8a850", border:"2px solid #fff", color:"#fff", fontSize:16, fontWeight:900, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite", zIndex:10 }}
+              >!</button>
+            )}
+            {scene === "town_right" && nearRuneVendor && phase === "walk" && (
+              <button onClick={() => setPhase("rune_vendor_d1")}
+                style={{ position:"absolute", left: runeVendorInteractPos.sx - 14, top: runeVendorInteractPos.sy - 10, width:28, height:28, borderRadius:"50%", background:"#30c890", border:"2px solid #fff", color:"#fff", fontSize:16, fontWeight:900, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", animation:"bounce 0.7s ease-in-out infinite", zIndex:10 }}
+              >!</button>
+            )}
+          </>
         )}
 
         {/* ── INTERACT BUTTON — Prof. Irwyn (Tidemark Shore) ──────────── */}
@@ -5409,6 +5599,108 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                 advanceDialog(phase);
               }} style={{ background:"rgba(144,192,96,0.15)", border:"1px solid rgba(144,192,96,0.5)", color:"#90c060", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}>
                 {phase === "maren_d2" && !marenGifted ? "Meet Cruci! ✦" : phase === "maren_done" || phase === "maren_idle" ? "OK" : "Next ▶"}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── CLEARBELL TOWN NPC DIALOGUES ────────────────────────────────── */}
+        {(phase === "blacksmith_d1" || phase === "blacksmith_d2" || phase === "blacksmith_idle") && (
+          <div style={{ position:"absolute", bottom:0, left:0, right:0, background:"linear-gradient(to top,rgba(18,8,2,0.97),rgba(24,12,4,0.93))", borderTop:"2px solid rgba(240,112,32,0.6)", padding:"10px 14px 14px", zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+              <img src={BLACKSMITH_IMG} alt="Darro" style={{ width:44, height:63, borderRadius:8, objectFit:"contain", border:"1px solid rgba(240,112,32,0.4)" }}/>
+              <span style={{ color:"#f07020", fontWeight:700, fontSize:13, letterSpacing:1 }}>DARRO</span>
+              <span style={{ marginLeft:"auto", color:"#f0c830", fontSize:11, fontWeight:700 }}>₡{primeriaCoin}</span>
+            </div>
+            <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>{LINES[phase]}</p>
+            <div style={{ display:"flex", justifyContent:"flex-end" }}>
+              <button onClick={() => advanceDialog(phase)} style={{ background:"rgba(240,112,32,0.15)", border:"1px solid rgba(240,112,32,0.5)", color:"#f07020", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}>
+                {phase === "blacksmith_d2" ? "See Gear ▶" : phase === "blacksmith_idle" ? "OK" : "Next ▶"}
+              </button>
+            </div>
+          </div>
+        )}
+        {(phase === "berry_vendor_d1" || phase === "berry_vendor_idle") && (
+          <div style={{ position:"absolute", bottom:0, left:0, right:0, background:"linear-gradient(to top,rgba(20,4,10,0.97),rgba(26,6,14,0.93))", borderTop:"2px solid rgba(232,80,128,0.6)", padding:"10px 14px 14px", zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+              <img src={BERRY_VENDOR_IMG} alt="Nessa" style={{ width:44, height:63, borderRadius:8, objectFit:"contain", border:"1px solid rgba(232,80,128,0.4)" }}/>
+              <span style={{ color:"#e85080", fontWeight:700, fontSize:13, letterSpacing:1 }}>NESSA</span>
+              <span style={{ marginLeft:"auto", color:"#f0c830", fontSize:11, fontWeight:700 }}>₡{primeriaCoin}</span>
+            </div>
+            <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>{LINES[phase]}</p>
+            <div style={{ display:"flex", justifyContent:"flex-end" }}>
+              <button onClick={() => advanceDialog(phase)} style={{ background:"rgba(232,80,128,0.15)", border:"1px solid rgba(232,80,128,0.5)", color:"#e85080", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}>
+                {phase === "berry_vendor_d1" ? "Browse Berries ▶" : "OK"}
+              </button>
+            </div>
+          </div>
+        )}
+        {(phase === "shell_vendor_d1" || phase === "shell_vendor_idle") && (
+          <div style={{ position:"absolute", bottom:0, left:0, right:0, background:"linear-gradient(to top,rgba(4,14,22,0.97),rgba(6,18,28,0.93))", borderTop:"2px solid rgba(80,184,232,0.6)", padding:"10px 14px 14px", zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+              <img src={SHELL_VENDOR_IMG} alt="Brynn" style={{ width:44, height:63, borderRadius:8, objectFit:"contain", border:"1px solid rgba(80,184,232,0.4)" }}/>
+              <span style={{ color:"#50b8e8", fontWeight:700, fontSize:13, letterSpacing:1 }}>BRYNN</span>
+              <span style={{ marginLeft:"auto", color:"#f0c830", fontSize:11, fontWeight:700 }}>₡{primeriaCoin}</span>
+            </div>
+            <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>{LINES[phase]}</p>
+            <div style={{ display:"flex", justifyContent:"flex-end" }}>
+              <button onClick={() => advanceDialog(phase)} style={{ background:"rgba(80,184,232,0.15)", border:"1px solid rgba(80,184,232,0.5)", color:"#50b8e8", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}>
+                {phase === "shell_vendor_d1" ? "Browse Shells ▶" : "OK"}
+              </button>
+            </div>
+          </div>
+        )}
+        {(phase === "rune_vendor_d1" || phase === "rune_vendor_idle") && (
+          <div style={{ position:"absolute", bottom:0, left:0, right:0, background:"linear-gradient(to top,rgba(4,20,14,0.97),rgba(6,26,18,0.93))", borderTop:"2px solid rgba(48,200,144,0.6)", padding:"10px 14px 14px", zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+              <img src={RUNE_VENDOR_IMG} alt="Kaela" style={{ width:44, height:63, borderRadius:8, objectFit:"contain", border:"1px solid rgba(48,200,144,0.4)" }}/>
+              <span style={{ color:"#30c890", fontWeight:700, fontSize:13, letterSpacing:1 }}>KAELA</span>
+              <span style={{ marginLeft:"auto", color:"#f0c830", fontSize:11, fontWeight:700 }}>₡{primeriaCoin}</span>
+            </div>
+            <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>{LINES[phase]}</p>
+            <div style={{ display:"flex", justifyContent:"flex-end" }}>
+              <button onClick={() => advanceDialog(phase)} style={{ background:"rgba(48,200,144,0.15)", border:"1px solid rgba(48,200,144,0.5)", color:"#30c890", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}>
+                {phase === "rune_vendor_d1" ? "Browse Runes ▶" : "OK"}
+              </button>
+            </div>
+          </div>
+        )}
+        {(phase === "town_kid_d1" || phase === "town_kid_idle") && (
+          <div style={{ position:"absolute", bottom:0, left:0, right:0, background:"linear-gradient(to top,rgba(14,12,2,0.97),rgba(20,16,4,0.93))", borderTop:"2px solid rgba(255,216,74,0.6)", padding:"10px 14px 14px", zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+              <img src={TOWN_KID_IMG} alt="Kid" style={{ width:44, height:63, borderRadius:8, objectFit:"contain", border:"1px solid rgba(255,216,74,0.4)" }}/>
+              <span style={{ color:"#ffd84a", fontWeight:700, fontSize:13, letterSpacing:1 }}>CLEARBELL KID</span>
+            </div>
+            <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>{LINES[phase]}</p>
+            <div style={{ display:"flex", justifyContent:"flex-end" }}>
+              <button onClick={() => advanceDialog(phase)} style={{ background:"rgba(255,216,74,0.15)", border:"1px solid rgba(255,216,74,0.5)", color:"#ffd84a", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}>OK</button>
+            </div>
+          </div>
+        )}
+        {(phase === "town_scholar_d1" || phase === "town_scholar_d2" || phase === "town_scholar_idle") && (
+          <div style={{ position:"absolute", bottom:0, left:0, right:0, background:"linear-gradient(to top,rgba(10,4,20,0.97),rgba(14,6,26,0.93))", borderTop:"2px solid rgba(160,112,232,0.6)", padding:"10px 14px 14px", zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+              <img src={TOWN_SCHOLAR_IMG} alt="Scholar" style={{ width:44, height:63, borderRadius:8, objectFit:"contain", border:"1px solid rgba(160,112,232,0.4)" }}/>
+              <span style={{ color:"#a070e8", fontWeight:700, fontSize:13, letterSpacing:1 }}>SCHOLAR</span>
+            </div>
+            <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>{LINES[phase]}</p>
+            <div style={{ display:"flex", justifyContent:"flex-end" }}>
+              <button onClick={() => advanceDialog(phase)} style={{ background:"rgba(160,112,232,0.15)", border:"1px solid rgba(160,112,232,0.5)", color:"#a070e8", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}>
+                {phase === "town_scholar_idle" ? "OK" : "Next ▶"}
+              </button>
+            </div>
+          </div>
+        )}
+        {(phase === "town_elder_d1" || phase === "town_elder_d2" || phase === "town_elder_idle") && (
+          <div style={{ position:"absolute", bottom:0, left:0, right:0, background:"linear-gradient(to top,rgba(14,10,2,0.97),rgba(20,14,4,0.93))", borderTop:"2px solid rgba(200,168,80,0.6)", padding:"10px 14px 14px", zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+              <img src={TOWN_ELDER_IMG} alt="Elder" style={{ width:44, height:63, borderRadius:8, objectFit:"contain", border:"1px solid rgba(200,168,80,0.4)" }}/>
+              <span style={{ color:"#c8a850", fontWeight:700, fontSize:13, letterSpacing:1 }}>CLEARBELL ELDER</span>
+            </div>
+            <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>{LINES[phase]}</p>
+            <div style={{ display:"flex", justifyContent:"flex-end" }}>
+              <button onClick={() => advanceDialog(phase)} style={{ background:"rgba(200,168,80,0.15)", border:"1px solid rgba(200,168,80,0.5)", color:"#c8a850", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}>
+                {phase === "town_elder_idle" ? "OK" : "Next ▶"}
               </button>
             </div>
           </div>
@@ -7591,32 +7883,46 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                 {/* ── GUIDE PAGE ──────────────────────────────── */}
                 {/* ── EQUIPMENT PAGE ───────────────────────────────── */}
                 {journalTab === "equipment" && (() => {
-                  const slots = [
+                  const slots: { id: GearSlot; slot: string; icon: string; label: string }[] = [
                     { id:"headband",  slot:"Head",    icon:"🎩", label:"Headband" },
                     { id:"armor",     slot:"Body",    icon:"🥼", label:"Armor" },
                     { id:"wristband", slot:"Wrists",  icon:"🪬", label:"Wristband" },
                     { id:"shoes",     slot:"Feet",    icon:"👟", label:"Shoes" },
-                  ] as const;
+                    { id:"backpack",  slot:"Pack",    icon:"🎒", label:"Backpack" },
+                  ];
                   return (
                     <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                      {/* Keeper label strip */}
-                      <div style={{ textAlign:"center", padding:"4px 0 10px", color:"#8a5c22", fontSize:9, fontWeight:800, letterSpacing:2.5 }}>
-                        KEEPER LOADOUT
-                      </div>
-
-                      {/* Empty gear slots */}
-                      {slots.map(eq => (
-                        <div key={eq.id} style={{ display:"flex", alignItems:"center", gap:11, padding:"9px 12px", borderRadius:10, background:"rgba(60,40,10,0.04)", border:"1.5px dashed rgba(100,64,20,0.20)" }}>
-                          <div style={{ width:38, height:38, borderRadius:8, background:"rgba(60,40,10,0.06)", border:"1.5px dashed rgba(100,64,20,0.22)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:17, flexShrink:0 }}>
-                            {eq.icon}
+                      <div style={{ textAlign:"center", padding:"4px 0 10px", color:"#8a5c22", fontSize:9, fontWeight:800, letterSpacing:2.5 }}>KEEPER LOADOUT</div>
+                      {slots.map(eq => {
+                        const equippedId = equippedGear[eq.id] ?? null;
+                        const equippedItem = equippedId ? GEAR_BY_ID[equippedId] : null;
+                        const owned = ownedGearIds.filter(id => { const g = GEAR_BY_ID[id]; return g && g.slot === eq.id; });
+                        return (
+                          <div key={eq.id} style={{ display:"flex", alignItems:"center", gap:11, padding:"9px 12px", borderRadius:10, background: equippedItem ? "rgba(60,120,40,0.07)" : "rgba(60,40,10,0.04)", border:`1.5px ${equippedItem ? "solid rgba(60,160,60,0.35)" : "dashed rgba(100,64,20,0.20)"}` }}>
+                            <div style={{ width:38, height:38, borderRadius:8, background: equippedItem ? "rgba(40,120,40,0.12)" : "rgba(60,40,10,0.06)", border:`1.5px ${equippedItem ? "solid rgba(60,160,60,0.4)" : "dashed rgba(100,64,20,0.22)"}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:17, flexShrink:0 }}>
+                              {eq.icon}
+                            </div>
+                            <div style={{ flex:1, minWidth:0 }}>
+                              <div style={{ color: equippedItem ? "#3a8040" : "#8a5c22", fontSize:8, fontWeight:800, letterSpacing:1.8, textTransform:"uppercase" }}>{eq.slot}</div>
+                              <div style={{ color:"#2a1206", fontWeight:700, fontSize:11, marginTop:2 }}>{equippedItem ? equippedItem.name : eq.label}</div>
+                              <div style={{ fontSize:9, marginTop:2, color: equippedItem ? "#3a9050" : "rgba(100,64,20,0.38)", fontStyle: equippedItem ? "normal" : "italic" }}>
+                                {equippedItem ? equippedItem.flavor : owned.length > 0 ? `${owned.length} owned` : "— Empty —"}
+                              </div>
+                            </div>
+                            {owned.length > 0 && (
+                              <div style={{ display:"flex", flexDirection:"column", gap:3, flexShrink:0 }}>
+                                {equippedId && (
+                                  <button onClick={() => { const ng = { ...equippedGear, [eq.id]: null }; setEquippedGear(ng); localStorage.setItem("primeria_gear", JSON.stringify(ng)); }} style={{ background:"rgba(180,40,40,0.10)", border:"1px solid rgba(180,60,60,0.5)", color:"#c05050", padding:"4px 9px", borderRadius:6, fontSize:9, fontWeight:700, cursor:"pointer" }}>Remove</button>
+                                )}
+                                {!equippedId && owned.length > 0 && (() => {
+                                  const g = GEAR_BY_ID[owned[0]];
+                                  return g ? <button onClick={() => { const ng = { ...equippedGear, [eq.id]: owned[0] }; setEquippedGear(ng); localStorage.setItem("primeria_gear", JSON.stringify(ng)); }} style={{ background:"rgba(40,120,40,0.12)", border:"1px solid rgba(60,160,60,0.5)", color:"#3a8040", padding:"4px 9px", borderRadius:6, fontSize:9, fontWeight:700, cursor:"pointer" }}>Equip</button> : null;
+                                })()}
+                              </div>
+                            )}
                           </div>
-                          <div style={{ flex:1 }}>
-                            <div style={{ color:"#8a5c22", fontSize:8, fontWeight:800, letterSpacing:1.8, textTransform:"uppercase" }}>{eq.slot}</div>
-                            <div style={{ color:"#2a1206", fontWeight:700, fontSize:11, marginTop:2 }}>{eq.label}</div>
-                            <div style={{ color:"rgba(100,64,20,0.38)", fontSize:9, marginTop:2, fontStyle:"italic" }}>— Empty —</div>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
 
                       {/* Divider */}
                       <div style={{ display:"flex", alignItems:"center", gap:8, margin:"4px 0" }}>
@@ -7627,9 +7933,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
 
                       {/* Resonance Stone slot — live state */}
                       <div style={{ display:"flex", alignItems:"center", gap:11, padding:"10px 12px", borderRadius:10, background: resonanceStoneEquipped ? "rgba(40,70,180,0.07)" : "rgba(60,40,10,0.04)", border:`1.5px solid ${resonanceStoneEquipped ? "rgba(80,110,220,0.35)" : "rgba(100,64,20,0.22)"}` }}>
-                        <div style={{ width:38, height:38, borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, fontSize:20, background: resonanceStoneEquipped ? "rgba(60,90,220,0.12)" : "rgba(60,40,10,0.06)", border:`1.5px solid ${resonanceStoneEquipped ? "rgba(80,110,220,0.4)" : "rgba(100,64,20,0.22)"}` }}>
-                          ◈
-                        </div>
+                        <div style={{ width:38, height:38, borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, fontSize:20, background: resonanceStoneEquipped ? "rgba(60,90,220,0.12)" : "rgba(60,40,10,0.06)", border:`1.5px solid ${resonanceStoneEquipped ? "rgba(80,110,220,0.4)" : "rgba(100,64,20,0.22)"}` }}>◈</div>
                         <div style={{ flex:1 }}>
                           <div style={{ color: resonanceStoneEquipped ? "#3d5db0" : "#8a5c22", fontSize:8, fontWeight:800, letterSpacing:1.8, textTransform:"uppercase" }}>Resonance Slot</div>
                           <div style={{ color:"#2a1206", fontWeight:700, fontSize:11, marginTop:2 }}>Resonance Stone</div>
@@ -7638,17 +7942,17 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                           </div>
                         </div>
                         {hasResonanceStone && (
-                          <button
-                            onClick={() => setResonanceStoneEquipped(e => !e)}
+                          <button onClick={() => setResonanceStoneEquipped(e => !e)}
                             style={{ background: resonanceStoneEquipped ? "rgba(180,40,40,0.10)" : "rgba(60,90,200,0.12)", border:`1px solid ${resonanceStoneEquipped ? "rgba(180,60,60,0.5)" : "rgba(60,90,200,0.5)"}`, color: resonanceStoneEquipped ? "#c05050" : "#4060c0", padding:"5px 11px", borderRadius:7, fontSize:10, fontWeight:700, cursor:"pointer", flexShrink:0 }}
                           >{resonanceStoneEquipped ? "Remove" : "Equip"}</button>
                         )}
                       </div>
 
-                      {/* Coming soon note */}
-                      <div style={{ textAlign:"center", color:"rgba(100,64,20,0.35)", fontSize:8, fontStyle:"italic", marginTop:6, letterSpacing:0.5 }}>
-                        More equipment drops as you explore the world.
-                      </div>
+                      {ownedGearIds.length === 0 && (
+                        <div style={{ textAlign:"center", color:"rgba(100,64,20,0.35)", fontSize:8, fontStyle:"italic", marginTop:6, letterSpacing:0.5 }}>
+                          Visit the blacksmith in Clearbell Town to purchase gear.
+                        </div>
+                      )}
                     </div>
                   );
                 })()}
@@ -7845,6 +8149,140 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             }} style={{ background:"rgba(128,144,240,0.2)", border:"1.5px solid #8090f0", color:"#8090f0", padding:"8px 28px", borderRadius:10, fontSize:13, fontWeight:800, cursor:"pointer" }}>
               {slottedBattleRuneId ? "Slot Rune ✓" : "Close"}
             </button>
+          </div>
+        )}
+
+        {/* ── CLEARBELL SHOP OVERLAYS ──────────────────────────────────────── */}
+        {activeShop === "blacksmith" && (
+          <div style={{ position:"absolute", inset:0, zIndex:90, background:"rgba(8,4,2,0.95)", display:"flex", flexDirection:"column", alignItems:"center", padding:"16px 14px 20px", overflowY:"auto" }}>
+            <div style={{ color:"#f07020", fontWeight:900, fontSize:16, letterSpacing:1, marginBottom:4 }}>🔨 Darro's Forge</div>
+            <div style={{ color:"#c8a880", fontSize:10, marginBottom:4, textAlign:"center" }}>Keeper gear — forged in Clearbell</div>
+            <div style={{ color:"#f0c830", fontSize:12, fontWeight:800, marginBottom:14 }}>Your coins: ₡{primeriaCoin}</div>
+            <div style={{ display:"flex", flexDirection:"column", gap:8, width:"100%", maxWidth:360, marginBottom:16 }}>
+              {GEAR_ITEMS.map(g => {
+                const owned = ownedGearIds.includes(g.id);
+                const canAfford = primeriaCoin >= g.price;
+                return (
+                  <div key={g.id} style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 12px", borderRadius:10, background: owned ? "rgba(40,120,40,0.12)" : "rgba(255,255,255,0.04)", border:`1.5px solid ${owned ? "rgba(60,160,60,0.4)" : "rgba(240,112,32,0.25)"}` }}>
+                    <div style={{ flex:1 }}>
+                      <div style={{ color: owned ? "#60c060" : "#e8c090", fontWeight:800, fontSize:12 }}>{g.icon} {g.name}{owned ? " ✓" : ""}</div>
+                      <div style={{ color:"#a08060", fontSize:9, marginTop:1 }}>{g.slot} · {g.flavor}</div>
+                    </div>
+                    <div style={{ textAlign:"right", flexShrink:0 }}>
+                      {owned ? (
+                        <span style={{ color:"#50a050", fontSize:10, fontWeight:700 }}>Owned</span>
+                      ) : (
+                        <button onClick={() => {
+                          if (!canAfford) return;
+                          setPrimeriaCoin(c => c - g.price);
+                          setOwnedGearIds(ids => [...ids, g.id]);
+                          localStorage.setItem("primeria_owned_gear", JSON.stringify([...ownedGearIds, g.id]));
+                        }} disabled={!canAfford} style={{ background: canAfford ? "rgba(240,112,32,0.2)" : "rgba(80,60,40,0.1)", border:`1px solid ${canAfford ? "rgba(240,112,32,0.6)" : "rgba(80,60,40,0.3)"}`, color: canAfford ? "#f07020" : "#604030", padding:"5px 10px", borderRadius:7, fontSize:10, fontWeight:800, cursor: canAfford ? "pointer" : "not-allowed" }}>
+                          ₡{g.price}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <button onClick={() => setActiveShop(null)} style={{ background:"rgba(240,112,32,0.15)", border:"1.5px solid rgba(240,112,32,0.5)", color:"#f07020", padding:"8px 28px", borderRadius:10, fontSize:13, fontWeight:800, cursor:"pointer" }}>Close</button>
+          </div>
+        )}
+        {activeShop === "berries" && (
+          <div style={{ position:"absolute", inset:0, zIndex:90, background:"rgba(8,2,4,0.95)", display:"flex", flexDirection:"column", alignItems:"center", padding:"16px 14px 20px", overflowY:"auto" }}>
+            <div style={{ color:"#e85080", fontWeight:900, fontSize:16, letterSpacing:1, marginBottom:4 }}>🍓 Nessa's Berry Stall</div>
+            <div style={{ color:"#c8a0b0", fontSize:10, marginBottom:4, textAlign:"center" }}>Fresh-picked Clearbell berries — field-grade</div>
+            <div style={{ color:"#f0c830", fontSize:12, fontWeight:800, marginBottom:14 }}>Your coins: ₡{primeriaCoin}</div>
+            <div style={{ display:"flex", flexDirection:"column", gap:8, width:"100%", maxWidth:360, marginBottom:16 }}>
+              {CLEARBELL_BERRIES.map(b => {
+                const count = b.id === "heartberry" ? heartberries : b.id === "blazeberry" ? blazeberries : b.id === "shellberry" ? shellberries : b.id === "flashberry" ? flashberries : b.id === "wakeberry" ? wakeberries : fullblooms;
+                const canAfford = primeriaCoin >= b.price;
+                const set = b.id === "heartberry" ? setHeartberries : b.id === "blazeberry" ? setBlazeberries : b.id === "shellberry" ? setShellberries : b.id === "flashberry" ? setFlashberries : b.id === "wakeberry" ? setWakeberries : setFullblooms;
+                return (
+                  <div key={b.id} style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 12px", borderRadius:10, background:"rgba(255,255,255,0.04)", border:"1.5px solid rgba(232,80,128,0.25)" }}>
+                    <div style={{ flex:1 }}>
+                      <div style={{ color:"#e8a0b8", fontWeight:800, fontSize:12 }}>{b.icon} {b.name} <span style={{ color:"#80c080", fontSize:10 }}>(×{count})</span></div>
+                      <div style={{ color:"#a08090", fontSize:9, marginTop:1 }}>{b.desc}</div>
+                    </div>
+                    <button onClick={() => {
+                      if (!canAfford) return;
+                      setPrimeriaCoin(c => c - b.price);
+                      set((n: number) => n + 1);
+                    }} disabled={!canAfford} style={{ background: canAfford ? "rgba(232,80,128,0.18)" : "rgba(80,40,50,0.1)", border:`1px solid ${canAfford ? "rgba(232,80,128,0.6)" : "rgba(80,40,50,0.3)"}`, color: canAfford ? "#e85080" : "#604050", padding:"5px 10px", borderRadius:7, fontSize:10, fontWeight:800, cursor: canAfford ? "pointer" : "not-allowed", flexShrink:0 }}>
+                      ₡{b.price}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+            <button onClick={() => setActiveShop(null)} style={{ background:"rgba(232,80,128,0.15)", border:"1.5px solid rgba(232,80,128,0.5)", color:"#e85080", padding:"8px 28px", borderRadius:10, fontSize:13, fontWeight:800, cursor:"pointer" }}>Close</button>
+          </div>
+        )}
+        {activeShop === "shells" && (
+          <div style={{ position:"absolute", inset:0, zIndex:90, background:"rgba(2,6,12,0.95)", display:"flex", flexDirection:"column", alignItems:"center", padding:"16px 14px 20px", overflowY:"auto" }}>
+            <div style={{ color:"#50b8e8", fontWeight:900, fontSize:16, letterSpacing:1, marginBottom:4 }}>🐚 Brynn's Shell Counter</div>
+            <div style={{ color:"#80b0d0", fontSize:10, marginBottom:4, textAlign:"center" }}>Clearbell Shells — higher resonance for better bonds</div>
+            <div style={{ color:"#f0c830", fontSize:12, fontWeight:800, marginBottom:14 }}>Your coins: ₡{primeriaCoin}</div>
+            <div style={{ display:"flex", flexDirection:"column", gap:8, width:"100%", maxWidth:360, marginBottom:16 }}>
+              {CLEARBELL_SHELLS.map(s => {
+                const count = ownedClearbellShellIds.filter(id => id === s.id).length;
+                const canAfford = primeriaCoin >= s.price;
+                return (
+                  <div key={s.id} style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 12px", borderRadius:10, background:"rgba(255,255,255,0.04)", border:"1.5px solid rgba(80,184,232,0.25)" }}>
+                    <div style={{ flex:1 }}>
+                      <div style={{ color:"#80c8e8", fontWeight:800, fontSize:12 }}>{s.icon} {s.name} <span style={{ color:"#80c080", fontSize:10 }}>(×{count})</span></div>
+                      <div style={{ color:"#6090a0", fontSize:9, marginTop:1 }}>{s.desc}</div>
+                    </div>
+                    <button onClick={() => {
+                      if (!canAfford) return;
+                      setPrimeriaCoin(c => c - s.price);
+                      setOwnedClearbellShellIds(ids => [...ids, s.id]);
+                      localStorage.setItem("primeria_cshells", JSON.stringify([...ownedClearbellShellIds, s.id]));
+                    }} disabled={!canAfford} style={{ background: canAfford ? "rgba(80,184,232,0.18)" : "rgba(30,50,70,0.1)", border:`1px solid ${canAfford ? "rgba(80,184,232,0.6)" : "rgba(30,50,70,0.3)"}`, color: canAfford ? "#50b8e8" : "#304050", padding:"5px 10px", borderRadius:7, fontSize:10, fontWeight:800, cursor: canAfford ? "pointer" : "not-allowed", flexShrink:0 }}>
+                      ₡{s.price}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+            <button onClick={() => setActiveShop(null)} style={{ background:"rgba(80,184,232,0.15)", border:"1.5px solid rgba(80,184,232,0.5)", color:"#50b8e8", padding:"8px 28px", borderRadius:10, fontSize:13, fontWeight:800, cursor:"pointer" }}>Close</button>
+          </div>
+        )}
+        {activeShop === "runes" && (
+          <div style={{ position:"absolute", inset:0, zIndex:90, background:"rgba(2,10,6,0.95)", display:"flex", flexDirection:"column", alignItems:"center", padding:"16px 14px 20px", overflowY:"auto" }}>
+            <div style={{ color:"#30c890", fontWeight:900, fontSize:16, letterSpacing:1, marginBottom:4 }}>✦ Kaela's Rune Workshop</div>
+            <div style={{ color:"#70b098", fontSize:10, marginBottom:4, textAlign:"center" }}>Clearbell Runes — field-verified, battle-ready</div>
+            <div style={{ color:"#f0c830", fontSize:12, fontWeight:800, marginBottom:14 }}>Your coins: ₡{primeriaCoin}</div>
+            <div style={{ display:"flex", flexDirection:"column", gap:8, width:"100%", maxWidth:360, marginBottom:16 }}>
+              {CLEARBELL_RUNES.map(r => {
+                const owned = ownedClearbellRuneIds.includes(r.id);
+                const canAfford = primeriaCoin >= r.price;
+                return (
+                  <div key={r.id} style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 12px", borderRadius:10, background: owned ? "rgba(40,120,60,0.12)" : "rgba(255,255,255,0.04)", border:`1.5px solid ${owned ? "rgba(48,200,144,0.4)" : "rgba(48,200,144,0.22)"}` }}>
+                    <div style={{ flex:1 }}>
+                      <div style={{ color: owned ? "#60d090" : "#80d0a8", fontWeight:800, fontSize:12 }}>{r.icon} {r.name}{owned ? " ✓" : ""}</div>
+                      <div style={{ color:"#508068", fontSize:9, marginTop:1 }}>{r.desc}</div>
+                    </div>
+                    <div style={{ flexShrink:0 }}>
+                      {owned ? (
+                        <span style={{ color:"#50a070", fontSize:10, fontWeight:700 }}>Owned</span>
+                      ) : (
+                        <button onClick={() => {
+                          if (!canAfford) return;
+                          setPrimeriaCoin(c => c - r.price);
+                          setOwnedClearbellRuneIds(ids => [...ids, r.id]);
+                          localStorage.setItem("primeria_crunes", JSON.stringify([...ownedClearbellRuneIds, r.id]));
+                        }} disabled={!canAfford} style={{ background: canAfford ? "rgba(48,200,144,0.18)" : "rgba(20,50,30,0.1)", border:`1px solid ${canAfford ? "rgba(48,200,144,0.6)" : "rgba(20,50,30,0.3)"}`, color: canAfford ? "#30c890" : "#204030", padding:"5px 10px", borderRadius:7, fontSize:10, fontWeight:800, cursor: canAfford ? "pointer" : "not-allowed" }}>
+                          ₡{r.price}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <button onClick={() => setActiveShop(null)} style={{ background:"rgba(48,200,144,0.15)", border:"1.5px solid rgba(48,200,144,0.5)", color:"#30c890", padding:"8px 28px", borderRadius:10, fontSize:13, fontWeight:800, cursor:"pointer" }}>Close</button>
           </div>
         )}
 
