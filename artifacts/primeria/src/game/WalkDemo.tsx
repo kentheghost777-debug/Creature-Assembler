@@ -941,9 +941,9 @@ const FARMER_SOLIDS: Rect[] = [FARMER_R2_BOX];
 // ── Primeria Farm (north of Route 2) ─────────────────────────────────────────
 const FARM = { w: 1376, h: 768 };                    // matches farm-bg.png native aspect (no crop)
 const FARM_SPAWN    = { x: 679, y: 713 };           // entering from Route 2 (south)
-const R2_FARM_EXIT: Rect  = [520, 0, 780, 40];       // Route 2 north cliff stairs → farm
-const FARM_RETURN_R2: Rect = [933, 664, 993, 694];   // south-east farm path → Route 2 (player pos 963,679)
-const FARM_TOWN_EXIT: Rect   = [540,  0, 836, 30];  // farm north road → Town Hub
+let R2_FARM_EXIT: Rect  = ld("r2_farm",    [520, 0, 780, 40]);      // Route 2 north cliff stairs → farm
+let FARM_RETURN_R2: Rect = ld("farm_r2",   [933, 664, 993, 694]);  // south-east farm path → Route 2
+let FARM_TOWN_EXIT: Rect  = ld("farm_town", [540,  0, 836, 30]);   // farm north road → Town Hub
 
 // ── Town Hub & Wings ─────────────────────────────────────────────────────────
 const TOWN   = { w: 1536, h: 864 };
@@ -952,9 +952,9 @@ const TOWN_R = { w: 1536, h: 864 };
 const TOWN_FARM_SPAWN  = { x: 768, y: 810 };   // enter town from farm (south path)
 const TOWN_FROM_LEFT   = { x: 80,  y: 432 };   // enter town center from left wing
 const TOWN_FROM_RIGHT  = { x: 1456, y: 432 };  // enter town center from right wing
-const TOWN_SOUTH_EXIT: Rect = [640, 840, 896, 864];  // town center south → farm
-const TOWN_WEST_EXIT: Rect  = [0,   280, 30,  580];  // town center west  → left wing
-const TOWN_EAST_EXIT: Rect  = [1506, 280, 1536, 580]; // town center east → right wing
+let TOWN_SOUTH_EXIT: Rect = ld("town_south", [640, 810, 896, 864]);  // town center south → farm (y=810 for easier reach)
+let TOWN_WEST_EXIT: Rect  = ld("town_west",  [0,   280, 30,  580]);  // town center west  → left wing
+let TOWN_EAST_EXIT: Rect  = ld("town_east",  [1506, 280, 1536, 580]); // town center east → right wing
 const TL_EAST_EXIT: Rect    = [1506, 280, 1536, 580]; // left wing east  → town center
 const TL_SPAWN = { x: 1456, y: 432 };   // spawn in left wing (arriving from east)
 const TR_WEST_EXIT: Rect    = [0,   280, 30,  580];  // right wing west → town center
@@ -1449,6 +1449,12 @@ const DOOR_LIST: DoorEntry[] = [
   { key: "jay_exit",   name: "Jay Exit",   scene: "jay",       glowDef: true,  get: () => JAY_HOME_EXIT,       set: (r) => { JAY_HOME_EXIT = r; } },
   { key: "ellio_exit", name: "Ellio Exit", scene: "ellio",     glowDef: true,  get: () => ELLIO_HOME_EXIT,     set: (r) => { ELLIO_HOME_EXIT = r; } },
   { key: "lab_exit",   name: "Lab Exit",   scene: "lab",       glowDef: true,  get: () => LAB_EXIT,            set: (r) => { LAB_EXIT = r; } },
+  { key: "r2_farm",    name: "R2→Farm",    scene: "route2",    glowDef: true,  get: () => R2_FARM_EXIT,         set: (r) => { R2_FARM_EXIT = r; } },
+  { key: "farm_r2",    name: "Farm→R2",    scene: "farm",      glowDef: true,  get: () => FARM_RETURN_R2,       set: (r) => { FARM_RETURN_R2 = r; } },
+  { key: "farm_town",  name: "Farm→Town",  scene: "farm",      glowDef: true,  get: () => FARM_TOWN_EXIT,       set: (r) => { FARM_TOWN_EXIT = r; } },
+  { key: "town_south", name: "Town→Farm",  scene: "town",      glowDef: true,  get: () => TOWN_SOUTH_EXIT,      set: (r) => { TOWN_SOUTH_EXIT = r; } },
+  { key: "town_west",  name: "Town West",  scene: "town",      glowDef: true,  get: () => TOWN_WEST_EXIT,       set: (r) => { TOWN_WEST_EXIT = r; } },
+  { key: "town_east",  name: "Town East",  scene: "town",      glowDef: true,  get: () => TOWN_EAST_EXIT,       set: (r) => { TOWN_EAST_EXIT = r; } },
 ];
 const doorGlowOn: Record<string, boolean> = {};
 DOOR_LIST.forEach((d) => { doorGlowOn[d.key] = ldGlow(d.key, d.glowDef); });
@@ -1842,6 +1848,16 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const [devCollapsed, setDevCollapsed] = useState(false);
   const [devProbe, setDevProbe] = useState<{ x: number; y: number } | null>(null);
   // ── DEV door editor: drag-to-move + glow toggle + COPY export ──────────────
+  const [glowAllOverride, setGlowAllOverride] = useState(() => {
+    try { return localStorage.getItem("primeria_dev_glow_all") === "true"; } catch { return false; }
+  });
+  const toggleGlowAll = () => {
+    setGlowAllOverride(v => {
+      const next = !v;
+      try { localStorage.setItem("primeria_dev_glow_all", next ? "true" : "false"); } catch {}
+      return next;
+    });
+  };
   const [, setDoorEditTick] = useState(0);
   const [doorCopied, setDoorCopied] = useState(false);
   const doorDragRef = useRef<{ sx: number; sy: number; orig: Rect } | null>(null);
@@ -4202,8 +4218,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             ))
           )}
 
-          {/* Door glows — always on; per-door shape preserved, toggled in DEV */}
-          {DOOR_LIST.filter((d) => d.scene === scene && doorGlowOn[d.key]).map((d) => {
+          {/* Door glows — per-door or glowAllOverride */}
+          {DOOR_LIST.filter((d) => d.scene === scene && (glowAllOverride || doorGlowOn[d.key])).map((d) => {
             const r = d.get();
             const shape = GLOW_SHAPE[d.key];
             const dw = Math.min(r[2] - r[0], 64);
@@ -9146,6 +9162,12 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           {!devCollapsed && (<>
             <div style={{ fontWeight:800, color:"#7fb0ff", marginTop:6 }}>DOOR TOOL</div>
             <div style={{ color:"#9fb0d0" }}>Drag blue boxes to move doors · tap ✦ to toggle glow per door</div>
+            <button onClick={toggleGlowAll} style={{
+              marginTop:6, padding:"5px 12px", borderRadius:6,
+              border:`1px solid ${glowAllOverride ? "#ffcf3a" : "#7fb0ff"}`,
+              background: glowAllOverride ? "#7a5800" : "rgba(20,16,4,0.7)",
+              color:"#fff", fontWeight:800, fontSize:12, fontFamily:"monospace", cursor:"pointer",
+            }}>✦ GLOW ALL: {glowAllOverride ? "ON" : "OFF"}</button>
             <button onClick={copyDoorLayout} style={{
               marginTop:6, padding:"5px 12px", borderRadius:6,
               border:"1px solid #2a78ff", background: doorCopied ? "#1f7a36" : "#2a78ff",
