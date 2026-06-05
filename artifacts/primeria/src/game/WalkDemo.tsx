@@ -1127,7 +1127,7 @@ let FARM_TOWN_EXIT: Rect  = ld("farm_town", [540,  0, 836, 30]);   // farm north
 const TOWN   = { w: 1536, h: 864 };
 const TOWN_L = { w: 1536, h: 864 };
 const TOWN_R = { w: 1536, h: 864 };
-const TOWN_FARM_SPAWN  = { x: 768, y: 810 };   // enter town from farm (south path)
+const TOWN_FARM_SPAWN  = { x: 768, y: 790 };   // enter town from farm (south path) — must be above TOWN_SOUTH_EXIT y=810
 const TOWN_FROM_LEFT   = { x: 80,  y: 432 };   // enter town center from left wing
 const TOWN_FROM_RIGHT  = { x: 1456, y: 432 };  // enter town center from right wing
 let TOWN_SOUTH_EXIT: Rect = ld("town_south", [640, 810, 896, 864]);  // town center south → farm (y=810 for easier reach)
