@@ -888,6 +888,18 @@ uri = "file://attached_assets/town_map_clean.png"
 type = "image"
 title = "fantasy town map no text"
 
+[[generated]]
+id = "HICQi1OiimD59G8ULrdAl"
+uri = "file://attached_assets/town_v2_square.png"
+type = "image"
+title = "town map square v2"
+
+[[generated]]
+id = "AvHdBC1AZeI36WirlLexL"
+uri = "file://attached_assets/town_v2_wide.png"
+type = "image"
+title = "town map wide v2"
+
 [[outputs]]
 id = "hj9mwcgl1Uv9QQTG9g6KL"
 uri = "file://kinju_walk_demo.tar.gz"
@@ -941,3 +953,15 @@ id = "EDCGJdv_-waUurU_488Mw"
 uri = "file://attached_assets/town_map_clean.png"
 type = "image"
 title = "Town Map (no labels)"
+
+[[outputs]]
+id = "-TE-999R_K7ImHph_gjO5"
+uri = "file://attached_assets/town_v2_square.png"
+type = "image"
+title = "Option A — Square (1:1, good for a compact area)"
+
+[[outputs]]
+id = "9Jfnq-d8NlfYINn7LGTXO"
+uri = "file://attached_assets/town_v2_wide.png"
+type = "image"
+title = "Option B — Wide (16:9, more space to explore)"
