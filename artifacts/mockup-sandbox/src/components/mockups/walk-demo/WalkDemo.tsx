@@ -2154,7 +2154,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     const tryDraw = () => {
       const c = jayCanvasRef.current;
       if (!c) return;
-      if (!drawSprite(c, src, false, 96)) setTimeout(tryDraw, 150);
+      if (!drawSprite(c, src, false, 64)) setTimeout(tryDraw, 150);
     };
     tryDraw();
   }, [scene]);
@@ -2305,7 +2305,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     const tryDraw = () => {
       const c = liaCanvasRef.current;
       if (!c) return;
-      if (!drawSprite(c, src, false, 96)) setTimeout(tryDraw, 150);
+      if (!drawSprite(c, src, false, 64)) setTimeout(tryDraw, 150);
     };
     tryDraw();
   }, [scene]);
@@ -4056,8 +4056,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             </>
           )}
 
-          {/* Prof Irwyn + Wyvrunt on Route 2 */}
-          {scene === "route2" && (
+          {/* Prof Irwyn + Wyvrunt on Route 2 — hidden once Wyvrunt is bonded */}
+          {scene === "route2" && !wyvruntCaught && (
             <>
               <canvas ref={profR2CanvasRef} style={{
                 position:"absolute",
@@ -5392,20 +5392,24 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                     if (phase === "scripted_set") {
                       window.setTimeout(() => setPhase("scripted_caught"), 650);
                     } else if (phase === "scripted_caught") {
-                      setWyvruntCaught(true);
-                      addCaughtMon(WYVRUNT_SPEC, true, 10); // story creature — level 10 baby form
-                      // Seed the follower beside the player so it activates in-place
-                      breadcrumbsRef.current   = [];
-                      followPosRef.current     = {
-                        x: worldPos.current.x,
-                        y: worldPos.current.y + 24,
-                      };
-                      followAnimRef.current    = "idle_down";
-                      followLastDirRef.current = "idle_down";
-                      followFrameRef.current   = 0;
-                      followFlipRef.current    = false;
-                      followLastSrc.current    = "";
-                      setPhase("walk");
+                      fadingRef.current = true; setFading(true);
+                      window.setTimeout(() => {
+                        setWyvruntCaught(true);
+                        addCaughtMon(WYVRUNT_SPEC, true, 10); // story creature — level 10 baby form
+                        // Seed the follower beside the player so it activates in-place
+                        breadcrumbsRef.current   = [];
+                        followPosRef.current     = {
+                          x: worldPos.current.x,
+                          y: worldPos.current.y + 24,
+                        };
+                        followAnimRef.current    = "idle_down";
+                        followLastDirRef.current = "idle_down";
+                        followFrameRef.current   = 0;
+                        followFlipRef.current    = false;
+                        followLastSrc.current    = "";
+                        setPhase("walk");
+                        window.setTimeout(() => { fadingRef.current = false; setFading(false); }, 450);
+                      }, 450);
                     } else {
                       advanceDialog(phase);
                     }
