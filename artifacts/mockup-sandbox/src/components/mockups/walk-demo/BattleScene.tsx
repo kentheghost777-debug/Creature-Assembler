@@ -19,6 +19,27 @@ function typeColor(type: string): string {
   return (ELEMENT_COLOR as Record<string, string>)[type] ?? "#ffe080";
 }
 
+// Evolution-chain form tier: 1 = mid-form, 2 = final form; absent = base/standalone.
+const FORM_TIER: Record<string, 1 | 2> = {
+  wyrnak: 1, caragnar: 1, sanctyke: 1,
+  wyrvast: 2, aureyvant: 2, bifernon: 2, lumayke: 2,
+};
+/** Scale sprite width % by evo form tier (base=your default %, e.g. 26 for wild). */
+function formWidthPct(id: string, base: number): number {
+  const t = FORM_TIER[id];
+  return t === 2 ? Math.round(base * 1.25) : t === 1 ? Math.round(base * 1.12) : base;
+}
+/** Adjust the vertical anchor % so bigger forms still plant feet on their circle. */
+function formAnchor(id: string, base: number): number {
+  const t = FORM_TIER[id];
+  return t === 2 ? base - 6 : t === 1 ? base - 3 : base;
+}
+/** RP (resource points) max for a move scales gently with mon level. */
+function maxRp(basePp: number, level: number): number {
+  if (basePp >= 99) return 99;
+  return basePp + Math.floor(level / 5);
+}
+
 export type MonRarity = "common" | "uncommon" | "rare" | "ultra" | "apex";
 
 /** One frame clipped from a sprite sheet. */
@@ -346,11 +367,12 @@ export function BattleScene({
     }];
   })();
 
-  // PP pools. Player PP is per-mon (drives the move menu); wild PP rides a ref.
+  // RP pools (resource points, formerly PP). Player RP is per-mon; wild RP rides a ref.
+  // Max RP per move scales with the mon's level via maxRp().
   const [teamPp, setTeamPp] = useState<Record<string, number>[]>(() =>
     team.map(m => {
       const o: Record<string, number> = {};
-      for (const mv of resolveMoves(m)) o[mv.id] = mv.pp;
+      for (const mv of resolveMoves(m)) o[mv.id] = maxRp(mv.pp, m.level);
       return o;
     }),
   );
@@ -364,7 +386,7 @@ export function BattleScene({
   if (wildPpKeyRef.current !== trainerMonIdx) {
     wildPpKeyRef.current = trainerMonIdx;
     wildPpRef.current = {};
-    for (const m of wildMoves) wildPpRef.current[m.id] = m.pp;
+    for (const m of wildMoves) wildPpRef.current[m.id] = maxRp(m.pp, wildOpponentLevel);
   }
 
   // Battle-long stat buffs (Sharpen / Bulwark). Refs mirror state so delayed
@@ -944,60 +966,58 @@ export function BattleScene({
           backgroundImage:"url(/__mockup/images/forest-arena.png)",
           backgroundSize:"cover", backgroundPosition:"center",
         }}>
-        {/* Wild HP plate (top-right) */}
+        {/* Wild HP plate (top-right) — compact */}
         <div style={hpPlateStyle("enemy")}>
-          <div style={{ display:"flex", alignItems:"baseline", gap:6, marginBottom:4 }}>
-            <span style={{ color:"#fff", fontSize:13, fontWeight:800 }}>
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:4, marginBottom:2 }}>
+            <span style={{ color:"#fff", fontSize:11, fontWeight:800, lineHeight:1 }}>
               {currentOpponent.name}
               {currentOpponent.nameIcon && (
                 <span style={{
-                  marginLeft:4,
-                  color:"#ffe080",
-                  textShadow:"0 0 4px #ffb030, 0 0 10px #ffa020, 0 0 2px #fff",
-                  filter:"drop-shadow(0 0 3px rgba(255,200,80,0.9))",
+                  marginLeft:3, color:"#ffe080",
+                  textShadow:"0 0 4px #ffb030, 0 0 10px #ffa020",
                   fontWeight:900,
                 }}>{currentOpponent.nameIcon}</span>
               )}
             </span>
             <span style={{
-              color: RARITY_COLOR[currentOpponent.rarity], fontSize:9, fontWeight:700,
-              padding:"1px 6px", borderRadius:8,
+              color: RARITY_COLOR[currentOpponent.rarity], fontSize:7, fontWeight:700,
+              padding:"1px 4px", borderRadius:6,
               border:`1px solid ${RARITY_COLOR[currentOpponent.rarity]}`,
               background:"rgba(0,0,0,0.4)",
-              textTransform:"uppercase", letterSpacing:1,
+              textTransform:"uppercase", letterSpacing:0.8, flexShrink:0,
             }}>{RARITY_LABEL[currentOpponent.rarity]}</span>
           </div>
           {!isKeeper && caughtIds.includes(currentOpponent.id) && (
             <div style={{
-              display:"inline-flex", alignItems:"center", gap:3, marginBottom:3,
-              background:"rgba(80,210,110,0.12)", borderRadius:5,
-              padding:"1px 7px", border:"1px solid rgba(80,210,110,0.28)",
+              display:"inline-flex", alignItems:"center", gap:2, marginBottom:2,
+              background:"rgba(80,210,110,0.12)", borderRadius:4,
+              padding:"0px 5px", border:"1px solid rgba(80,210,110,0.28)",
             }}>
-              <span style={{ color:"#70e888", fontSize:8, fontWeight:800, letterSpacing:1, textTransform:"uppercase" }}>✦ bonded</span>
+              <span style={{ color:"#70e888", fontSize:7, fontWeight:800, letterSpacing:0.8, textTransform:"uppercase" }}>✦ bonded</span>
             </div>
           )}
           <HpBar hp={wildHp} max={currentOpponent.maxHp} />
-          <div style={{ display:"flex", justifyContent:"space-between", marginTop:2 }}>
-            <span style={{ color:"#a8c0d0", fontSize:9 }}>{currentOpponent.type}</span>
-            <span style={{ color:"#c8c8c8", fontSize:9, fontWeight:700 }}>{wildHp}/{currentOpponent.maxHp}</span>
+          <div style={{ display:"flex", justifyContent:"space-between", marginTop:1 }}>
+            <span style={{ color:"#a8c0d0", fontSize:8 }}>{currentOpponent.type}</span>
+            <span style={{ color:"#c8c8c8", fontSize:8, fontWeight:700 }}>{wildHp}/{currentOpponent.maxHp}</span>
           </div>
         </div>
 
-        {/* Player HP plate (top-left) */}
+        {/* Player HP plate (top-left) — compact */}
         <div style={hpPlateStyle("player")}>
-          <div style={{ display:"flex", alignItems:"baseline", gap:6, marginBottom:4 }}>
-            <span style={{ color:"#fff", fontSize:13, fontWeight:800 }}>{active.name}</span>
-            <span style={{ color:"#aaa", fontSize:9 }}>Lv.{active.level}</span>
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:4, marginBottom:2 }}>
+            <span style={{ color:"#fff", fontSize:11, fontWeight:800, lineHeight:1 }}>{active.name}</span>
+            <span style={{ color:"#bbb", fontSize:8, fontWeight:700, flexShrink:0 }}>Lv.{active.level}</span>
           </div>
           <HpBar hp={playerHp} max={playerMaxHp} />
-          <div style={{ display:"flex", justifyContent:"space-between", marginTop:2 }}>
-            <span style={{ color: active.color, fontSize:9 }}>{active.type}</span>
-            <span style={{ color:"#c8c8c8", fontSize:9, fontWeight:700 }}>{playerHp}/{playerMaxHp}</span>
+          <div style={{ display:"flex", justifyContent:"space-between", marginTop:1 }}>
+            <span style={{ color: active.color, fontSize:8 }}>{active.type}</span>
+            <span style={{ color:"#c8c8c8", fontSize:8, fontWeight:700 }}>{playerHp}/{playerMaxHp}</span>
           </div>
         </div>
 
-        {/* Wild sprite — top-right */}
-        <div style={standOn(POS.wild, 26, 3, 80)}>
+        {/* Wild sprite — top-right; size scales with evo form tier */}
+        <div style={standOn(POS.wild, formWidthPct(currentOpponent.id, 26), 3, formAnchor(currentOpponent.id, 80))}>
           <div style={{
             width:"100%", height:"100%",
             animation: intro
@@ -1108,8 +1128,8 @@ export function BattleScene({
           </div>
         )}
 
-        {/* Player Tayanari — red ritual circle, facing east toward the wild */}
-        <div style={standOn(POS.mon, 24, 3, 80)}>
+        {/* Player Tayanari — red ritual circle, facing east; size scales with evo form tier */}
+        <div style={standOn(POS.mon, formWidthPct(active.id, 24), 3, formAnchor(active.id, 80))}>
           <div style={{
             width:"100%", height:"100%",
             animation: intro ? "introSlide 1.1s ease-out" : (playerShake || "none"),
@@ -1518,6 +1538,7 @@ export function BattleScene({
                   key={m.id}
                   move={m}
                   pp={pp}
+                  maxPp={maxRp(m.pp, active.level)}
                   eff={m.category === "damage" && m.element && wildEl ? effectiveness(m.element, wildEl) : 1}
                   disabled={busy || out}
                   onClick={() => onMove(out ? STRUGGLE : m)}
@@ -1525,7 +1546,7 @@ export function BattleScene({
               );
             })}
             {playerMoves.every(m => (playerPp[m.id] ?? 0) <= 0) && (
-              <MoveBtn move={STRUGGLE} pp={99} eff={1} disabled={busy} onClick={() => onMove(STRUGGLE)} />
+              <MoveBtn move={STRUGGLE} pp={99} maxPp={99} eff={1} disabled={busy} onClick={() => onMove(STRUGGLE)} />
             )}
             <button onClick={() => setMenu("root")} style={{
               gridColumn:"1 / -1", padding:"8px",
@@ -1736,19 +1757,17 @@ export function BattleScene({
   );
 
   function hpPlateStyle(who: "enemy" | "player"): React.CSSProperties {
-    // Both plates pinned to the top: the player's Tayanari on the left,
-    // the enemy on the right.
     return {
       position:"absolute",
-      top:    10,
-      left:   who === "player" ? 8 : "auto",
-      right:  who === "enemy"  ? 8 : "auto",
-      padding:"6px 10px",
-      background:"linear-gradient(180deg, rgba(28,20,10,0.94), rgba(14,8,4,0.94))",
-      border:"1.5px solid rgba(180,130,60,0.5)",
-      borderRadius:8,
-      minWidth:"min(140px, 42vw)",
-      boxShadow:"0 2px 8px rgba(0,0,0,0.5)",
+      top:    6,
+      left:   who === "player" ? 6 : "auto",
+      right:  who === "enemy"  ? 6 : "auto",
+      padding:"4px 7px",
+      background:"linear-gradient(180deg, rgba(28,20,10,0.93), rgba(14,8,4,0.93))",
+      border:"1.5px solid rgba(180,130,60,0.45)",
+      borderRadius:7,
+      minWidth:"min(118px, 36vw)",
+      boxShadow:"0 2px 6px rgba(0,0,0,0.55)",
     };
   }
 }
@@ -1843,11 +1862,11 @@ function BattleBtn({
   );
 }
 
-// In-battle move button — shows name, element/category tag, PP, and an
+// In-battle move button — shows name, element/category tag, RP (cur/max), and an
 // effectiveness hint vs. the current opponent.
 function MoveBtn({
-  move, pp, eff, disabled, onClick,
-}: { move: Move; pp: number; eff: number; disabled?: boolean; onClick: () => void }) {
+  move, pp, maxPp, eff, disabled, onClick,
+}: { move: Move; pp: number; maxPp: number; eff: number; disabled?: boolean; onClick: () => void }) {
   const accent =
     move.category === "damage"
       ? (move.element ? typeColor(move.element) : "#ffe080")
@@ -1860,6 +1879,8 @@ function MoveBtn({
     : move.category === "buff" ? "Attack ↑" : "Defense ↑";
   const effHint = move.category === "damage" && eff !== 1
     ? (eff >= 2 ? "▲ strong" : "▼ weak") : "";
+  const rpLabel = move.pp >= 99 ? "RP ∞" : `RP ${pp}/${maxPp}`;
+  const rpColor = pp <= 0 ? "#c06040" : pp <= Math.ceil(maxPp / 3) ? "#e8b040" : "#a0d0b0";
   return (
     <button
       onClick={onClick}
@@ -1878,7 +1899,7 @@ function MoveBtn({
     >
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", gap:6 }}>
         <span style={{ fontSize:12, fontWeight:800 }}>{move.name}</span>
-        <span style={{ fontSize:9, fontWeight:700, opacity:0.7 }}>PP {pp >= 99 ? "∞" : pp}</span>
+        <span style={{ fontSize:9, fontWeight:700, color: rpColor }}>{rpLabel}</span>
       </div>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", gap:6 }}>
         <span style={{ fontSize:9, fontWeight:700, color: accent }}>{tag}</span>
