@@ -1133,7 +1133,7 @@ const BESTIARY_FC: MonSpec[] = [
 const SHORE = { w: 1024, h: 717 };
 const SHORE_SPAWN        = { x: 513, y: 75 };    // entering from Route 2 — spawns near north entry
 let   SHORE_NORTH_EXIT: Rect = [315, 0, 688, 19]; // north edge → back to Route 2
-const PROF_SHORE_POS     = { x: 511, y: 289 };   // professor on the clifftop
+const PROF_SHORE_POS     = { x: 651, y: 471 };   // professor on the clifftop
 const SHORE_COIN_GIFT    = 500;                    // PrimeriaCoin per payment
 const SHORE_HOTSPOTS: Hotspot[] = [
   { x: 184, y: 149, r: 51, kind: "rock" }, { x: 389, y: 187, r: 51, kind: "bush" },
