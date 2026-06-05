@@ -344,7 +344,7 @@ type Phase = "walk" | "d1" | "d2" | "pick" | "d3" | "role_pick" | "d4" | "d5"
           | "tova_d1" | "tova_d2" | "tova_idle"
           | "senna_d1" | "senna_d2" | "senna_idle"
           | "corvin_d1" | "corvin_d2" | "corvin_idle";
-type Scene = "overworld" | "lab" | "maya" | "jay" | "home" | "ellio" | "lia" | "route1" | "route2" | "area3" | "battle" | "farm" | "shore";
+type Scene = "overworld" | "lab" | "maya" | "jay" | "home" | "ellio" | "lia" | "route1" | "route2" | "area3" | "battle" | "farm" | "shore" | "town" | "town_left" | "town_right";
 type Rect  = [number, number, number, number]; // x1 y1 x2 y2 world-px
 
 // ── Bestiary (Route 1 encounter pool) ───────────────────────────────────────
@@ -935,6 +935,23 @@ const FARM = { w: 1376, h: 768 };                    // matches farm-bg.png nati
 const FARM_SPAWN    = { x: 679, y: 713 };           // entering from Route 2 (south)
 const R2_FARM_EXIT: Rect  = [520, 0, 780, 40];       // Route 2 north cliff stairs → farm
 const FARM_RETURN_R2: Rect = [933, 664, 993, 694];   // south-east farm path → Route 2 (player pos 963,679)
+const FARM_TOWN_EXIT: Rect   = [540,  0, 836, 30];  // farm north road → Town Hub
+
+// ── Town Hub & Wings ─────────────────────────────────────────────────────────
+const TOWN   = { w: 1536, h: 864 };
+const TOWN_L = { w: 1536, h: 864 };
+const TOWN_R = { w: 1536, h: 864 };
+const TOWN_FARM_SPAWN  = { x: 768, y: 810 };   // enter town from farm (south path)
+const TOWN_FROM_LEFT   = { x: 80,  y: 432 };   // enter town center from left wing
+const TOWN_FROM_RIGHT  = { x: 1456, y: 432 };  // enter town center from right wing
+const TOWN_SOUTH_EXIT: Rect = [640, 840, 896, 864];  // town center south → farm
+const TOWN_WEST_EXIT: Rect  = [0,   280, 30,  580];  // town center west  → left wing
+const TOWN_EAST_EXIT: Rect  = [1506, 280, 1536, 580]; // town center east → right wing
+const TL_EAST_EXIT: Rect    = [1506, 280, 1536, 580]; // left wing east  → town center
+const TL_SPAWN = { x: 1456, y: 432 };   // spawn in left wing (arriving from east)
+const TR_WEST_EXIT: Rect    = [0,   280, 30,  580];  // right wing west → town center
+const TR_SPAWN = { x: 80, y: 432 };     // spawn in right wing (arriving from west)
+const FARM_FROM_TOWN_SPAWN = { x: 679, y: 50 };  // spawn near top of farm from town
 // NPC world positions (farm scene)
 const SHELLA_POS = { x: 536, y: 487 };   // shell vendor — left side near house
 const RUNRIK_POS = { x: 761, y: 420 };   // rune vendor — centre-right
@@ -1550,7 +1567,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   // Saves live in localStorage and could be malformed/tampered, so we validate
   // the scene against the known walkable set and require finite coordinates;
   // anything off falls back to the safe home spawn.
-  const WALKABLE_SCENES: Scene[] = ["overworld","lab","maya","jay","home","ellio","lia","route1","route2","area3","farm","shore"];
+  const WALKABLE_SCENES: Scene[] = ["overworld","lab","maya","jay","home","ellio","lia","route1","route2","area3","farm","shore","town","town_left","town_right"];
   const resume = (() => {
     if (!savedWorld) return null;
     const HOME = { scene: "home" as Scene, x: 400, y: 670 };
@@ -2633,8 +2650,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         const h       = heldRef.current;
         const sc      = sceneRef.current;
         const zoom    = sc === "farm" ? 0.62 : ZOOM;
-        const world   = sc === "overworld" ? OW : sc === "lab" ? LB : sc === "route1" ? R1 : sc === "route2" ? R2 : sc === "area3" ? A3 : sc === "farm" ? FARM : sc === "shore" ? SHORE : sc === "maya" ? MY : sc === "jay" ? JY : sc === "ellio" ? EH : sc === "lia" ? LH : PH;
-        const zones   = sc === "overworld" ? OW_BLOCKED : sc === "lab" ? LAB_BLOCKED : sc === "route1" ? R1_BLOCKED : sc === "route2" ? R2_BLOCKED : sc === "area3" ? A3_BLOCKED : sc === "farm" ? NO_SOLIDS : sc === "shore" ? NO_SOLIDS : sc === "maya" ? MAYA_BLOCKED : sc === "jay" ? JAY_BLOCKED : sc === "ellio" ? EH_BLOCKED : sc === "lia" ? LH_BLOCKED : PH_BLOCKED;
+        const world   = sc === "overworld" ? OW : sc === "lab" ? LB : sc === "route1" ? R1 : sc === "route2" ? R2 : sc === "area3" ? A3 : sc === "farm" ? FARM : sc === "shore" ? SHORE : sc === "town" ? TOWN : sc === "town_left" ? TOWN_L : sc === "town_right" ? TOWN_R : sc === "maya" ? MY : sc === "jay" ? JY : sc === "ellio" ? EH : sc === "lia" ? LH : PH;
+        const zones   = sc === "overworld" ? OW_BLOCKED : sc === "lab" ? LAB_BLOCKED : sc === "route1" ? R1_BLOCKED : sc === "route2" ? R2_BLOCKED : sc === "area3" ? A3_BLOCKED : sc === "farm" ? NO_SOLIDS : sc === "shore" ? NO_SOLIDS : sc === "town" ? NO_SOLIDS : sc === "town_left" ? NO_SOLIDS : sc === "town_right" ? NO_SOLIDS : sc === "maya" ? MAYA_BLOCKED : sc === "jay" ? JAY_BLOCKED : sc === "ellio" ? EH_BLOCKED : sc === "lia" ? LH_BLOCKED : PH_BLOCKED;
 
         let newAnim = lastDirRef.current; // stay in last-faced direction when idle
         let newFlip = flipRef.current;
@@ -2742,6 +2759,18 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           if (!farmVisited) setFarmVisited(true);
         } else if (sc === "farm" && inRect(worldPos.current.x, worldPos.current.y, FARM_RETURN_R2)) {
           transitionTo("route2", 165, 45);
+        } else if (sc === "farm" && inRect(worldPos.current.x, worldPos.current.y, FARM_TOWN_EXIT)) {
+          transitionTo("town", TOWN_FARM_SPAWN.x, TOWN_FARM_SPAWN.y);
+        } else if (sc === "town" && inRect(worldPos.current.x, worldPos.current.y, TOWN_SOUTH_EXIT)) {
+          transitionTo("farm", FARM_FROM_TOWN_SPAWN.x, FARM_FROM_TOWN_SPAWN.y);
+        } else if (sc === "town" && inRect(worldPos.current.x, worldPos.current.y, TOWN_WEST_EXIT)) {
+          transitionTo("town_left", TL_SPAWN.x, TL_SPAWN.y);
+        } else if (sc === "town_left" && inRect(worldPos.current.x, worldPos.current.y, TL_EAST_EXIT)) {
+          transitionTo("town", TOWN_FROM_LEFT.x, TOWN_FROM_LEFT.y);
+        } else if (sc === "town" && inRect(worldPos.current.x, worldPos.current.y, TOWN_EAST_EXIT)) {
+          transitionTo("town_right", TR_SPAWN.x, TR_SPAWN.y);
+        } else if (sc === "town_right" && inRect(worldPos.current.x, worldPos.current.y, TR_WEST_EXIT)) {
+          transitionTo("town", TOWN_FROM_RIGHT.x, TOWN_FROM_RIGHT.y);
         } else if (sc === "area3" && worldPos.current.x < 248 && phaseRef.current === "walk") {
           // Far-west closed door — Jerbs lands here from his portal the first time.
           // The portal plays out (no dialogue yet); the player then walks up to
@@ -3794,8 +3823,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         {/* World container — camera-scrolled + zoomed */}
         <div ref={worldRef} style={{
           position: "absolute",
-          width:  scene === "overworld" ? OW.w : scene === "lab" ? LB.w : scene === "route1" ? R1.w : scene === "route2" ? R2.w : scene === "area3" ? A3.w : scene === "farm" ? FARM.w : scene === "shore" ? SHORE.w : scene === "maya" ? MY.w : scene === "jay" ? JY.w : scene === "ellio" ? EH.w : scene === "lia" ? LH.w : PH.w,
-          height: scene === "overworld" ? OW.h : scene === "lab" ? LB.h : scene === "route1" ? R1.h : scene === "route2" ? R2.h : scene === "area3" ? A3.h : scene === "farm" ? FARM.h : scene === "shore" ? SHORE.h : scene === "maya" ? MY.h : scene === "jay" ? JY.h : scene === "ellio" ? EH.h : scene === "lia" ? LH.h : PH.h,
+          width:  scene === "overworld" ? OW.w : scene === "lab" ? LB.w : scene === "route1" ? R1.w : scene === "route2" ? R2.w : scene === "area3" ? A3.w : scene === "farm" ? FARM.w : scene === "shore" ? SHORE.w : scene === "town" ? TOWN.w : scene === "town_left" ? TOWN_L.w : scene === "town_right" ? TOWN_R.w : scene === "maya" ? MY.w : scene === "jay" ? JY.w : scene === "ellio" ? EH.w : scene === "lia" ? LH.w : PH.w,
+          height: scene === "overworld" ? OW.h : scene === "lab" ? LB.h : scene === "route1" ? R1.h : scene === "route2" ? R2.h : scene === "area3" ? A3.h : scene === "farm" ? FARM.h : scene === "shore" ? SHORE.h : scene === "town" ? TOWN.h : scene === "town_left" ? TOWN_L.h : scene === "town_right" ? TOWN_R.h : scene === "maya" ? MY.h : scene === "jay" ? JY.h : scene === "ellio" ? EH.h : scene === "lia" ? LH.h : PH.h,
           willChange: "transform",
           transformOrigin: "0 0",
           transform: `scale(${ZOOM}) translate(${-cam.current.x}px,${-cam.current.y}px)`,
@@ -3806,8 +3835,11 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             src={scene === "ellio" ? "./images/ellio-home-interior.png"
               : scene === "lia"    ? "./images/lia-home.png"
               : scene === "area3"  ? "./images/area3-bg.png"
-              : scene === "farm"   ? "./images/farm-bg.png"
-              : scene === "shore"  ? "./images/shore-bg.png"
+              : scene === "farm"       ? "./images/farm-bg.png"
+              : scene === "shore"      ? "./images/shore-bg.png"
+              : scene === "town"       ? "./images/town-hub.png"
+              : scene === "town_left"  ? "./images/town-left.png"
+              : scene === "town_right" ? "./images/town-right.png"
               : scene === "route1" ? "./images/route1-bg.png"
               : scene === "route2" ? "./images/route2-map.png"
               : scene === "overworld"
@@ -7694,7 +7726,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           border:"1px solid rgba(240,208,96,0.3)", pointerEvents:"none",
           textTransform:"uppercase", zIndex:5,
         }}>
-          {scene === "overworld" ? "Primeria Village" : scene === "lab" ? "Prof. Irwyn's Lab" : scene === "maya" ? "Maya's Home" : scene === "jay" ? "Jay's Home" : scene === "ellio" ? "Ellio's Home" : scene === "lia" ? "Lia's Home" : scene === "route1" ? "Whisperroot Trail" : scene === "route2" ? "Route 2 — Eastern Path" : scene === "area3" ? "Westwood Reaches" : scene === "farm" ? "Primeria Farm" : scene === "shore" ? "Tidemark Shore" : scene === "battle" ? "Battle" : "Your Home"}
+          {scene === "overworld" ? "Primeria Village" : scene === "lab" ? "Prof. Irwyn's Lab" : scene === "maya" ? "Maya's Home" : scene === "jay" ? "Jay's Home" : scene === "ellio" ? "Ellio's Home" : scene === "lia" ? "Lia's Home" : scene === "route1" ? "Whisperroot Trail" : scene === "route2" ? "Route 2 — Eastern Path" : scene === "area3" ? "Westwood Reaches" : scene === "farm" ? "Primeria Farm" : scene === "shore" ? "Tidemark Shore" : scene === "town" ? "Clearbell Town" : scene === "town_left" ? "Clearbell — West Quarter" : scene === "town_right" ? "Clearbell — East Quarter" : scene === "battle" ? "Battle" : "Your Home"}
         </div>
 
         {/* Quest hint — current main objective */}
