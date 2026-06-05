@@ -2610,8 +2610,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       else if (gi.itemId === "calm")   setCalmberries(n => n + gi.count);
       else if (gi.itemId === "bright") setBrightberries(n => n + gi.count);
     }
-    const screenX = (gi.wx - (cam as React.MutableRefObject<{x:number;y:number}>).current.x) * ZOOM;
-    const screenY = (gi.wy - (cam as React.MutableRefObject<{x:number;y:number}>).current.y) * ZOOM - 20;
+    const screenX = (gi.wx - cam.current.x) * ZOOM;
+    const screenY = (gi.wy - cam.current.y) * ZOOM - 20;
     setFloatMsg({ x: screenX, y: screenY, text: `Found ${gi.label}!`, key: Date.now() });
     window.setTimeout(() => setFloatMsg(null), 2500);
   }
@@ -4392,8 +4392,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       else if (enc.trainer === "jerbs") setJerbsBattleDone(true);
       else if (enc.trainer === "prof") {
         setProfShoreWins(w => w + 1);
-        // Gift: resonance_fill rune on first shore win
-        setOwnedBattleRuneIds(ids => ids.includes("resonance_fill") ? ids : [...ids, "resonance_fill"]);
+        // Gift: Resonance Rune on first shore win
+        setOwnedBattleRuneIds(ids => ids.includes("brune_resonance") ? ids : [...ids, "brune_resonance"]);
       }
       setBattleNotif({ title: `You beat ${enc.name}!`, sub: `+${r.xpGained} XP · +₡${trainerCoins}` });
       setPhase(enc.trainer === "jay" ? "jay_a3_win" : enc.trainer === "lia" ? "lia_a3_win" : enc.trainer === "prof" ? "prof_shore_win" : "jerbs_crystal_d1");
