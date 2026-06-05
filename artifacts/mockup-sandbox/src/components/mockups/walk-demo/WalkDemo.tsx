@@ -3880,12 +3880,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   useEffect(() => { checksStreakRef.current = checksStreak; },      [checksStreak]);
 
   useEffect(() => {
-    const isR2Active = scene === "route2";
-    const isFPActive = scene === "forest_path";
-    const isFCActive = scene === "forest_clear";
-    if (scene !== "route1" && scene !== "area3" && !isR2Active && !isFPActive && !isFCActive) return;
+    const isR2Active     = scene === "route2";
+    const isFPActive     = scene === "forest_path";
+    const isFCActive     = scene === "forest_clear";
+    const isShoreActive  = scene === "shore";
+    if (scene !== "route1" && scene !== "area3" && !isR2Active && !isFPActive && !isFCActive && !isShoreActive) return;
     setActiveDisturbances({});
-    const hotspots = scene === "area3" ? A3_HOTSPOTS : scene === "route2" ? R2_HOTSPOTS : scene === "forest_path" ? FP_HOTSPOTS : scene === "forest_clear" ? FC_HOTSPOTS : R1_HOTSPOTS;
+    const hotspots = scene === "area3" ? A3_HOTSPOTS : scene === "route2" ? R2_HOTSPOTS : scene === "shore" ? SHORE_HOTSPOTS : scene === "forest_path" ? FP_HOTSPOTS : scene === "forest_clear" ? FC_HOTSPOTS : R1_HOTSPOTS;
     const id = window.setInterval(() => {
       const now = Date.now();
       const cur = activeDistRef.current;
