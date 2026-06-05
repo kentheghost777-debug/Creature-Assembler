@@ -1234,6 +1234,8 @@ const FP_SPAWN            = { x: 512, y: 792 }; // entering from Route 1 (south)
 const FP_FROM_CLEAR_SPAWN = { x: 512, y:  30 }; // entering from Clearing (north)
 let R1_NORTH_EXIT: Rect  = ld("r1_north", [412,   0, 564,  18]); // Route 1 north edge → Forest Path
 let FP_SOUTH_EXIT: Rect  = ld("fp_south", [432, 776, 594, 820]); // Forest Path south → Route 1 (y1=776 reachable; player max y=790)
+// Auto-correct: if localStorage has the old unreachable y1 (>FP.h-45=775), reset to the working default.
+if (FP_SOUTH_EXIT[1] > FP.h - 45) FP_SOUTH_EXIT = [432, 776, 594, 820];
 let FP_NORTH_EXIT: Rect  = ld("fp_north", [432,   0, 594,  18]); // Forest Path north → Clearing
 const FP_HOTSPOTS: Hotspot[] = [
   { x: 175, y: 220, r: 36, kind: "bush" },
@@ -1712,6 +1714,10 @@ type GlowBox = { left: number; top: number; w: number; h: number; color: string 
 const GLOW_SHAPE: Record<string, (r: Rect) => GlowBox> = {
   ow_lab:    (r) => ({ left: r[0] - 9,  top: r[1] + 23, w: 44, h: 10, color: "rgba(255,210,60,0.6)" }),
   r1_south:  (r) => ({ left: r[0] + 42, top: r[1] - 8,  w: 80, h: 14, color: "rgba(100,220,120,0.6)" }),
+  r1_north:  (r) => ({ left: (r[0]+r[2])/2-40, top: r[3]+2, w: 80, h: 14, color: "rgba(100,220,120,0.6)" }),
+  fp_south:  (r) => ({ left: (r[0]+r[2])/2-48, top: r[1]-18, w: 96, h: 22, color: "rgba(100,220,120,0.75)" }),
+  fp_north:  (r) => ({ left: (r[0]+r[2])/2-40, top: r[3]+2,  w: 80, h: 14, color: "rgba(100,220,120,0.6)" }),
+  fc_south:  (r) => ({ left: (r[0]+r[2])/2-48, top: r[1]-18, w: 96, h: 22, color: "rgba(100,220,120,0.75)" }),
   r2_locked: (r) => ({ left: (r[0] + r[2]) / 2 - 22, top: r[3] - 8, w: 44, h: 14, color: "rgba(200,150,120,0.45)" }),
   a3_return: (r) => ({ left: r[0] + 2,  top: r[1] + 28, w: 40, h: 64, color: "rgba(255,210,90,0.78)" }),
 };
