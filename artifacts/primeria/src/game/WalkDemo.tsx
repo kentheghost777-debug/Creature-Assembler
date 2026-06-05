@@ -1483,9 +1483,9 @@ let LAB_EXIT: Rect = ld("lab_exit", [262, 645, 438, 692]); // exit lab
 // ── Maya's Home ───────────────────────────────────────────────────────────────
 const MY = { w: 800, h: 800 };
 const MAYA_POS  = { x: 870, y: 427 }; // Maya standing at her doorstep
-let TOVA_POS   = { x: 600, y: 560 }; // ambient townsfolk — center of Primeria village square
-let SENNA_POS  = { x: 300, y: 200 }; // ambient townsfolk — near Route 1 north gate
-let CORVIN_POS = { x: 790, y: 310 }; // traveling naturalist — northeast near east road
+let TOVA_POS   = { x: 549, y: 451 }; // ambient townsfolk — center of Primeria village square
+let SENNA_POS  = { x: 398, y: 217 }; // ambient townsfolk — near Route 1 north gate
+let CORVIN_POS = { x: 835, y: 830 }; // traveling naturalist — northeast near east road
 const TOVA_IMG   = "./images/tova-npc.png";
 const SENNA_IMG  = "./images/senna-npc.png";
 const CORVIN_IMG = "./images/corvin-npc.png";
