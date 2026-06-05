@@ -178,7 +178,7 @@ const STARTERS = [
   { id: "cerepup",    name: "Cerepup",    type: "Volcanic",     color: "#ff6020", img: "./images/emberfox.png" },
   { id: "cunbubble",  name: "Cun-bubble", type: "Oceanic",      color: "#3080ff", img: "./images/phantorch.png" },
   { id: "shockit",    name: "Shockit",    type: "Stormproven",  color: "#ffd000", img: "./images/voltfang.png" },
-  { id: "mentyke",    name: "Mentyke",    type: "Mind",         color: "#c080ff", img: "./images/lumacorn.png" },
+  { id: "mentyke",    name: "Mentyke",    type: "Mind",         color: "#c080ff", img: "./images/mentyke-wild-a.png" },
   { id: "foxin",      name: "Foxin",      type: "Spirit",       color: "#60a070", img: "./images/vixgrim.png" },
 ] as const;
 type StarterId = typeof STARTERS[number]["id"];
@@ -300,7 +300,7 @@ const EVO_TABLE: Array<{ from: string; atLevel: number; to: StarterSpec }> = [
   { from:"grovenak",   atLevel:30, to:{ id:"anchorak",     name:"Anchorak",     type:"Armored",     color:"#4a6a3a", img:"./images/infernub-wild.png"   } },
   { from:"twigling",   atLevel:18, to:{ id:"branchrel",    name:"Branchrel",    type:"Nature",      color:"#50c040", img:"./images/blomath-wild.png"    } },
   { from:"branchrel",  atLevel:30, to:{ id:"arborvex",     name:"Arborvex",     type:"Nature",      color:"#2a8820", img:"./images/verdanox-wild.png"   } },
-  { from:"gloamite",   atLevel:22, to:{ id:"umbravel",     name:"Umbravel",     type:"Abyss",       color:"#5020a0", img:"./images/spectrael-wild.png"  } },
+  { from:"gloamite",   atLevel:22, to:{ id:"umbravel",     name:"Umbravel",     type:"Abyss",       color:"#5020a0", img:"./images/umbravel-wild.png"   } },
   { from:"fernfang",   atLevel:18, to:{ id:"thicketfang",  name:"Thicketfang",  type:"Nature",      color:"#3a9828", img:"./images/brewant-wild.png"    } },
   { from:"thicketfang",atLevel:30, to:{ id:"wildantis",    name:"Wildantis",    type:"Nature",      color:"#2a7818", img:"./images/windriel-wild.png"   } },
   { from:"rootknot",   atLevel:18, to:{ id:"knothorn",     name:"Knothorn",     type:"Armored",     color:"#8a7a5a", img:"./images/crysthorn-wild.png"  } },
@@ -312,7 +312,7 @@ const EVO_TABLE: Array<{ from: string; atLevel: number; to: StarterSpec }> = [
   { from:"gloomveil",  atLevel:22, to:{ id:"darkravel",    name:"Darkravel",    type:"Abyss",       color:"#3d1a5c", img:"./images/dreadcrow-wild.png"  } },
   { from:"embersap",   atLevel:22, to:{ id:"blazewood",    name:"Blazewood",    type:"Volcanic",    color:"#cc4400", img:"./images/wyrmblaze-wild.png"  } },
   // ── Forest Clearing evo chains ──────────────────────────────────────────────────
-  { from:"sunpetal",   atLevel:18, to:{ id:"solmane",      name:"Solmane",      type:"Radiant",     color:"#f5d860", img:"./images/spectrael-wild.png"  } },
+  { from:"sunpetal",   atLevel:18, to:{ id:"solmane",      name:"Solmane",      type:"Radiant",     color:"#f5d860", img:"./images/solmane-wild.png"    } },
   { from:"solmane",    atLevel:30, to:{ id:"auravast",     name:"Auravast",     type:"Radiant",     color:"#fff176", img:"./images/sylphara-wild.png"   } },
   { from:"grassmite",  atLevel:18, to:{ id:"meadrak",      name:"Meadrak",      type:"Nature",      color:"#50c040", img:"./images/blomath-wild.png"    } },
   { from:"meadrak",    atLevel:30, to:{ id:"verdamite",    name:"Verdamite",    type:"Nature",      color:"#2a8820", img:"./images/windriel-wild.png"   } },
@@ -505,7 +505,7 @@ const BESTIARY: MonSpec[] = [
     wildImg:"./images/skyvast-wild.png",     playerImg:"./images/skyvast-wild.png",
     wildFaces:"left", playerFaces:"left", maxHp:60, baseDmg:[7,13] as [number,number] },
   { id:"mindwraith",  name:"Mindwraith",  type:"Mind",        rarity:"ultra",
-    wildImg:"./images/spectrael-wild.png",   playerImg:"./images/spectrael-wild.png",
+    wildImg:"./images/mindwraith-wild.png",  playerImg:"./images/mindwraith-wild.png",
     wildFaces:"right", playerFaces:"right", maxHp:58, baseDmg:[7,13] as [number,number] },
   // Apex: Verdking (ancient leafed nature titan) + Thunderdread (legendary storm owl-wyvern)
   { id:"verdking",    name:"Verdking",    type:"Nature",      rarity:"apex",
@@ -922,7 +922,7 @@ const BESTIARY_SHORE: MonSpec[] = [
     wildFaces:"left", playerFaces:"left",  maxHp:28, baseDmg:[3,6] as [number,number] },
   // Lumecolt — glowing foal with a nub light-horn; holy newborn of coastal mist; Radiant
   { id:"lumecolt",    name:"Lumecolt",    type:"Radiant",     rarity:"common",
-    wildImg:"./images/spectrael-wild.png",    playerImg:"./images/spectrael-wild.png",
+    wildImg:"./images/lumacorn-clean.png",    playerImg:"./images/lumacorn-clean.png",
     wildFaces:"right", playerFaces:"right", maxHp:26, baseDmg:[3,7] as [number,number] },
   // Gryfling — fluffy baby griffon (eagle beak + lion cub body); Nature
   { id:"gryfling",    name:"Gryfling",    type:"Nature",      rarity:"common",
@@ -939,7 +939,7 @@ const BESTIARY_SHORE: MonSpec[] = [
     wildFaces:"left", playerFaces:"left",  maxHp:34, baseDmg:[4,9] as [number,number] },
   // Shellcrag — armored hermit-crab with crystalline shell (crab × boulder turtle); Armored
   { id:"shellcrag",   name:"Shellcrag",   type:"Armored",     rarity:"uncommon",
-    wildImg:"./images/crystalback-wild.png",  playerImg:"./images/crystalback-wild.png",
+    wildImg:"./images/shellcrag-wild.png",    playerImg:"./images/shellcrag-wild.png",
     wildFaces:"left", playerFaces:"left",  maxHp:40, baseDmg:[4,8] as [number,number] },
   // ── RARE — great shapes glimpsed at dusk on the clifftop ────────────────────
   // Chaoryn — young chaos dragon; iridescent shifting scales (peacock × sea dragon); Chaos

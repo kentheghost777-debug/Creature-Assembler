@@ -1230,6 +1230,30 @@ uri = "file://artifacts/primeria/public/images/pondskip-wild.png"
 type = "image"
 title = "pondskip water sprite"
 
+[[generated]]
+id = "kwTgi_xo4kIYOlmNN7Po4"
+uri = "file://artifacts/primeria/public/images/shellcrag-wild.png"
+type = "image"
+title = "shellcrag hermit crab crystal shell"
+
+[[generated]]
+id = "5oNfdt6ZX7KzJ3BaAc0t6"
+uri = "file://artifacts/primeria/public/images/solmane-wild.png"
+type = "image"
+title = "solmane radiant sunflower lion"
+
+[[generated]]
+id = "NBq_vRa94SwkvAG5x9YP-"
+uri = "file://artifacts/primeria/public/images/umbravel-wild.png"
+type = "image"
+title = "umbravel shadow mantis evolved"
+
+[[generated]]
+id = "hF0IE8rn5eCm8Ih2nsjX5"
+uri = "file://artifacts/primeria/public/images/mindwraith-wild.png"
+type = "image"
+title = "mindwraith psychic phantom mind type"
+
 [[outputs]]
 id = "hj9mwcgl1Uv9QQTG9g6KL"
 uri = "file://kinju_walk_demo.tar.gz"
