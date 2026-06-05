@@ -838,6 +838,17 @@ const RARITY_BASE: Record<MonRarity, number> = {
   common: 53, uncommon: 30, rare: 11, ultra: 5, apex: 1,
 };
 
+// Wild encounter levels by zone — deeper areas spawn stronger mons
+const SCENE_WILD_LEVELS: Partial<Record<string, Record<MonRarity, number>>> = {
+  route1: { common:4,  uncommon:6,  rare:9,  ultra:12, apex:15 },
+  route2: { common:8,  uncommon:10, rare:13, ultra:16, apex:19 },
+  area3:  { common:13, uncommon:16, rare:19, ultra:22, apex:25 },
+  shore:  { common:18, uncommon:20, rare:22, ultra:25, apex:28 },
+};
+function wildLevelForScene(rarity: MonRarity, sc: string): number {
+  return SCENE_WILD_LEVELS[sc]?.[rarity] ?? wildLevelFor(rarity);
+}
+
 function rollRarity(checksStreak: number): MonRarity {
   // Streak A: +2% Rare/Ultra per 5 checks since last UR/Apex, cap +20
   const streakBonus = Math.min(20, Math.floor(checksStreak / 5) * 2);
@@ -1570,6 +1581,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   // ── Encounter / battle state ────────────────────────────────────────────
   const [shellCount,    setShellCount]    = useState(() => savedParty?.shells ?? 0);
   const [wildEncounter, setWildEncounter] = useState<MonSpec | null>(null);
+  const wildEncounterLevelRef = useRef(5);
   const [caughtParty,   setCaughtParty]   = useState<PartyMon[]>(() => hydrateParty(savedParty?.caught ?? []));
   const [storageBox,    setStorageBox]    = useState<PartyMon[]>(() => hydrateParty(savedParty?.box ?? []));
   const [activeDisturbances, setActiveDisturbances] = useState<Record<number, { mon: MonSpec; expiresAt: number }>>({});
@@ -3161,6 +3173,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       });
       setHotspotCd(prev => ({ ...prev, [idx]: Date.now() + 12000 }));
       setWildEncounter(dist.mon);
+      wildEncounterLevelRef.current = wildLevelForScene(dist.mon.rarity, scene);
       if (dist.mon.rarity === "ultra" || dist.mon.rarity === "apex") setChecksStreak(0);
       // Encounter flourish — element-tinted radial burst before the fade-to-battle
       const distEl = asElement(dist.mon.type);
@@ -3374,7 +3387,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
 
     let outcome: string;
     if (result.kind === "caught") {
-      const dest = addCaughtMon(result.mon);
+      const dest = addCaughtMon(result.mon, false, wildEncounterLevelRef.current);
       if (dest === "full") {
         setBattleNotif({ title: `${result.mon.name} couldn't be stored!`, sub: `Party & Storage Box both full (${STORAGE_CAP})` });
         outcome = `${result.mon.name} bonded with you, but your party and Storage Box are both full — it returned to the wild.`;
@@ -3570,6 +3583,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       <div style={{ width:"100vw", height:"100dvh", background:"#000", position:"relative", overflow:"hidden" }}>
         <BattleScene
           wild={wildEncounter}
+          wildLevel={wildEncounterLevelRef.current}
           starter={starter}
           starterLevel={starterLevel}
           starterStats={starterStats}

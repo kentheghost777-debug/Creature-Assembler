@@ -157,6 +157,8 @@ type Props = {
   healingRuneEquipped: boolean;
   /** Role boon: capture odds multiplier (Hopeful path raises it). Defaults to 1. */
   catchMult?: number;
+  /** Scene-appropriate wild level; overrides the flat wildLevelFor(rarity) default. */
+  wildLevel?: number;
   shellsCount: number;
   /** IDs of mon species the player has already bonded (party + storage). Used
    *  to show a "bonded" indicator on the wild HP plate. */
@@ -202,7 +204,7 @@ const BTN_BG_HI = "linear-gradient(180deg, rgba(90,62,30,0.96), rgba(56,36,16,0.
 
 export function BattleScene({
   wild, starter, starterLevel, starterStats, starterMoves, hasResonanceStone, healingRuneEquipped,
-  catchMult = 1, shellsCount, caughtIds = [] as string[],
+  catchMult = 1, wildLevel, shellsCount, caughtIds = [] as string[],
   opponentKind = "wild", keeperName = "Keeper", keeperImg = "/__mockup/images/rowan_side_1.png",
   heroImg = "/__mockup/images/walk_side_1.png",
   keeperSheet,
@@ -223,7 +225,7 @@ export function BattleScene({
     : wild;
   const currentOpponentLevel: number = (isKeeper && keeperMonLevels?.length)
     ? (keeperMonLevels[trainerMonIdx] ?? Math.max(5, starterLevel))
-    : (isKeeper ? Math.max(5, starterLevel) : wildLevelFor(wild.rarity));
+    : (isKeeper ? Math.max(5, starterLevel) : (wildLevel ?? wildLevelFor(wild.rarity)));
 
   // ── Player team (lead + bench) ──────────────────────────────────────────
   // The lead is built from the starter props; caught companions ride `bench`.
@@ -311,14 +313,14 @@ export function BattleScene({
   const playerEl  = asElement(active.type);
   const wildEl    = asElement(currentOpponent.type);
   const wildStats = wildCombatStats(currentOpponent.baseDmg, currentOpponent.rarity);
-  const wildLevel = currentOpponentLevel;
+  const wildOpponentLevel = currentOpponentLevel;
 
   // Active mon's loadout.
   const playerMoves: Move[] = resolveMoves(active);
   // Wild's loadout derived from its element + notional level.
   const wildMoves: Move[] = (() => {
     if (wildEl) {
-      const ids = defaultActiveMoves(wildEl, wildLevel);
+      const ids = defaultActiveMoves(wildEl, wildOpponentLevel);
       const ms = ids.map(getMove).filter((m): m is Move => !!m);
       if (ms.length) return ms;
     }
