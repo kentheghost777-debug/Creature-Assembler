@@ -1431,7 +1431,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     return base;
   });
   const [showJournal,      setShowJournal]      = useState(false);
-  const [journalTab,       setJournalTab]       = useState<"party"|"storage"|"shells"|"bag"|"guide">("party");
+  const [journalTab,       setJournalTab]       = useState<"party"|"storage"|"shells"|"bag"|"equipment"|"guide">("party");
   const [interactPos,      setInteractPos]      = useState({ sx: 0, sy: 0 });
   const [mayaInteractPos,  setMayaInteractPos]  = useState({ sx: 0, sy: 0 });
   const [jayInteractPos,   setJayInteractPos]   = useState({ sx: 0, sy: 0 });
@@ -6248,7 +6248,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                     </div>
                     {/* Mobile row 2: tabs full width */}
                     <div style={{ display:"flex", gap:3 }}>
-                      {(["party","storage","shells","bag","guide"] as const).map(tab => (
+                      {(["party","storage","shells","bag","equipment","guide"] as const).map(tab => (
                         <button key={tab} onClick={() => setJournalTab(tab)} style={{
                           flex:1, padding:"5px 4px 8px",
                           background: journalTab === tab
@@ -6259,7 +6259,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                           color: journalTab === tab ? "#3d1e04" : "#a08050",
                           fontSize:10, fontWeight:800, letterSpacing:0.8,
                           textTransform:"uppercase", cursor:"pointer",
-                        }}>{tab === "party" ? "Party" : tab === "storage" ? "Box" : tab === "shells" ? "Shells" : tab === "guide" ? "Guide" : "Bag"}</button>
+                        }}>{tab === "party" ? "Party" : tab === "storage" ? "Box" : tab === "shells" ? "Shells" : tab === "equipment" ? "Equip" : tab === "guide" ? "Guide" : "Bag"}</button>
                       ))}
                     </div>
                   </>
@@ -6274,7 +6274,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
 
                     {/* Page tabs flush with bottom of spine */}
                     <div style={{ display:"flex", gap:3, alignSelf:"flex-end" }}>
-                      {(["party","storage","shells","bag","guide"] as const).map(tab => (
+                      {(["party","storage","shells","bag","equipment","guide"] as const).map(tab => (
                         <button key={tab} onClick={() => setJournalTab(tab)} style={{
                           padding:"5px 11px 8px",
                           background: journalTab === tab
@@ -6285,7 +6285,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                           color: journalTab === tab ? "#3d1e04" : "#a08050",
                           fontSize:10, fontWeight:800, letterSpacing:1.2,
                           textTransform:"uppercase", cursor:"pointer",
-                        }}>{tab === "party" ? "Party" : tab === "storage" ? "Box" : tab === "shells" ? "Shells" : tab === "guide" ? "Guide" : "Bag"}</button>
+                        }}>{tab === "party" ? "Party" : tab === "storage" ? "Box" : tab === "shells" ? "Shells" : tab === "equipment" ? "Equip" : tab === "guide" ? "Guide" : "Bag"}</button>
                       ))}
                     </div>
 
@@ -6311,7 +6311,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                   <span style={{
                     color:"#8a5c22", fontSize:9, fontWeight:800,
                     letterSpacing:2.5, textTransform:"uppercase",
-                  }}>{journalTab === "party" ? "Companions" : journalTab === "storage" ? "Storage Box" : journalTab === "guide" ? "Tayanari Field Guide" : "Carried Items"}</span>
+                  }}>{journalTab === "party" ? "Companions" : journalTab === "storage" ? "Storage Box" : journalTab === "guide" ? "Tayanari Field Guide" : journalTab === "equipment" ? "Keeper Equipment" : "Carried Items"}</span>
                   <div style={{ flex:1, height:1, background:"rgba(100,64,20,0.28)" }}/>
                 </div>
 
@@ -7370,6 +7370,70 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                 )}
 
                 {/* ── GUIDE PAGE ──────────────────────────────── */}
+                {/* ── EQUIPMENT PAGE ───────────────────────────────── */}
+                {journalTab === "equipment" && (() => {
+                  const slots = [
+                    { id:"headband",  slot:"Head",    icon:"🎩", label:"Headband" },
+                    { id:"armor",     slot:"Body",    icon:"🥼", label:"Armor" },
+                    { id:"wristband", slot:"Wrists",  icon:"🪬", label:"Wristband" },
+                    { id:"shoes",     slot:"Feet",    icon:"👟", label:"Shoes" },
+                  ] as const;
+                  return (
+                    <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                      {/* Keeper label strip */}
+                      <div style={{ textAlign:"center", padding:"4px 0 10px", color:"#8a5c22", fontSize:9, fontWeight:800, letterSpacing:2.5 }}>
+                        KEEPER LOADOUT
+                      </div>
+
+                      {/* Empty gear slots */}
+                      {slots.map(eq => (
+                        <div key={eq.id} style={{ display:"flex", alignItems:"center", gap:11, padding:"9px 12px", borderRadius:10, background:"rgba(60,40,10,0.04)", border:"1.5px dashed rgba(100,64,20,0.20)" }}>
+                          <div style={{ width:38, height:38, borderRadius:8, background:"rgba(60,40,10,0.06)", border:"1.5px dashed rgba(100,64,20,0.22)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:17, flexShrink:0 }}>
+                            {eq.icon}
+                          </div>
+                          <div style={{ flex:1 }}>
+                            <div style={{ color:"#8a5c22", fontSize:8, fontWeight:800, letterSpacing:1.8, textTransform:"uppercase" }}>{eq.slot}</div>
+                            <div style={{ color:"#2a1206", fontWeight:700, fontSize:11, marginTop:2 }}>{eq.label}</div>
+                            <div style={{ color:"rgba(100,64,20,0.38)", fontSize:9, marginTop:2, fontStyle:"italic" }}>— Empty —</div>
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* Divider */}
+                      <div style={{ display:"flex", alignItems:"center", gap:8, margin:"4px 0" }}>
+                        <div style={{ flex:1, height:1, background:"rgba(100,64,20,0.18)" }}/>
+                        <span style={{ color:"rgba(100,64,20,0.45)", fontSize:8, fontWeight:800, letterSpacing:2 }}>RESONANCE</span>
+                        <div style={{ flex:1, height:1, background:"rgba(100,64,20,0.18)" }}/>
+                      </div>
+
+                      {/* Resonance Stone slot — live state */}
+                      <div style={{ display:"flex", alignItems:"center", gap:11, padding:"10px 12px", borderRadius:10, background: resonanceStoneEquipped ? "rgba(40,70,180,0.07)" : "rgba(60,40,10,0.04)", border:`1.5px solid ${resonanceStoneEquipped ? "rgba(80,110,220,0.35)" : "rgba(100,64,20,0.22)"}` }}>
+                        <div style={{ width:38, height:38, borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, fontSize:20, background: resonanceStoneEquipped ? "rgba(60,90,220,0.12)" : "rgba(60,40,10,0.06)", border:`1.5px solid ${resonanceStoneEquipped ? "rgba(80,110,220,0.4)" : "rgba(100,64,20,0.22)"}` }}>
+                          ◈
+                        </div>
+                        <div style={{ flex:1 }}>
+                          <div style={{ color: resonanceStoneEquipped ? "#3d5db0" : "#8a5c22", fontSize:8, fontWeight:800, letterSpacing:1.8, textTransform:"uppercase" }}>Resonance Slot</div>
+                          <div style={{ color:"#2a1206", fontWeight:700, fontSize:11, marginTop:2 }}>Resonance Stone</div>
+                          <div style={{ fontSize:9, marginTop:2, color: resonanceStoneEquipped ? "#5070c0" : hasResonanceStone ? "rgba(100,64,20,0.5)" : "rgba(100,64,20,0.35)", fontStyle: hasResonanceStone ? "normal" : "italic" }}>
+                            {resonanceStoneEquipped ? "Equipped · +20% catch rate" : hasResonanceStone ? "Owned · not equipped" : "— Not obtained —"}
+                          </div>
+                        </div>
+                        {hasResonanceStone && (
+                          <button
+                            onClick={() => setResonanceStoneEquipped(e => !e)}
+                            style={{ background: resonanceStoneEquipped ? "rgba(180,40,40,0.10)" : "rgba(60,90,200,0.12)", border:`1px solid ${resonanceStoneEquipped ? "rgba(180,60,60,0.5)" : "rgba(60,90,200,0.5)"}`, color: resonanceStoneEquipped ? "#c05050" : "#4060c0", padding:"5px 11px", borderRadius:7, fontSize:10, fontWeight:700, cursor:"pointer", flexShrink:0 }}
+                          >{resonanceStoneEquipped ? "Remove" : "Equip"}</button>
+                        )}
+                      </div>
+
+                      {/* Coming soon note */}
+                      <div style={{ textAlign:"center", color:"rgba(100,64,20,0.35)", fontSize:8, fontStyle:"italic", marginTop:6, letterSpacing:0.5 }}>
+                        More equipment drops as you explore the world.
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 {journalTab === "guide" && (
                   <div style={{ display:"flex", flexDirection:"column", gap:2 }}>
                     {([
