@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { WalkDemo } from "./WalkDemo";
-import { type CharId, type RoleId, hasSave, readSave, startNewSave } from "./save";
+import { type CharId, type RoleId, type SlotIndex, ALL_SLOTS, readSlot, deleteSlot, setActiveSlot, getActiveSlot, startNewSave, formatSaveTime } from "./save";
 import { playTrack, stopAll } from "./audioManager";
 
 const TITLE_TRACK = "./audio/primeria_title.mp3";
@@ -59,9 +59,14 @@ export default function GameLauncher() {
   const [screen, setScreen]       = useState<Screen>("studio");
   const [introPhase, setIntroPhase] = useState(1);
   const [fading, setFading]       = useState(false);
-  const [savedGame, setSavedGame] = useState(() => hasSave());
+  const [activeSlot, setActiveSlotState] = useState<SlotIndex>(() => getActiveSlot());
+  const [slotData, setSlotData] = useState(() => ALL_SLOTS.map(s => readSlot(s)));
+  const [showSlotPicker, setShowSlotPicker] = useState(false);
+  const [slotPickerMode, setSlotPickerMode] = useState<"continue"|"new">("continue");
+  const [confirmDelete, setConfirmDelete] = useState<SlotIndex|null>(null);
   const [characterId, setCharacterId] = useState<CharId>("kinju");
   const [roleId, setRoleId] = useState<RoleId>("keeper");
+  const savedGame = slotData[activeSlot - 1] !== null;
   const [vw, setVw] = useState(() => window.innerWidth);
 
   useEffect(() => {
@@ -101,24 +106,71 @@ export default function GameLauncher() {
     return () => window.removeEventListener("keydown", handler);
   }, [screen, fadeTo]);
 
+  const refreshSlots = () => setSlotData(ALL_SLOTS.map(s => readSlot(s)));
+
   const handleNewGame = () => {
-    setCharacterId("kinju");
-    setRoleId("keeper");
-    setIntroPhase(1);
-    fadeTo("char_reveal");
+    const anyEmpty = ALL_SLOTS.some(s => readSlot(s) === null);
+    if (anyEmpty) {
+      // Automatically pick first empty slot
+      const emptySlot = ALL_SLOTS.find(s => readSlot(s) === null)!;
+      setActiveSlot(emptySlot);
+      setActiveSlotState(emptySlot);
+      setCharacterId("kinju");
+      setRoleId("keeper");
+      setIntroPhase(1);
+      fadeTo("char_reveal");
+    } else {
+      // All slots full — show picker to overwrite
+      setSlotPickerMode("new");
+      setShowSlotPicker(true);
+    }
   };
 
   const handleContinue = () => {
-    const save = readSave();
-    setCharacterId(save?.characterId ?? "kinju");
-    setRoleId(save?.roleId ?? "keeper");
-    fadeTo("game");
+    const anyFull = ALL_SLOTS.some(s => readSlot(s) !== null);
+    if (!anyFull) return;
+    const fullSlots = ALL_SLOTS.filter(s => readSlot(s) !== null);
+    if (fullSlots.length === 1) {
+      const slot = fullSlots[0];
+      setActiveSlot(slot);
+      setActiveSlotState(slot);
+      const save = readSlot(slot);
+      setCharacterId(save?.characterId ?? "kinju");
+      setRoleId(save?.roleId ?? "keeper");
+      fadeTo("game");
+    } else {
+      setSlotPickerMode("continue");
+      setShowSlotPicker(true);
+    }
   };
 
   const beginJourney = () => {
-    startNewSave(characterId, roleId);
-    setSavedGame(true);
+    startNewSave(characterId, roleId, activeSlot);
+    refreshSlots();
     fadeTo("intro");
+  };
+
+  const handleSlotSelect = (slot: SlotIndex) => {
+    setActiveSlot(slot);
+    setActiveSlotState(slot);
+    setShowSlotPicker(false);
+    if (slotPickerMode === "continue") {
+      const save = readSlot(slot);
+      setCharacterId(save?.characterId ?? "kinju");
+      setRoleId(save?.roleId ?? "keeper");
+      fadeTo("game");
+    } else {
+      setCharacterId("kinju");
+      setRoleId("keeper");
+      setIntroPhase(1);
+      fadeTo("char_reveal");
+    }
+  };
+
+  const handleDeleteSlot = (slot: SlotIndex) => {
+    deleteSlot(slot);
+    refreshSlots();
+    setConfirmDelete(null);
   };
 
   const advanceIntro = () => {
@@ -425,6 +477,117 @@ export default function GameLauncher() {
               pointerEvents: "none",
             }} />
           </div>
+
+          {/* ── SAVE SLOT PICKER OVERLAY ───────────────────────────── */}
+          {showSlotPicker && (
+            <div style={{
+              position: "absolute", inset: 0, zIndex: 20,
+              background: "rgba(4,2,1,0.93)",
+              display: "flex", flexDirection: "column",
+              alignItems: "center", justifyContent: "center",
+              padding: "24px 20px",
+            }}>
+              <div style={{ color: "#f0d060", fontSize: 10, fontWeight: 900, letterSpacing: 3.5, marginBottom: 6 }}>
+                {slotPickerMode === "continue" ? "CHOOSE SAVE FILE" : "CHOOSE SLOT"}
+              </div>
+              <div style={{ color: "#5a4020", fontSize: 8, letterSpacing: 1.5, marginBottom: 20 }}>
+                {slotPickerMode === "continue" ? "Select a save to continue" : "Select a slot for your new game"}
+              </div>
+              <div style={{ width: "100%", maxWidth: 340, display: "flex", flexDirection: "column", gap: 10 }}>
+                {ALL_SLOTS.map(slot => {
+                  const save = slotData[slot - 1];
+                  const isEmpty = save === null;
+                  const charName = save ? (save.characterId === "kinju" ? "Kinju" : save.characterId === "jess" ? "Jess" : "Rowan") : null;
+                  const scene = save?.world?.scene ?? null;
+                  const sceneLabel: Record<string, string> = {
+                    overworld:"Primeria Village", home:"Your Home", lab:"Lab",
+                    route1:"Whisperroot Trail", route2:"Eastern Path", area3:"Westwood Reaches",
+                    shore:"Tidemark Shore", farm:"Primeria Farm",
+                    maya:"Maya's Home", jay:"Jay's Home", ellio:"Ellio's Home", lia:"Lia's Home",
+                  };
+                  const isSelectable = slotPickerMode === "continue" ? !isEmpty : true;
+                  if (confirmDelete === slot) {
+                    return (
+                      <div key={slot} style={{
+                        border: "1.5px solid rgba(200,60,40,0.5)", borderRadius: 10,
+                        padding: "12px 14px", background: "rgba(30,4,2,0.85)",
+                        display: "flex", flexDirection: "column", gap: 8,
+                      }}>
+                        <div style={{ color: "#e06050", fontSize: 9, fontWeight: 800, letterSpacing: 1 }}>
+                          Delete Slot {slot}? This cannot be undone.
+                        </div>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button onClick={() => handleDeleteSlot(slot)} style={{
+                            flex: 1, padding: "7px 0", borderRadius: 7,
+                            background: "rgba(180,40,30,0.3)", border: "1.5px solid rgba(180,40,30,0.6)",
+                            color: "#e08070", fontSize: 9, fontWeight: 800, cursor: "pointer",
+                          }}>DELETE</button>
+                          <button onClick={() => setConfirmDelete(null)} style={{
+                            flex: 1, padding: "7px 0", borderRadius: 7,
+                            background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.15)",
+                            color: "#8a7a60", fontSize: 9, fontWeight: 700, cursor: "pointer",
+                          }}>CANCEL</button>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div key={slot} style={{
+                      border: `1.5px solid ${isSelectable ? "rgba(240,200,60,0.28)" : "rgba(80,60,30,0.3)"}`,
+                      borderRadius: 10, padding: "11px 14px",
+                      background: isSelectable ? "rgba(240,200,60,0.05)" : "rgba(20,14,6,0.4)",
+                      display: "flex", alignItems: "center", gap: 12,
+                      cursor: isSelectable ? "pointer" : "default",
+                      opacity: isSelectable ? 1 : 0.45,
+                    }}
+                      onClick={() => isSelectable && handleSlotSelect(slot)}
+                    >
+                      <div style={{
+                        width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                        background: isEmpty ? "rgba(60,44,20,0.3)" : "rgba(240,200,60,0.14)",
+                        border: "1px solid rgba(240,200,60,0.2)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        color: "#c8a030", fontSize: 11, fontWeight: 900,
+                      }}>{slot}</div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        {isEmpty ? (
+                          <div style={{ color: "#3a2c14", fontSize: 9, letterSpacing: 1 }}>— EMPTY —</div>
+                        ) : (
+                          <>
+                            <div style={{ color: "#f0d060", fontSize: 10, fontWeight: 800 }}>
+                              {charName}
+                            </div>
+                            <div style={{ color: "#7a6030", fontSize: 8, marginTop: 2 }}>
+                              {scene ? (sceneLabel[scene] ?? scene) : "New game"}
+                              {save?.ts ? ` · ${formatSaveTime(save.ts)}` : ""}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                      {!isEmpty && (
+                        <button
+                          onClick={e => { e.stopPropagation(); setConfirmDelete(slot); }}
+                          style={{
+                            flexShrink: 0, width: 24, height: 24, borderRadius: 6,
+                            background: "rgba(160,40,30,0.18)", border: "1px solid rgba(160,40,30,0.35)",
+                            color: "#c06050", fontSize: 10, cursor: "pointer",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                          }}
+                          title="Delete this save"
+                        >✕</button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              <button onClick={() => { setShowSlotPicker(false); setConfirmDelete(null); }} style={{
+                marginTop: 20, padding: "8px 24px", borderRadius: 8,
+                background: "transparent", border: "1px solid rgba(240,200,60,0.2)",
+                color: "#6a5030", fontSize: 9, fontWeight: 700, letterSpacing: 1.5,
+                textTransform: "uppercase", cursor: "pointer",
+              }}>← BACK</button>
+            </div>
+          )}
         </div>
       )}
 

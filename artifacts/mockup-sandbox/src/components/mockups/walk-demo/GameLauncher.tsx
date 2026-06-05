@@ -1,31 +1,31 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { WalkDemo } from "./WalkDemo";
-import { type CharId, type RoleId, hasSave, readSave, startNewSave } from "./save";
+import { type CharId, type RoleId, type SlotIndex, ALL_SLOTS, readSlot, deleteSlot, setActiveSlot, getActiveSlot, startNewSave, formatSaveTime } from "./save";
 import { playTrack, stopAll } from "./audioManager";
 
-const TITLE_TRACK = "/__mockup/audio/primeria_title.mp3";
+const TITLE_TRACK = "./audio/primeria_title.mp3";
 
 type Screen = "studio" | "dedication" | "title" | "menu" | "intro" | "char_reveal" | "game";
 
-const CHARACTERS: { id: CharId; name: string; tag: string; sprite: string; hdImg: string; desc: string; stats: [string, string][] }[] = [
+const CHARACTERS: { id: CharId; name: string; tag: string; sprite: string; hero: string; desc: string; stats: [string, string][] }[] = [
   {
     id: "kinju", name: "Kinju", tag: "Sunlit wanderer",
-    sprite: "/__mockup/images/kinju_front_idle.png",
-    hdImg:  "/__mockup/images/kinju_hero.png",
+    sprite: "./images/kinju_front_idle.png",
+    hero: "./images/kinju_hero.png",
     desc: "Born curious. Always at the edge of the known. When the world finally called your name — there was never any doubt.",
     stats: [["ORIGIN", "Primeria Village"], ["HEART", "Wanderlust"], ["CALL", "Horizon"]],
   },
   {
     id: "jess", name: "Jess", tag: "Wildheart roamer",
-    sprite: "/__mockup/images/jess_front_idle.png",
-    hdImg:  "/__mockup/images/jess_hero.png",
+    sprite: "./images/jess_front_idle.png",
+    hero: "./images/jess_hero.png",
     desc: "Born to the living world. You speak in the language of creatures, silence, and instinct — without ever saying a word.",
     stats: [["ORIGIN", "Primeria Village"], ["HEART", "Wildborn"], ["CALL", "The Living Land"]],
   },
   {
     id: "rowan", name: "Rowan", tag: "Seasoned traveler",
-    sprite: "/__mockup/images/rowan_front_idle.png",
-    hdImg:  "/__mockup/images/rowan_hero.png",
+    sprite: "./images/rowan_front_idle.png",
+    hero: "./images/rowan_hero.png",
     desc: "Born to understand. Every question leads to the next. For you, the Trial is not a beginning — it is a continuation.",
     stats: [["ORIGIN", "Primeria Village"], ["HEART", "Discovery"], ["CALL", "The Unknown"]],
   },
@@ -33,25 +33,25 @@ const CHARACTERS: { id: CharId; name: string; tag: string; sprite: string; hdImg
 
 const CHAR_INTRO_LINES: Record<CharId, string[]> = {
   kinju: [
-    "Come in. I've been watching the light change since first bell — and here you are, right at the moment it turned gold. I've had this scroll ready for three weeks. Every time I considered passing it to someone else, something stopped me. Today nothing stopped me.",
-    "Primeria looks peaceful from the village square. It isn't. Its mountains store elemental force the way stone holds heat — pressure building for centuries. Its rivers carry resonance memory from thousands of years of creature-life. The Tayanari that live in it? They are that world given shape and will. They don't obey. They choose.",
-    "The Trial of the Elders has been called. Once a generation, each village sends one of its own — not the strongest, not the most decorated. The one the land seems to recognize. Someone who will walk toward the unknown and keep walking when the map runs out. The village chose you. I was not surprised.",
-    "I have watched you stand at the north fence since you were small — eyes on the ridge, already calculating the route. Some people hold the horizon as an escape. You hold it as a direction. That is a different thing entirely, and the Tayanari out there will feel the difference the moment they meet you.",
-    "But first: your path. You'll declare it in the lab, and it will shape everything that comes after. Take a breath. When you're ready, come find me. The wildlands have been waiting a long time for someone who already knows which way they're facing. They can wait five more minutes.",
+    "Come in, come in — I've been expecting you since dawn. There's an energy about you today — well, every day, if I'm honest. But today it feels like the world finally caught up with it. Forgive me a moment's pause; I don't open this scroll often.",
+    "You know our world. Primeria — its mountains breathe with elemental force, its rivers run with memory, its wildlands sprawl past every map ever drawn. And everywhere within it live the Tayanari: creatures of pure elemental essence, born of the land itself. They cannot be owned. They cannot be commanded. They can only be bonded.",
+    "Once a generation, each village is asked to put a name forward — to send one of its own to face the Trial of the Elders. It is the highest honor we have. The whole village knew today was the day. And when we gathered to choose... every hand pointed to you.",
+    "I have watched you wander to the village edge since you were small — eyes always on the horizon, like something out there was calling your name. The Elders don't test strength. They test direction. And yours has never wavered.",
+    "But first, you must declare your path before them — the calling you'll carry through the Trial and beyond. Take a breath. When you're ready, come to the lab. The wild has waited a generation for someone like you. It can wait a few more minutes.",
   ],
   jess: [
-    "Come in — I knew it was you before you knocked. The Tayanari in the back garden went still all at once, like they were listening for something. They read what I hadn't said yet: today the Trial calls someone from Primeria, and it's been pointing at you for longer than either of us realized.",
-    "Primeria isn't just one place — it's a living system. Mountains that breathe elemental energy, rivers that remember every creature that's ever crossed them, wildlands that stretch so far past the last map that whole new forms of life are still being found out there. The Tayanari exist inside all of it: born from it, shaped by it, and able to bond with exactly the right person if that person knows how to be still enough to listen.",
-    "The Trial asks one thing of each generation: send someone the world seems to recognize. Not the most powerful. The one who moves through living things — creatures, people — as if they already have permission to be there. We chose you in under a minute. No one argued. The room just knew.",
-    "I have seen you calm Tayanari three times your size without raising your voice. I have seen wild ones near the eastern fence stop and watch you cross the yard. That is not luck. That is a language the Tayanari speak fluently, and you are already answering them without knowing it.",
-    "One more thing before you go — your path. You declare it at the lab today, and it follows you through everything that comes next. Trust what you feel when you're standing there. Then go. The wildlands are waiting for exactly what you carry. Don't keep them long.",
+    "Come in, come in — I've been expecting you since first light. Even the Tayanari in the back garden have been restless all morning. They feel it too, I think. Something's shifting today, and it has your name on it.",
+    "You know our world. Primeria — its mountains breathe with elemental force, its rivers run with memory, its wildlands sprawl past every map ever drawn. And everywhere within it live the Tayanari: creatures of pure elemental essence, born of the land itself. They cannot be owned. They cannot be commanded. They can only be bonded.",
+    "Once a generation, each village is asked to put a name forward — to send one of its own to face the Trial of the Elders. It is the highest honor we have. The whole village knew today was the day. And when we gathered to choose... the answer came from the heart, not the head.",
+    "I have never seen anyone quiet a Tayanari the way you do — not with commands, but with presence. Some Keepers spend decades learning that. You were born with it. The Elders will feel it the moment you walk in. I am certain of it.",
+    "But first, you must declare your path before them — the calling you'll carry through the Trial and beyond. Take a breath. When you're ready, come to the lab. The wild has waited a long time for you. It won't mind a few more minutes.",
   ],
   rowan: [
-    "Come in, right on time — I've had everything prepared since Tuesday. I kept revisiting the selection, running the compatibility index one more time. Same result every time. Some problems resolve cleanly when you give them enough data. You were that kind of problem. Sit down.",
-    "Primeria runs on something most people never stop to examine: elemental resonance. The mountains don't just stand there — they generate force that accumulates over centuries. The water doesn't just flow — it carries frequency. The Tayanari aren't unusual animals. They are living concentrations of that energy, evolved across millennia to work with it in ways our field journals are still only beginning to describe.",
-    "The Trial of the Elders has been called. One person per generation, per village — chosen not for strength alone, but for a specific quality of mind. Someone who will actually learn from what they encounter rather than simply survive it. The village deliberated. In the end: you. I ran the prediction three times. It resolved the same way each time.",
-    "You have read every field journal in this lab. You have found indexing errors I missed. You ask questions that take me two days to answer properly, and you remember the answers. The Trial will put you in front of situations where no field guide exists yet. That is precisely where someone with your patience belongs — at the edge of what's known, building the next record.",
-    "Before everything else: your path. You declare it at the lab. I expect you've been considering the options for some time. Take as long as you need — though I'd be surprised if you need long. The undiscovered country has been sitting there waiting for someone methodical enough to actually map it. Go map it.",
+    "Come in, come in — punctual as ever. I expected no less. I've had your selection prepared for some time; every day I waited, every day something confirmed it. Today, there is no more waiting. Forgive me — I've been rehearsing this speech for weeks.",
+    "You know our world. Primeria — its mountains breathe with elemental force, its rivers run with memory, its wildlands sprawl past every map ever drawn. And everywhere within it live the Tayanari: creatures of pure elemental essence, born of the land itself. They cannot be owned. They cannot be commanded. They can only be bonded.",
+    "Once a generation, each village is asked to put a name forward — to send one of its own to face the Trial of the Elders. It is the highest honor we have. The whole village knew today was the day. And when we gathered to choose... you had already been studying for it.",
+    "I have watched you work through every scroll in this lab twice over. You ask the questions most Keepers never think to ask. The Elders will not test your strength — they will test your mind, your patience, your purpose. There is no one in this village more ready for that test than you.",
+    "But first, you must declare your path before them — the calling you'll carry through the Trial and beyond. Take a breath. When you're ready, come to the lab. The world has more left to discover than any one person can chart. You will chart more of it than most.",
   ],
 };
 
@@ -59,9 +59,14 @@ export default function GameLauncher() {
   const [screen, setScreen]       = useState<Screen>("studio");
   const [introPhase, setIntroPhase] = useState(1);
   const [fading, setFading]       = useState(false);
-  const [savedGame, setSavedGame] = useState(() => hasSave());
+  const [activeSlot, setActiveSlotState] = useState<SlotIndex>(() => getActiveSlot());
+  const [slotData, setSlotData] = useState(() => ALL_SLOTS.map(s => readSlot(s)));
+  const [showSlotPicker, setShowSlotPicker] = useState(false);
+  const [slotPickerMode, setSlotPickerMode] = useState<"continue"|"new">("continue");
+  const [confirmDelete, setConfirmDelete] = useState<SlotIndex|null>(null);
   const [characterId, setCharacterId] = useState<CharId>("kinju");
   const [roleId, setRoleId] = useState<RoleId>("keeper");
+  const savedGame = slotData[activeSlot - 1] !== null;
   const [vw, setVw] = useState(() => window.innerWidth);
 
   useEffect(() => {
@@ -95,30 +100,77 @@ export default function GameLauncher() {
   useEffect(() => {
     if (screen !== "title") return;
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Enter" || e.key === " ") { playTrack(TITLE_TRACK); fadeTo("menu"); }
+      if (e.key === "Enter" || e.key === " ") fadeTo("menu");
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [screen, fadeTo]);
 
+  const refreshSlots = () => setSlotData(ALL_SLOTS.map(s => readSlot(s)));
+
   const handleNewGame = () => {
-    setCharacterId("kinju");
-    setRoleId("keeper");
-    setIntroPhase(1);
-    fadeTo("char_reveal");
+    const anyEmpty = ALL_SLOTS.some(s => readSlot(s) === null);
+    if (anyEmpty) {
+      // Automatically pick first empty slot
+      const emptySlot = ALL_SLOTS.find(s => readSlot(s) === null)!;
+      setActiveSlot(emptySlot);
+      setActiveSlotState(emptySlot);
+      setCharacterId("kinju");
+      setRoleId("keeper");
+      setIntroPhase(1);
+      fadeTo("char_reveal");
+    } else {
+      // All slots full — show picker to overwrite
+      setSlotPickerMode("new");
+      setShowSlotPicker(true);
+    }
   };
 
   const handleContinue = () => {
-    const save = readSave();
-    setCharacterId(save?.characterId ?? "kinju");
-    setRoleId(save?.roleId ?? "keeper");
-    fadeTo("game");
+    const anyFull = ALL_SLOTS.some(s => readSlot(s) !== null);
+    if (!anyFull) return;
+    const fullSlots = ALL_SLOTS.filter(s => readSlot(s) !== null);
+    if (fullSlots.length === 1) {
+      const slot = fullSlots[0];
+      setActiveSlot(slot);
+      setActiveSlotState(slot);
+      const save = readSlot(slot);
+      setCharacterId(save?.characterId ?? "kinju");
+      setRoleId(save?.roleId ?? "keeper");
+      fadeTo("game");
+    } else {
+      setSlotPickerMode("continue");
+      setShowSlotPicker(true);
+    }
   };
 
   const beginJourney = () => {
-    startNewSave(characterId, roleId);
-    setSavedGame(true);
+    startNewSave(characterId, roleId, activeSlot);
+    refreshSlots();
     fadeTo("intro");
+  };
+
+  const handleSlotSelect = (slot: SlotIndex) => {
+    setActiveSlot(slot);
+    setActiveSlotState(slot);
+    setShowSlotPicker(false);
+    if (slotPickerMode === "continue") {
+      const save = readSlot(slot);
+      setCharacterId(save?.characterId ?? "kinju");
+      setRoleId(save?.roleId ?? "keeper");
+      fadeTo("game");
+    } else {
+      setCharacterId("kinju");
+      setRoleId("keeper");
+      setIntroPhase(1);
+      fadeTo("char_reveal");
+    }
+  };
+
+  const handleDeleteSlot = (slot: SlotIndex) => {
+    deleteSlot(slot);
+    refreshSlots();
+    setConfirmDelete(null);
   };
 
   const advanceIntro = () => {
@@ -161,16 +213,16 @@ export default function GameLauncher() {
             letterSpacing: 8, textTransform: "uppercase",
           }}>PURESTORY</div>
           <div style={{
-            color: "#a8956a", fontSize: 8, fontWeight: 400,
+            color: "#6a5c40", fontSize: 8, fontWeight: 400,
             letterSpacing: 5, marginTop: 5, textTransform: "uppercase",
           }}>GAMING STUDIOS</div>
           <div style={{
             width: 44, height: 1,
-            background: "rgba(240,208,80,0.25)", marginTop: 26,
+            background: "rgba(240,208,80,0.2)", marginTop: 26,
           }} />
           <div style={{
-            color: "#8a7a58", fontSize: 9,
-            letterSpacing: 4, marginTop: 14,
+            color: "#302818", fontSize: 8,
+            letterSpacing: 3, marginTop: 14,
           }}>PRESENTS</div>
         </div>
       )}
@@ -178,7 +230,7 @@ export default function GameLauncher() {
       {/* ── DEDICATION ─────────────────────────────────────────────── */}
       {screen === "dedication" && (
         <div
-          onClick={() => { if (!fading) { playTrack(TITLE_TRACK); fadeTo("title"); } }}
+          onClick={() => { if (!fading) fadeTo("title"); }}
           style={{
             width: "100%", height: "100%",
             background: "#040303",
@@ -237,7 +289,7 @@ export default function GameLauncher() {
 
           <div style={{
             position: "absolute", bottom: 30,
-            color: "#a89060", fontSize: 10, letterSpacing: 2.5,
+            color: "#302618", fontSize: 9, letterSpacing: 2.5,
             animation: "glPulse 2.8s ease-in-out infinite",
           }}>TAP TO CONTINUE</div>
         </div>
@@ -254,7 +306,7 @@ export default function GameLauncher() {
           }}
         >
           <img
-            src="/__mockup/images/title-bg.png"
+            src="./images/title-bg.png"
             alt="Primeria"
             loading="eager"
             decoding="async"
@@ -291,11 +343,11 @@ export default function GameLauncher() {
               textShadow: "0 0 50px rgba(240,200,60,0.5), 0 4px 28px rgba(0,0,0,0.95), 0 0 100px rgba(240,180,40,0.2)",
             }}>PRIMERIA</div>
             <div style={{
-              color: "#c8a84a",
-              fontSize: "clamp(11px,2.4vw,14px)",
+              color: "#b89040",
+              fontSize: "clamp(8px,1.8vw,11px)",
               letterSpacing: "clamp(4px,1.5vw,7px)",
               marginTop: 9,
-              textShadow: "0 2px 12px rgba(0,0,0,0.98)",
+              textShadow: "0 2px 10px rgba(0,0,0,0.95)",
               textTransform: "uppercase",
             }}>The Keeper's Tale</div>
           </div>
@@ -319,7 +371,7 @@ export default function GameLauncher() {
           <div style={{
             position: "absolute", bottom: "4%",
             left: 0, right: 0, textAlign: "center",
-            color: "#6a5c38", fontSize: 8, letterSpacing: 2,
+            color: "#2e2412", fontSize: 8, letterSpacing: 2,
           }}>PURESTORY GAMING STUDIOS</div>
         </div>
       )}
@@ -333,7 +385,7 @@ export default function GameLauncher() {
           animation: "glFadeIn 0.6s ease forwards",
         }}>
           {/* Dim bg */}
-          <img src="/__mockup/images/title-bg.png" alt="" loading="eager" decoding="async" style={{
+          <img src="./images/title-bg.png" alt="" loading="eager" decoding="async" style={{
             position: "absolute", inset: 0, width: "100%", height: "100%",
             objectFit: "cover", objectPosition: "center 28%",
             opacity: 0.09, pointerEvents: "none",
@@ -401,7 +453,7 @@ export default function GameLauncher() {
             opacity: isMobile ? 0.14 : 1,
           }}>
             <img
-              src="/__mockup/images/hero-art.png"
+              src="./images/hero-art.png"
               alt="Hero"
               style={{
                 position: "absolute", bottom: 0, right: "4%",
@@ -410,7 +462,7 @@ export default function GameLauncher() {
               }}
             />
             <img
-              src="/__mockup/images/title-tayanari.png"
+              src="./images/title-tayanari.png"
               alt="Tayanari"
               style={{
                 position: "absolute", bottom: 0, right: "34%",
@@ -425,6 +477,117 @@ export default function GameLauncher() {
               pointerEvents: "none",
             }} />
           </div>
+
+          {/* ── SAVE SLOT PICKER OVERLAY ───────────────────────────── */}
+          {showSlotPicker && (
+            <div style={{
+              position: "absolute", inset: 0, zIndex: 20,
+              background: "rgba(4,2,1,0.93)",
+              display: "flex", flexDirection: "column",
+              alignItems: "center", justifyContent: "center",
+              padding: "24px 20px",
+            }}>
+              <div style={{ color: "#f0d060", fontSize: 10, fontWeight: 900, letterSpacing: 3.5, marginBottom: 6 }}>
+                {slotPickerMode === "continue" ? "CHOOSE SAVE FILE" : "CHOOSE SLOT"}
+              </div>
+              <div style={{ color: "#5a4020", fontSize: 8, letterSpacing: 1.5, marginBottom: 20 }}>
+                {slotPickerMode === "continue" ? "Select a save to continue" : "Select a slot for your new game"}
+              </div>
+              <div style={{ width: "100%", maxWidth: 340, display: "flex", flexDirection: "column", gap: 10 }}>
+                {ALL_SLOTS.map(slot => {
+                  const save = slotData[slot - 1];
+                  const isEmpty = save === null;
+                  const charName = save ? (save.characterId === "kinju" ? "Kinju" : save.characterId === "jess" ? "Jess" : "Rowan") : null;
+                  const scene = save?.world?.scene ?? null;
+                  const sceneLabel: Record<string, string> = {
+                    overworld:"Primeria Village", home:"Your Home", lab:"Lab",
+                    route1:"Whisperroot Trail", route2:"Eastern Path", area3:"Westwood Reaches",
+                    shore:"Tidemark Shore", farm:"Primeria Farm",
+                    maya:"Maya's Home", jay:"Jay's Home", ellio:"Ellio's Home", lia:"Lia's Home",
+                  };
+                  const isSelectable = slotPickerMode === "continue" ? !isEmpty : true;
+                  if (confirmDelete === slot) {
+                    return (
+                      <div key={slot} style={{
+                        border: "1.5px solid rgba(200,60,40,0.5)", borderRadius: 10,
+                        padding: "12px 14px", background: "rgba(30,4,2,0.85)",
+                        display: "flex", flexDirection: "column", gap: 8,
+                      }}>
+                        <div style={{ color: "#e06050", fontSize: 9, fontWeight: 800, letterSpacing: 1 }}>
+                          Delete Slot {slot}? This cannot be undone.
+                        </div>
+                        <div style={{ display: "flex", gap: 8 }}>
+                          <button onClick={() => handleDeleteSlot(slot)} style={{
+                            flex: 1, padding: "7px 0", borderRadius: 7,
+                            background: "rgba(180,40,30,0.3)", border: "1.5px solid rgba(180,40,30,0.6)",
+                            color: "#e08070", fontSize: 9, fontWeight: 800, cursor: "pointer",
+                          }}>DELETE</button>
+                          <button onClick={() => setConfirmDelete(null)} style={{
+                            flex: 1, padding: "7px 0", borderRadius: 7,
+                            background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.15)",
+                            color: "#8a7a60", fontSize: 9, fontWeight: 700, cursor: "pointer",
+                          }}>CANCEL</button>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div key={slot} style={{
+                      border: `1.5px solid ${isSelectable ? "rgba(240,200,60,0.28)" : "rgba(80,60,30,0.3)"}`,
+                      borderRadius: 10, padding: "11px 14px",
+                      background: isSelectable ? "rgba(240,200,60,0.05)" : "rgba(20,14,6,0.4)",
+                      display: "flex", alignItems: "center", gap: 12,
+                      cursor: isSelectable ? "pointer" : "default",
+                      opacity: isSelectable ? 1 : 0.45,
+                    }}
+                      onClick={() => isSelectable && handleSlotSelect(slot)}
+                    >
+                      <div style={{
+                        width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                        background: isEmpty ? "rgba(60,44,20,0.3)" : "rgba(240,200,60,0.14)",
+                        border: "1px solid rgba(240,200,60,0.2)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        color: "#c8a030", fontSize: 11, fontWeight: 900,
+                      }}>{slot}</div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        {isEmpty ? (
+                          <div style={{ color: "#3a2c14", fontSize: 9, letterSpacing: 1 }}>— EMPTY —</div>
+                        ) : (
+                          <>
+                            <div style={{ color: "#f0d060", fontSize: 10, fontWeight: 800 }}>
+                              {charName}
+                            </div>
+                            <div style={{ color: "#7a6030", fontSize: 8, marginTop: 2 }}>
+                              {scene ? (sceneLabel[scene] ?? scene) : "New game"}
+                              {save?.ts ? ` · ${formatSaveTime(save.ts)}` : ""}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                      {!isEmpty && (
+                        <button
+                          onClick={e => { e.stopPropagation(); setConfirmDelete(slot); }}
+                          style={{
+                            flexShrink: 0, width: 24, height: 24, borderRadius: 6,
+                            background: "rgba(160,40,30,0.18)", border: "1px solid rgba(160,40,30,0.35)",
+                            color: "#c06050", fontSize: 10, cursor: "pointer",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                          }}
+                          title="Delete this save"
+                        >✕</button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              <button onClick={() => { setShowSlotPicker(false); setConfirmDelete(null); }} style={{
+                marginTop: 20, padding: "8px 24px", borderRadius: 8,
+                background: "transparent", border: "1px solid rgba(240,200,60,0.2)",
+                color: "#6a5030", fontSize: 9, fontWeight: 700, letterSpacing: 1.5,
+                textTransform: "uppercase", cursor: "pointer",
+              }}>← BACK</button>
+            </div>
+          )}
         </div>
       )}
 
@@ -466,7 +629,7 @@ export default function GameLauncher() {
           }}>
             {/* Prof art */}
             <img
-              src="/__mockup/images/prof-art.png"
+              src="./images/prof-art.png"
               alt="Prof. Irwyn"
               style={{
                 height: isMobile ? 130 : "min(66%, 440px)",
@@ -546,7 +709,7 @@ export default function GameLauncher() {
       {screen === "char_reveal" && (() => {
         const activeChar = CHARACTERS.find(c => c.id === characterId) ?? CHARACTERS[0];
         const CharPicker = () => (
-          <div style={{ display: "flex", gap: isMobile ? 8 : 10, flexWrap: "nowrap" }}>
+          <div style={{ display: "flex", gap: isMobile ? 7 : 9, flexWrap: "nowrap" }}>
             {CHARACTERS.map(c => {
               const active = characterId === c.id;
               return (
@@ -555,30 +718,31 @@ export default function GameLauncher() {
                   onClick={() => setCharacterId(c.id)}
                   style={{
                     display: "flex", flexDirection: "column", alignItems: "center",
-                    flex: 1,
-                    padding: "8px 6px 10px", gap: 6, cursor: "pointer",
+                    flex: isMobile ? 1 : undefined,
+                    width: isMobile ? undefined : 90,
+                    padding: "10px 6px 8px", gap: 5, cursor: "pointer",
                     background: active ? "rgba(240,200,60,0.12)" : "rgba(255,255,255,0.02)",
                     border: active ? "1.5px solid rgba(240,200,60,0.6)" : "1px solid rgba(240,200,60,0.16)",
                     borderRadius: 10,
-                    boxShadow: active ? "0 0 18px rgba(240,200,60,0.14)" : "none",
+                    boxShadow: active ? "0 0 16px rgba(240,200,60,0.12)" : "none",
                     transition: "all 0.18s",
                   }}
                 >
                   <div style={{
-                    width: "100%", aspectRatio: "3/4",
-                    overflow: "hidden", borderRadius: 6, flexShrink: 0,
-                    background: "rgba(0,0,0,0.4)",
-                    display: "flex", alignItems: "flex-end", justifyContent: "center",
+                    width: isMobile ? 46 : 56, height: isMobile ? 64 : 78,
+                    overflow: "hidden", display: "flex",
+                    alignItems: "flex-start", justifyContent: "center",
+                    flexShrink: 0,
                   }}>
-                    <img src={c.hdImg} alt={c.name} style={{
-                      width: "100%", height: "100%",
-                      objectFit: "contain", objectPosition: "top center",
-                      filter: active ? "none" : "grayscale(0.55) opacity(0.55)",
-                      transition: "filter 0.18s",
+                    <img src={c.sprite} alt={c.name} style={{
+                      width: "100%", objectFit: "contain",
+                      objectPosition: "top center",
+                      imageRendering: "pixelated",
+                      filter: active ? "none" : "grayscale(0.6) opacity(0.6)",
                     }} />
                   </div>
-                  <div style={{ color: active ? "#f0d060" : "#8a7440", fontSize: isMobile ? 11 : 12, fontWeight: 800, letterSpacing: 1 }}>{c.name}</div>
-                  <div style={{ color: "#6a5424", fontSize: isMobile ? 8 : 8.5, letterSpacing: 0.4 }}>{c.tag}</div>
+                  <div style={{ color: active ? "#f0d060" : "#8a7440", fontSize: 10, fontWeight: 800, letterSpacing: 1 }}>{c.name}</div>
+                  <div style={{ color: "#6a5424", fontSize: 7, letterSpacing: 0.4 }}>{c.tag}</div>
                 </button>
               );
             })}
@@ -594,27 +758,23 @@ export default function GameLauncher() {
               overflowY: "auto", overflowX: "hidden",
               animation: "glFadeIn 0.8s ease forwards",
             }}>
-              {/* Character art — responsive height so full portrait always shows */}
+              {/* Character art — top, fixed height */}
               <div style={{
-                width: "100%",
-                height: "clamp(300px, 90vw, 420px)",
-                flexShrink: 0,
-                position: "relative",
+                width: "100%", height: 260, flexShrink: 0,
+                position: "relative", display: "flex",
+                alignItems: "flex-end", justifyContent: "center",
+                overflow: "hidden",
               }}>
                 <div style={{
                   position: "absolute", inset: 0,
-                  background: "radial-gradient(ellipse at 50% 85%,rgba(240,180,40,0.09) 0%,transparent 70%)",
+                  background: "radial-gradient(ellipse at 50% 80%,rgba(240,180,40,0.09) 0%,transparent 70%)",
                   pointerEvents: "none",
                 }} />
                 <img
-                  key={activeChar.id}
-                  src={activeChar.hdImg}
+                  src={activeChar.hero}
                   alt={activeChar.name}
                   style={{
-                    position: "absolute", inset: 0,
-                    width: "100%", height: "100%",
-                    objectFit: "contain",
-                    objectPosition: "bottom center",
+                    height: "98%", objectFit: "contain", objectPosition: "bottom center",
                     filter: "drop-shadow(0 0 28px rgba(240,180,40,0.22))",
                   }}
                 />
@@ -622,24 +782,24 @@ export default function GameLauncher() {
 
               {/* Info below */}
               <div style={{ padding: "16px 20px 32px", display: "flex", flexDirection: "column", gap: 0 }}>
-                <div style={{ color: "#4a3818", fontSize: 10, letterSpacing: 4, marginBottom: 10 }}>YOUR CHARACTER</div>
+                <div style={{ color: "#4a3818", fontSize: 8, letterSpacing: 4, marginBottom: 10 }}>YOUR CHARACTER</div>
                 <div style={{
-                  color: "#f0d060", fontSize: 30, fontWeight: 900, letterSpacing: 3, lineHeight: 1.05,
+                  color: "#f0d060", fontSize: 26, fontWeight: 900, letterSpacing: 3, lineHeight: 1.05,
                   textShadow: "0 0 22px rgba(240,200,60,0.22)",
                 }}>THE<br />KEEPER</div>
                 <div style={{ width: 46, height: 1, background: "rgba(240,200,60,0.22)", margin: "14px 0" }} />
-                <div style={{ color: "#c8bca0", fontSize: 14, lineHeight: 1.7, fontWeight: 300, marginBottom: 14 }}>
+                <div style={{ color: "#c8bca0", fontSize: 12, lineHeight: 1.75, fontWeight: 300, marginBottom: 14 }}>
                   {activeChar.desc}
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 7, marginBottom: 20 }}>
                   {activeChar.stats.map(([k, v]) => (
                     <div key={k} style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                      <div style={{ color: "#3a2c14", fontSize: 9, letterSpacing: 2, width: 58 }}>{k}</div>
-                      <div style={{ color: "#9a7c40", fontSize: 12, fontWeight: 600 }}>{v}</div>
+                      <div style={{ color: "#3a2c14", fontSize: 7.5, letterSpacing: 2, width: 52 }}>{k}</div>
+                      <div style={{ color: "#9a7c40", fontSize: 10, fontWeight: 600 }}>{v}</div>
                     </div>
                   ))}
                 </div>
-                <div style={{ color: "#4a3818", fontSize: 10, letterSpacing: 3, marginBottom: 9 }}>CHOOSE YOUR LOOK</div>
+                <div style={{ color: "#4a3818", fontSize: 8, letterSpacing: 3, marginBottom: 9 }}>CHOOSE YOUR LOOK</div>
                 <CharPicker />
                 <button
                   onClick={() => { if (!fading) beginJourney(); }}
@@ -730,10 +890,12 @@ export default function GameLauncher() {
               justifyContent: "center", overflow: "hidden",
             }}>
               <img
-                key={activeChar.id}
-                src={activeChar.hdImg}
+                src={activeChar.hero}
                 alt="Your Keeper"
-                style={{ height: "min(88%, 520px)", objectFit: "contain", objectPosition: "bottom center", filter: "drop-shadow(-2px 0 36px rgba(240,180,40,0.18))" }}
+                style={{
+                  height: "min(88%, 520px)", objectFit: "contain", objectPosition: "bottom center",
+                  filter: "drop-shadow(-2px 0 36px rgba(240,180,40,0.18))",
+                }}
               />
             </div>
           </div>

@@ -1701,8 +1701,12 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     return base;
   });
   const [showJournal,      setShowJournal]      = useState(false);
-  const [journalTab,       setJournalTab]       = useState<"party"|"storage"|"shells"|"bag"|"equipment"|"guide">("party");
+  const [journalTab,       setJournalTab]       = useState<"party"|"storage"|"shells"|"bag"|"equipment"|"guide"|"map">("party");
   const [dexSub,           setDexSub]           = useState<"dex"|"evo">("dex");
+  const [visitedScenes,    setVisitedScenes]    = useState<Set<string>>(() => {
+    const saved = savedWorld?.visitedScenes;
+    return new Set(saved ?? [savedWorld?.scene ?? "home"]);
+  });
   const [interactPos,      setInteractPos]      = useState({ sx: 0, sy: 0 });
   const [mayaInteractPos,  setMayaInteractPos]  = useState({ sx: 0, sy: 0 });
   const [jayInteractPos,   setJayInteractPos]   = useState({ sx: 0, sy: 0 });
@@ -2163,6 +2167,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       ownedPrismStoneIds, slottedPrismStoneId,
       primeriaCoin, profShoreWins, profShorePaid,
       corvinMet,
+      visitedScenes: Array.from(visitedScenes),
     };
     persistWorld();
   }, [
@@ -2180,6 +2185,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     ownedPrismStoneIds, slottedPrismStoneId,
     primeriaCoin, profShoreWins, profShorePaid,
     corvinMet,
+    visitedScenes,
     persistWorld,
   ]);
   // On resume with Wyvrunt already caught, seed the follower beside the player
@@ -2812,6 +2818,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       followLastSrc.current  = "";
       sceneRef.current = next;
       setScene(next);
+      if (next !== "battle") setVisitedScenes(prev => { const s = new Set(prev); s.add(next); return s; });
       setTimeout(() => { fadingRef.current = false; setFading(false); }, 350);
     }, 350);
   }, []);
@@ -6878,18 +6885,18 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                     </div>
                     {/* Mobile row 2: tabs full width */}
                     <div style={{ display:"flex", gap:3 }}>
-                      {(["party","storage","shells","bag","equipment","guide"] as const).map(tab => (
+                      {(["party","storage","shells","bag","equipment","guide","map"] as const).map(tab => (
                         <button key={tab} onClick={() => setJournalTab(tab)} style={{
-                          flex:1, padding:"5px 4px 8px",
+                          flex:1, padding:"5px 2px 8px",
                           background: journalTab === tab
                             ? "linear-gradient(175deg,#f5e9cc,#ecdcb4)"
                             : "rgba(0,0,0,0.30)",
                           border:"none",
                           borderRadius:"7px 7px 0 0",
                           color: journalTab === tab ? "#3d1e04" : "#a08050",
-                          fontSize:10, fontWeight:800, letterSpacing:0.8,
+                          fontSize:9, fontWeight:800, letterSpacing:0.5,
                           textTransform:"uppercase", cursor:"pointer",
-                        }}>{tab === "party" ? "Party" : tab === "storage" ? "Box" : tab === "shells" ? "Shells" : tab === "equipment" ? "Equip" : tab === "guide" ? "Guide" : "Bag"}</button>
+                        }}>{tab === "party" ? "Party" : tab === "storage" ? "Box" : tab === "shells" ? "Shells" : tab === "equipment" ? "Equip" : tab === "guide" ? "Guide" : tab === "map" ? "Map" : "Bag"}</button>
                       ))}
                     </div>
                   </>
@@ -6904,18 +6911,18 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
 
                     {/* Page tabs flush with bottom of spine */}
                     <div style={{ display:"flex", gap:3, alignSelf:"flex-end" }}>
-                      {(["party","storage","shells","bag","equipment","guide"] as const).map(tab => (
+                      {(["party","storage","shells","bag","equipment","guide","map"] as const).map(tab => (
                         <button key={tab} onClick={() => setJournalTab(tab)} style={{
-                          padding:"5px 11px 8px",
+                          padding:"5px 9px 8px",
                           background: journalTab === tab
                             ? "linear-gradient(175deg,#f5e9cc,#ecdcb4)"
                             : "rgba(0,0,0,0.30)",
                           border:"none",
                           borderRadius:"7px 7px 0 0",
                           color: journalTab === tab ? "#3d1e04" : "#a08050",
-                          fontSize:10, fontWeight:800, letterSpacing:1.2,
+                          fontSize:10, fontWeight:800, letterSpacing:1,
                           textTransform:"uppercase", cursor:"pointer",
-                        }}>{tab === "party" ? "Party" : tab === "storage" ? "Box" : tab === "shells" ? "Shells" : tab === "equipment" ? "Equip" : tab === "guide" ? "Guide" : "Bag"}</button>
+                        }}>{tab === "party" ? "Party" : tab === "storage" ? "Box" : tab === "shells" ? "Shells" : tab === "equipment" ? "Equip" : tab === "guide" ? "Guide" : tab === "map" ? "Map" : "Bag"}</button>
                       ))}
                     </div>
 
@@ -6934,14 +6941,14 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               </div>
 
               {/* Parchment body */}
-              <div style={{ overflowY:"auto", padding:"14px 18px 22px", flex:1 }}>
+              <div style={{ overflowY:"auto", padding:"14px 18px 22px", flex:1, minHeight:0 }}>
                 {/* Section header rule */}
                 <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:14 }}>
                   <div style={{ flex:1, height:1, background:"rgba(100,64,20,0.28)" }}/>
                   <span style={{
                     color:"#8a5c22", fontSize:9, fontWeight:800,
                     letterSpacing:2.5, textTransform:"uppercase",
-                  }}>{journalTab === "party" ? "Companions" : journalTab === "storage" ? "Storage Box" : journalTab === "guide" ? "Tayanari Field Guide" : journalTab === "equipment" ? "Keeper Equipment" : "Carried Items"}</span>
+                  }}>{journalTab === "party" ? "Companions" : journalTab === "storage" ? "Storage Box" : journalTab === "guide" ? "Tayanari Field Guide" : journalTab === "equipment" ? "Keeper Equipment" : journalTab === "map" ? "World Map" : "Carried Items"}</span>
                   <div style={{ flex:1, height:1, background:"rgba(100,64,20,0.28)" }}/>
                 </div>
 
@@ -8261,6 +8268,112 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                           ))}
                         </div>
                       )}
+                    </div>
+                  );
+                })()}
+
+                {/* ── MAP TAB ─────────────────────────────────────── */}
+                {journalTab === "map" && (() => {
+                  const REGIONS: Array<{
+                    id: string; label: string; sublabel?: string;
+                    x: number; y: number; w: number; h: number;
+                    color: string; textColor: string;
+                    shape?: "diamond" | "rect";
+                  }> = [
+                    { id:"home",      label:"Home",           x:200, y:148, w:28, h:28, color:"#d4a84a", textColor:"#3a2000", shape:"diamond" },
+                    { id:"overworld", label:"Primeria",       sublabel:"Village", x:148, y:128, w:90, h:72, color:"#e8d090", textColor:"#3a2000" },
+                    { id:"lab",       label:"Lab",            x:192, y:92,  w:32, h:30, color:"#b8c8d8", textColor:"#1a2030", shape:"diamond" },
+                    { id:"maya",      label:"Maya",           x:256, y:130, w:26, h:26, color:"#d8a8c0", textColor:"#3a1020", shape:"diamond" },
+                    { id:"jay",       label:"Jay",            x:256, y:88,  w:26, h:26, color:"#a8c8d0", textColor:"#102030", shape:"diamond" },
+                    { id:"ellio",     label:"Ellio",          x:116, y:128, w:26, h:26, color:"#c8d0a8", textColor:"#202810", shape:"diamond" },
+                    { id:"lia",       label:"Lia",            x:290, y:148, w:26, h:26, color:"#d0b8a8", textColor:"#301808", shape:"diamond" },
+                    { id:"route1",    label:"Whisperroot",    sublabel:"Trail", x:148, y:52, w:90, h:70, color:"#70b858", textColor:"#0a2006" },
+                    { id:"route2",    label:"Eastern",        sublabel:"Path",  x:290, y:70, w:88, h:110, color:"#5890d0", textColor:"#041830" },
+                    { id:"area3",     label:"Westwood",       sublabel:"Reaches", x:36, y:52, w:100, h:110, color:"#9060d0", textColor:"#180830" },
+                    { id:"shore",     label:"Tidemark",       sublabel:"Shore", x:36, y:168, w:100, h:70, color:"#40c0d8", textColor:"#042030" },
+                    { id:"farm",      label:"Farm",           x:290, y:186, w:88, h:50, color:"#a8c870", textColor:"#182006" },
+                  ];
+                  const CONNECTIONS: Array<[string,string]> = [
+                    ["overworld","route1"], ["overworld","route2"], ["overworld","area3"],
+                    ["overworld","home"], ["overworld","lab"], ["overworld","maya"],
+                    ["overworld","jay"], ["overworld","ellio"], ["overworld","lia"],
+                    ["area3","shore"], ["route2","farm"],
+                  ];
+                  const vb = { w: 420, h: 270 };
+                  function cx(r: typeof REGIONS[0]) { return r.x + r.w/2; }
+                  function cy(r: typeof REGIONS[0]) { return r.y + r.h/2; }
+                  const regionMap = Object.fromEntries(REGIONS.map(r => [r.id, r]));
+                  return (
+                    <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                      <div style={{ fontSize:8, color:"#7a6030", letterSpacing:1, textAlign:"center" }}>
+                        Discovered regions glow — unexplored areas remain dim
+                      </div>
+                      <div style={{ position:"relative", width:"100%", borderRadius:10, overflow:"hidden", border:"1px solid rgba(100,64,20,0.3)", background:"rgba(20,12,4,0.85)" }}>
+                        <svg viewBox={`0 0 ${vb.w} ${vb.h}`} style={{ width:"100%", display:"block" }}>
+                          <rect x={0} y={0} width={vb.w} height={vb.h} fill="#0a1830"/>
+                          <rect x={0} y={0} width={vb.w} height={vb.h} fill="url(#oceanLinesM)" opacity={0.18}/>
+                          <defs>
+                            <pattern id="oceanLinesM" x={0} y={0} width={16} height={16} patternUnits="userSpaceOnUse">
+                              <line x1={0} y1={8} x2={16} y2={8} stroke="#4090c0" strokeWidth={0.5}/>
+                            </pattern>
+                          </defs>
+                          {CONNECTIONS.map(([a,b]) => {
+                            const ra = regionMap[a]; const rb = regionMap[b];
+                            if (!ra || !rb) return null;
+                            const vis = visitedScenes.has(a) || visitedScenes.has(b);
+                            return <line key={`${a}-${b}`} x1={cx(ra)} y1={cy(ra)} x2={cx(rb)} y2={cy(rb)} stroke={vis ? "#c8a030" : "#2a1c08"} strokeWidth={vis ? 1.5 : 1} strokeDasharray={vis ? "none" : "3 3"} opacity={vis ? 0.7 : 0.4}/>;
+                          })}
+                          {REGIONS.map(r => {
+                            const visited = visitedScenes.has(r.id);
+                            const isCurrent = scene === r.id;
+                            if (r.shape === "diamond") {
+                              const mx = r.x + r.w/2; const my = r.y + r.h/2;
+                              const hw = r.w/2; const hh = r.h/2;
+                              return (
+                                <g key={r.id}>
+                                  <polygon points={`${mx},${my-hh} ${mx+hw},${my} ${mx},${my+hh} ${mx-hw},${my}`} fill={visited ? r.color : "#1a1208"} stroke={isCurrent ? "#fff8a0" : (visited ? r.color : "#3a2810")} strokeWidth={isCurrent ? 2 : 1} opacity={visited ? 1 : 0.5}/>
+                                  {isCurrent && <polygon points={`${mx},${my-hh} ${mx+hw},${my} ${mx},${my+hh} ${mx-hw},${my}`} fill="none" stroke="#fff8a0" strokeWidth={1} opacity={0.5}/>}
+                                  <text x={mx} y={my+1} textAnchor="middle" dominantBaseline="middle" fontSize={visited ? 6 : 5} fontWeight={800} fill={visited ? r.textColor : "#3a2810"}>{r.label}</text>
+                                  {isCurrent && <text x={mx} y={my-hh-4} textAnchor="middle" fontSize={5} fill="#fff8a0" fontWeight={900}>YOU</text>}
+                                </g>
+                              );
+                            }
+                            return (
+                              <g key={r.id}>
+                                <rect x={r.x} y={r.y} width={r.w} height={r.h} rx={5} fill={visited ? r.color : "#1a1208"} stroke={isCurrent ? "#fff8a0" : (visited ? r.color : "#3a2810")} strokeWidth={isCurrent ? 2 : 1} opacity={visited ? 1 : 0.45}/>
+                                {isCurrent && <rect x={r.x-1} y={r.y-1} width={r.w+2} height={r.h+2} rx={6} fill="none" stroke="#fff8a0" strokeWidth={1} opacity={0.5}/>}
+                                <text x={cx(r)} y={r.sublabel ? cy(r)-4 : cy(r)} textAnchor="middle" dominantBaseline="middle" fontSize={visited ? 7.5 : 6} fontWeight={900} fill={visited ? r.textColor : "#3a2810"}>{r.label}</text>
+                                {r.sublabel && <text x={cx(r)} y={cy(r)+7} textAnchor="middle" dominantBaseline="middle" fontSize={visited ? 6 : 5} fontWeight={700} fill={visited ? r.textColor+"cc" : "#2a1c08"}>{r.sublabel}</text>}
+                                {isCurrent && <text x={cx(r)} y={r.y-6} textAnchor="middle" fontSize={5.5} fill="#fff8a0" fontWeight={900}>▼ YOU ARE HERE</text>}
+                              </g>
+                            );
+                          })}
+                          <g transform="translate(390,250)">
+                            <circle cx={0} cy={0} r={14} fill="rgba(0,0,0,0.5)" stroke="rgba(200,160,48,0.4)" strokeWidth={1}/>
+                            <text x={0} y={-7} textAnchor="middle" dominantBaseline="middle" fontSize={7} fill="#c8a030" fontWeight={900}>N</text>
+                            <text x={0} y={8}  textAnchor="middle" dominantBaseline="middle" fontSize={6} fill="#806828">S</text>
+                            <text x={-8} y={1} textAnchor="middle" dominantBaseline="middle" fontSize={6} fill="#806828">W</text>
+                            <text x={8}  y={1} textAnchor="middle" dominantBaseline="middle" fontSize={6} fill="#806828">E</text>
+                          </g>
+                        </svg>
+                      </div>
+                      <div style={{ display:"flex", flexWrap:"wrap", gap:6, justifyContent:"center" }}>
+                        {[
+                          { color:"#e8d090", label:"Village" },
+                          { color:"#70b858", label:"Wilds" },
+                          { color:"#9060d0", label:"Westwood" },
+                          { color:"#40c0d8", label:"Shore" },
+                          { color:"#5890d0", label:"East Path" },
+                        ].map(({ color, label }) => (
+                          <div key={label} style={{ display:"flex", alignItems:"center", gap:3 }}>
+                            <div style={{ width:8, height:8, borderRadius:2, background:color }}/>
+                            <span style={{ fontSize:7, color:"#7a6030", fontWeight:700 }}>{label}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{ fontSize:7, color:"#5a4020", textAlign:"center", letterSpacing:0.5 }}>
+                        {visitedScenes.size} of {12} regions explored
+                      </div>
                     </div>
                   );
                 })()}

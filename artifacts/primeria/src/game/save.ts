@@ -2,25 +2,18 @@ import type { MonSpec, StarterStats } from "./BattleScene";
 
 export type CharId = "kinju" | "rowan" | "jess";
 
-/**
- * The path a Keeper-hopeful declares before the Elders at the start of their
- * Trial. Each role carries a single passive boon tied to its calling.
- */
 export type RoleId = "keeper" | "hopeful" | "wanderer";
 
 export type RoleDef = {
   id: RoleId;
-  name: string;       // short selectable label, e.g. "Keeper"
-  title: string;      // formal calling, shown on the oath screen
-  calling: string;    // one-line flavor of what this path is
-  buffLabel: string;  // short buff summary for the picker
-  buffDetail: string; // fuller in-world description of the boon
-  glyph: string;      // decorative sigil
-  /** XP earned by your Tayanari is multiplied by this. */
+  name: string;
+  title: string;
+  calling: string;
+  buffLabel: string;
+  buffDetail: string;
+  glyph: string;
   xpMult: number;
-  /** Shell capture odds are multiplied by this (result clamped to 1.0). */
   catchMult: number;
-  /** Fraction shaved off prices when trading (0.15 = 15% better deals). */
   sellDiscount: number;
 };
 
@@ -67,16 +60,10 @@ export function roleDef(id: RoleId): RoleDef {
   return ROLES.find(r => r.id === id) ?? ROLES[0];
 }
 
-/** A caught companion with its own progression. Wild-caught mons gain levels
- *  (and thus derived stats + moves) but do not evolve in this demo. Older saves
- *  stored bare MonSpec[]; those are migrated to level 1 on load. */
 export type PartyMon = MonSpec & { level: number; xp: number; moves?: string[] };
 
 export type PartySave = {
   starterId: string | null;
-  /** When the starter has evolved, stores the evolved form's identity so the
-   *  correct name + sprite is restored on resume. The base spec (type/color)
-   *  is always read from the STARTERS table via starterId. */
   starterFormOverride?: { id: string; name: string; img: string } | null;
   level: number;
   xp: number;
@@ -87,16 +74,10 @@ export type PartySave = {
   shells: number;
 };
 
-/**
- * Snapshot of where the player physically is in the world plus every quest /
- * progression flag. Persisting this is what lets a player close the game and
- * resume in the exact same spot, mid-quest, on their next visit.
- */
 export type WorldSave = {
-  scene: string;            // current scene id (overworld / route1 / home / ...)
-  posX: number;             // world-space position within that scene
+  scene: string;
+  posX: number;
   posY: number;
-  // Town errands
   shellsCollected: boolean;
   hasHealingRune: boolean;
   healingRuneEquipped: boolean;
@@ -104,15 +85,13 @@ export type WorldSave = {
   resonanceStoneEquipped: boolean;
   hasHearthberries: boolean;
   hasSatchel: boolean;
-  // NPC arc completion (clears their "!" bubble)
-  firstHomeGreeting: boolean;  // partner spoke on very first home spawn
+  firstHomeGreeting: boolean;
   jessDone: boolean;
   jayDone: boolean;
   mayaInitDone: boolean;
   mayaDone: boolean;
   ellioDone: boolean;
   liaDone: boolean;
-  // Route 2 / Wyvrunt arc
   route1Visited: boolean;
   wifeOnPath: boolean;
   wifeIntercepted: boolean;
@@ -120,50 +99,39 @@ export type WorldSave = {
   profRoute2Done: boolean;
   hasObsidianRealmShell: boolean;
   wyvruntCaught: boolean;
-  // Wyvrunt evolution chain
-  wyvruntForm: number;   // 0=Wyvrunt, 1=Wyrnak, 2=Wyrvast, 3=Aureyvant
-  wyrLoyalty: number;    // 0–100 loyalty bar; fills from battles/catches/quests
-  // Area 3 trainer battles (Jay & Lia)
-  jayA3Wins: number;     // cumulative wins vs Jay in Area 3
+  wyvruntForm: number;
+  wyrLoyalty: number;
+  jayA3Wins: number;
   liaA3Wins: number;
-  // Declared path — chosen in the lab when you receive your starter (not at
-  // character creation). Until then the role badge stays hidden.
   roleChosen: boolean;
-  // Encounter pacing
   checksStreak: number;
-  // Cleminus / demo end
-  cleminusMet: boolean;   // Jerbs has appeared and introduced himself
-  demoComplete: boolean;  // player received Trial Cards + saw demo end screen
-  // Jerbs battle + Crystalfang gift
-  jerbsBattleDone: boolean;  // player won the Jerbs battle
-  hasCrystalFang: boolean;   // Crystalfang was received
-  crystalFangEvo: "glacia" | "volcia" | "faelia" | null;  // chosen evolution
-  catalystStones: ("glacia"|"volcia"|"faelia")[];         // stones received, not yet used
-  // Hollis field-berries (Route 2 farmer gift)
+  cleminusMet: boolean;
+  demoComplete: boolean;
+  jerbsBattleDone: boolean;
+  hasCrystalFang: boolean;
+  crystalFangEvo: "glacia" | "volcia" | "faelia" | null;
+  catalystStones: ("glacia"|"volcia"|"faelia")[];
   hollisGifted: boolean;
-  duskberries: number;    // restores 30% HP in battle
-  thornberries: number;   // +ATK buff for the battle
-  calmberries: number;    // +DEF buff for the battle
-  brightberries: number;  // clears heal cooldown + restores lowest-PP move
-  // Primeria Farm (north of Route 2)
+  duskberries: number;
+  thornberries: number;
+  calmberries: number;
+  brightberries: number;
   farmVisited: boolean;
-  farmShellsGiven: boolean;   // Shella gave the player a battle shell
-  farmRunesGiven: boolean;    // Runrik gave all runes + Crucibyx
-  marenGifted: boolean;       // Maren gave brightberries
-  // Battle shell / rune equip system (socketed before wild battles)
+  farmShellsGiven: boolean;
+  farmRunesGiven: boolean;
+  marenGifted: boolean;
   ownedBattleShellIds: string[];
   equippedBattleShellId: string | null;
   ownedBattleRuneIds: string[];
-  slottedBattleRuneId: string | null;  // rune currently socketed in the shell
+  slottedBattleRuneId: string | null;
   hasCrucibyx: boolean;
-  ownedPrismStoneIds: string[];      // prism stones collected
-  slottedPrismStoneId: string | null; // prism stone currently slotted
-  // Tidemark Shore — Prof. Irwyn challenger battle + PrimeriaCoin currency
+  ownedPrismStoneIds: string[];
+  slottedPrismStoneId: string | null;
   primeriaCoin: number;
-  profShoreWins: number;   // times the player has beaten the prof on shore
-  profShorePaid: number;   // times prof has paid out coin (cap 2)
-  // Overworld NPCs
-  corvinMet: boolean;      // Corvin (traveling naturalist) has introduced himself
+  profShoreWins: number;
+  profShorePaid: number;
+  corvinMet: boolean;
+  visitedScenes?: string[];
 };
 
 export type SaveData = {
@@ -174,20 +142,39 @@ export type SaveData = {
   world: WorldSave | null;
 };
 
-const SAVE_KEY = "primeria_v3";
+// ── Multi-slot system ─────────────────────────────────────────────────────────
+// Slots 1-3 are stored as primeria_v3_s1 / primeria_v3_s2 / primeria_v3_s3.
+// The "active slot" is stored in primeria_v3_active (number 1-3).
+// Legacy saves at primeria_v3 (no slot suffix) are imported into slot 1 on
+// first load and then removed, giving zero data loss on upgrade.
 
-export function hasSave(): boolean {
-  try {
-    return !!localStorage.getItem(SAVE_KEY);
-  } catch {
-    return false;
-  }
+const SLOT_KEYS = ["primeria_v3_s1", "primeria_v3_s2", "primeria_v3_s3"] as const;
+const ACTIVE_KEY = "primeria_v3_active";
+const LEGACY_KEY = "primeria_v3";
+
+export type SlotIndex = 1 | 2 | 3;
+export const ALL_SLOTS: SlotIndex[] = [1, 2, 3];
+
+function slotKey(slot: SlotIndex): string {
+  return SLOT_KEYS[slot - 1];
 }
 
-export function readSave(): SaveData | null {
+/** Migrate a legacy single-slot save into slot 1 (runs once). */
+function migrateLegacy(): void {
   try {
-    const raw = localStorage.getItem(SAVE_KEY);
-    if (!raw) return null;
+    const legacy = localStorage.getItem(LEGACY_KEY);
+    if (!legacy) return;
+    if (!localStorage.getItem(slotKey(1))) {
+      localStorage.setItem(slotKey(1), legacy);
+    }
+    localStorage.removeItem(LEGACY_KEY);
+  } catch { /* ignore */ }
+}
+
+/** Read and validate a raw save from localStorage. */
+function parseSlot(raw: string | null): SaveData | null {
+  if (!raw) return null;
+  try {
     const data = JSON.parse(raw) as Partial<SaveData>;
     return {
       ts: typeof data.ts === "number" ? data.ts : Date.now(),
@@ -207,20 +194,61 @@ export function readSave(): SaveData | null {
   }
 }
 
-export function writeSave(data: SaveData): void {
+export function getActiveSlot(): SlotIndex {
+  migrateLegacy();
   try {
-    localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+    const v = parseInt(localStorage.getItem(ACTIVE_KEY) ?? "1", 10);
+    if (v === 1 || v === 2 || v === 3) return v as SlotIndex;
+  } catch { /* ignore */ }
+  return 1;
+}
+
+export function setActiveSlot(slot: SlotIndex): void {
+  try { localStorage.setItem(ACTIVE_KEY, String(slot)); } catch { /* ignore */ }
+}
+
+/** Read a specific slot (null = empty). */
+export function readSlot(slot: SlotIndex): SaveData | null {
+  migrateLegacy();
+  try { return parseSlot(localStorage.getItem(slotKey(slot))); } catch { return null; }
+}
+
+/** Write to a specific slot. */
+export function writeSlot(slot: SlotIndex, data: SaveData): void {
+  try { localStorage.setItem(slotKey(slot), JSON.stringify(data)); } catch { /* ignore */ }
+}
+
+/** Delete a slot permanently. */
+export function deleteSlot(slot: SlotIndex): void {
+  try { localStorage.removeItem(slotKey(slot)); } catch { /* ignore */ }
+}
+
+// ── Active-slot helpers (used by WalkDemo to persist without knowing slot) ───
+
+export function hasSave(): boolean {
+  migrateLegacy();
+  try {
+    const slot = getActiveSlot();
+    return !!localStorage.getItem(slotKey(slot));
   } catch {
-    /* ignore quota / unavailable storage */
+    return false;
   }
 }
 
-/** Begin a fresh game with the chosen character + declared role; clears any prior party + world. */
-export function startNewSave(characterId: CharId, roleId: RoleId = "keeper"): void {
-  writeSave({ ts: Date.now(), characterId, roleId, party: null, world: null });
+export function readSave(): SaveData | null {
+  return readSlot(getActiveSlot());
 }
 
-/** Persist party progress, preserving the stored character id + role + world. */
+export function writeSave(data: SaveData): void {
+  writeSlot(getActiveSlot(), data);
+}
+
+export function startNewSave(characterId: CharId, roleId: RoleId = "keeper", slot?: SlotIndex): void {
+  const target = slot ?? getActiveSlot();
+  setActiveSlot(target);
+  writeSlot(target, { ts: Date.now(), characterId, roleId, party: null, world: null });
+}
+
 export function updateParty(party: PartySave): void {
   const cur = readSave();
   writeSave({
@@ -232,7 +260,6 @@ export function updateParty(party: PartySave): void {
   });
 }
 
-/** Persist world position + quest flags, preserving the stored character/role/party. */
 export function updateWorld(world: WorldSave): void {
   const cur = readSave();
   writeSave({
@@ -244,7 +271,6 @@ export function updateWorld(world: WorldSave): void {
   });
 }
 
-/** Persist the declared role (chosen in the lab), preserving character/party/world. */
 export function updateRole(roleId: RoleId): void {
   const cur = readSave();
   writeSave({
@@ -254,4 +280,11 @@ export function updateRole(roleId: RoleId): void {
     party: cur?.party ?? null,
     world: cur?.world ?? null,
   });
+}
+
+/** Format a save timestamp as a short human-readable string. */
+export function formatSaveTime(ts: number): string {
+  const d = new Date(ts);
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" }) +
+    " " + d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
 }
