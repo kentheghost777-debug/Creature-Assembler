@@ -438,11 +438,79 @@ export function applyShellGrowthBias(
   return out;
 }
 
+// ── Prism Stones ──────────────────────────────────────────────────────────────
+// Cosmetic items that tint a Tayanari's sprite to a unique shiny hue when
+// slotted into a Prism Shell. One slot occupied per stone. No stat effect.
+
+export type PrismStoneId =
+  | "prism_ruby"    | "prism_sapphire" | "prism_emerald" | "prism_amber"
+  | "prism_amethyst"| "prism_crystal"  | "prism_obsidian"| "prism_rose"
+  | "prism_umbra"   | "prism_solaris"  | "prism_neon";
+
+export type PrismStoneItem = {
+  id: PrismStoneId;
+  name: string;
+  color: string;
+  hue: number;
+  sat: number;
+  bri: number;
+  sepia: number;
+  icon: string;
+  desc: string;
+  price: number;
+  rarity: "rare" | "ultra" | "apex";
+  dropChance: number;
+};
+
+export const PRISM_STONES: readonly PrismStoneItem[] = [
+  { id:"prism_ruby",      name:"Ruby Prism",      icon:"💎", color:"#e03040", rarity:"rare",
+    hue:0,   sat:2.4, bri:1.0, sepia:0.8,
+    desc:"Crimson-tinted sheen. Burns like embers.",            price:120, dropChance:0.012 },
+  { id:"prism_sapphire",  name:"Sapphire Prism",  icon:"🔷", color:"#2060e0", rarity:"rare",
+    hue:200, sat:2.2, bri:0.95, sepia:0.6,
+    desc:"Deep ocean blue. Cool as midnight tides.",            price:120, dropChance:0.012 },
+  { id:"prism_emerald",   name:"Emerald Prism",   icon:"💚", color:"#20b040", rarity:"rare",
+    hue:120, sat:2.5, bri:1.0, sepia:0.7,
+    desc:"Vivid forest green. Smells faintly of rain.",         price:120, dropChance:0.012 },
+  { id:"prism_amber",     name:"Amber Prism",     icon:"🟡", color:"#e09020", rarity:"rare",
+    hue:30,  sat:2.2, bri:1.05, sepia:0.75,
+    desc:"Warm golden glow. Ancient light trapped in glass.",   price:120, dropChance:0.012 },
+  { id:"prism_amethyst",  name:"Amethyst Prism",  icon:"💜", color:"#9040c0", rarity:"rare",
+    hue:280, sat:2.0, bri:0.95, sepia:0.65,
+    desc:"Violet shimmer. Feels like a held secret.",           price:120, dropChance:0.012 },
+  { id:"prism_crystal",   name:"Crystal Prism",   icon:"🔵", color:"#b0e8ff", rarity:"rare",
+    hue:185, sat:0.4, bri:1.35, sepia:0.0,
+    desc:"Pale icy white. Refracts light into rainbows.",       price:120, dropChance:0.010 },
+  { id:"prism_obsidian",  name:"Obsidian Prism",  icon:"⬛", color:"#505060", rarity:"rare",
+    hue:240, sat:0.3, bri:0.45, sepia:0.2,
+    desc:"Dark as a starless sky. Absorbs light.",              price:120, dropChance:0.010 },
+  { id:"prism_rose",      name:"Rose Prism",      icon:"🌸", color:"#e060a0", rarity:"rare",
+    hue:330, sat:2.0, bri:1.0, sepia:0.7,
+    desc:"Soft pink bloom. Rare as a blossoming Tayanari.",     price:120, dropChance:0.010 },
+  { id:"prism_umbra",     name:"Umbra Prism",     icon:"🌑", color:"#3d1a6a", rarity:"ultra",
+    hue:270, sat:1.8, bri:0.30, sepia:0.5,
+    desc:"Shadow-forged. The mon fades into living dusk.",      price:0,   dropChance:0.004 },
+  { id:"prism_solaris",   name:"Solaris Prism",   icon:"☀️",  color:"#ffe080", rarity:"ultra",
+    hue:45,  sat:1.2, bri:1.70, sepia:0.3,
+    desc:"Holy radiance. The mon blazes like a second sun.",    price:0,   dropChance:0.004 },
+  { id:"prism_neon",      name:"Neon Prism",      icon:"⚡", color:"#00ffcc", rarity:"apex",
+    hue:165, sat:4.0, bri:1.20, sepia:0.0,
+    desc:"Electric neon glow. Impossible to look away from.",   price:0,   dropChance:0.001 },
+];
+
+export const PRISM_STONES_BY_ID: Record<PrismStoneId, PrismStoneItem> =
+  Object.fromEntries(PRISM_STONES.map(s => [s.id, s])) as Record<PrismStoneId, PrismStoneItem>;
+
+export function prismFilter(stone: PrismStoneItem): string {
+  return `sepia(${stone.sepia}) hue-rotate(${stone.hue}deg) saturate(${stone.sat}) brightness(${stone.bri})`;
+}
+
 // ── Battle Shells & Runes (Primeria Farm equip system) ───────────────────────
 
 export type BattleShellId =
-  | "bshell_moss" | "bshell_ember" | "bshell_tide"   | "bshell_storm"
-  | "bshell_dusk" | "bshell_frost" | "bshell_spirit" | "bshell_alch";
+  | "bshell_moss"   | "bshell_ember"  | "bshell_tide"   | "bshell_storm"
+  | "bshell_dusk"   | "bshell_frost"  | "bshell_spirit" | "bshell_alch"
+  | "bshell_prism2" | "bshell_prism3";
 
 export type BattleRuneId =
   | "brune_warden"    | "brune_resonance" | "brune_swift"     | "brune_power"
@@ -459,6 +527,7 @@ export type BattleShellItem = {
   color: string;
   icon: string;
   desc: string;
+  prismSlots?: number;
 };
 
 export type BattleRuneItem = {
@@ -479,6 +548,8 @@ export const BATTLE_SHELLS: readonly BattleShellItem[] = [
   { id:"bshell_frost",  name:"Crystalcap",     element:"Frostformed", color:"#7ddeff", icon:"❄",  desc:"Etched with ancient frost-rune patterns. Unmelting, unyielding." },
   { id:"bshell_spirit", name:"Veilshell",      element:"Spirit",      color:"#b890e0", icon:"✦",  desc:"Shimmers at the edge of sight. Whispers when the world goes quiet." },
   { id:"bshell_alch",   name:"Alchemband",     element:"Alchemy",     color:"#90c060", icon:"⚗",  desc:"Smells faintly of transmutation salts. Shifts under moonlight." },
+  { id:"bshell_prism2",  name:"Prism Shell",      element:"Spirit",      color:"#d0a0ff", icon:"◈",  desc:"A dual-slotted shell etched with refraction runes. Holds one rune and one Prism Stone.", prismSlots:1 },
+  { id:"bshell_prism3",  name:"Grand Prism Shell", element:"Spirit",     color:"#f0c0ff", icon:"✦",  desc:"Three slots — one rune, two Prism Stones. Rarest of bonding vessels.", prismSlots:2 },
 ];
 
 export const BATTLE_SHELLS_BY_ID: Record<BattleShellId, BattleShellItem> =

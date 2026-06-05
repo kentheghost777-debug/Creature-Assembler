@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback, Fragment, type PointerEvent as RPointerEvent, type MouseEvent as RMouseEvent } from "react";
 import { BattleScene, RARITY_COLOR, sheetBgStyle, type SpriteSheet, type MonSpec, type MonRarity, type BattleResult, type StarterStats, type StarterSpec, type BattleMon } from "./BattleScene";
 import { EvoScene } from "./EvoScene";
-import { SHELLS, ELEMENT_COLOR, BATTLE_SHELLS, BATTLE_RUNES, BATTLE_SHELLS_BY_ID, BATTLE_RUNES_BY_ID, GEAR_ITEMS, GEAR_BY_ID, CLEARBELL_BERRIES, CLEARBELL_SHELLS, CLEARBELL_SHELLS_BY_ID, CLEARBELL_RUNES, type GearSlot, type GearItem } from "./progression";
+import { SHELLS, ELEMENT_COLOR, BATTLE_SHELLS, BATTLE_RUNES, BATTLE_SHELLS_BY_ID, BATTLE_RUNES_BY_ID, GEAR_ITEMS, GEAR_BY_ID, CLEARBELL_BERRIES, CLEARBELL_SHELLS, CLEARBELL_SHELLS_BY_ID, CLEARBELL_RUNES, PRISM_STONES, PRISM_STONES_BY_ID, prismFilter, type GearSlot, type GearItem, type PrismStoneId } from "./progression";
 import {
   getMove, moveName, asElement,
   learnedMoveIds, movesLearnedAt, defaultActiveMoves, sanitizeActiveMoves,
@@ -1738,6 +1738,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const [ownedBattleRuneIds,   setOwnedBattleRuneIds]   = useState<string[]>(() => savedWorld?.ownedBattleRuneIds ?? []);
   const [slottedBattleRuneId,  setSlottedBattleRuneId]  = useState<string|null>(() => savedWorld?.slottedBattleRuneId ?? null);
   const [hasCrucibyx,          setHasCrucibyx]          = useState(() => savedWorld?.hasCrucibyx ?? false);
+  const [ownedPrismStoneIds,   setOwnedPrismStoneIds]   = useState<PrismStoneId[]>(() => (savedWorld?.ownedPrismStoneIds ?? []) as PrismStoneId[]);
+  const [slottedPrismStoneId,  setSlottedPrismStoneId]  = useState<PrismStoneId|null>(() => (savedWorld?.slottedPrismStoneId ?? null) as PrismStoneId|null);
   const [showShellPicker,      setShowShellPicker]      = useState(false);
   const [showRunePicker,       setShowRunePicker]       = useState(false);
   const [primeriaCoin,         setPrimeriaCoin]         = useState(() => savedWorld?.primeriaCoin ?? 0);
@@ -2044,6 +2046,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     hollisGifted, duskberries, thornberries, calmberries, brightberries,
     farmVisited, farmShellsGiven, farmRunesGiven, marenGifted,
     ownedBattleShellIds, equippedBattleShellId, ownedBattleRuneIds, slottedBattleRuneId, hasCrucibyx,
+    ownedPrismStoneIds, slottedPrismStoneId,
     primeriaCoin, profShoreWins, profShorePaid,
     corvinMet,
   });
@@ -2071,6 +2074,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       hollisGifted, duskberries, thornberries, calmberries, brightberries,
       farmVisited, farmShellsGiven, farmRunesGiven, marenGifted,
       ownedBattleShellIds, equippedBattleShellId, ownedBattleRuneIds, slottedBattleRuneId, hasCrucibyx,
+      ownedPrismStoneIds, slottedPrismStoneId,
       primeriaCoin, profShoreWins, profShorePaid,
       corvinMet,
     };
@@ -2087,6 +2091,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     hollisGifted, duskberries, thornberries, calmberries, brightberries,
     farmVisited, farmShellsGiven, farmRunesGiven, marenGifted,
     ownedBattleShellIds, equippedBattleShellId, ownedBattleRuneIds, slottedBattleRuneId, hasCrucibyx,
+    ownedPrismStoneIds, slottedPrismStoneId,
     primeriaCoin, profShoreWins, profShorePaid,
     corvinMet,
     persistWorld,
@@ -3722,6 +3727,24 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       setChecksStreak(0);
       outcome = `${starter?.name ?? "Your Tayanari"} fell. You retreat to recover.`;
     }
+    // Prism Stone drop from wild battles (ko or caught)
+    if (result.kind === "ko" || result.kind === "caught") {
+      const roll = Math.random();
+      let cumulative = 0;
+      for (const ps of PRISM_STONES) {
+        cumulative += ps.dropChance;
+        if (roll < cumulative) {
+          const pid = ps.id;
+          setOwnedPrismStoneIds(prev => prev.includes(pid) ? prev : [...prev, pid]);
+          window.setTimeout(() => {
+            setBattleNotif({ title: `◈ ${ps.name} found!`, sub: `A prism stone — slot it in the Shells tab` });
+            window.setTimeout(() => setBattleNotif(null), 3200);
+          }, 2000);
+          break;
+        }
+      }
+    }
+
     setWildEncounter(null);
     window.setTimeout(() => setBattleNotif(null), 2800);
     transitionTo(returnScene, returnX, returnY);
@@ -3850,6 +3873,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           hasResonanceStone={resonanceStoneEquipped}
           healingRuneEquipped={healingRuneEquipped}
           slottedRuneId={slottedBattleRuneId}
+          slottedPrismStoneId={slottedPrismStoneId ?? undefined}
           catchMult={0}
           shellsCount={shellCount}
           heroImg={heroSideImg}
@@ -3903,6 +3927,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           hasResonanceStone={resonanceStoneEquipped}
           healingRuneEquipped={healingRuneEquipped}
           slottedRuneId={slottedBattleRuneId}
+          slottedPrismStoneId={slottedPrismStoneId ?? undefined}
           catchMult={role.catchMult}
           shellsCount={shellCount}
           caughtIds={[...caughtParty.map(m => m.id), ...storageBox.map(m => m.id)]}
@@ -7359,6 +7384,33 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                                 <div style={{ color:"#6070a0", fontSize:9.5, marginTop:1 }}>{br.desc}</div>
                               </div>
                               <button onClick={() => setSlottedBattleRuneId(isSlotted ? null : id)} style={{ background: isSlotted ? "rgba(200,60,60,0.15)" : "rgba(80,80,200,0.15)", border:`1px solid ${isSlotted ? "#c04040" : "#6060c0"}`, color: isSlotted ? "#d06060" : "#8090e0", padding:"4px 10px", borderRadius:7, fontSize:10, fontWeight:700, cursor:"pointer" }}>
+                                {isSlotted ? "Remove" : "Slot"}
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* ── Prism Stones ─────────────────────────────── */}
+                    {ownedPrismStoneIds.length > 0 && (
+                      <div style={{ background:"rgba(40,10,60,0.07)", border:"1px solid rgba(200,140,255,0.28)", borderRadius:14, padding:14, marginBottom:12 }}>
+                        <div style={{ color:"#9050d0", fontWeight:900, fontSize:10, letterSpacing:1.5, textTransform:"uppercase", marginBottom:10 }}>◈ Prism Stones</div>
+                        <div style={{ color:"#b080e0", fontSize:9.5, marginBottom:10, fontStyle:"italic" }}>
+                          Slot a Prism Stone to tint your Tayanari's aura in battle. Purely cosmetic.
+                        </div>
+                        {ownedPrismStoneIds.map(id => {
+                          const ps = PRISM_STONES_BY_ID[id];
+                          if (!ps) return null;
+                          const isSlotted = slottedPrismStoneId === id;
+                          return (
+                            <div key={id} style={{ display:"flex", alignItems:"center", gap:8, padding:"7px 9px", borderRadius:9, marginBottom:6, background: isSlotted ? `${ps.color}22` : "rgba(0,0,0,0.03)", border:`1px solid ${isSlotted ? ps.color : "rgba(200,140,255,0.2)"}` }}>
+                              <div style={{ width:22, height:22, borderRadius:"50%", background:ps.color, boxShadow:`0 0 8px ${ps.color}`, flexShrink:0 }}/>
+                              <div style={{ flex:1 }}>
+                                <div style={{ color: isSlotted ? ps.color : "#8050b0", fontWeight:800, fontSize:11 }}>{ps.name}{isSlotted ? " ◈ slotted" : ""}</div>
+                                <div style={{ color:"#7050a0", fontSize:9.5, marginTop:1 }}>{ps.rarity} · {ps.desc}</div>
+                              </div>
+                              <button onClick={() => setSlottedPrismStoneId(isSlotted ? null : id as PrismStoneId)} style={{ background: isSlotted ? "rgba(200,60,60,0.15)" : `${ps.color}22`, border:`1px solid ${isSlotted ? "#c04040" : ps.color}`, color: isSlotted ? "#d06060" : ps.color, padding:"4px 10px", borderRadius:7, fontSize:10, fontWeight:700, cursor:"pointer" }}>
                                 {isSlotted ? "Remove" : "Slot"}
                               </button>
                             </div>

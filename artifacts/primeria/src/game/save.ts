@@ -156,6 +156,8 @@ export type WorldSave = {
   ownedBattleRuneIds: string[];
   slottedBattleRuneId: string | null;  // rune currently socketed in the shell
   hasCrucibyx: boolean;
+  ownedPrismStoneIds: string[];      // prism stones collected
+  slottedPrismStoneId: string | null; // prism stone currently slotted
   // Tidemark Shore — Prof. Irwyn challenger battle + PrimeriaCoin currency
   primeriaCoin: number;
   profShoreWins: number;   // times the player has beaten the prof on shore

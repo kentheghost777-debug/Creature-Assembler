@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ELEMENT_COLOR } from "./progression";
+import { ELEMENT_COLOR, PRISM_STONES_BY_ID, prismFilter, type PrismStoneId } from "./progression";
 import {
   type Move, getMove, asElement, computeDamage, effectiveness, effLabel,
   defaultActiveMoves, wildCombatStats, wildLevelFor,
@@ -185,6 +185,8 @@ type Props = {
   bench?: BattleMon[];
   /** Battle Rune slotted for this battle — enables rune effects. */
   slottedRuneId?: string | null;
+  /** Prism Stone slotted — applies cosmetic tint + glitter to the player mon. */
+  slottedPrismStoneId?: PrismStoneId | null;
   onConsumeShell: () => void;
   onEnd: (r: BattleResult) => void;
   /** Hollis field-berries available in battle */
@@ -211,6 +213,7 @@ export function BattleScene({
   keeperSheet,
   keeperTeam, keeperMonLevels, bench,
   slottedRuneId,
+  slottedPrismStoneId,
   onConsumeShell, onEnd,
   berries, onUseBerry,
 }: Props) {
@@ -279,6 +282,16 @@ export function BattleScene({
   const [shellsSet, setShellsSet] = useState(0);
   const shellsSetRef = useRef(0);
   const tRef = useRef<number[]>([]);
+
+  // ── Prism stone tint ─────────────────────────────────────────────────
+  const prismStone = slottedPrismStoneId ? PRISM_STONES_BY_ID[slottedPrismStoneId] : null;
+  const prismCssFilter = prismStone ? prismFilter(prismStone) : null;
+  const [prismBurst, setPrismBurst] = useState(!!prismStone);
+  useEffect(() => {
+    if (!prismStone) return;
+    const t = setTimeout(() => setPrismBurst(false), 1600);
+    return () => clearTimeout(t);
+  }, [prismStone]);
 
   // ── FX layer state ────────────────────────────────────────────────────
   type AttackFx = { from: "player" | "wild"; color: string; id: number };
@@ -1109,17 +1122,51 @@ export function BattleScene({
                 transform: (playerFlip + playerExtra).trim() || "none",
                 transformOrigin:"center center",
                 transition:"transform 0.45s ease-in",
-                filter:"drop-shadow(0 6px 8px rgba(0,0,0,0.5))",
+                filter: prismCssFilter
+                  ? `${prismCssFilter} drop-shadow(0 6px 8px rgba(0,0,0,0.5))`
+                  : "drop-shadow(0 6px 8px rgba(0,0,0,0.5))",
               }}/>
             ) : (
               <img src={active.img} alt={active.name} style={{
                 width:"100%", height:"100%", objectFit:"contain",
-                // Keeper-side mon faces EAST (right). Native right-facing sprite => no flip; native left => scaleX(-1).
                 transform: (playerFlip + playerExtra).trim() || "none",
                 transformOrigin:"center center",
                 transition:"transform 0.45s ease-in, opacity 0.45s",
-                filter:"drop-shadow(0 6px 8px rgba(0,0,0,0.5))",
+                filter: prismCssFilter
+                  ? `${prismCssFilter} drop-shadow(0 6px 8px rgba(0,0,0,0.5))`
+                  : "drop-shadow(0 6px 8px rgba(0,0,0,0.5))",
               }}/>
+            )}
+            {prismStone && (
+              <div aria-hidden style={{
+                position:"absolute", inset:0, pointerEvents:"none", overflow:"hidden", borderRadius:4,
+              }}>
+                <div style={{
+                  position:"absolute", inset:0,
+                  background:`radial-gradient(ellipse at 40% 30%, ${prismStone.color}55 0%, transparent 65%)`,
+                  animation:"prismShimmer 2.4s ease-in-out infinite",
+                }}/>
+                {prismBurst && Array.from({ length: 14 }).map((_, i) => {
+                  const angle = (i / 14) * 360;
+                  const dist = 28 + Math.random() * 22;
+                  const tx = Math.cos((angle * Math.PI) / 180) * dist;
+                  const ty = Math.sin((angle * Math.PI) / 180) * dist;
+                  const size = 3 + Math.random() * 4;
+                  const delay = (i * 0.06).toFixed(2);
+                  return (
+                    <div key={i} style={{
+                      position:"absolute", left:"50%", top:"40%",
+                      width:size, height:size, borderRadius:"50%",
+                      background: prismStone.color,
+                      boxShadow:`0 0 ${size * 2}px ${prismStone.color}`,
+                      animation:`prismGlitter 1.2s ${delay}s ease-out forwards`,
+                      transform:`translate(-50%, -50%)`,
+                      ["--tx" as string]: `${tx}px`,
+                      ["--ty" as string]: `${ty}px`,
+                    }}/>
+                  );
+                })}
+              </div>
             )}
           </div>
         </div>
@@ -1674,6 +1721,16 @@ export function BattleScene({
         }
         ${RESONANCE_FX_KEYFRAMES}
         ${MOVE_FX_KEYFRAMES}
+        @keyframes prismShimmer {
+          0%   { opacity:0.18; background-position: 40% 30%; }
+          45%  { opacity:0.55; background-position: 60% 65%; }
+          100% { opacity:0.18; background-position: 40% 30%; }
+        }
+        @keyframes prismGlitter {
+          0%   { transform: translate(-50%,-50%) translate(0px,0px) scale(1);   opacity:1; }
+          60%  { opacity:0.8; }
+          100% { transform: translate(-50%,-50%) translate(var(--tx),var(--ty)) scale(0); opacity:0; }
+        }
       `}</style>
     </div>
   );
