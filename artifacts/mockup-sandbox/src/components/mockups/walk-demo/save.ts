@@ -60,7 +60,7 @@ export function roleDef(id: RoleId): RoleDef {
   return ROLES.find(r => r.id === id) ?? ROLES[0];
 }
 
-export type PartyMon = MonSpec & { level: number; xp: number; moves?: string[] };
+export type PartyMon = MonSpec & { level: number; xp: number; moves?: string[]; shellId?: string | null; runeIds?: string[] };
 
 export type PartySave = {
   starterId: string | null;
@@ -72,6 +72,8 @@ export type PartySave = {
   caught: PartyMon[];
   box: PartyMon[];
   shells: number;
+  shellId?: string | null;
+  runeIds?: string[];
 };
 
 export type WorldSave = {
@@ -121,9 +123,7 @@ export type WorldSave = {
   farmRunesGiven: boolean;
   marenGifted: boolean;
   ownedBattleShellIds: string[];
-  equippedBattleShellId: string | null;
   ownedBattleRuneIds: string[];
-  slottedBattleRuneIds: string[];
   hasCrucibyx: boolean;
   ownedPrismStoneIds: string[];
   slottedPrismStoneId: string | null;

@@ -2100,14 +2100,9 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const [farmRunesGiven,       setFarmRunesGiven]       = useState(() => savedWorld?.farmRunesGiven ?? false);
   const [marenGifted,          setMarenGifted]          = useState(() => savedWorld?.marenGifted ?? false);
   const [ownedBattleShellIds,  setOwnedBattleShellIds]  = useState<string[]>(() => savedWorld?.ownedBattleShellIds ?? []);
-  const [equippedBattleShellId,setEquippedBattleShellId]= useState<string|null>(() => savedWorld?.equippedBattleShellId ?? null);
   const [ownedBattleRuneIds,   setOwnedBattleRuneIds]   = useState<string[]>(() => savedWorld?.ownedBattleRuneIds ?? []);
-  const [slottedBattleRuneIds, setSlottedBattleRuneIds] = useState<string[]>(() => {
-    const w = savedWorld as (WorldSave & { slottedBattleRuneId?: string | null }) | undefined;
-    if (w?.slottedBattleRuneIds?.length) return w.slottedBattleRuneIds;
-    if (w?.slottedBattleRuneId) return [w.slottedBattleRuneId];
-    return [];
-  });
+  const [starterShellId,       setStarterShellId]       = useState<string|null>(() => savedParty?.shellId ?? null);
+  const [starterRuneIds,       setStarterRuneIds]       = useState<string[]>(() => savedParty?.runeIds ?? []);
   const [hasCrucibyx,          setHasCrucibyx]          = useState(() => savedWorld?.hasCrucibyx ?? false);
   const [ownedPrismStoneIds,   setOwnedPrismStoneIds]   = useState<PrismStoneId[]>(() => (savedWorld?.ownedPrismStoneIds ?? []) as PrismStoneId[]);
   const [slottedPrismStoneId,  setSlottedPrismStoneId]  = useState<PrismStoneId|null>(() => (savedWorld?.slottedPrismStoneId ?? null) as PrismStoneId|null);
@@ -2484,8 +2479,10 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       caught: caughtParty,
       box: storageBox,
       shells: shellCount,
+      shellId: starterShellId,
+      runeIds: starterRuneIds,
     });
-  }, [starter, starterLevel, starterXp, starterStats, starterMoves, caughtParty, storageBox, shellCount]);
+  }, [starter, starterLevel, starterXp, starterStats, starterMoves, caughtParty, storageBox, shellCount, starterShellId, starterRuneIds]);
 
   // One-time migration: older saves stored cosmetic move name-strings. Once the
   // starter (and thus its element) is known, normalise the active list to valid
@@ -2524,7 +2521,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     jerbsBattleDone, hasCrystalFang, crystalFangEvo, catalystStones,
     hollisGifted, duskberries, thornberries, calmberries, brightberries,
     farmVisited, farmShellsGiven, farmRunesGiven, marenGifted,
-    ownedBattleShellIds, equippedBattleShellId, ownedBattleRuneIds, slottedBattleRuneIds, hasCrucibyx,
+    ownedBattleShellIds, ownedBattleRuneIds, hasCrucibyx,
     ownedPrismStoneIds, slottedPrismStoneId,
     primeriaCoin, profShoreWins, profShorePaid,
     corvinMet,
@@ -2553,7 +2550,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       jerbsBattleDone, hasCrystalFang, crystalFangEvo, catalystStones,
       hollisGifted, duskberries, thornberries, calmberries, brightberries,
       farmVisited, farmShellsGiven, farmRunesGiven, marenGifted,
-      ownedBattleShellIds, equippedBattleShellId, ownedBattleRuneIds, slottedBattleRuneIds, hasCrucibyx,
+      ownedBattleShellIds, ownedBattleRuneIds, hasCrucibyx,
       ownedPrismStoneIds, slottedPrismStoneId,
       primeriaCoin, profShoreWins, profShorePaid,
       corvinMet,
@@ -2572,7 +2569,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     jerbsBattleDone, hasCrystalFang, crystalFangEvo, catalystStones,
     hollisGifted, duskberries, thornberries, calmberries, brightberries,
     farmVisited, farmShellsGiven, farmRunesGiven, marenGifted,
-    ownedBattleShellIds, equippedBattleShellId, ownedBattleRuneIds, slottedBattleRuneIds, hasCrucibyx,
+    ownedBattleShellIds, ownedBattleRuneIds, hasCrucibyx,
     ownedPrismStoneIds, slottedPrismStoneId,
     primeriaCoin, profShoreWins, profShorePaid,
     corvinMet,
@@ -3768,6 +3765,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     if (from === "corvin_d2" && !corvinMet) {
       setCorvinMet(true);
       setOwnedBattleShellIds(ids => ids.includes("bshell_naturalist") ? ids : [...ids, "bshell_naturalist"]);
+      setStarterShellId(prev => prev ?? "bshell_naturalist");
     }
     const next = map[from];
     if (next) { playSfx("btn"); setPhase(next); }
@@ -4263,7 +4261,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     if (recovered > 0) setShellCount(c => c + recovered);
 
     const rawXp = (result.kind === "caught" || result.kind === "ko") ? result.xpGained : 0;
-    const runeXpMult = slottedBattleRuneIds.some(id => BATTLE_RUNES_BY_ID[id as BattleRuneId]?.effect === "xp_boost") ? 1.5 : 1;
+    const runeXpMult = starterRuneIds.some(id => BATTLE_RUNES_BY_ID[id as BattleRuneId]?.effect === "xp_boost") ? 1.5 : 1;
     const r = calcBattleXp(rawXp, role.xpMult * runeXpMult, starterLevel, starterXp, starterMoves);
     // Coin reward for wild battles
     const wildCoin = (result.kind === "ko" || result.kind === "caught")
@@ -4466,6 +4464,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       faces: m.playerFaces,
     };
   });
+  // Per-mon rune effect arrays: index 0 = starter (lead), 1+ = bench.
+  const toRuneEffects = (ids: string[]) =>
+    ids.map(id => BATTLE_RUNES_BY_ID[id as BattleRuneId]?.effect).filter(e => !!e) as string[];
+  const teamRuneEffects = [
+    toRuneEffects(starterRuneIds),
+    ...caughtParty.map(m => toRuneEffects(m.runeIds ?? [])),
+  ];
 
   // ── Trainer battle — full takeover when scene === "battle" + trainerEncounter ─
   if (scene === "battle" && trainerEncounter && starter) {
@@ -4479,7 +4484,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           starterMoves={starterMoves}
           hasResonanceStone={resonanceStoneEquipped}
           healingRuneEquipped={healingRuneEquipped}
-          slottedRuneIds={slottedBattleRuneIds.map(id => BATTLE_RUNES_BY_ID[id as BattleRuneId]?.effect).filter(e => !!e) as string[]}
+          teamRuneEffects={teamRuneEffects}
           slottedPrismStoneId={slottedPrismStoneId ?? undefined}
           catchMult={0}
           shellsCount={shellCount}
@@ -4540,7 +4545,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           starterMoves={starterMoves}
           hasResonanceStone={resonanceStoneEquipped}
           healingRuneEquipped={healingRuneEquipped}
-          slottedRuneIds={slottedBattleRuneIds.map(id => BATTLE_RUNES_BY_ID[id as BattleRuneId]?.effect).filter(e => !!e) as string[]}
+          teamRuneEffects={teamRuneEffects}
           slottedPrismStoneId={slottedPrismStoneId ?? undefined}
           catchMult={role.catchMult}
           shellsCount={shellCount}
@@ -7843,6 +7848,11 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                       {" "}Withdraw one when a party slot is free.
                       {" "}<span style={{ fontStyle:"normal", fontWeight:800, color:"#7a5e34" }}>({storageBox.length} / {STORAGE_CAP})</span>
                     </div>
+                    {storageBox.some(m => m.shellId) && (
+                      <div style={{ color:"#7060a0", fontSize:9.5, lineHeight:1.55, fontStyle:"italic", padding:"8px 10px", background:"rgba(100,80,180,0.07)", border:"1px solid rgba(140,100,220,0.2)", borderRadius:9, marginBottom:4 }}>
+                        ✦ Mons in the box rest in their personal Shell Realm — a pocket dimension woven from the shell's resonance. Their equipped shells and runes remain bound to them while they wait.
+                      </div>
+                    )}
                     {storageBox.length === 0 ? (
                       <div style={{ textAlign:"center", padding:"26px 0", color:"#b09468", fontSize:12, fontStyle:"italic" }}>
                         — The Storage Box is empty. —
@@ -8052,50 +8062,43 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                       </div>
                     )}
 
-                    {/* ── Battle Shell equip ─────────────────────────── */}
-                    {ownedBattleShellIds.length > 0 && (
-                      <div style={{ background:"rgba(60,40,10,0.06)", border:"1px solid rgba(200,160,60,0.25)", borderRadius:14, padding:14, marginBottom:12 }}>
-                        <div style={{ color:"#9a6e2e", fontWeight:900, fontSize:10, letterSpacing:1.5, textTransform:"uppercase", marginBottom:10 }}>⚔ Battle Shell</div>
-                        {ownedBattleShellIds.map(id => {
-                          const bs = BATTLE_SHELLS.find(s => s.id === id);
-                          if (!bs) return null;
-                          const isEq = equippedBattleShellId === id;
-                          return (
-                            <div key={id} style={{ display:"flex", alignItems:"center", gap:8, padding:"7px 9px", borderRadius:9, marginBottom:6, background: isEq ? "rgba(245,200,66,0.14)" : "rgba(0,0,0,0.03)", border:`1px solid ${isEq ? "#f5c842" : "rgba(200,160,60,0.2)"}` }}>
-                              <div style={{ flex:1 }}>
-                                <div style={{ color: isEq ? "#f5c842" : "#7a5820", fontWeight:800, fontSize:11 }}>{bs.icon} {bs.name}{isEq ? " (equipped)" : ""}</div>
-                                <div style={{ color:"#906030", fontSize:9.5, marginTop:1 }}>{bs.element} element</div>
-                              </div>
-                              <button onClick={() => setEquippedBattleShellId(isEq ? null : id)} style={{ background: isEq ? "rgba(200,60,60,0.15)" : "rgba(80,140,60,0.15)", border:`1px solid ${isEq ? "#c04040" : "#60a040"}`, color: isEq ? "#d06060" : "#70b050", padding:"4px 10px", borderRadius:7, fontSize:10, fontWeight:700, cursor:"pointer" }}>
-                                {isEq ? "Unequip" : "Equip"}
-                              </button>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-
-                    {/* ── Battle Rune equip ─────────────────────────── */}
-                    {ownedBattleRuneIds.length > 0 && (() => {
-                      const maxSlots = BATTLE_SHELLS.find(s => s.id === equippedBattleShellId)?.runeSlots ?? 1;
+                    {/* ── Per-Tayanari Equipment ──────────────────────── */}
+                    {(ownedBattleShellIds.length > 0 || ownedBattleRuneIds.length > 0) && (() => {
+                      type MonEquip = { name:string; color:string; shellId:string|null; runeIds:string[]; setShell:(id:string|null)=>void; setRunes:(fn:(ids:string[])=>string[])=>void; };
+                      const partyMons: MonEquip[] = [
+                        ...(starter ? [{ name: starter.name, color: starter.color, shellId: starterShellId, runeIds: starterRuneIds, setShell: (id:string|null) => setStarterShellId(id), setRunes: (fn:(ids:string[])=>string[]) => setStarterRuneIds(fn) }] : []),
+                        ...caughtParty.map((m, idx) => ({ name: m.name, color: ELEMENT_COLOR[m.type as keyof typeof ELEMENT_COLOR] ?? "#ccc", shellId: m.shellId ?? null, runeIds: m.runeIds ?? [], setShell: (id:string|null) => setCaughtParty(prev => { const a=[...prev]; a[idx]={...a[idx], shellId: id ?? undefined}; return a; }), setRunes: (fn:(ids:string[])=>string[]) => setCaughtParty(prev => { const a=[...prev]; a[idx]={...a[idx], runeIds: fn(a[idx].runeIds ?? [])}; return a; }) })),
+                      ];
                       return (
-                        <div style={{ background:"rgba(20,20,60,0.06)", border:"1px solid rgba(128,144,240,0.25)", borderRadius:14, padding:14, marginBottom:12 }}>
-                          <div style={{ color:"#5060a0", fontWeight:900, fontSize:10, letterSpacing:1.5, textTransform:"uppercase", marginBottom:6 }}>✦ Battle Runes</div>
-                          <div style={{ color:"#7080b8", fontSize:9.5, marginBottom:10 }}>{slottedBattleRuneIds.length}/{maxSlots} slots filled</div>
-                          {ownedBattleRuneIds.map(id => {
-                            const br = BATTLE_RUNES.find(r => r.id === id);
-                            if (!br) return null;
-                            const isSlotted = slottedBattleRuneIds.includes(id);
-                            const canSlot = !isSlotted && slottedBattleRuneIds.length < maxSlots;
+                        <div style={{ background:"rgba(40,28,8,0.08)", border:"1px solid rgba(200,160,60,0.28)", borderRadius:14, padding:14, marginBottom:12 }}>
+                          <div style={{ color:"#9a6e2e", fontWeight:900, fontSize:10, letterSpacing:1.5, textTransform:"uppercase", marginBottom:10 }}>⚔ Equipment per Tayanari</div>
+                          {partyMons.map((pm, i) => {
+                            const equippedShell = BATTLE_SHELLS.find(s => s.id === pm.shellId);
+                            const maxSlots = equippedShell?.runeSlots ?? 0;
                             return (
-                              <div key={id} style={{ display:"flex", alignItems:"center", gap:8, padding:"7px 9px", borderRadius:9, marginBottom:6, background: isSlotted ? "rgba(128,144,240,0.14)" : "rgba(0,0,0,0.03)", border:`1px solid ${isSlotted ? "#8090f0" : "rgba(128,144,240,0.2)"}` }}>
-                                <div style={{ flex:1 }}>
-                                  <div style={{ color: isSlotted ? "#a0b0ff" : "#4a5890", fontWeight:800, fontSize:11 }}>{br.icon} {br.name}{isSlotted ? " ✦" : ""}</div>
-                                  <div style={{ color:"#6070a0", fontSize:9.5, marginTop:1 }}>{br.desc}</div>
+                              <div key={i} style={{ marginBottom: i < partyMons.length-1 ? 14 : 0, paddingBottom: i < partyMons.length-1 ? 14 : 0, borderBottom: i < partyMons.length-1 ? "1px solid rgba(200,160,60,0.15)" : "none" }}>
+                                <div style={{ color: pm.color, fontWeight:800, fontSize:11, marginBottom:7 }}>{pm.name}</div>
+                                <div style={{ display:"flex", alignItems:"center", gap:5, marginBottom:6, flexWrap:"wrap" }}>
+                                  <span style={{ color:"#9a6e2e", fontSize:9, fontWeight:700, minWidth:40 }}>Shell:</span>
+                                  {ownedBattleShellIds.length === 0 ? (<span style={{ color:"#806040", fontSize:9, fontStyle:"italic" }}>None owned</span>) : ownedBattleShellIds.map(id => {
+                                    const bs = BATTLE_SHELLS.find(s => s.id === id); if (!bs) return null;
+                                    const isEq = pm.shellId === id;
+                                    return (<button key={id} onClick={() => pm.setShell(isEq ? null : id)} style={{ background: isEq ? "rgba(245,200,66,0.2)" : "rgba(0,0,0,0.06)", border:`1px solid ${isEq ? "#f5c842" : "rgba(200,160,60,0.22)"}`, color: isEq ? "#f5c842" : "#9a7030", padding:"3px 8px", borderRadius:6, fontSize:9.5, fontWeight:700, cursor:"pointer" }}>{bs.icon} {bs.name}{isEq ? " ✓" : ""}</button>);
+                                  })}
                                 </div>
-                                <button onClick={() => { if (isSlotted) setSlottedBattleRuneIds(ids => ids.filter(i => i !== id)); else if (canSlot) setSlottedBattleRuneIds(ids => [...ids, id]); }} disabled={!isSlotted && !canSlot} style={{ background: isSlotted ? "rgba(200,60,60,0.15)" : canSlot ? "rgba(80,80,200,0.15)" : "rgba(60,60,60,0.1)", border:`1px solid ${isSlotted ? "#c04040" : canSlot ? "#6060c0" : "#555"}`, color: isSlotted ? "#d06060" : canSlot ? "#8090e0" : "#666", padding:"4px 10px", borderRadius:7, fontSize:10, fontWeight:700, cursor: (!isSlotted && !canSlot) ? "default" : "pointer", opacity: (!isSlotted && !canSlot) ? 0.5 : 1 }}>
-                                  {isSlotted ? "Remove" : "Slot"}
-                                </button>
+                                {maxSlots > 0 && ownedBattleRuneIds.length > 0 && (
+                                  <div style={{ display:"flex", alignItems:"center", gap:5, flexWrap:"wrap" }}>
+                                    <span style={{ color:"#5060a0", fontSize:9, fontWeight:700, minWidth:40 }}>Runes <span style={{ color:"#7080b8" }}>({pm.runeIds.length}/{maxSlots})</span>:</span>
+                                    {ownedBattleRuneIds.map(id => {
+                                      const br = BATTLE_RUNES.find(r => r.id === id); if (!br) return null;
+                                      const isSlotted = pm.runeIds.includes(id);
+                                      const canSlot = !isSlotted && pm.runeIds.length < maxSlots;
+                                      return (<button key={id} onClick={() => { if (isSlotted) pm.setRunes(ids => ids.filter(x => x !== id)); else if (canSlot) pm.setRunes(ids => [...ids, id]); }} disabled={!isSlotted && !canSlot} style={{ background: isSlotted ? "rgba(128,144,240,0.2)" : canSlot ? "rgba(80,80,200,0.1)" : "rgba(60,60,60,0.08)", border:`1px solid ${isSlotted ? "#8090f0" : canSlot ? "#6060c0" : "#555"}`, color: isSlotted ? "#a0b0ff" : canSlot ? "#8090e0" : "#666", padding:"3px 8px", borderRadius:6, fontSize:9.5, fontWeight:700, cursor:(!isSlotted && !canSlot) ? "default" : "pointer", opacity:(!isSlotted && !canSlot) ? 0.5 : 1 }}>{br.icon} {br.name}{isSlotted ? " ✦" : ""}</button>);
+                                    })}
+                                  </div>
+                                )}
+                                {!equippedShell && ownedBattleRuneIds.length > 0 && (<div style={{ color:"#7060a0", fontSize:9, fontStyle:"italic", marginTop:3 }}>Equip a shell to unlock rune slots</div>)}
+                                {equippedShell && maxSlots === 0 && (<div style={{ color:"#806040", fontSize:9, fontStyle:"italic", marginTop:3 }}>This shell has no rune slots</div>)}
                               </div>
                             );
                           })}
@@ -9141,14 +9144,14 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         {showShellPicker && (
           <div style={{ position:"absolute", inset:0, zIndex:90, background:"rgba(10,6,2,0.92)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"20px 16px", overflowY:"auto" }}>
             <div style={{ color:"#f5c842", fontWeight:900, fontSize:16, letterSpacing:1, marginBottom:6 }}>Shella's Battle Shells</div>
-            <div style={{ color:"#c8b080", fontSize:11, marginBottom:16, textAlign:"center" }}>Choose a Battle Shell to equip on your lead Tayanari. You can swap anytime from the Shells tab.</div>
+            <div style={{ color:"#c8b080", fontSize:11, marginBottom:16, textAlign:"center" }}>Choose a Battle Shell for your lead Tayanari. You can reassign anytime from the Shells tab.</div>
             <div style={{ display:"flex", flexDirection:"column", gap:8, width:"100%", maxWidth:360, marginBottom:16 }}>
               {BATTLE_SHELLS.map(bs => {
-                const isEquipped = equippedBattleShellId === bs.id;
+                const isEquipped = starterShellId === bs.id;
                 return (
                   <button key={bs.id} onClick={() => {
                     if (!ownedBattleShellIds.includes(bs.id)) setOwnedBattleShellIds(ids => [...ids, bs.id]);
-                    setEquippedBattleShellId(bs.id);
+                    setStarterShellId(bs.id);
                   }} style={{ display:"flex", alignItems:"flex-start", gap:10, padding:"10px 12px", borderRadius:10, background: isEquipped ? "rgba(245,200,66,0.18)" : "rgba(255,255,255,0.05)", border:`1.5px solid ${isEquipped ? "#f5c842" : "rgba(245,200,66,0.25)"}`, cursor:"pointer", textAlign:"left" }}>
                     <div style={{ width:10, height:10, borderRadius:"50%", background: isEquipped ? "#f5c842" : "#666", marginTop:3, flexShrink:0 }}/>
                     <div style={{ flex:1 }}>
@@ -9161,11 +9164,11 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               })}
             </div>
             <button onClick={() => {
-              if (!farmShellsGiven && equippedBattleShellId) { setFarmShellsGiven(true); }
+              if (!farmShellsGiven && starterShellId) { setFarmShellsGiven(true); }
               setShowShellPicker(false);
               setPhase("shella_done");
             }} style={{ background:"rgba(245,200,66,0.2)", border:"1.5px solid #f5c842", color:"#f5c842", padding:"8px 28px", borderRadius:10, fontSize:13, fontWeight:800, cursor:"pointer" }}>
-              {equippedBattleShellId ? "Confirm ✓" : "Close"}
+              {starterShellId ? "Confirm ✓" : "Close"}
             </button>
           </div>
         )}
@@ -9177,10 +9180,10 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             <div style={{ color:"#a0a8e0", fontSize:11, marginBottom:16, textAlign:"center" }}>Pick one Battle Rune for your lead Tayanari — your first is free. Slot it before battle to feel the effect.</div>
             <div style={{ display:"flex", flexDirection:"column", gap:8, width:"100%", maxWidth:360, marginBottom:16 }}>
               {BATTLE_RUNES.map(br => {
-                const isSlotted = slottedBattleRuneIds.includes(br.id);
+                const isSlotted = starterRuneIds.includes(br.id);
                 return (
                   <button key={br.id} onClick={() => {
-                    setSlottedBattleRuneIds([br.id]);
+                    setStarterRuneIds([br.id]);
                     if (!ownedBattleRuneIds.includes(br.id)) setOwnedBattleRuneIds(ids => [...ids, br.id]);
                   }} style={{ display:"flex", alignItems:"flex-start", gap:10, padding:"10px 12px", borderRadius:10, background: isSlotted ? "rgba(128,144,240,0.18)" : "rgba(255,255,255,0.05)", border:`1.5px solid ${isSlotted ? "#8090f0" : "rgba(128,144,240,0.25)"}`, cursor:"pointer", textAlign:"left" }}>
                     <div style={{ width:10, height:10, borderRadius:"50%", background: isSlotted ? "#8090f0" : "#666", marginTop:3, flexShrink:0 }}/>
@@ -9193,11 +9196,11 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               })}
             </div>
             <button onClick={() => {
-              if (slottedBattleRuneIds.length > 0) setFarmRunesGiven(true);
+              if (starterRuneIds.length > 0) setFarmRunesGiven(true);
               setShowRunePicker(false);
               setPhase("runrik_d4");
             }} style={{ background:"rgba(128,144,240,0.2)", border:"1.5px solid #8090f0", color:"#8090f0", padding:"8px 28px", borderRadius:10, fontSize:13, fontWeight:800, cursor:"pointer" }}>
-              {slottedBattleRuneIds.length > 0 ? "Slot Rune ✓" : "Close"}
+              {starterRuneIds.length > 0 ? "Slot Rune ✓" : "Close"}
             </button>
           </div>
         )}
