@@ -123,7 +123,7 @@ export type WorldSave = {
   ownedBattleShellIds: string[];
   equippedBattleShellId: string | null;
   ownedBattleRuneIds: string[];
-  slottedBattleRuneId: string | null;
+  slottedBattleRuneIds: string[];
   hasCrucibyx: boolean;
   ownedPrismStoneIds: string[];
   slottedPrismStoneId: string | null;

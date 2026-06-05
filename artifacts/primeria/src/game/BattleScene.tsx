@@ -204,8 +204,8 @@ type Props = {
   /** Caught companions (party slots 2…N) as battle-ready mons. The lead is
    *  built from the starter props; these fill out the switchable team. */
   bench?: BattleMon[];
-  /** Battle Rune slotted for this battle — enables rune effects. */
-  slottedRuneId?: string | null;
+  /** Battle Rune effects active for this battle (translated from slotted rune IDs). */
+  slottedRuneIds?: string[];
   /** Prism Stone slotted — applies CSS tint + glitter to the player's Tayanari. */
   slottedPrismStoneId?: PrismStoneId | null;
   onConsumeShell: () => void;
@@ -237,7 +237,7 @@ export function BattleScene({
   heroImg = "./images/walk_side_1.png",
   keeperSheet,
   keeperTeam, keeperMonLevels, bench,
-  slottedRuneId,
+  slottedRuneIds = [],
   slottedPrismStoneId,
   onConsumeShell, onEnd, onMonDefeated,
   berries, onUseBerry,
@@ -299,8 +299,8 @@ export function BattleScene({
   const [healCd,   setHealCd]     = useState(0);              // turns remaining
   const [runeUses, setRuneUses]   = useState(healingRuneEquipped ? 3 : 0);
   const [berryCount, setBerryCount] = useState(() => berries ?? { dusk:0, thorn:0, calm:0, bright:0 });
-  const [resBar,   setResBar]     = useState(slottedRuneId === "resonance_fill" ? 15 : 0); // 0..15
-  const [barrierActive, setBarrierActive] = useState(() => slottedRuneId === "barrier");
+  const [resBar,   setResBar]     = useState(slottedRuneIds.includes("resonance_fill") ? 15 : 0); // 0..15
+  const [barrierActive, setBarrierActive] = useState(() => slottedRuneIds.includes("barrier"));
   const [swiftUsed,     setSwiftUsed]     = useState(false);
   const [intro,    setIntro]      = useState(true);
   const [shake,    setShake]      = useState<"player" | "wild" | null>(null);
@@ -493,7 +493,7 @@ export function BattleScene({
   function wildTurn(afterCb?: () => void) {
     later(() => {
       // Rune: swift — wild's very first action is skipped once
-      if (slottedRuneId === "swift" && !swiftUsed) {
+      if (slottedRuneIds.includes("swift") && !swiftUsed) {
         setSwiftUsed(true);
         setLog(`${currentOpponent.name} hesitates — your Rune's swift edge!`);
         later(() => { setHealCd(c => Math.max(0, c - 1)); setBusy(false); afterCb?.(); }, 900);
@@ -524,7 +524,7 @@ export function BattleScene({
       }
 
       // Rune: evasion — 25% chance to dodge any incoming attack
-      if (slottedRuneId === "evasion" && Math.random() < 0.25) {
+      if (slottedRuneIds.includes("evasion") && Math.random() < 0.25) {
         setPlayerDodge(true);
         setLog(`${currentOpponent.name} uses ${move.name} — ${active.name} evades it!`);
         later(() => { setPlayerDodge(false); setHealCd(c => Math.max(0, c - 1)); setBusy(false); afterCb?.(); }, 700);
@@ -566,7 +566,7 @@ export function BattleScene({
         return;
       }
       // Rune: defense_boost — 55% damage reduction
-      const dmg = slottedRuneId === "defense_boost" ? Math.max(1, Math.round(rawDmg * 0.45)) : rawDmg;
+      const dmg = slottedRuneIds.includes("defense_boost") ? Math.max(1, Math.round(rawDmg * 0.45)) : rawDmg;
       triggerMove(move.anim, color, "wild", "damage", move.element, move.power);
 
       later(() => {
@@ -624,7 +624,7 @@ export function BattleScene({
       const tag = effLabel(eff);
       setLog(`${msg}${crit ? " A critical hit!" : ""}${tag ? " " + tag : ""}`);
       // Rune: lifesteal — heal 15% of damage dealt
-      if (slottedRuneId === "lifesteal" && dmg > 0) {
+      if (slottedRuneIds.includes("lifesteal") && dmg > 0) {
         const steal = Math.max(1, Math.round(dmg * 0.15));
         setPlayerHp(hp => Math.min(active.stats.hp, hp + steal));
       }
@@ -731,7 +731,7 @@ export function BattleScene({
       power: move.power, attackerAtk: pAtk(), defenderDef: wDef(), stab, effectiveness: eff,
     });
     // Rune: power_boost — +40% damage dealt
-    const dmg = slottedRuneId === "power_boost" ? Math.round(rawAtk * 1.4) : rawAtk;
+    const dmg = slottedRuneIds.includes("power_boost") ? Math.round(rawAtk * 1.4) : rawAtk;
     later(() => playerHit(dmg, `${active.name} uses ${move.name}!`, crit, eff), 140);
   }
 

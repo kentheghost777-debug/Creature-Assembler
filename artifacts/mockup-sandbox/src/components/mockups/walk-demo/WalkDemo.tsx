@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback, Fragment, type PointerEvent as RPointerEvent, type MouseEvent as RMouseEvent } from "react";
 import { BattleScene, RARITY_COLOR, sheetBgStyle, type SpriteSheet, type MonSpec, type MonRarity, type BattleResult, type StarterStats, type StarterSpec, type BattleMon } from "./BattleScene";
 import { EvoScene } from "./EvoScene";
-import { SHELLS, ELEMENT_COLOR, BATTLE_SHELLS, BATTLE_RUNES, BATTLE_SHELLS_BY_ID, BATTLE_RUNES_BY_ID, GEAR_ITEMS, GEAR_BY_ID, CLEARBELL_BERRIES, CLEARBELL_SHELLS, CLEARBELL_SHELLS_BY_ID, CLEARBELL_RUNES, PRISM_STONES, PRISM_STONES_BY_ID, prismFilter, type GearSlot, type GearItem, type PrismStoneId } from "./progression";
+import { SHELLS, ELEMENT_COLOR, BATTLE_SHELLS, BATTLE_RUNES, BATTLE_SHELLS_BY_ID, BATTLE_RUNES_BY_ID, GEAR_ITEMS, GEAR_BY_ID, CLEARBELL_BERRIES, CLEARBELL_SHELLS, CLEARBELL_SHELLS_BY_ID, CLEARBELL_RUNES, PRISM_STONES, PRISM_STONES_BY_ID, prismFilter, type GearSlot, type GearItem, type PrismStoneId, type BattleRuneId } from "./progression";
 import {
   getMove, moveName, asElement,
   learnedMoveIds, movesLearnedAt, defaultActiveMoves, sanitizeActiveMoves,
@@ -2102,7 +2102,12 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const [ownedBattleShellIds,  setOwnedBattleShellIds]  = useState<string[]>(() => savedWorld?.ownedBattleShellIds ?? []);
   const [equippedBattleShellId,setEquippedBattleShellId]= useState<string|null>(() => savedWorld?.equippedBattleShellId ?? null);
   const [ownedBattleRuneIds,   setOwnedBattleRuneIds]   = useState<string[]>(() => savedWorld?.ownedBattleRuneIds ?? []);
-  const [slottedBattleRuneId,  setSlottedBattleRuneId]  = useState<string|null>(() => savedWorld?.slottedBattleRuneId ?? null);
+  const [slottedBattleRuneIds, setSlottedBattleRuneIds] = useState<string[]>(() => {
+    const w = savedWorld as (WorldSave & { slottedBattleRuneId?: string | null }) | undefined;
+    if (w?.slottedBattleRuneIds?.length) return w.slottedBattleRuneIds;
+    if (w?.slottedBattleRuneId) return [w.slottedBattleRuneId];
+    return [];
+  });
   const [hasCrucibyx,          setHasCrucibyx]          = useState(() => savedWorld?.hasCrucibyx ?? false);
   const [ownedPrismStoneIds,   setOwnedPrismStoneIds]   = useState<PrismStoneId[]>(() => (savedWorld?.ownedPrismStoneIds ?? []) as PrismStoneId[]);
   const [slottedPrismStoneId,  setSlottedPrismStoneId]  = useState<PrismStoneId|null>(() => (savedWorld?.slottedPrismStoneId ?? null) as PrismStoneId|null);
@@ -2519,7 +2524,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     jerbsBattleDone, hasCrystalFang, crystalFangEvo, catalystStones,
     hollisGifted, duskberries, thornberries, calmberries, brightberries,
     farmVisited, farmShellsGiven, farmRunesGiven, marenGifted,
-    ownedBattleShellIds, equippedBattleShellId, ownedBattleRuneIds, slottedBattleRuneId, hasCrucibyx,
+    ownedBattleShellIds, equippedBattleShellId, ownedBattleRuneIds, slottedBattleRuneIds, hasCrucibyx,
     ownedPrismStoneIds, slottedPrismStoneId,
     primeriaCoin, profShoreWins, profShorePaid,
     corvinMet,
@@ -2548,7 +2553,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       jerbsBattleDone, hasCrystalFang, crystalFangEvo, catalystStones,
       hollisGifted, duskberries, thornberries, calmberries, brightberries,
       farmVisited, farmShellsGiven, farmRunesGiven, marenGifted,
-      ownedBattleShellIds, equippedBattleShellId, ownedBattleRuneIds, slottedBattleRuneId, hasCrucibyx,
+      ownedBattleShellIds, equippedBattleShellId, ownedBattleRuneIds, slottedBattleRuneIds, hasCrucibyx,
       ownedPrismStoneIds, slottedPrismStoneId,
       primeriaCoin, profShoreWins, profShorePaid,
       corvinMet,
@@ -2567,7 +2572,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     jerbsBattleDone, hasCrystalFang, crystalFangEvo, catalystStones,
     hollisGifted, duskberries, thornberries, calmberries, brightberries,
     farmVisited, farmShellsGiven, farmRunesGiven, marenGifted,
-    ownedBattleShellIds, equippedBattleShellId, ownedBattleRuneIds, slottedBattleRuneId, hasCrucibyx,
+    ownedBattleShellIds, equippedBattleShellId, ownedBattleRuneIds, slottedBattleRuneIds, hasCrucibyx,
     ownedPrismStoneIds, slottedPrismStoneId,
     primeriaCoin, profShoreWins, profShorePaid,
     corvinMet,
@@ -3760,7 +3765,10 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     if (from === "berry_vendor_shop" || from === "berry_vendor_d1") { setActiveShop("berries"); setPhase("walk"); return; }
     if (from === "shell_vendor_shop" || from === "shell_vendor_d1") { setActiveShop("shells"); setPhase("walk"); return; }
     if (from === "rune_vendor_shop" || from === "rune_vendor_d1") { setActiveShop("runes"); setPhase("walk"); return; }
-    if (from === "corvin_d2" && !corvinMet) { setCorvinMet(true); setPrimeriaCoin(c => c + 75); }
+    if (from === "corvin_d2" && !corvinMet) {
+      setCorvinMet(true);
+      setOwnedBattleShellIds(ids => ids.includes("bshell_naturalist") ? ids : [...ids, "bshell_naturalist"]);
+    }
     const next = map[from];
     if (next) { playSfx("btn"); setPhase(next); }
   }, []);
@@ -4255,7 +4263,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     if (recovered > 0) setShellCount(c => c + recovered);
 
     const rawXp = (result.kind === "caught" || result.kind === "ko") ? result.xpGained : 0;
-    const runeXpMult = slottedBattleRuneId === "xp_boost" ? 1.5 : 1;
+    const runeXpMult = slottedBattleRuneIds.some(id => BATTLE_RUNES_BY_ID[id as BattleRuneId]?.effect === "xp_boost") ? 1.5 : 1;
     const r = calcBattleXp(rawXp, role.xpMult * runeXpMult, starterLevel, starterXp, starterMoves);
     // Coin reward for wild battles
     const wildCoin = (result.kind === "ko" || result.kind === "caught")
@@ -4471,7 +4479,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           starterMoves={starterMoves}
           hasResonanceStone={resonanceStoneEquipped}
           healingRuneEquipped={healingRuneEquipped}
-          slottedRuneId={slottedBattleRuneId}
+          slottedRuneIds={slottedBattleRuneIds.map(id => BATTLE_RUNES_BY_ID[id as BattleRuneId]?.effect).filter(e => !!e) as string[]}
           slottedPrismStoneId={slottedPrismStoneId ?? undefined}
           catchMult={0}
           shellsCount={shellCount}
@@ -4532,7 +4540,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           starterMoves={starterMoves}
           hasResonanceStone={resonanceStoneEquipped}
           healingRuneEquipped={healingRuneEquipped}
-          slottedRuneId={slottedBattleRuneId}
+          slottedRuneIds={slottedBattleRuneIds.map(id => BATTLE_RUNES_BY_ID[id as BattleRuneId]?.effect).filter(e => !!e) as string[]}
           slottedPrismStoneId={slottedPrismStoneId ?? undefined}
           catchMult={role.catchMult}
           shellsCount={shellCount}
@@ -8068,27 +8076,32 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                     )}
 
                     {/* ── Battle Rune equip ─────────────────────────── */}
-                    {ownedBattleRuneIds.length > 0 && (
-                      <div style={{ background:"rgba(20,20,60,0.06)", border:"1px solid rgba(128,144,240,0.25)", borderRadius:14, padding:14, marginBottom:12 }}>
-                        <div style={{ color:"#5060a0", fontWeight:900, fontSize:10, letterSpacing:1.5, textTransform:"uppercase", marginBottom:10 }}>✦ Battle Rune</div>
-                        {ownedBattleRuneIds.map(id => {
-                          const br = BATTLE_RUNES.find(r => r.id === id);
-                          if (!br) return null;
-                          const isSlotted = slottedBattleRuneId === id;
-                          return (
-                            <div key={id} style={{ display:"flex", alignItems:"center", gap:8, padding:"7px 9px", borderRadius:9, marginBottom:6, background: isSlotted ? "rgba(128,144,240,0.14)" : "rgba(0,0,0,0.03)", border:`1px solid ${isSlotted ? "#8090f0" : "rgba(128,144,240,0.2)"}` }}>
-                              <div style={{ flex:1 }}>
-                                <div style={{ color: isSlotted ? "#a0b0ff" : "#4a5890", fontWeight:800, fontSize:11 }}>{br.icon} {br.name}{isSlotted ? " (slotted)" : ""}</div>
-                                <div style={{ color:"#6070a0", fontSize:9.5, marginTop:1 }}>{br.desc}</div>
+                    {ownedBattleRuneIds.length > 0 && (() => {
+                      const maxSlots = BATTLE_SHELLS.find(s => s.id === equippedBattleShellId)?.runeSlots ?? 1;
+                      return (
+                        <div style={{ background:"rgba(20,20,60,0.06)", border:"1px solid rgba(128,144,240,0.25)", borderRadius:14, padding:14, marginBottom:12 }}>
+                          <div style={{ color:"#5060a0", fontWeight:900, fontSize:10, letterSpacing:1.5, textTransform:"uppercase", marginBottom:6 }}>✦ Battle Runes</div>
+                          <div style={{ color:"#7080b8", fontSize:9.5, marginBottom:10 }}>{slottedBattleRuneIds.length}/{maxSlots} slots filled</div>
+                          {ownedBattleRuneIds.map(id => {
+                            const br = BATTLE_RUNES.find(r => r.id === id);
+                            if (!br) return null;
+                            const isSlotted = slottedBattleRuneIds.includes(id);
+                            const canSlot = !isSlotted && slottedBattleRuneIds.length < maxSlots;
+                            return (
+                              <div key={id} style={{ display:"flex", alignItems:"center", gap:8, padding:"7px 9px", borderRadius:9, marginBottom:6, background: isSlotted ? "rgba(128,144,240,0.14)" : "rgba(0,0,0,0.03)", border:`1px solid ${isSlotted ? "#8090f0" : "rgba(128,144,240,0.2)"}` }}>
+                                <div style={{ flex:1 }}>
+                                  <div style={{ color: isSlotted ? "#a0b0ff" : "#4a5890", fontWeight:800, fontSize:11 }}>{br.icon} {br.name}{isSlotted ? " ✦" : ""}</div>
+                                  <div style={{ color:"#6070a0", fontSize:9.5, marginTop:1 }}>{br.desc}</div>
+                                </div>
+                                <button onClick={() => { if (isSlotted) setSlottedBattleRuneIds(ids => ids.filter(i => i !== id)); else if (canSlot) setSlottedBattleRuneIds(ids => [...ids, id]); }} disabled={!isSlotted && !canSlot} style={{ background: isSlotted ? "rgba(200,60,60,0.15)" : canSlot ? "rgba(80,80,200,0.15)" : "rgba(60,60,60,0.1)", border:`1px solid ${isSlotted ? "#c04040" : canSlot ? "#6060c0" : "#555"}`, color: isSlotted ? "#d06060" : canSlot ? "#8090e0" : "#666", padding:"4px 10px", borderRadius:7, fontSize:10, fontWeight:700, cursor: (!isSlotted && !canSlot) ? "default" : "pointer", opacity: (!isSlotted && !canSlot) ? 0.5 : 1 }}>
+                                  {isSlotted ? "Remove" : "Slot"}
+                                </button>
                               </div>
-                              <button onClick={() => setSlottedBattleRuneId(isSlotted ? null : id)} style={{ background: isSlotted ? "rgba(200,60,60,0.15)" : "rgba(80,80,200,0.15)", border:`1px solid ${isSlotted ? "#c04040" : "#6060c0"}`, color: isSlotted ? "#d06060" : "#8090e0", padding:"4px 10px", borderRadius:7, fontSize:10, fontWeight:700, cursor:"pointer" }}>
-                                {isSlotted ? "Remove" : "Slot"}
-                              </button>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
 
                     {/* ── Prism Stones ─────────────────────────────── */}
                     {ownedPrismStoneIds.length > 0 && (
@@ -9164,10 +9177,10 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             <div style={{ color:"#a0a8e0", fontSize:11, marginBottom:16, textAlign:"center" }}>Pick one Battle Rune for your lead Tayanari — your first is free. Slot it before battle to feel the effect.</div>
             <div style={{ display:"flex", flexDirection:"column", gap:8, width:"100%", maxWidth:360, marginBottom:16 }}>
               {BATTLE_RUNES.map(br => {
-                const isSlotted = slottedBattleRuneId === br.id;
+                const isSlotted = slottedBattleRuneIds.includes(br.id);
                 return (
                   <button key={br.id} onClick={() => {
-                    setSlottedBattleRuneId(br.id);
+                    setSlottedBattleRuneIds([br.id]);
                     if (!ownedBattleRuneIds.includes(br.id)) setOwnedBattleRuneIds(ids => [...ids, br.id]);
                   }} style={{ display:"flex", alignItems:"flex-start", gap:10, padding:"10px 12px", borderRadius:10, background: isSlotted ? "rgba(128,144,240,0.18)" : "rgba(255,255,255,0.05)", border:`1.5px solid ${isSlotted ? "#8090f0" : "rgba(128,144,240,0.25)"}`, cursor:"pointer", textAlign:"left" }}>
                     <div style={{ width:10, height:10, borderRadius:"50%", background: isSlotted ? "#8090f0" : "#666", marginTop:3, flexShrink:0 }}/>
@@ -9180,11 +9193,11 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               })}
             </div>
             <button onClick={() => {
-              if (slottedBattleRuneId) setFarmRunesGiven(true);
+              if (slottedBattleRuneIds.length > 0) setFarmRunesGiven(true);
               setShowRunePicker(false);
               setPhase("runrik_d4");
             }} style={{ background:"rgba(128,144,240,0.2)", border:"1.5px solid #8090f0", color:"#8090f0", padding:"8px 28px", borderRadius:10, fontSize:13, fontWeight:800, cursor:"pointer" }}>
-              {slottedBattleRuneId ? "Slot Rune ✓" : "Close"}
+              {slottedBattleRuneIds.length > 0 ? "Slot Rune ✓" : "Close"}
             </button>
           </div>
         )}

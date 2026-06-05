@@ -515,9 +515,9 @@ export function prismFilter(stone: PrismStoneItem): string {
 // ── Battle Shells & Runes (Primeria Farm equip system) ───────────────────────
 
 export type BattleShellId =
-  | "bshell_moss"   | "bshell_ember"  | "bshell_tide"   | "bshell_storm"
-  | "bshell_dusk"   | "bshell_frost"  | "bshell_spirit" | "bshell_alch"
-  | "bshell_prism2" | "bshell_prism3";
+  | "bshell_moss"   | "bshell_ember"  | "bshell_tide"       | "bshell_storm"
+  | "bshell_dusk"   | "bshell_frost"  | "bshell_spirit"     | "bshell_alch"
+  | "bshell_prism2" | "bshell_prism3" | "bshell_naturalist";
 
 export type BattleRuneId =
   | "brune_warden"    | "brune_resonance" | "brune_swift"     | "brune_power"
@@ -534,6 +534,8 @@ export type BattleShellItem = {
   color: string;
   icon: string;
   desc: string;
+  /** Number of rune slots this shell supports (defaults to 1 if absent). */
+  runeSlots?: number;
   /** Number of prism stone slots (0 = standard shell, no prism support) */
   prismSlots?: number;
 };
@@ -558,6 +560,7 @@ export const BATTLE_SHELLS: readonly BattleShellItem[] = [
   { id:"bshell_alch",    name:"Alchemband",       element:"Alchemy",     color:"#90c060", icon:"⚗",  desc:"Smells faintly of transmutation salts. Shifts under moonlight." },
   { id:"bshell_prism2",  name:"Prism Shell",      element:"Spirit",      color:"#d0a0ff", icon:"◈",  desc:"A dual-slotted shell etched with refraction runes. Holds one rune and one Prism Stone.", prismSlots:1 },
   { id:"bshell_prism3",  name:"Grand Prism Shell", element:"Spirit",     color:"#f0c0ff", icon:"✦",  desc:"Three slots — one rune, two Prism Stones. Rarest of bonding vessels.", prismSlots:2 },
+  { id:"bshell_naturalist", name:"Naturalist's Shell", element:"Nature", color:"#7acc88", icon:"🍃", desc:"Crafted over years of fieldwork. Three channels etched deep — one for each expedition Corvin never forgot.", runeSlots:3 },
 ];
 
 export const BATTLE_SHELLS_BY_ID: Record<BattleShellId, BattleShellItem> =
