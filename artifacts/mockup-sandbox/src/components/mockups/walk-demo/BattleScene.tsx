@@ -5,6 +5,7 @@ import {
   defaultActiveMoves, wildCombatStats, wildLevelFor,
 } from "./moves";
 import { MoveFx, MOVE_FX_KEYFRAMES, ResonanceFx, RESONANCE_FX_KEYFRAMES } from "./battleFx";
+import { playSfx } from "./audioManager";
 
 // Last-resort move when every active move is out of PP.
 const STRUGGLE: Move = {
@@ -369,6 +370,7 @@ export function BattleScene({
   const [resonanceFx, setResonanceFx] = useState<{ element: string; color: string; id: number } | null>(null);
 
   useEffect(() => {
+    playSfx("battle_send");
     const t1 = window.setTimeout(() => { setIntro(false); setBusy(false); }, 1100);
     // Summon bloom lingers a touch past the intro float, then clears.
     const t2 = window.setTimeout(() => setSummon(false), 1300);
@@ -482,6 +484,7 @@ export function BattleScene({
       }
       // Accuracy check.
       if (Math.random() * 100 > move.accuracy) {
+        playSfx("miss");
         setLog(`${currentOpponent.name} uses ${move.name} — but it missed!`);
         later(() => { setHealCd(c => Math.max(0, c - 1)); setBusy(false); afterCb?.(); }, 700);
         return;
@@ -509,6 +512,7 @@ export function BattleScene({
       triggerMove(move.anim, color, "wild", "damage", move.element, move.power);
 
       later(() => {
+        playSfx("hit");
         setShake("player");
         setScreenFlash("player"); later(() => setScreenFlash(null), 190);
         showDmg("player", dmg, crit);
@@ -528,6 +532,7 @@ export function BattleScene({
             const faintedName = team[idx]?.name ?? "Your Tayanari";
             const anyAlive = arr.some((h, i) => i !== idx && h > 0);
             later(() => {
+              playSfx("faint");
               setLog(`${faintedName} fainted…`);
               if (anyAlive) {
                 // Mandatory send-out — the player picks the next mon. No turn is
@@ -554,6 +559,7 @@ export function BattleScene({
     setBusy(true);
     later(() => setShake(null), 600);
     later(() => {
+      playSfx("hit");
       setShake("wild");
       setScreenFlash("wild"); later(() => setScreenFlash(null), 190);
       showDmg("wild", dmg, crit);
@@ -641,6 +647,7 @@ export function BattleScene({
     triggerMove(move.anim, color, "player", "damage", move.element, move.power);
     if (Math.random() * 100 > move.accuracy) {
       later(() => {
+        playSfx("miss");
         triggerAux("feint", undefined, "wild", 750);
         setFeinting(true);
         later(() => setFeinting(false), 600);
@@ -792,6 +799,7 @@ export function BattleScene({
     if (isKeeper) return; // safety: keeper mons are never bondable
     setMenu("root");
     setBusy(true);
+    playSfx("shell_throw");
     onConsumeShell();
     shellsSetRef.current += 1;
     setShellsSet(shellsSetRef.current);
@@ -805,13 +813,14 @@ export function BattleScene({
     //  2100ms     resolve — bond formed (gold burst) / broke    (700ms)
     const seqId = nextFxId();
     setShellFx({ phase: "set", id: seqId });
-    later(() => setShellFx({ phase: "wobble", id: seqId }), 600);
+    later(() => { playSfx("shell_wobble"); setShellFx({ phase: "wobble", id: seqId }); }, 600);
 
     later(() => {
       // Hopeful's boon: capture odds scaled by catchMult, clamped to a sure thing.
       const catchPct = Math.min(1, outcome.pct * catchMult);
       const caught = Math.random() < catchPct;
       if (caught) {
+        playSfx("shell_catch");
         setShellFx({ phase: "caught", id: seqId });
         const xp = xpFor(wild, true);
         later(() => {
@@ -825,6 +834,7 @@ export function BattleScene({
           }), 900);
         }, 750);
       } else {
+        playSfx("shell_fail");
         setShellFx({ phase: "break", id: seqId });
         later(() => {
           setShellFx(null);
@@ -840,6 +850,7 @@ export function BattleScene({
   function doSwitch(idx: number) {
     if (idx === activeIdxRef.current) return;
     if ((teamHpRef.current[idx] ?? 0) <= 0) return;
+    playSfx("battle_swap");
     participatedRef.current.add(idx);
     setActiveIdx(idx);
     activeIdxRef.current = idx;

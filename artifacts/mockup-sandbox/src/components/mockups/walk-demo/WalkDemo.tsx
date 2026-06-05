@@ -9,7 +9,7 @@ import {
   type Move,
 } from "./moves";
 import { type CharId, type RoleId, type PartySave, type PartyMon, type WorldSave, ROLES, readSave, updateParty, updateWorld, updateRole, roleDef } from "./save";
-import { playTrack, playJingle, stopAll } from "./audioManager";
+import { playTrack, playJingle, stopAll, playSfx } from "./audioManager";
 
 /** Hydrate caught/box entries on load. Older saves stored bare MonSpec (no
  *  progression); those default to the level the mon was caught at. */
@@ -2628,6 +2628,9 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const transitionTo = useCallback((next: Scene, sx: number, sy: number) => {
     if (fadingRef.current) return;
     fadingRef.current = true; setFading(true);
+    const INTERIOR: Scene[] = ["home", "lab", "maya", "jay", "ellio", "lia", "farm"];
+    if (INTERIOR.includes(next)) playSfx("door_in");
+    else if (next !== "battle") playSfx("door_out");
     setTimeout(() => {
       worldPos.current = { x: sx, y: sy };
       if (next !== "battle") lastSafeRef.current = { scene: next, x: sx, y: sy };
@@ -3082,7 +3085,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     if (from === "runrik_d3") { setShowRunePicker(true); return; }
     if (from === "corvin_d2" && !corvinMet) { setCorvinMet(true); setPrimeriaCoin(c => c + 75); }
     const next = map[from];
-    if (next) setPhase(next);
+    if (next) { playSfx("btn"); setPhase(next); }
   }, []);
 
   const pickStarter = useCallback(() => {
@@ -3393,6 +3396,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     if (r.xpGained > 0) {
       setStarterXp(r.newXp);
       if (r.levelUps > 0) {
+        playSfx("level_up");
         setStarterLevel(r.newLevel);
         setStarterStats(s => ({
           hp:  s.hp  + (r.totalGains.hp  ?? 0),
