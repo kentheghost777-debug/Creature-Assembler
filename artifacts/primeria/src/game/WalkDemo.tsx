@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback, type PointerEvent as RPointerEvent, type MouseEvent as RMouseEvent } from "react";
+import { useEffect, useRef, useState, useCallback, Fragment, type PointerEvent as RPointerEvent, type MouseEvent as RMouseEvent } from "react";
 import { BattleScene, RARITY_COLOR, sheetBgStyle, type SpriteSheet, type MonSpec, type MonRarity, type BattleResult, type StarterStats, type StarterSpec, type BattleMon } from "./BattleScene";
 import { EvoScene } from "./EvoScene";
 import { SHELLS, ELEMENT_COLOR, BATTLE_SHELLS, BATTLE_RUNES, BATTLE_SHELLS_BY_ID, BATTLE_RUNES_BY_ID, GEAR_ITEMS, GEAR_BY_ID, CLEARBELL_BERRIES, CLEARBELL_SHELLS, CLEARBELL_SHELLS_BY_ID, CLEARBELL_RUNES, type GearSlot, type GearItem } from "./progression";
@@ -1644,6 +1644,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   });
   const [showJournal,      setShowJournal]      = useState(false);
   const [journalTab,       setJournalTab]       = useState<"party"|"storage"|"shells"|"bag"|"equipment"|"guide">("party");
+  const [dexSub,           setDexSub]           = useState<"dex"|"evo">("dex");
   const [interactPos,      setInteractPos]      = useState({ sx: 0, sy: 0 });
   const [mayaInteractPos,  setMayaInteractPos]  = useState({ sx: 0, sy: 0 });
   const [jayInteractPos,   setJayInteractPos]   = useState({ sx: 0, sy: 0 });
@@ -7957,58 +7958,164 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                   );
                 })()}
 
-                {journalTab === "guide" && (
-                  <div style={{ display:"flex", flexDirection:"column", gap:2 }}>
-                    {([
-                      { label:"Whisperroot Trail", mons: BESTIARY,    accent:"#50c040" },
-                      { label:"Eastern Path",      mons: BESTIARY_R2, accent:"#40a8ff" },
-                      { label:"Westwood Reaches",  mons: BESTIARY_A3, accent:"#c070ff" },
-                    ]).map(({ label, mons, accent }) => (
-                      <div key={label} style={{ marginBottom:12 }}>
-                        <div style={{
-                          color: accent, fontSize:9.5, fontWeight:900, letterSpacing:1.8,
-                          textTransform:"uppercase", padding:"8px 2px 6px",
-                          borderBottom:`1px solid ${accent}55`, marginBottom:6,
-                        }}>{label}</div>
-                        <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:5 }}>
-                          {mons.filter((m, i, arr) => arr.findIndex(x => x.name === m.name) === i).map(m => {
-                            const rc = RARITY_COLOR[m.rarity];
-                            const tc = ELEMENT_COLOR[m.type as keyof typeof ELEMENT_COLOR] ?? "#aaa";
+                {journalTab === "guide" && (() => {
+                  // ── helpers ────────────────────────────────────────────────────
+                  const allMons = [...BESTIARY, ...BESTIARY_R2, ...BESTIARY_A3, ...BESTIARY_SHORE];
+                  const monById: Record<string, { name:string; type:string }> = {};
+                  allMons.forEach(m => { monById[m.id] = { name:m.name, type:m.type }; });
+                  EVO_TABLE.forEach(e => { if (!monById[e.to.id]) monById[e.to.id] = { name:e.to.name, type:e.to.type }; });
+                  const STARTER_ROOTS: Record<string, { name:string; type:string }> = {
+                    burg:{ name:"Burg", type:"Frostformed" }, pebble:{ name:"Pebble", type:"Earthbound" },
+                    cunbubble:{ name:"Cunbubble", type:"Oceanic" }, mentyke:{ name:"Mentyke", type:"Mind" },
+                    foxin:{ name:"Foxin", type:"Spirit" }, cerepup:{ name:"Cerepup", type:"Volcanic" },
+                    shockit:{ name:"Shockit", type:"Stormproven" },
+                  };
+                  Object.entries(STARTER_ROOTS).forEach(([id, v]) => { if (!monById[id]) monById[id] = v; });
+
+                  function buildChain(rootId: string): Array<{ id:string; name:string; type:string; atLevel?:number }> {
+                    const root = monById[rootId] ?? { name:rootId, type:"" };
+                    const chain: Array<{ id:string; name:string; type:string; atLevel?:number }> = [{ id:rootId, ...root }];
+                    let cur = rootId;
+                    for (;;) { const nxt = EVO_TABLE.find(e => e.from === cur); if (!nxt) break; chain.push({ id:nxt.to.id, name:nxt.to.name, type:nxt.to.type, atLevel:nxt.atLevel }); cur = nxt.to.id; }
+                    return chain;
+                  }
+
+                  const toIds = new Set(EVO_TABLE.map(e => e.to.id));
+                  const seenR = new Set<string>(); const chainRoots: string[] = [];
+                  EVO_TABLE.forEach(e => { if (toIds.has(e.from) || seenR.has(e.from)) return; seenR.add(e.from); chainRoots.push(e.from); });
+                  const seenSec = new Set<string>();
+                  const uniqueRoots = chainRoots.filter(id => { const nxt = EVO_TABLE.find(e => e.from === id); if (!nxt) return true; if (seenSec.has(nxt.to.id)) return false; seenSec.add(nxt.to.id); return true; });
+
+                  const r1Set = new Set(BESTIARY.map(m => m.id));
+                  const r2Set = new Set(BESTIARY_R2.map(m => m.id));
+                  const a3Set = new Set(BESTIARY_A3.map(m => m.id));
+                  const shSet = new Set(BESTIARY_SHORE.map(m => m.id));
+                  const starterSet = new Set(Object.keys(STARTER_ROOTS).concat(["peachi"]));
+                  function areaOf(id: string): string {
+                    if (starterSet.has(id)) return "starters";
+                    if (r1Set.has(id)) return "r1"; if (r2Set.has(id)) return "r2";
+                    if (a3Set.has(id)) return "a3"; if (shSet.has(id)) return "shore";
+                    return "other";
+                  }
+                  const AREA_META = [
+                    { key:"starters", label:"Starter Lines",    accent:"#f0c830" },
+                    { key:"r1",       label:"Whisperroot Trail", accent:"#50c040" },
+                    { key:"r2",       label:"Eastern Path",      accent:"#40a8ff" },
+                    { key:"a3",       label:"Westwood Reaches",  accent:"#c070ff" },
+                    { key:"shore",    label:"Tidemark Shore",    accent:"#40d0e0" },
+                  ];
+                  const grouped: Record<string, string[]> = {};
+                  uniqueRoots.forEach(id => { const k = areaOf(id); (grouped[k] ??= []).push(id); });
+
+                  const WYV_CHAIN = [
+                    { id:"wyvrunt",   name:"Wyvrunt",     type:"Chaos",  icon:"☯",  atLevel:undefined as number|undefined, isLoyalty:false },
+                    { id:"wyrnak",    name:"Wyburn",      type:"Spirit", icon:undefined, atLevel:18,        isLoyalty:false },
+                    { id:"wyrvast",   name:"Wyvlord",     type:"Chaos",  icon:undefined, atLevel:30,        isLoyalty:false },
+                    { id:"aureyvant", name:"DiviniDrake", type:"Chaos",  icon:"✦",  atLevel:80,        isLoyalty:true  },
+                  ];
+
+                  return (
+                    <div style={{ display:"flex", flexDirection:"column" }}>
+                      {/* sub-tab pills */}
+                      <div style={{ display:"flex", gap:4, marginBottom:10, paddingBottom:8, borderBottom:"1px solid rgba(100,60,20,0.18)" }}>
+                        {(["dex","evo"] as const).map(t => (
+                          <button key={t} onClick={() => setDexSub(t)} style={{ flex:1, padding:"6px 0", borderRadius:7, fontSize:9, fontWeight:800, letterSpacing:1, border: dexSub===t ? "1.5px solid rgba(100,60,20,0.35)" : "1.5px solid transparent", background: dexSub===t ? "rgba(100,60,20,0.14)" : "transparent", color: dexSub===t ? "#6a3c12" : "rgba(100,60,20,0.4)", cursor:"pointer", textTransform:"uppercase" }}>
+                            {t === "dex" ? "🐾 Field Dex" : "🔀 Evo Lines"}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* DEX tab */}
+                      {dexSub === "dex" && (
+                        <div style={{ display:"flex", flexDirection:"column", gap:2 }}>
+                          {([
+                            { label:"Whisperroot Trail", mons:BESTIARY,       accent:"#50c040" },
+                            { label:"Eastern Path",      mons:BESTIARY_R2,    accent:"#40a8ff" },
+                            { label:"Westwood Reaches",  mons:BESTIARY_A3,    accent:"#c070ff" },
+                            { label:"Tidemark Shore",    mons:BESTIARY_SHORE, accent:"#40d0e0" },
+                          ]).map(({ label, mons, accent }) => {
+                            const uniq = mons.filter((m,i,a) => a.findIndex(x => x.name === m.name) === i);
                             return (
-                              <div key={m.id} style={{
-                                display:"flex", flexDirection:"column", alignItems:"center",
-                                background:"rgba(255,248,230,0.5)", borderRadius:7,
-                                padding:"6px 4px 5px", gap:1,
-                                border:`1px solid ${rc}33`,
-                              }}>
-                                {m.wildImg ? (
-                                  <img src={m.wildImg} alt={m.name} style={{ width:52, height:52, objectFit:"contain" }}/>
-                                ) : m.wildSheet ? (
-                                  <div style={{ width:52, height:52, backgroundRepeat:"no-repeat", ...sheetBgStyle(m.wildSheet) }}/>
-                                ) : (
-                                  <div style={{ width:52, height:52, borderRadius:6, background: tc + "33", border:`1px solid ${tc}55` }}/>
-                                )}
-                                <div style={{ fontSize:8, fontWeight:800, color:"#2a1206", textAlign:"center", lineHeight:1.2, maxWidth:70, wordBreak:"break-word", marginTop:2 }}>{m.name}</div>
-                                <div style={{ fontSize:7, color: tc, fontWeight:700 }}>{m.type}</div>
-                                <div style={{ fontSize:7, fontWeight:900, color: rc, textTransform:"uppercase", letterSpacing:0.5 }}>{m.rarity}</div>
-                                {(() => {
-                                  const e1 = EVO_TABLE.find(e => e.from === m.id);
-                                  if (!e1) return null;
-                                  const e2 = EVO_TABLE.find(e => e.from === e1.to.id);
-                                  return (
-                                    <div style={{ fontSize:6, color:"#4a7a5a", fontWeight:700, marginTop:2, textAlign:"center", lineHeight:1.3, maxWidth:70 }}>
-                                      →{e1.to.name}{e2 ? ` →${e2.to.name}` : ""}
-                                    </div>
-                                  );
-                                })()}
+                              <div key={label} style={{ marginBottom:12 }}>
+                                <div style={{ color:accent, fontSize:9.5, fontWeight:900, letterSpacing:1.8, textTransform:"uppercase", padding:"8px 2px 6px", borderBottom:`1px solid ${accent}55`, marginBottom:6 }}>
+                                  {label} <span style={{ opacity:0.55, fontSize:8 }}>({uniq.length})</span>
+                                </div>
+                                <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:5 }}>
+                                  {uniq.map(m => {
+                                    const rc = RARITY_COLOR[m.rarity];
+                                    const tc = ELEMENT_COLOR[m.type as keyof typeof ELEMENT_COLOR] ?? "#aaa";
+                                    const e1 = EVO_TABLE.find(e => e.from === m.id);
+                                    const e2 = e1 ? EVO_TABLE.find(e => e.from === e1.to.id) : null;
+                                    return (
+                                      <div key={m.id} style={{ display:"flex", flexDirection:"column", alignItems:"center", background:"rgba(255,248,230,0.5)", borderRadius:7, padding:"6px 4px 5px", gap:1, border:`1px solid ${rc}33` }}>
+                                        {m.wildImg ? <img src={m.wildImg} alt={m.name} style={{ width:52, height:52, objectFit:"contain" }}/> : m.wildSheet ? <div style={{ width:52, height:52, backgroundRepeat:"no-repeat", ...sheetBgStyle(m.wildSheet) }}/> : <div style={{ width:52, height:52, borderRadius:6, background:tc+"33", border:`1px solid ${tc}55` }}/>}
+                                        <div style={{ fontSize:8, fontWeight:800, color:"#2a1206", textAlign:"center", lineHeight:1.2, maxWidth:70, wordBreak:"break-word", marginTop:2 }}>{m.name}</div>
+                                        <div style={{ fontSize:7, color:tc, fontWeight:700 }}>{m.type}</div>
+                                        <div style={{ fontSize:7, fontWeight:900, color:rc, textTransform:"uppercase", letterSpacing:0.5 }}>{m.rarity}</div>
+                                        {e1 && <div style={{ fontSize:6, color:"#4a7a5a", fontWeight:700, marginTop:2, textAlign:"center", lineHeight:1.3, maxWidth:70 }}>→{e1.to.name}{e2 ? ` →${e2.to.name}` : ""}</div>}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
                               </div>
                             );
                           })}
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      )}
+
+                      {/* EVO LINES tab */}
+                      {dexSub === "evo" && (
+                        <div style={{ display:"flex", flexDirection:"column", gap:0 }}>
+                          {/* Wyvrunt special chain */}
+                          <div style={{ marginBottom:10 }}>
+                            <div style={{ color:"#f0c830", fontSize:9.5, fontWeight:900, letterSpacing:1.8, textTransform:"uppercase", padding:"6px 2px 5px", borderBottom:"1px solid rgba(240,200,48,0.3)", marginBottom:5 }}>★ Wyvrunt Chain</div>
+                            <div style={{ display:"flex", flexWrap:"wrap", gap:4, alignItems:"center" }}>
+                              {WYV_CHAIN.map((f, fi) => {
+                                const tc = ELEMENT_COLOR[f.type as keyof typeof ELEMENT_COLOR] ?? "#aaa";
+                                return (
+                                  <Fragment key={f.id}>
+                                    {fi > 0 && <div style={{ color:"rgba(100,60,20,0.4)", fontSize:8, display:"flex", flexDirection:"column", alignItems:"center", lineHeight:1.2 }}><span>→</span><span style={{ fontSize:6 }}>{f.isLoyalty ? "Loy80" : `Lv${f.atLevel}`}</span></div>}
+                                    <div style={{ background:tc+"18", border:`1px solid ${tc}55`, borderRadius:6, padding:"3px 6px", textAlign:"center" }}>
+                                      <div style={{ fontSize:8, fontWeight:800, color:tc }}>{f.icon ?? ""}{f.name}</div>
+                                      <div style={{ fontSize:6, color:tc+"aa" }}>{f.type}</div>
+                                    </div>
+                                  </Fragment>
+                                );
+                              })}
+                            </div>
+                          </div>
+                          {/* Area evo groups */}
+                          {AREA_META.filter(a => grouped[a.key]?.length).map(area => (
+                            <div key={area.key} style={{ marginBottom:10 }}>
+                              <div style={{ color:area.accent, fontSize:9.5, fontWeight:900, letterSpacing:1.8, textTransform:"uppercase", padding:"6px 2px 5px", borderBottom:`1px solid ${area.accent}33`, marginBottom:5 }}>{area.label}</div>
+                              <div style={{ display:"flex", flexDirection:"column", gap:5 }}>
+                                {grouped[area.key].map(rootId => {
+                                  const chain = buildChain(rootId);
+                                  return (
+                                    <div key={rootId} style={{ display:"flex", flexWrap:"wrap", gap:4, alignItems:"center", padding:"4px 2px", borderBottom:"1px solid rgba(100,60,20,0.07)" }}>
+                                      {chain.map((form, fi) => {
+                                        const tc = ELEMENT_COLOR[form.type as keyof typeof ELEMENT_COLOR] ?? "#aaa";
+                                        return (
+                                          <Fragment key={form.id}>
+                                            {fi > 0 && <div style={{ color:"rgba(100,60,20,0.35)", fontSize:7, display:"flex", flexDirection:"column", alignItems:"center", lineHeight:1.1 }}><span>→</span><span style={{ fontSize:6 }}>{form.atLevel ? `Lv${form.atLevel}` : ""}</span></div>}
+                                            <div style={{ background:tc+"18", border:`1px solid ${tc}44`, borderRadius:5, padding:"2px 6px", textAlign:"center", minWidth:44 }}>
+                                              <div style={{ fontSize:8, fontWeight:800, color:tc, whiteSpace:"nowrap" }}>{form.name}</div>
+                                              <div style={{ fontSize:6, color:tc+"99" }}>{form.type}</div>
+                                            </div>
+                                          </Fragment>
+                                        );
+                                      })}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Bottom binding */}
