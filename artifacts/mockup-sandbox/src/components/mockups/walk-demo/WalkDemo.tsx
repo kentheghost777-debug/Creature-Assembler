@@ -7404,13 +7404,17 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                           if (!ps) return null;
                           const isSlotted = slottedPrismStoneId === id;
                           return (
-                            <div key={id} style={{ display:"flex", alignItems:"center", gap:8, padding:"7px 9px", borderRadius:9, marginBottom:6, background: isSlotted ? `${ps.color}22` : "rgba(0,0,0,0.03)", border:`1px solid ${isSlotted ? ps.color : "rgba(200,140,255,0.2)"}` }}>
-                              <div style={{ width:22, height:22, borderRadius:"50%", background:ps.color, boxShadow:`0 0 8px ${ps.color}`, flexShrink:0 }}/>
-                              <div style={{ flex:1 }}>
-                                <div style={{ color: isSlotted ? ps.color : "#8050b0", fontWeight:800, fontSize:11 }}>{ps.name}{isSlotted ? " ◈ slotted" : ""}</div>
-                                <div style={{ color:"#7050a0", fontSize:9.5, marginTop:1 }}>{ps.rarity} · {ps.desc}</div>
+                            <div key={id} style={{ display:"flex", alignItems:"center", gap:10, padding:"8px 10px", borderRadius:11, marginBottom:6, background: isSlotted ? `${ps.color}18` : "rgba(0,0,0,0.03)", border:`1.5px solid ${isSlotted ? ps.color : "rgba(200,140,255,0.18)"}`, transition:"border 0.2s" }}>
+                              <div style={{ width:46, height:46, flexShrink:0, position:"relative", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                                <div style={{ position:"absolute", inset:0, borderRadius:"50%", background:ps.color, filter:"blur(10px)", opacity: isSlotted ? 0.6 : 0.3 }}/>
+                                <img src={`/__mockup/images/${ps.img}`} alt={ps.name} style={{ width:42, height:42, objectFit:"contain", position:"relative", zIndex:1, filter:`drop-shadow(0 0 6px ${ps.color})`, animation: isSlotted ? "prismGemPulse 2s ease-in-out infinite" : "none" }}/>
                               </div>
-                              <button onClick={() => setSlottedPrismStoneId(isSlotted ? null : id as PrismStoneId)} style={{ background: isSlotted ? "rgba(200,60,60,0.15)" : `${ps.color}22`, border:`1px solid ${isSlotted ? "#c04040" : ps.color}`, color: isSlotted ? "#d06060" : ps.color, padding:"4px 10px", borderRadius:7, fontSize:10, fontWeight:700, cursor:"pointer" }}>
+                              <div style={{ flex:1 }}>
+                                <div style={{ color: isSlotted ? ps.color : "#8050b0", fontWeight:800, fontSize:11 }}>{ps.name}{isSlotted ? " ◈" : ""}</div>
+                                <div style={{ color:"#7050a0", fontSize:9, marginTop:2, textTransform:"uppercase", letterSpacing:0.8, fontWeight:700 }}>{ps.rarity}</div>
+                                <div style={{ color:"#8060a8", fontSize:9.5, marginTop:1, fontStyle:"italic" }}>{ps.desc}</div>
+                              </div>
+                              <button onClick={() => setSlottedPrismStoneId(isSlotted ? null : id as PrismStoneId)} style={{ background: isSlotted ? "rgba(200,60,60,0.15)" : `${ps.color}28`, border:`1px solid ${isSlotted ? "#c04040" : ps.color}`, color: isSlotted ? "#d06060" : ps.color, padding:"5px 11px", borderRadius:8, fontSize:10, fontWeight:800, cursor:"pointer", flexShrink:0 }}>
                                 {isSlotted ? "Remove" : "Slot"}
                               </button>
                             </div>
@@ -8823,6 +8827,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         @keyframes dialogIn        { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
         @keyframes npcReact        { 0%{transform:translateY(0)} 20%{transform:translateY(-10px)} 45%{transform:translateY(-2px)} 65%{transform:translateY(-6px)} 82%{transform:translateY(-1px)} 100%{transform:translateY(0)} }
         @keyframes moteFloat       { 0%{opacity:0;transform:translateY(0) scale(1)} 35%{opacity:1} 75%{opacity:0.45} 100%{opacity:0;transform:translateY(-55px) scale(0.4)} }
+        @keyframes prismGemPulse   { 0%,100%{filter:drop-shadow(0 0 5px currentColor) brightness(1)} 50%{filter:drop-shadow(0 0 14px currentColor) brightness(1.25)} }
       `}</style>
     </div>
   );

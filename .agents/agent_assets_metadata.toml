@@ -954,6 +954,72 @@ uri = "file://attached_assets/npc_town_elder.png"
 type = "image"
 title = "generated_image"
 
+[[generated]]
+id = "WyBEIUQRj48JMO5Tifues"
+uri = "file://attached_assets/prism_ruby.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "l4V_U2qLJvCjjF-nyhbgl"
+uri = "file://attached_assets/prism_sapphire.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "g8F6gM9dewky9TGSkdpPM"
+uri = "file://attached_assets/prism_emerald.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "dEAcG6o670--E566nFVpt"
+uri = "file://attached_assets/prism_amber.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "jxzWX692dmiD_kLULbbOM"
+uri = "file://attached_assets/prism_amethyst.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "kXzObBlqSfSwz_PxBhqg3"
+uri = "file://attached_assets/prism_crystal.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "45LriPdnIda8TymVotDyT"
+uri = "file://attached_assets/prism_rose.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "yOQpoEkMMuhIXptPwZjQ3"
+uri = "file://attached_assets/prism_umbra.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "JzayAANMRreSzWEFzPCDa"
+uri = "file://attached_assets/prism_solaris.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "rfCk9HHEcUmf05RoOB6Ov"
+uri = "file://attached_assets/prism_neon.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "O4VGwWTRFCV8--Sjouwbj"
+uri = "file://attached_assets/prism_obsidian.png"
+type = "image"
+title = "generated_image"
+
 [[outputs]]
 id = "hj9mwcgl1Uv9QQTG9g6KL"
 uri = "file://kinju_walk_demo.tar.gz"
@@ -1031,3 +1097,51 @@ id = "jPN56r7_fd79ig3f9obxm"
 uri = "file://attached_assets/town_right_wing.png"
 type = "image"
 title = "Right Wing — Mystical & Sacred quarter"
+
+[[outputs]]
+id = "IvgAPIL6F9II4YO21Hujw"
+uri = "file://attached_assets/prism_ruby.png"
+type = "image"
+title = "Ruby Prism"
+
+[[outputs]]
+id = "InwsimsMfpnXVsiTQ5KqS"
+uri = "file://attached_assets/prism_sapphire.png"
+type = "image"
+title = "Sapphire Prism"
+
+[[outputs]]
+id = "lIv4Mmvw0DuulQN5MXbn4"
+uri = "file://attached_assets/prism_emerald.png"
+type = "image"
+title = "Emerald Prism"
+
+[[outputs]]
+id = "gWKS_lJUuyd35RnkzxjKR"
+uri = "file://attached_assets/prism_amethyst.png"
+type = "image"
+title = "Amethyst Prism"
+
+[[outputs]]
+id = "8AjXW9RdB5ZvkCkt9wcU3"
+uri = "file://attached_assets/prism_umbra.png"
+type = "image"
+title = "Umbra Prism"
+
+[[outputs]]
+id = "2_tELR-FduAR-W5ObXbl6"
+uri = "file://attached_assets/prism_neon.png"
+type = "image"
+title = "Neon Prism"
+
+[[outputs]]
+id = "rYSRcJsh-S31SKgoKuPij"
+uri = "file://attached_assets/prism_solaris.png"
+type = "image"
+title = "Solaris Prism"
+
+[[outputs]]
+id = "-iDdmcfJrLlF1q_2NVWCi"
+uri = "file://attached_assets/prism_obsidian.png"
+type = "image"
+title = "Obsidian Prism"

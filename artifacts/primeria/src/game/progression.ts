@@ -460,6 +460,7 @@ export type PrismStoneItem = {
   /** CSS sepia() pre-pass amount (0..1) – used to shift base hue cleanly */
   sepia: number;
   icon: string;
+  img: string;        // gem image filename (without path prefix)
   desc: string;
   price: number;      // Primeria Coin shop price (0 = not sold)
   rarity: "rare" | "ultra" | "apex";
@@ -469,37 +470,37 @@ export type PrismStoneItem = {
 
 export const PRISM_STONES: readonly PrismStoneItem[] = [
   { id:"prism_ruby",      name:"Ruby Prism",      icon:"💎", color:"#e03040", rarity:"rare",
-    hue:0,   sat:2.4, bri:1.0, sepia:0.8,
+    hue:0,   sat:2.4, bri:1.0, sepia:0.8,   img:"prism_ruby.png",
     desc:"Crimson-tinted sheen. Burns like embers.",            price:120, dropChance:0.012 },
   { id:"prism_sapphire",  name:"Sapphire Prism",  icon:"🔷", color:"#2060e0", rarity:"rare",
-    hue:200, sat:2.2, bri:0.95, sepia:0.6,
+    hue:200, sat:2.2, bri:0.95, sepia:0.6,  img:"prism_sapphire.png",
     desc:"Deep ocean blue. Cool as midnight tides.",            price:120, dropChance:0.012 },
   { id:"prism_emerald",   name:"Emerald Prism",   icon:"💚", color:"#20b040", rarity:"rare",
-    hue:120, sat:2.5, bri:1.0, sepia:0.7,
+    hue:120, sat:2.5, bri:1.0, sepia:0.7,   img:"prism_emerald.png",
     desc:"Vivid forest green. Smells faintly of rain.",         price:120, dropChance:0.012 },
   { id:"prism_amber",     name:"Amber Prism",     icon:"🟡", color:"#e09020", rarity:"rare",
-    hue:30,  sat:2.2, bri:1.05, sepia:0.75,
+    hue:30,  sat:2.2, bri:1.05, sepia:0.75, img:"prism_amber.png",
     desc:"Warm golden glow. Ancient light trapped in glass.",   price:120, dropChance:0.012 },
   { id:"prism_amethyst",  name:"Amethyst Prism",  icon:"💜", color:"#9040c0", rarity:"rare",
-    hue:280, sat:2.0, bri:0.95, sepia:0.65,
+    hue:280, sat:2.0, bri:0.95, sepia:0.65, img:"prism_amethyst.png",
     desc:"Violet shimmer. Feels like a held secret.",           price:120, dropChance:0.012 },
   { id:"prism_crystal",   name:"Crystal Prism",   icon:"🔵", color:"#b0e8ff", rarity:"rare",
-    hue:185, sat:0.4, bri:1.35, sepia:0.0,
+    hue:185, sat:0.4, bri:1.35, sepia:0.0,  img:"prism_crystal.png",
     desc:"Pale icy white. Refracts light into rainbows.",       price:120, dropChance:0.010 },
   { id:"prism_obsidian",  name:"Obsidian Prism",  icon:"⬛", color:"#505060", rarity:"rare",
-    hue:240, sat:0.3, bri:0.45, sepia:0.2,
+    hue:240, sat:0.3, bri:0.45, sepia:0.2,  img:"prism_obsidian.png",
     desc:"Dark as a starless sky. Absorbs light.",              price:120, dropChance:0.010 },
   { id:"prism_rose",      name:"Rose Prism",      icon:"🌸", color:"#e060a0", rarity:"rare",
-    hue:330, sat:2.0, bri:1.0, sepia:0.7,
+    hue:330, sat:2.0, bri:1.0, sepia:0.7,   img:"prism_rose.png",
     desc:"Soft pink bloom. Rare as a blossoming Tayanari.",     price:120, dropChance:0.010 },
   { id:"prism_umbra",     name:"Umbra Prism",     icon:"🌑", color:"#3d1a6a", rarity:"ultra",
-    hue:270, sat:1.8, bri:0.30, sepia:0.5,
+    hue:270, sat:1.8, bri:0.30, sepia:0.5,  img:"prism_umbra.png",
     desc:"Shadow-forged. The mon fades into living dusk.",      price:0,   dropChance:0.004 },
   { id:"prism_solaris",   name:"Solaris Prism",   icon:"☀️",  color:"#ffe080", rarity:"ultra",
-    hue:45,  sat:1.2, bri:1.70, sepia:0.3,
+    hue:45,  sat:1.2, bri:1.70, sepia:0.3,  img:"prism_solaris.png",
     desc:"Holy radiance. The mon blazes like a second sun.",    price:0,   dropChance:0.004 },
   { id:"prism_neon",      name:"Neon Prism",      icon:"⚡", color:"#00ffcc", rarity:"apex",
-    hue:165, sat:4.0, bri:1.20, sepia:0.0,
+    hue:165, sat:4.0, bri:1.20, sepia:0.0,  img:"prism_neon.png",
     desc:"Electric neon glow. Impossible to look away from.",   price:0,   dropChance:0.001 },
 ];
 
