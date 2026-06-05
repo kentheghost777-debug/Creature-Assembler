@@ -1972,7 +1972,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     return base;
   });
   const [showJournal,      setShowJournal]      = useState(false);
-  const [journalTab,       setJournalTab]       = useState<"party"|"storage"|"shells"|"bag"|"equipment"|"guide"|"map">("party");
+  const [journalTab,       setJournalTab]       = useState<"party"|"storage"|"shells"|"bag"|"equipment"|"guide"|"map"|"licenses">("party");
   const [dexSub,           setDexSub]           = useState<"dex"|"evo">("dex");
   const [visitedScenes,    setVisitedScenes]    = useState<Set<string>>(() => {
     const saved = savedWorld?.visitedScenes;
@@ -3701,8 +3701,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       : "The bond between a Keeper and their Tayanari deepens through trust, exploration, and challenge. Treat them well and they will never let you down. Consider each one carefully. Who is it going to be?",
     pick: "",
     d3: starter ? `${starter.name}. Interesting — it moved toward you before I called it. That does not happen often. The bond has already begun. Treat them well.` : "",
-    d4: "Head north past the village gate through Route 1 to the Wild Area. Wild Tayanari roam freely there. It is the best place for a new Keeper to earn their first bonds.",
-    d5: "But be careful — wild Tayanari are spirited and won't hesitate to test you. Keep your partner healthy and your wits sharp. I'll meet you in the Wild Area. Safe travels, Keeper.",
+    d4: "Head north past the village gate through Route 1 to the Wild Area. Wild Tayanari roam freely there — it is the best place for a new Keeper to earn their first bonds. But before you go: today was not only a Keeper selection. The village put your name forward for something more.",
+    d5: "An Elder Trial. It happens once in a generation — a calling, not a ceremony. I have filed my vouch with the registry; the village has signed. But the Elder Trial card cannot be issued without a certified sponsor — someone from beyond these walls. I do not know who that will be yet. But I believe they are already looking for you. Safe travels, Keeper.",
     maya_d1: "There you are — I was hoping you'd stop by before you left. I've had something set aside for you for a while. My father's collection. I think today is finally the day I hand it over. ...I almost went myself, you know. Put my name in three times. He talked me out of every one. I thought I resented him for it. I don't, anymore.",
     maya_d2: "My father was a legendary Keeper. He spent his whole life out there, bonding with Tayanari no one else could reach. He'd come home with field notes so full he had to tape extra pages in. Last creature he ever bonded was on the high cliffs north of the ruins — he said it looked at him like it already knew his name. He passed last winter. I miss him every single day.",
     maya_d3: "Before he left us, he pressed his Weathered Realm Shells into my hands. Old things — you can feel the weight of every journey in them. He said: 'Give these to someone worthy, Maya. You'll know them when you see them.' I've been watching people leave for their Trials for months. I knew when I saw you.",
@@ -3762,7 +3762,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     maren_done: "Take good care of little Cruci. Visit anytime — the farm's always open.",
     maren_idle: "Cruci's been in a good mood all morning. Whatever you did, keep doing it.",
     // ── Overworld ambient townspeople ─────────────────────────────────────────
-    tova_d1: "You must be the one who received the Trial selection. I heard the lab bell before sunrise — couldn't sleep after that. This village hasn't felt this alive in years. Even the Tayanari near the market have been gathering closer to the walls lately. Something's shifting.",
+    tova_d1: "You must be the one the village chose — not just the Keeper Trial. The Elder Trial. I heard the lab bell before sunrise and I haven't stopped thinking about it since. My grandmother used to talk about the last time a selection like this came through. That was before my mother was born. Something is shifting — even the Tayanari near the market have been drawing closer to the walls.",
     tova_d2: "Irwyn hasn't said why, but some of us have noticed — he's been out on the eastern path before dawn these past few mornings. That's not like him. He usually talks through everything he finds. Whatever he's watching out there... he's not ready to say. Just keep your eyes open.",
     tova_idle: "Safe travels, Keeper. Come back with stories — and come back whole.",
     senna_d1: "First time heading out through Route 1? I've been running goods through that gate for years. The Tayanari out there haven't been acting the same lately — more curious, less wary. Old Mena on the ridge says they're responding to something deep in the ruins. I don't know about all that. I just know the trail's busier than it's been in a long time.",
@@ -7383,7 +7383,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                     </div>
                     {/* Mobile row 2: tabs full width */}
                     <div style={{ display:"flex", gap:3 }}>
-                      {(["party","storage","shells","bag","equipment","guide","map"] as const).map(tab => (
+                      {(["party","storage","shells","bag","equipment","guide","map","licenses"] as const).map(tab => (
                         <button key={tab} onClick={() => setJournalTab(tab)} style={{
                           flex:1, padding:"5px 2px 8px",
                           background: journalTab === tab
@@ -7394,7 +7394,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                           color: journalTab === tab ? "#3d1e04" : "#a08050",
                           fontSize:9, fontWeight:800, letterSpacing:0.5,
                           textTransform:"uppercase", cursor:"pointer",
-                        }}>{tab === "party" ? "Party" : tab === "storage" ? "Box" : tab === "shells" ? "Shells" : tab === "equipment" ? "Equip" : tab === "guide" ? "Guide" : tab === "map" ? "Map" : "Bag"}</button>
+                        }}>{tab === "party" ? "Party" : tab === "storage" ? "Box" : tab === "shells" ? "Shells" : tab === "equipment" ? "Equip" : tab === "guide" ? "Guide" : tab === "map" ? "Map" : tab === "licenses" ? "Cards" : "Bag"}</button>
                       ))}
                     </div>
                   </>
@@ -7409,7 +7409,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
 
                     {/* Page tabs flush with bottom of spine */}
                     <div style={{ display:"flex", gap:3, alignSelf:"flex-end" }}>
-                      {(["party","storage","shells","bag","equipment","guide","map"] as const).map(tab => (
+                      {(["party","storage","shells","bag","equipment","guide","map","licenses"] as const).map(tab => (
                         <button key={tab} onClick={() => setJournalTab(tab)} style={{
                           padding:"5px 9px 8px",
                           background: journalTab === tab
@@ -7420,7 +7420,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                           color: journalTab === tab ? "#3d1e04" : "#a08050",
                           fontSize:10, fontWeight:800, letterSpacing:1,
                           textTransform:"uppercase", cursor:"pointer",
-                        }}>{tab === "party" ? "Party" : tab === "storage" ? "Box" : tab === "shells" ? "Shells" : tab === "equipment" ? "Equip" : tab === "guide" ? "Guide" : tab === "map" ? "Map" : "Bag"}</button>
+                        }}>{tab === "party" ? "Party" : tab === "storage" ? "Box" : tab === "shells" ? "Shells" : tab === "equipment" ? "Equip" : tab === "guide" ? "Guide" : tab === "map" ? "Map" : tab === "licenses" ? "Cards" : "Bag"}</button>
                       ))}
                     </div>
 
@@ -7446,7 +7446,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                   <span style={{
                     color:"#8a5c22", fontSize:9, fontWeight:800,
                     letterSpacing:2.5, textTransform:"uppercase",
-                  }}>{journalTab === "party" ? "Companions" : journalTab === "storage" ? "Storage Box" : journalTab === "guide" ? "Tayanari Field Guide" : journalTab === "equipment" ? "Keeper Equipment" : journalTab === "map" ? "World Map" : "Carried Items"}</span>
+                  }}>{journalTab === "party" ? "Companions" : journalTab === "storage" ? "Storage Box" : journalTab === "guide" ? "Tayanari Field Guide" : journalTab === "equipment" ? "Keeper Equipment" : journalTab === "map" ? "World Map" : journalTab === "licenses" ? "Trial Licenses" : "Carried Items"}</span>
                   <div style={{ flex:1, height:1, background:"rgba(100,64,20,0.28)" }}/>
                 </div>
 
@@ -8846,6 +8846,127 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                       <div style={{ fontSize:7, color:"#5a4020", textAlign:"center", letterSpacing:0.5 }}>
                         {visitedScenes.size} of {14} regions explored
                       </div>
+                    </div>
+                  );
+                })()}
+
+                {/* ── LICENSES PAGE ──────────────────────────────── */}
+                {journalTab === "licenses" && (() => {
+                  const hasKeeperCard = !!starter;
+                  const hasElderCard  = cleminusMet;
+                  const CARD_W    = 150;
+                  const photoLeft   = Math.round(88  * CARD_W / 1024);
+                  const photoTop    = Math.round(233 * CARD_W / 1024);
+                  const photoWidth  = Math.round(283 * CARD_W / 1024);
+                  const photoHeight = Math.round(320 * CARD_W / 1024);
+                  return (
+                    <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+                      <div style={{ color:"#826040", fontSize:9, lineHeight:1.55, fontStyle:"italic" }}>
+                        Your official credentials as a registered Keeper and the formal record of your Elder Trial selection.
+                      </div>
+
+                      <div style={{ display:"flex", gap:10, justifyContent:"center", flexWrap:"wrap" }}>
+                        {/* ── Keeper Trial Card ── */}
+                        <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:7, maxWidth:160 }}>
+                          <div style={{
+                            position:"relative", width:CARD_W,
+                            opacity: hasKeeperCard ? 1 : 0.3,
+                            filter: hasKeeperCard ? "none" : "grayscale(1) sepia(0.3)",
+                          }}>
+                            <img src="./images/keeper_trial_card.png"
+                              style={{ width:CARD_W, display:"block", borderRadius:4 }} alt="Keeper Trial Card"/>
+                            {hasKeeperCard && (
+                              <img
+                                src={`./images/${CHAR_IMG_KEY[characterId]}_front_idle.png`}
+                                style={{
+                                  position:"absolute",
+                                  left:photoLeft, top:photoTop,
+                                  width:photoWidth, height:photoHeight,
+                                  objectFit:"cover", objectPosition:"center top",
+                                  mixBlendMode:"multiply",
+                                }}
+                                alt=""
+                              />
+                            )}
+                          </div>
+                          <div style={{ textAlign:"center", width:"100%" }}>
+                            <div style={{ color:"#2a1206", fontWeight:800, fontSize:11, letterSpacing:0.3 }}>Keeper Trial</div>
+                            <div style={{
+                              display:"inline-block", marginTop:3,
+                              padding:"2px 8px", borderRadius:10,
+                              background: hasKeeperCard ? "rgba(40,120,40,0.12)" : "rgba(100,64,20,0.07)",
+                              border:`1px solid ${hasKeeperCard ? "rgba(40,120,40,0.38)" : "rgba(100,64,20,0.2)"}`,
+                              color: hasKeeperCard ? "#2a7040" : "#9a7848",
+                              fontSize:8, fontWeight:800, letterSpacing:1.2,
+                            }}>{hasKeeperCard ? "✓ ACTIVE" : "PENDING"}</div>
+                            <div style={{ color:"#826040", fontSize:9, lineHeight:1.5, marginTop:6 }}>
+                              Standard Keeper license. Issued on first partner selection — grants the right to travel, bond with Tayanari, and battle as a registered Keeper.
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* ── Elder Trial Card ── */}
+                        <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:7, maxWidth:160 }}>
+                          <div style={{
+                            position:"relative", width:CARD_W,
+                            opacity: hasElderCard ? 1 : 0.3,
+                            filter: hasElderCard ? "none" : "grayscale(1) sepia(0.3)",
+                          }}>
+                            <img src="./images/elder_trial_card.png"
+                              style={{ width:CARD_W, display:"block", borderRadius:4 }} alt="Elder Trial Card"/>
+                            {hasElderCard && (
+                              <img
+                                src={`./images/${CHAR_IMG_KEY[characterId]}_front_idle.png`}
+                                style={{
+                                  position:"absolute",
+                                  left:photoLeft, top:photoTop,
+                                  width:photoWidth, height:photoHeight,
+                                  objectFit:"cover", objectPosition:"center top",
+                                  mixBlendMode:"multiply",
+                                }}
+                                alt=""
+                              />
+                            )}
+                          </div>
+                          <div style={{ textAlign:"center", width:"100%" }}>
+                            <div style={{ color:"#2a1206", fontWeight:800, fontSize:11, letterSpacing:0.3 }}>Elder Trial</div>
+                            <div style={{
+                              display:"inline-block", marginTop:3,
+                              padding:"2px 8px", borderRadius:10,
+                              background: hasElderCard ? "rgba(80,60,180,0.12)" : "rgba(100,64,20,0.07)",
+                              border:`1px solid ${hasElderCard ? "rgba(80,60,180,0.38)" : "rgba(100,64,20,0.2)"}`,
+                              color: hasElderCard ? "#5040b0" : "#9a7848",
+                              fontSize:8, fontWeight:800, letterSpacing:1.2,
+                            }}>{hasElderCard ? "✓ ACTIVE" : "AWAITING SPONSOR"}</div>
+                            <div style={{ color:"#826040", fontSize:9, lineHeight:1.5, marginTop:6 }}>
+                              Once-in-a-generation calling. You were chosen by the village. Prof. Irwyn has vouched. A certified Elder sponsor must sign to activate.
+                            </div>
+                            {hasElderCard && (
+                              <div style={{
+                                marginTop:7, padding:"6px 8px", borderRadius:8,
+                                background:"rgba(80,60,180,0.07)",
+                                border:"1px solid rgba(80,60,180,0.22)",
+                              }}>
+                                <div style={{ color:"#6050a0", fontSize:7, fontWeight:800, letterSpacing:1.5, marginBottom:2 }}>SPONSOR</div>
+                                <div style={{ color:"#2a1206", fontWeight:800, fontSize:10 }}>Cleminus "Jerbs"</div>
+                                <div style={{ color:"#826040", fontSize:8 }}>Clandestine Jerbeen · Traveler · Elder</div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {!hasElderCard && hasKeeperCard && (
+                        <div style={{
+                          padding:"8px 10px", borderRadius:8,
+                          background:"rgba(100,64,20,0.05)",
+                          border:"1px dashed rgba(100,64,20,0.22)",
+                          color:"#9a7040", fontSize:9, lineHeight:1.5,
+                          fontStyle:"italic", textAlign:"center",
+                        }}>
+                          The village has vouched. Prof. Irwyn has filed. Your Elder Trial license awaits a sponsor's signature.
+                        </div>
+                      )}
                     </div>
                   );
                 })()}
