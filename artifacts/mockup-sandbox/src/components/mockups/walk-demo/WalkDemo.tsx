@@ -1233,7 +1233,7 @@ const FP = { w: 1024, h: 820 };              // forest-path-bg.png (1402×1122 �
 const FP_SPAWN            = { x: 512, y: 792 }; // entering from Route 1 (south)
 const FP_FROM_CLEAR_SPAWN = { x: 512, y:  30 }; // entering from Clearing (north)
 let R1_NORTH_EXIT: Rect  = ld("r1_north", [412,   0, 564,  18]); // Route 1 north edge → Forest Path
-let FP_SOUTH_EXIT: Rect  = ld("fp_south", [432, 803, 594, 820]); // Forest Path south → Route 1
+let FP_SOUTH_EXIT: Rect  = ld("fp_south", [432, 776, 594, 820]); // Forest Path south → Route 1 (y1=776 reachable; player max y=790)
 let FP_NORTH_EXIT: Rect  = ld("fp_north", [432,   0, 594,  18]); // Forest Path north → Clearing
 const FP_HOTSPOTS: Hotspot[] = [
   { x: 175, y: 220, r: 36, kind: "bush" },
@@ -1250,7 +1250,7 @@ const FP_HOTSPOTS: Hotspot[] = [
 
 // ── Forest Clearing (north of Forest Path — final demo encounter zone) ────────
 const FC = { w: 1024, h: 516 };              // forest-clear-bg.png (1254×633 → 1024×516)
-const FC_SPAWN   = { x: 512, y: 488 };       // entering from Forest Path (south)
+const FC_SPAWN   = { x: 512, y: 440 };       // entering from Forest Path (south) — above FC_SOUTH_EXIT y=476 to avoid instant re-exit
 let FC_SOUTH_EXIT: Rect = ld("fc_south", [0, 476, 1024, 516]); // Clearing south → Forest Path — full width, raised to y=476 so player can reach it
 const FC_HOTSPOTS: Hotspot[] = [
   { x: 175, y: 155, r: 36, kind: "bush" },
