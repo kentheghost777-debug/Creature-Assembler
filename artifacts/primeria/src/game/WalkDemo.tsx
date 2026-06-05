@@ -1202,6 +1202,31 @@ const RARITY_BASE: Record<MonRarity, number> = {
   common: 53, uncommon: 30, rare: 11, ultra: 5, apex: 1,
 };
 
+// ── Battle coin rewards ───────────────────────────────────────────────────────
+const WILD_COIN: Record<string, number> = {
+  common: 4, uncommon: 8, rare: 16, ultra: 30, apex: 55,
+};
+const TRAINER_COIN: Record<string, number> = {
+  jay: 40, lia: 40, jerbs: 60, prof: 50,
+};
+
+// ── Farm shop prices ─────────────────────────────────────────────────────────
+const FARM_SHELL_PRICES: Record<string, number> = {
+  bshell_moss: 40, bshell_ember: 40, bshell_tide: 40, bshell_storm: 40,
+  bshell_dusk: 40, bshell_frost: 45, bshell_spirit: 45, bshell_alch: 45,
+  bshell_prism2: 65, bshell_prism3: 90,
+};
+const FARM_RUNE_PRICES: Record<string, number> = {
+  brune_warden: 35, brune_resonance: 45, brune_swift: 40, brune_power: 40,
+  brune_lifesteal: 40, brune_barrier: 35, brune_evasion: 40, brune_soulforge: 50,
+};
+const HOLLIS_BERRY_INFO = [
+  { key: "dusk",   label: "Duskberry",   price: 8,  icon: "🌑", desc: "Restores HP during battle. Field-grade healing." },
+  { key: "thorn",  label: "Thornberry",  price: 8,  icon: "🌿", desc: "Sharpens attack for one turn. Edge from the wild." },
+  { key: "calm",   label: "Calmberry",   price: 8,  icon: "🌸", desc: "Hardens defense for one turn. Steady and grounded." },
+  { key: "bright", label: "Brightberry", price: 10, icon: "☀", desc: "Restores move uses. Clears the fog from tired moves." },
+] as const;
+
 // ── Forest Path (north of Route 1, south of Forest Clearing) ─────────────────
 const FP = { w: 1024, h: 820 };              // forest-path-bg.png (1402×1122 → 1024×820)
 const FP_SPAWN            = { x: 512, y: 792 }; // entering from Route 1 (south)
@@ -1979,6 +2004,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const [slottedPrismStoneId,  setSlottedPrismStoneId]  = useState<PrismStoneId|null>(() => (savedWorld?.slottedPrismStoneId ?? null) as PrismStoneId|null);
   const [showShellPicker,      setShowShellPicker]      = useState(false);
   const [showRunePicker,       setShowRunePicker]       = useState(false);
+  const [showBerryPicker,      setShowBerryPicker]      = useState(false);
+  const [hollisBerryPick,      setHollisBerryPick]      = useState<string | null>(null);
   const [primeriaCoin,         setPrimeriaCoin]         = useState(() => savedWorld?.primeriaCoin ?? 0);
   const [profShoreWins,        setProfShoreWins]        = useState(() => savedWorld?.profShoreWins ?? 0);
   const [profShorePaid,        setProfShorePaid]        = useState(() => savedWorld?.profShorePaid ?? 0);
@@ -2022,7 +2049,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const [nearTownElder,        setNearTownElder]        = useState(false);
   const [townElderInteractPos, setTownElderInteractPos] = useState({ sx: 0, sy: 0 });
   // Active shop overlay: "blacksmith" | "berries" | "shells" | "runes" | null
-  const [activeShop,           setActiveShop]           = useState<"blacksmith"|"berries"|"shells"|"runes"|null>(null);
+  const [activeShop,           setActiveShop]           = useState<"blacksmith"|"berries"|"shells"|"runes"|"farm_shells"|"farm_runes"|"farm_berries"|null>(null);
   // Equipped gear — one item per slot (stores gear id or null)
   const [equippedGear, setEquippedGear] = useState<Record<GearSlot, string|null>>(() => {
     try { const s = localStorage.getItem("primeria_gear"); return s ? JSON.parse(s) : { headband:null, armor:null, wristband:null, shoes:null, backpack:null }; } catch { return { headband:null, armor:null, wristband:null, shoes:null, backpack:null }; }
@@ -3632,7 +3659,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     farm_d1: "Oh — hello there, Keeper. Don't mind me, I'm just sittin' out here watching the Tayanari play. Best show in the whole valley, and it don't cost a copper.",
     farm_d2: "I keep the farm up north, past the rise where the grass goes gold. Hard work, sure, but come dusk the little ones wander down into my fields. Good company, the lot of 'em.",
     farm_d3: "Funny thing, that Wyvrunt everyone's whispering about... I'm the one who first found it. Half-frozen by my north fence one winter, it was. Fed it scraps till it could fly again. Rare creature — glad it found its way to good hands.",
-    farm_d4: "Say — you look like a Keeper who earns their keep. I've got more field berries than I can use before the season turns. Take some. Duskberry for healing, Thornberry for a sharp edge, Calmberry for a steady guard, Brightberry when your moves run dry. They'll serve you well out there.",
+    farm_d4: "Say — you look like a Keeper who earns their keep. I've got more field berries than I can use before the season turns. Go on — pick whichever suits you best. The others I'll keep at the stand for whenever you need them.",
     farm_idle: "Word travels fast in this valley. Clearbell folks are buzzing about it too — old Darro at the forge was asking me about you last time I was in town. Said he'd been hoping someone worth outfitting would come through. Come back anytime.",
     shella_d1: "Goodness — a visitor! Most folks pass right through the north gate without stopping. Come closer, I won't bite. Name's Shella. I run the shell workshop — forge Realm Shells out of crystalite shards and valley ore.",
     shella_d2: "My brother-in-law thinks it's too niche. 'Shella,' he says, 'nobody needs custom shells.' But then every Keeper who's bonded a rare Tayanari comes straight to me. Funny how that works.",
@@ -4026,6 +4053,11 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     const rawXp = (result.kind === "caught" || result.kind === "ko") ? result.xpGained : 0;
     const runeXpMult = slottedBattleRuneId === "xp_boost" ? 1.5 : 1;
     const r = calcBattleXp(rawXp, role.xpMult * runeXpMult, starterLevel, starterXp, starterMoves);
+    // Coin reward for wild battles
+    const wildCoin = (result.kind === "ko" || result.kind === "caught")
+      ? (WILD_COIN[(result.mon.rarity ?? "common")] ?? 4)
+      : 0;
+    if (wildCoin > 0) setPrimeriaCoin(c => c + wildCoin);
     applyLevelUp(r);
 
     // Award the same XP to every caught companion that joined the fight.
@@ -4070,12 +4102,12 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         setBattleNotif({ title: `Bond formed — ${result.mon.name}!`, sub: "Party full · sent to Storage Box" });
         outcome = `${result.mon.name} bonded with you, but your party was full — it was sent to the Storage Box.`;
       } else {
-        setBattleNotif({ title: `Bond formed — ${result.mon.name}!`, sub: "Joined your party · full heal" });
+        setBattleNotif({ title: `Bond formed — ${result.mon.name}!`, sub: `Joined your party · +₡${wildCoin}` });
         outcome = `${result.mon.name} bonded with you and joined the party!`;
       }
       setChecksStreak(0);
     } else if (result.kind === "ko") {
-      setBattleNotif({ title: `${result.mon.name} fainted!`, sub: `+${r.xpGained} XP` });
+      setBattleNotif({ title: `${result.mon.name} fainted!`, sub: `+${r.xpGained} XP · +₡${wildCoin}` });
       outcome = `${result.mon.name} fainted in the clash.`;
     } else if (result.kind === "fled") {
       setBattleNotif({ title: "Got away safely.", sub: "" });
@@ -4161,6 +4193,10 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     if (result.kind === "trainerWin") playJingle(WIN_JINGLE);
 
     if (result.kind === "trainerWin") {
+      // Coin reward for trainer win
+      const trainerCoins = TRAINER_COIN[enc.trainer ?? ""] ?? 35;
+      setPrimeriaCoin(c => c + trainerCoins);
+
       if (enc.trainer === "jay") setJayA3Wins(w => Math.min(3, w + 1));
       else if (enc.trainer === "lia") setLiaA3Wins(w => Math.min(3, w + 1));
       else if (enc.trainer === "jerbs") setJerbsBattleDone(true);
@@ -4169,7 +4205,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         // Gift: resonance_fill rune on first shore win
         setOwnedBattleRuneIds(ids => ids.includes("resonance_fill") ? ids : [...ids, "resonance_fill"]);
       }
-      setBattleNotif({ title: `You beat ${enc.name}!`, sub: `+${r.xpGained} XP` });
+      setBattleNotif({ title: `You beat ${enc.name}!`, sub: `+${r.xpGained} XP · +₡${trainerCoins}` });
       setPhase(enc.trainer === "jay" ? "jay_a3_win" : enc.trainer === "lia" ? "lia_a3_win" : enc.trainer === "prof" ? "prof_shore_win" : "jerbs_crystal_d1");
     } else {
       setBattleNotif({ title: `${enc.name} won this round.`, sub: "Come back stronger!" });
@@ -5977,12 +6013,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               <button
                 onClick={() => {
                   if (phase === "farm_d4") {
-                    setHollisGifted(true);
-                    setDuskberries(n => n + 3);
-                    setThornberries(n => n + 3);
-                    setCalmberries(n => n + 3);
-                    setBrightberries(n => n + 3);
-                    setPhase("walk");
+                    setShowBerryPicker(true);
                   } else {
                     advanceDialog(phase);
                   }
@@ -5994,7 +6025,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                   borderRadius:8, fontSize:13, fontWeight:700,
                   cursor:"pointer",
                 }}
-              >{phase === "farm_d4" ? "Take Berries ✦" : phase === "farm_idle" ? "OK" : "Next ▶"}</button>
+              >{phase === "farm_d4" ? "Choose ▶" : phase === "farm_idle" ? "OK" : "Next ▶"}</button>
+              {phase === "farm_idle" && hollisGifted && (
+                <button
+                  onClick={() => { setActiveShop("farm_berries"); setPhase("walk"); }}
+                  style={{ background:"rgba(150,200,90,0.15)", border:"1px solid rgba(150,200,90,0.5)", color:"#bfe080", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer", marginLeft:8 }}
+                >Farm Stand ▶</button>
+              )}
             </div>
           </div>
         )}
@@ -6007,7 +6044,12 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               <span style={{ color:"#f5c842", fontWeight:700, fontSize:13, letterSpacing:1 }}>SHELLA</span>
             </div>
             <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>{LINES[phase]}</p>
-            <div style={{ display:"flex", justifyContent:"flex-end" }}>
+            <div style={{ display:"flex", justifyContent:"flex-end", gap:8 }}>
+              {farmShellsGiven && (phase === "shella_done" || phase === "shella_idle") && (
+                <button onClick={() => { setActiveShop("farm_shells"); setPhase("walk"); }} style={{ background:"rgba(245,200,66,0.12)", border:"1px solid rgba(245,200,66,0.4)", color:"#c8a820", padding:"6px 16px", borderRadius:8, fontSize:12, fontWeight:700, cursor:"pointer" }}>
+                  Shop ▶
+                </button>
+              )}
               <button onClick={() => advanceDialog(phase)} style={{ background:"rgba(245,200,66,0.15)", border:"1px solid rgba(245,200,66,0.5)", color:"#f5c842", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}>
                 {phase === "shella_d3" ? "See Shells ▶" : phase === "shella_done" || phase === "shella_idle" ? "OK" : "Next ▶"}
               </button>
@@ -6023,7 +6065,12 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               <span style={{ color:"#8090f0", fontWeight:700, fontSize:13, letterSpacing:1 }}>RUNRIK</span>
             </div>
             <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>{LINES[phase]}</p>
-            <div style={{ display:"flex", justifyContent:"flex-end" }}>
+            <div style={{ display:"flex", justifyContent:"flex-end", gap:8 }}>
+              {farmRunesGiven && (phase === "runrik_done" || phase === "runrik_idle") && (
+                <button onClick={() => { setActiveShop("farm_runes"); setPhase("walk"); }} style={{ background:"rgba(128,144,240,0.12)", border:"1px solid rgba(128,144,240,0.4)", color:"#7080c0", padding:"6px 16px", borderRadius:8, fontSize:12, fontWeight:700, cursor:"pointer" }}>
+                  Shop ▶
+                </button>
+              )}
               <button onClick={() => {
                 if (phase === "runrik_d4") {
                   setFarmRunesGiven(true);
@@ -8839,7 +8886,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               })}
             </div>
             <button onClick={() => {
-              if (!farmShellsGiven) { setFarmShellsGiven(true); setOwnedBattleShellIds(BATTLE_SHELLS.map(b => b.id)); }
+              if (!farmShellsGiven && equippedBattleShellId) { setFarmShellsGiven(true); }
               setShowShellPicker(false);
               setPhase("shella_done");
             }} style={{ background:"rgba(245,200,66,0.2)", border:"1.5px solid #f5c842", color:"#f5c842", padding:"8px 28px", borderRadius:10, fontSize:13, fontWeight:800, cursor:"pointer" }}>
@@ -8877,6 +8924,148 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             }} style={{ background:"rgba(128,144,240,0.2)", border:"1.5px solid #8090f0", color:"#8090f0", padding:"8px 28px", borderRadius:10, fontSize:13, fontWeight:800, cursor:"pointer" }}>
               {slottedBattleRuneId ? "Slot Rune ✓" : "Close"}
             </button>
+          </div>
+        )}
+
+        {/* ── BERRY PICKER (Hollis) ────────────────────────────────────────── */}
+        {showBerryPicker && (
+          <div style={{ position:"absolute", inset:0, zIndex:90, background:"rgba(4,12,2,0.93)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"20px 16px", overflowY:"auto" }}>
+            <div style={{ color:"#bfe080", fontWeight:900, fontSize:16, letterSpacing:1, marginBottom:6 }}>Hollis's Field Berries</div>
+            <div style={{ color:"#a0c080", fontSize:11, marginBottom:16, textAlign:"center" }}>Pick one bundle — Old Hollis will set the rest aside at the farm stand for you.</div>
+            <div style={{ display:"flex", flexDirection:"column", gap:8, width:"100%", maxWidth:360, marginBottom:16 }}>
+              {HOLLIS_BERRY_INFO.map(b => {
+                const isPicked = hollisBerryPick === b.key;
+                return (
+                  <button key={b.key} onClick={() => setHollisBerryPick(b.key)} style={{ display:"flex", alignItems:"flex-start", gap:10, padding:"10px 12px", borderRadius:10, background: isPicked ? "rgba(150,200,90,0.2)" : "rgba(255,255,255,0.05)", border:`1.5px solid ${isPicked ? "#8ec850" : "rgba(150,200,90,0.25)"}`, cursor:"pointer", textAlign:"left" }}>
+                    <div style={{ width:10, height:10, borderRadius:"50%", background: isPicked ? "#8ec850" : "#555", marginTop:3, flexShrink:0 }}/>
+                    <div style={{ flex:1 }}>
+                      <div style={{ color:"#d0f080", fontWeight:800, fontSize:12 }}>{b.icon} {b.label} ×5{isPicked ? " ✓" : ""}</div>
+                      <div style={{ color:"#90b060", fontSize:10, marginTop:2 }}>{b.desc}</div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            <button onClick={() => {
+              if (!hollisBerryPick) return;
+              if (hollisBerryPick === "dusk")   setDuskberries(n => n + 5);
+              if (hollisBerryPick === "thorn")  setThornberries(n => n + 5);
+              if (hollisBerryPick === "calm")   setCalmberries(n => n + 5);
+              if (hollisBerryPick === "bright") setBrightberries(n => n + 5);
+              setHollisGifted(true);
+              setShowBerryPicker(false);
+              setPhase("walk");
+            }} disabled={!hollisBerryPick} style={{ background: hollisBerryPick ? "rgba(150,200,90,0.22)" : "rgba(60,80,40,0.1)", border:`1.5px solid ${hollisBerryPick ? "#8ec850" : "rgba(80,100,60,0.3)"}`, color: hollisBerryPick ? "#bfe080" : "#607050", padding:"8px 28px", borderRadius:10, fontSize:13, fontWeight:800, cursor: hollisBerryPick ? "pointer" : "not-allowed" }}>
+              {hollisBerryPick ? "Take Bundle ✦" : "Pick one first"}
+            </button>
+          </div>
+        )}
+
+        {/* ── FARM SHOP OVERLAYS ───────────────────────────────────────────── */}
+        {activeShop === "farm_shells" && (
+          <div style={{ position:"absolute", inset:0, zIndex:90, background:"rgba(10,6,2,0.95)", display:"flex", flexDirection:"column", alignItems:"center", padding:"16px 14px 20px", overflowY:"auto" }}>
+            <div style={{ color:"#f5c842", fontWeight:900, fontSize:16, letterSpacing:1, marginBottom:4 }}>🐚 Shella's Battle Shells</div>
+            <div style={{ color:"#c8b080", fontSize:10, marginBottom:4, textAlign:"center" }}>Farm-forged Battle Shells — one free, rest buyable</div>
+            <div style={{ color:"#f0c830", fontSize:12, fontWeight:800, marginBottom:14 }}>Your coins: ₡{primeriaCoin}</div>
+            <div style={{ display:"flex", flexDirection:"column", gap:8, width:"100%", maxWidth:360, marginBottom:16 }}>
+              {BATTLE_SHELLS.map(bs => {
+                const owned = ownedBattleShellIds.includes(bs.id);
+                const price = FARM_SHELL_PRICES[bs.id] ?? 45;
+                const canAfford = primeriaCoin >= price;
+                const wandererPrice = Math.round(price * (1 - role.sellDiscount));
+                const displayPrice = wandererPrice;
+                return (
+                  <div key={bs.id} style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 12px", borderRadius:10, background: owned ? "rgba(40,120,40,0.12)" : "rgba(255,255,255,0.04)", border:`1.5px solid ${owned ? "rgba(245,200,66,0.4)" : "rgba(245,200,66,0.2)"}` }}>
+                    <div style={{ flex:1 }}>
+                      <div style={{ color: owned ? "#f0d060" : "#f5e090", fontWeight:800, fontSize:12 }}>{bs.icon} {bs.name}{owned ? " ✓" : ""}</div>
+                      <div style={{ color:"#a08060", fontSize:9, marginTop:1 }}>{bs.element} · {bs.desc.slice(0, 48)}…</div>
+                    </div>
+                    <div style={{ flexShrink:0 }}>
+                      {owned ? (
+                        <span style={{ color:"#80a040", fontSize:10, fontWeight:700 }}>Owned</span>
+                      ) : (
+                        <button onClick={() => {
+                          if (!canAfford) return;
+                          setPrimeriaCoin(c => c - displayPrice);
+                          setOwnedBattleShellIds(ids => [...ids, bs.id]);
+                        }} disabled={!canAfford} style={{ background: canAfford ? "rgba(245,200,66,0.18)" : "rgba(80,60,30,0.1)", border:`1px solid ${canAfford ? "rgba(245,200,66,0.6)" : "rgba(80,60,30,0.3)"}`, color: canAfford ? "#f5c842" : "#604020", padding:"5px 10px", borderRadius:7, fontSize:10, fontWeight:800, cursor: canAfford ? "pointer" : "not-allowed" }}>
+                          ₡{displayPrice}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <button onClick={() => setActiveShop(null)} style={{ background:"rgba(245,200,66,0.15)", border:"1.5px solid rgba(245,200,66,0.5)", color:"#f5c842", padding:"8px 28px", borderRadius:10, fontSize:13, fontWeight:800, cursor:"pointer" }}>Close</button>
+          </div>
+        )}
+        {activeShop === "farm_runes" && (
+          <div style={{ position:"absolute", inset:0, zIndex:90, background:"rgba(4,4,16,0.95)", display:"flex", flexDirection:"column", alignItems:"center", padding:"16px 14px 20px", overflowY:"auto" }}>
+            <div style={{ color:"#8090f0", fontWeight:900, fontSize:16, letterSpacing:1, marginBottom:4 }}>✦ Runrik's Rune Forge</div>
+            <div style={{ color:"#a0a8e0", fontSize:10, marginBottom:4, textAlign:"center" }}>Farm-forged Battle Runes — one free, rest buyable</div>
+            <div style={{ color:"#f0c830", fontSize:12, fontWeight:800, marginBottom:14 }}>Your coins: ₡{primeriaCoin}</div>
+            <div style={{ display:"flex", flexDirection:"column", gap:8, width:"100%", maxWidth:360, marginBottom:16 }}>
+              {BATTLE_RUNES.map(br => {
+                const owned = ownedBattleRuneIds.includes(br.id);
+                const price = FARM_RUNE_PRICES[br.id] ?? 40;
+                const displayPrice = Math.round(price * (1 - role.sellDiscount));
+                const canAfford = primeriaCoin >= displayPrice;
+                return (
+                  <div key={br.id} style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 12px", borderRadius:10, background: owned ? "rgba(40,60,120,0.15)" : "rgba(255,255,255,0.04)", border:`1.5px solid ${owned ? "rgba(128,144,240,0.4)" : "rgba(128,144,240,0.2)"}` }}>
+                    <div style={{ flex:1 }}>
+                      <div style={{ color: owned ? "#a0b0f8" : "#c0c8ff", fontWeight:800, fontSize:12 }}>{br.icon} {br.name}{owned ? " ✓" : ""}</div>
+                      <div style={{ color:"#7080a0", fontSize:9, marginTop:1 }}>{br.desc.slice(0, 55)}…</div>
+                    </div>
+                    <div style={{ flexShrink:0 }}>
+                      {owned ? (
+                        <span style={{ color:"#6080c0", fontSize:10, fontWeight:700 }}>Owned</span>
+                      ) : (
+                        <button onClick={() => {
+                          if (!canAfford) return;
+                          setPrimeriaCoin(c => c - displayPrice);
+                          setOwnedBattleRuneIds(ids => [...ids, br.id]);
+                        }} disabled={!canAfford} style={{ background: canAfford ? "rgba(128,144,240,0.18)" : "rgba(30,30,60,0.1)", border:`1px solid ${canAfford ? "rgba(128,144,240,0.6)" : "rgba(30,30,60,0.3)"}`, color: canAfford ? "#8090f0" : "#304060", padding:"5px 10px", borderRadius:7, fontSize:10, fontWeight:800, cursor: canAfford ? "pointer" : "not-allowed" }}>
+                          ₡{displayPrice}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <button onClick={() => setActiveShop(null)} style={{ background:"rgba(128,144,240,0.15)", border:"1.5px solid rgba(128,144,240,0.5)", color:"#8090f0", padding:"8px 28px", borderRadius:10, fontSize:13, fontWeight:800, cursor:"pointer" }}>Close</button>
+          </div>
+        )}
+        {activeShop === "farm_berries" && (
+          <div style={{ position:"absolute", inset:0, zIndex:90, background:"rgba(4,12,2,0.95)", display:"flex", flexDirection:"column", alignItems:"center", padding:"16px 14px 20px", overflowY:"auto" }}>
+            <div style={{ color:"#bfe080", fontWeight:900, fontSize:16, letterSpacing:1, marginBottom:4 }}>🌿 Hollis's Farm Stand</div>
+            <div style={{ color:"#a0c080", fontSize:10, marginBottom:4, textAlign:"center" }}>Field-grade berries from the north farm</div>
+            <div style={{ color:"#f0c830", fontSize:12, fontWeight:800, marginBottom:14 }}>Your coins: ₡{primeriaCoin}</div>
+            <div style={{ display:"flex", flexDirection:"column", gap:8, width:"100%", maxWidth:360, marginBottom:16 }}>
+              {HOLLIS_BERRY_INFO.map(b => {
+                const count = b.key === "dusk" ? duskberries : b.key === "thorn" ? thornberries : b.key === "calm" ? calmberries : brightberries;
+                const setter = b.key === "dusk" ? setDuskberries : b.key === "thorn" ? setThornberries : b.key === "calm" ? setCalmberries : setBrightberries;
+                const displayPrice = Math.round(b.price * (1 - role.sellDiscount));
+                const canAfford = primeriaCoin >= displayPrice;
+                return (
+                  <div key={b.key} style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 12px", borderRadius:10, background:"rgba(255,255,255,0.04)", border:"1.5px solid rgba(150,200,90,0.25)" }}>
+                    <div style={{ flex:1 }}>
+                      <div style={{ color:"#c8e890", fontWeight:800, fontSize:12 }}>{b.icon} {b.label} <span style={{ color:"#80c080", fontSize:10 }}>(×{count})</span></div>
+                      <div style={{ color:"#80a060", fontSize:9, marginTop:1 }}>{b.desc}</div>
+                    </div>
+                    <button onClick={() => {
+                      if (!canAfford) return;
+                      setPrimeriaCoin(c => c - displayPrice);
+                      setter(n => n + 1);
+                    }} disabled={!canAfford} style={{ background: canAfford ? "rgba(150,200,90,0.18)" : "rgba(50,70,30,0.1)", border:`1px solid ${canAfford ? "rgba(150,200,90,0.6)" : "rgba(50,70,30,0.3)"}`, color: canAfford ? "#8ec850" : "#404830", padding:"5px 10px", borderRadius:7, fontSize:10, fontWeight:800, cursor: canAfford ? "pointer" : "not-allowed", flexShrink:0 }}>
+                      ₡{displayPrice}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+            <button onClick={() => setActiveShop(null)} style={{ background:"rgba(150,200,90,0.15)", border:"1.5px solid rgba(150,200,90,0.5)", color:"#8ec850", padding:"8px 28px", borderRadius:10, fontSize:13, fontWeight:800, cursor:"pointer" }}>Close</button>
           </div>
         )}
 
