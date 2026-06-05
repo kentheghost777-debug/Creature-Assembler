@@ -4647,17 +4647,16 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                 }}/>
               )}
               {(cleminusMet || portalOpen || jerbsAppeared) && (
-                <div style={{
-                  position:"absolute", pointerEvents:"none", zIndex:5,
-                  left: JERBS_POS.x - 22, top: JERBS_POS.y - 112,
-                  width: 45, height: 112,
-                  backgroundImage: "url(./images/jerbs_sprite.png)",
-                  backgroundSize: "224px 336px",
-                  backgroundPosition: jerbsFacing === "front" ? "-90px -112px" : "0px 0px",
-                  backgroundRepeat: "no-repeat",
-                  imageRendering: "auto",
-                  transition: "background-position 0.25s steps(1)",
-                }}/>
+                <img
+                  src={jerbsFacing === "front" ? "./images/jerbs_front.png" : "./images/jerbs_back.png"}
+                  style={{
+                    position:"absolute", pointerEvents:"none", zIndex:5,
+                    left: JERBS_POS.x - 22, top: JERBS_POS.y - 113,
+                    width: 45, height: 113,
+                    objectFit:"contain", objectPosition:"bottom center",
+                    imageRendering:"auto",
+                  }}
+                />
               )}
               {cleminusMet && (
                 <div style={{
