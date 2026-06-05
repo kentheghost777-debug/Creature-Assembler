@@ -1444,6 +1444,8 @@ let OW_PROF_DOOR: Rect = ld("ow_lab", [585, 289, 667, 346]); // nudged 8 west of
 // ── Whisperroot Trail (Route 1 / Area 1) ─────────────────────────────────────
 // South gate (blue) connects back to town; north continues deeper (future)
 let R1_SOUTH_GATE: Rect = ld("r1_south", [412, 683, 564, 722]); // bottom-center exit → overworld (y1 within reachable band; movement clamps y to h-30=693)
+// Auto-correct: if saved r1_south was dragged out of the valid bottom band (y1 < 643 or y1 > 693), reset it.
+if (R1_SOUTH_GATE[1] > R1.h - 30 || R1_SOUTH_GATE[1] < R1.h - 80) R1_SOUTH_GATE = [412, 683, 564, 722];
 let R1_BLOCKED: Rect[] = [
   // ── OUTER FOREST BORDER ──────────────────────────────────────────────────
   [0,    0,  1024,   50],  // top forest strip
