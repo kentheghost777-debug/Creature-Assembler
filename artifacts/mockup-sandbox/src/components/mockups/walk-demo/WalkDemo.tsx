@@ -1224,7 +1224,7 @@ const FP_HOTSPOTS: Hotspot[] = [
 // ── Forest Clearing (north of Forest Path — final demo encounter zone) ────────
 const FC = { w: 1024, h: 516 };              // forest-clear-bg.png (1254×633 → 1024×516)
 const FC_SPAWN   = { x: 512, y: 488 };       // entering from Forest Path (south)
-let FC_SOUTH_EXIT: Rect = ld("fc_south", [425, 498, 599, 516]); // Clearing south → Forest Path
+let FC_SOUTH_EXIT: Rect = ld("fc_south", [0, 476, 1024, 516]); // Clearing south → Forest Path — full width, raised to y=476 so player can reach it
 const FC_HOTSPOTS: Hotspot[] = [
   { x: 175, y: 155, r: 36, kind: "bush" },
   { x: 310, y: 240, r: 34, kind: "rock" },
