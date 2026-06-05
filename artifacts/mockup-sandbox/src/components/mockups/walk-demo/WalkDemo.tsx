@@ -1498,9 +1498,16 @@ const NPC_LIST: NpcReg[] = [
   { key:"tova",   label:"TOVA",   scene:"overworld", color:"#e8c878", get:()=>TOVA_POS,   set:(p)=>{TOVA_POS=p;}   },
   { key:"senna",  label:"SENNA",  scene:"overworld", color:"#88d8b0", get:()=>SENNA_POS,  set:(p)=>{SENNA_POS=p;}  },
   { key:"corvin", label:"CORVIN", scene:"overworld", color:"#c8a8f8", get:()=>CORVIN_POS, set:(p)=>{CORVIN_POS=p;} },
-  { key:"shella", label:"SHELLA", scene:"farm",      color:"#f5c842", get:()=>SHELLA_POS, set:(p)=>{SHELLA_POS=p;} },
-  { key:"runrik", label:"RUNRIK", scene:"farm",      color:"#8090f0", get:()=>RUNRIK_POS, set:(p)=>{RUNRIK_POS=p;} },
-  { key:"maren",  label:"MAREN",  scene:"farm",      color:"#90c060", get:()=>MAREN_POS,  set:(p)=>{MAREN_POS=p;}  },
+  { key:"shella",       label:"SHELLA",       scene:"farm",       color:"#f5c842", get:()=>SHELLA_POS,       set:(p)=>{SHELLA_POS=p;}       },
+  { key:"runrik",       label:"RUNRIK",       scene:"farm",       color:"#8090f0", get:()=>RUNRIK_POS,       set:(p)=>{RUNRIK_POS=p;}       },
+  { key:"maren",        label:"MAREN",        scene:"farm",       color:"#90c060", get:()=>MAREN_POS,        set:(p)=>{MAREN_POS=p;}        },
+  { key:"berry_vendor", label:"BERRY VENDOR", scene:"town",       color:"#f08848", get:()=>BERRY_VENDOR_POS, set:(p)=>{BERRY_VENDOR_POS=p;} },
+  { key:"shell_vendor", label:"SHELL VENDOR", scene:"town",       color:"#70d8f0", get:()=>SHELL_VENDOR_POS, set:(p)=>{SHELL_VENDOR_POS=p;} },
+  { key:"town_kid",     label:"TOWN KID",     scene:"town",       color:"#ffd84a", get:()=>TOWN_KID_POS,     set:(p)=>{TOWN_KID_POS=p;}     },
+  { key:"town_scholar", label:"SCHOLAR",      scene:"town",       color:"#a070e8", get:()=>TOWN_SCHOLAR_POS, set:(p)=>{TOWN_SCHOLAR_POS=p;} },
+  { key:"blacksmith",   label:"BLACKSMITH",   scene:"town_left",  color:"#e07840", get:()=>BLACKSMITH_POS,   set:(p)=>{BLACKSMITH_POS=p;}   },
+  { key:"town_elder",   label:"ELDER",        scene:"town_left",  color:"#c8a850", get:()=>TOWN_ELDER_POS,   set:(p)=>{TOWN_ELDER_POS=p;}   },
+  { key:"rune_vendor",  label:"RUNE VENDOR",  scene:"town_right", color:"#78b8f0", get:()=>RUNE_VENDOR_POS,  set:(p)=>{RUNE_VENDOR_POS=p;}  },
 ];
 // Load NPC position overrides from localStorage
 (() => {
@@ -1524,13 +1531,13 @@ function saveDevSpawns() {
 }
 
 // ── Clearbell Town NPCs ───────────────────────────────────────────────────────
-const BERRY_VENDOR_POS  = { x: 500, y: 580 };
-const SHELL_VENDOR_POS  = { x: 1000, y: 580 };
-const TOWN_KID_POS      = { x: 768, y: 700 };
-const TOWN_SCHOLAR_POS  = { x: 400, y: 360 };
-const BLACKSMITH_POS    = { x: 640, y: 430 };
-const TOWN_ELDER_POS    = { x: 300, y: 500 };
-const RUNE_VENDOR_POS   = { x: 900, y: 430 };
+let BERRY_VENDOR_POS  = { x: 500, y: 580 };
+let SHELL_VENDOR_POS  = { x: 1000, y: 580 };
+let TOWN_KID_POS      = { x: 768, y: 700 };
+let TOWN_SCHOLAR_POS  = { x: 400, y: 360 };
+let BLACKSMITH_POS    = { x: 640, y: 430 };
+let TOWN_ELDER_POS    = { x: 300, y: 500 };
+let RUNE_VENDOR_POS   = { x: 900, y: 430 };
 
 const BLACKSMITH_IMG    = "/__mockup/images/blacksmith-npc.png";
 const BERRY_VENDOR_IMG  = "/__mockup/images/berry-vendor-npc.png";
