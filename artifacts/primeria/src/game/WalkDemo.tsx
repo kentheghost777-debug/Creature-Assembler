@@ -961,9 +961,9 @@ const TR_WEST_EXIT: Rect    = [0,   280, 30,  580];  // right wing west → town
 const TR_SPAWN = { x: 80, y: 432 };     // spawn in right wing (arriving from west)
 const FARM_FROM_TOWN_SPAWN = { x: 679, y: 50 };  // spawn near top of farm from town
 // NPC world positions (farm scene)
-const SHELLA_POS = { x: 536, y: 487 };   // shell vendor — left side near house
-const RUNRIK_POS = { x: 761, y: 420 };   // rune vendor — centre-right
-const MAREN_POS  = { x: 889, y: 525 };   // berry elder — right side
+let SHELLA_POS = { x: 536, y: 487 };   // shell vendor — left side near house
+let RUNRIK_POS = { x: 761, y: 420 };   // rune vendor — centre-right
+let MAREN_POS  = { x: 889, y: 525 };   // berry elder — right side
 // Farm animal decorations (src, world x/y, display size)
 const FARM_ANIMALS: { src: string; x: number; y: number; w: number; h: number }[] = [
   { src: "./images/chicken1.png", x: 435, y: 608, w: 50, h: 50 },
@@ -1239,12 +1239,45 @@ let LAB_EXIT: Rect = ld("lab_exit", [262, 645, 438, 692]); // exit lab
 // ── Maya's Home ───────────────────────────────────────────────────────────────
 const MY = { w: 800, h: 800 };
 const MAYA_POS  = { x: 870, y: 427 }; // Maya standing at her doorstep
-const TOVA_POS   = { x: 600, y: 560 }; // ambient townsfolk — center of Primeria village square
-const SENNA_POS  = { x: 300, y: 200 }; // ambient townsfolk — near Route 1 north gate
-const CORVIN_POS = { x: 790, y: 310 }; // traveling naturalist — northeast near east road
+let TOVA_POS   = { x: 600, y: 560 }; // ambient townsfolk — center of Primeria village square
+let SENNA_POS  = { x: 300, y: 200 }; // ambient townsfolk — near Route 1 north gate
+let CORVIN_POS = { x: 790, y: 310 }; // traveling naturalist — northeast near east road
 const TOVA_IMG   = "./images/tova-npc.png";
 const SENNA_IMG  = "./images/senna-npc.png";
 const CORVIN_IMG = "./images/corvin-npc.png";
+
+// ── DEV NPC placer + spawn setter ────────────────────────────────────────────
+const DEV_NPC_KEY   = "primeria_dev_npcs";
+const DEV_SPAWN_KEY = "primeria_dev_spawns";
+type NpcReg = { key: string; label: string; scene: string; color: string; get: () => {x:number;y:number}; set: (p:{x:number;y:number}) => void };
+const NPC_LIST: NpcReg[] = [
+  { key:"tova",   label:"TOVA",   scene:"overworld", color:"#e8c878", get:()=>TOVA_POS,   set:(p)=>{TOVA_POS=p;}   },
+  { key:"senna",  label:"SENNA",  scene:"overworld", color:"#88d8b0", get:()=>SENNA_POS,  set:(p)=>{SENNA_POS=p;}  },
+  { key:"corvin", label:"CORVIN", scene:"overworld", color:"#c8a8f8", get:()=>CORVIN_POS, set:(p)=>{CORVIN_POS=p;} },
+  { key:"shella", label:"SHELLA", scene:"farm",      color:"#f5c842", get:()=>SHELLA_POS, set:(p)=>{SHELLA_POS=p;} },
+  { key:"runrik", label:"RUNRIK", scene:"farm",      color:"#8090f0", get:()=>RUNRIK_POS, set:(p)=>{RUNRIK_POS=p;} },
+  { key:"maren",  label:"MAREN",  scene:"farm",      color:"#90c060", get:()=>MAREN_POS,  set:(p)=>{MAREN_POS=p;}  },
+];
+// Load NPC position overrides from localStorage
+(() => {
+  try {
+    const s: Record<string,{x:number;y:number}> = JSON.parse(localStorage.getItem(DEV_NPC_KEY) ?? "{}");
+    NPC_LIST.forEach(n => { if (s[n.key]) n.set(s[n.key]); });
+  } catch { /* ignore */ }
+})();
+function saveDevNpcs() {
+  try {
+    const m: Record<string,{x:number;y:number}> = {};
+    NPC_LIST.forEach(n => { m[n.key] = n.get(); });
+    localStorage.setItem(DEV_NPC_KEY, JSON.stringify(m));
+  } catch { /* ignore */ }
+}
+let _devSpawns: Record<string,{x:number;y:number}> = (() => {
+  try { return JSON.parse(localStorage.getItem(DEV_SPAWN_KEY) ?? "{}"); } catch { return {}; }
+})();
+function saveDevSpawns() {
+  try { localStorage.setItem(DEV_SPAWN_KEY, JSON.stringify(_devSpawns)); } catch { /* ignore */ }
+}
 
 // ── Clearbell Town NPCs ───────────────────────────────────────────────────────
 // Central hub
@@ -1936,7 +1969,60 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       fallbackCopy(txt, done);
     }
   };
+  // ── DEV NPC placer handlers ───────────────────────────────────────────────
+  const onNpcDown = (key: string) => (e: React.PointerEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    const npc = NPC_LIST.find(n => n.key === key)!;
+    const pos = npc.get();
+    npcMovedRef.current = false;
+    npcDragRef.current = { key, sx: e.clientX, sy: e.clientY, ox: pos.x, oy: pos.y };
+  };
+  const onNpcMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const d = npcDragRef.current; if (!d) return;
+    e.stopPropagation();
+    const dx = Math.round((e.clientX - d.sx) / ZOOM);
+    const dy = Math.round((e.clientY - d.sy) / ZOOM);
+    if (dx !== 0 || dy !== 0) npcMovedRef.current = true;
+    const npc = NPC_LIST.find(n => n.key === d.key)!;
+    npc.set({ x: d.ox + dx, y: d.oy + dy });
+    setNpcEditTick(t => t + 1);
+  };
+  const onNpcUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!npcDragRef.current) return;
+    e.stopPropagation();
+    npcDragRef.current = null;
+    saveDevNpcs();
+  };
+  const copyNpcLayout = () => {
+    const out: string[] = ["PRIMERIA NPC POSITIONS — paste to assistant to bake in"];
+    NPC_LIST.forEach(n => { const p = n.get(); out.push("  " + n.key.padEnd(8) + " {x:" + p.x + ", y:" + p.y + "}  scene:" + n.scene); });
+    const txt = out.join("\n");
+    const done = () => { setNpcCopied(true); window.setTimeout(() => setNpcCopied(false), 1800); };
+    if (navigator.clipboard?.writeText) navigator.clipboard.writeText(txt).then(done).catch(() => fallbackCopy(txt, done));
+    else fallbackCopy(txt, done);
+  };
+  const copySpawnLayout = () => {
+    const entries = Object.entries(_devSpawns);
+    const out: string[] = ["PRIMERIA SPAWN OVERRIDES — paste to assistant to bake in"];
+    if (!entries.length) out.push("  (none — enable SPAWN tool and tap the map)");
+    else entries.forEach(([sc, p]) => out.push("  " + sc.padEnd(14) + " {x:" + p.x + ", y:" + p.y + "}"));
+    const txt = out.join("\n");
+    const done = () => { setSpawnCopied(true); window.setTimeout(() => setSpawnCopied(false), 1800); };
+    if (navigator.clipboard?.writeText) navigator.clipboard.writeText(txt).then(done).catch(() => fallbackCopy(txt, done));
+    else fallbackCopy(txt, done);
+  };
   const [devPlayerPos, setDevPlayerPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  // DEV NPC placer
+  const [, setNpcEditTick] = useState(0);
+  const [npcEditMode, setNpcEditMode] = useState(false);
+  const [npcCopied, setNpcCopied] = useState(false);
+  const npcDragRef = useRef<{ key: string; sx: number; sy: number; ox: number; oy: number } | null>(null);
+  const npcMovedRef = useRef(false);
+  // DEV spawn setter
+  const [, setSpawnEditTick] = useState(0);
+  const [spawnEditMode, setSpawnEditMode] = useState(false);
+  const [spawnCopied, setSpawnCopied] = useState(false);
   const DEV_COLLISIONS = devMode;
   const [checksStreak,  setChecksStreak]  = useState(() => savedWorld?.checksStreak ?? 0);
   const [floatMsg,      setFloatMsg]      = useState<{ x: number; y: number; text: string; key: number } | null>(null);
@@ -2689,15 +2775,18 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     if (INTERIOR.includes(next)) playSfx("door_in");
     else if (next !== "battle") playSfx("door_out");
     setTimeout(() => {
-      worldPos.current = { x: sx, y: sy };
-      if (next !== "battle") lastSafeRef.current = { scene: next, x: sx, y: sy };
+      const _spOvr = _devSpawns[next];
+      const _spX = _spOvr ? _spOvr.x : sx;
+      const _spY = _spOvr ? _spOvr.y : sy;
+      worldPos.current = { x: _spX, y: _spY };
+      if (next !== "battle") lastSafeRef.current = { scene: next, x: _spX, y: _spY };
       cam.current      = { x: 0, y: 0 };
       animRef.current  = "idle";
       frameRef.current = 0;
       lastSrc.current  = "";
       // Reset the follower so Wyvrunt re-spawns beside the player in the new scene
       breadcrumbsRef.current = [];
-      followPosRef.current   = { x: sx, y: sy + 24 };
+      followPosRef.current   = { x: _spX, y: _spY + 24 };
       followAnimRef.current  = "idle_down";
       followLastDirRef.current = "idle_down";
       followLastSrc.current  = "";
@@ -3962,7 +4051,12 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           if (wallEditMode) {
             if (!wallPendA) { setWallPendA({ x: wx, y: wy }); }
             else { addWall(wallPendA, { x: wx, y: wy }); setWallPendA(null); }
-          } else {
+          } else if (spawnEditMode) {
+            _devSpawns[scene] = { x: wx, y: wy };
+            saveDevSpawns();
+            worldPos.current = { x: wx, y: wy };
+            setSpawnEditTick(t => t + 1);
+          } else if (!npcEditMode) {
             setDevProbe({ x: wx, y: wy });
           }
         }}>
@@ -4172,6 +4266,52 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               <div style={{ position:"absolute", left:4, top:4, width:12, height:12, borderRadius:"50%", border:"2px solid #39ff88" }}/>
             </div>
           )}
+
+          {/* Dev: NPC placer — draggable rings for each NPC in the current scene */}
+          {devMode && npcEditMode && NPC_LIST.filter(n => n.scene === scene).map(n => {
+            const pos = n.get();
+            return (
+              <div key={n.key}
+                onPointerDown={onNpcDown(n.key)}
+                onPointerMove={onNpcMove}
+                onPointerUp={onNpcUp}
+                onPointerCancel={onNpcUp}
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  position:"absolute",
+                  left: pos.x - 22, top: pos.y - 22,
+                  width: 44, height: 44,
+                  border: `2.5px solid ${n.color}`,
+                  borderRadius: "50%",
+                  background: n.color + "22",
+                  cursor: "grab",
+                  zIndex: 950,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 7, color: n.color, fontWeight: 800, fontFamily: "monospace",
+                  boxShadow: `0 0 10px ${n.color}88`,
+                  touchAction: "none",
+                }}
+              >
+                <span style={{ pointerEvents:"none", userSelect:"none" }}>{n.label}</span>
+              </div>
+            );
+          })}
+
+          {/* Dev: spawn marker — green dot at the saved spawn override for this scene */}
+          {devMode && spawnEditMode && _devSpawns[scene] && (() => {
+            const sp = _devSpawns[scene]!;
+            return (
+              <div style={{
+                position:"absolute", left: sp.x - 12, top: sp.y - 12,
+                width: 24, height: 24, borderRadius: "50%",
+                background: "rgba(0,255,100,0.75)", border: "2px solid #00ff80",
+                zIndex: 950, pointerEvents: "none",
+                boxShadow: "0 0 12px #00ff80",
+              }}>
+                <div style={{ position:"absolute", left:"50%", top:"50%", transform:"translate(-50%,-50%)", color:"#003010", fontSize:9, fontWeight:900 }}>✦</div>
+              </div>
+            );
+          })()}
 
           {/* Prof Irwyn */}
           {scene === "lab" && (
@@ -8870,7 +9010,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               color:"#fff", fontWeight:800, fontSize:12, fontFamily:"monospace", cursor:"pointer",
             }}>{doorCopied ? "✓ COPIED — paste it to me" : "COPY door layout"}</button>
             <div style={{ marginTop:8, paddingTop:8, borderTop:"1px solid rgba(127,176,255,0.3)" }}>
-              <div style={{ fontWeight:800, color:"#ff9a7f" }}>WALL TOOL</div>
+              <div style={{ fontWeight:800, color:"#ff9a7f" }}>COLLIDER TOOL</div>
               <div style={{ display:"flex", gap:6, marginTop:4, flexWrap:"wrap" }}>
                 <button onClick={toggleWalls} style={{
                   padding:"5px 10px", borderRadius:6, border:"1px solid #ff5a3c",
@@ -8885,7 +9025,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               </div>
               {wallEditMode && (
                 <div style={{ color:"#e0b0a0", marginTop:4 }}>
-                  Tap two corners to draw a wall · drag a box to move · double-tap a box to delete.
+                  Tap two corners to draw a collider · drag a box to move · double-tap a box to delete.
                   {" "}First corner: <b style={{color:"#39ff88"}}>{wallPendA ? `${wallPendA.x}, ${wallPendA.y}` : "—"}</b>
                 </div>
               )}
@@ -8893,7 +9033,44 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                 marginTop:6, padding:"5px 12px", borderRadius:6,
                 border:"1px solid #ff5a3c", background: wallsCopied ? "#1f7a36" : "#ff5a3c",
                 color:"#fff", fontWeight:800, fontSize:12, fontFamily:"monospace", cursor:"pointer",
-              }}>{wallsCopied ? "✓ COPIED — paste it to me" : "COPY wall layout"}</button>
+              }}>{wallsCopied ? "✓ COPIED — paste it to me" : "COPY collider layout"}</button>
+            </div>
+            <div style={{ marginTop:8, paddingTop:8, borderTop:"1px solid rgba(127,176,255,0.3)" }}>
+              <div style={{ fontWeight:800, color:"#ffd080" }}>NPC TOOL</div>
+              <div style={{ color:"#c0b080", marginTop:2 }}>Drag amber rings to reposition NPCs for this scene.</div>
+              <div style={{ display:"flex", gap:6, marginTop:4, flexWrap:"wrap" }}>
+                <button onClick={() => setNpcEditMode(v => !v)} style={{
+                  padding:"5px 10px", borderRadius:6, border:"1px solid #ffd080",
+                  background: npcEditMode ? "#7a5800" : "rgba(20,16,4,0.7)",
+                  color:"#fff", fontWeight:800, fontSize:12, fontFamily:"monospace", cursor:"pointer",
+                }}>Edit: {npcEditMode ? "ON" : "OFF"}</button>
+                <button onClick={copyNpcLayout} style={{
+                  padding:"5px 12px", borderRadius:6, border:"1px solid #ffd080",
+                  background: npcCopied ? "#1f7a36" : "#7a5800",
+                  color:"#fff", fontWeight:800, fontSize:12, fontFamily:"monospace", cursor:"pointer",
+                }}>{npcCopied ? "✓ COPIED — paste it to me" : "COPY NPC positions"}</button>
+              </div>
+            </div>
+            <div style={{ marginTop:8, paddingTop:8, borderTop:"1px solid rgba(127,176,255,0.3)" }}>
+              <div style={{ fontWeight:800, color:"#80ff80" }}>SPAWN TOOL</div>
+              <div style={{ color:"#80c080", marginTop:2 }}>Tap the map to set where you spawn when entering this scene.</div>
+              <div style={{ display:"flex", gap:6, marginTop:4, flexWrap:"wrap", alignItems:"center" }}>
+                <button onClick={() => setSpawnEditMode(v => !v)} style={{
+                  padding:"5px 10px", borderRadius:6, border:"1px solid #80ff80",
+                  background: spawnEditMode ? "#1a6020" : "rgba(4,20,4,0.7)",
+                  color:"#fff", fontWeight:800, fontSize:12, fontFamily:"monospace", cursor:"pointer",
+                }}>Set: {spawnEditMode ? "ON" : "OFF"}</button>
+                <button onClick={copySpawnLayout} style={{
+                  padding:"5px 12px", borderRadius:6, border:"1px solid #80ff80",
+                  background: spawnCopied ? "#1f7a36" : "#1a6020",
+                  color:"#fff", fontWeight:800, fontSize:12, fontFamily:"monospace", cursor:"pointer",
+                }}>{spawnCopied ? "✓ COPIED — paste it to me" : "COPY spawns"}</button>
+              </div>
+              {spawnEditMode && (
+                <div style={{ color:"#80ff80", marginTop:4 }}>
+                  {_devSpawns[scene] ? <>Spawn for <b>{scene}</b>: <b style={{color:"#fff"}}>{_devSpawns[scene]!.x}, {_devSpawns[scene]!.y}</b></> : <>Tap map to set spawn for <b>{scene}</b></>}
+                </div>
+              )}
             </div>
           </>)}
         </div>
