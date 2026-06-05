@@ -49,7 +49,7 @@ export const ELEMENT_ANIM: Record<Element, MoveAnim> = {
   Nature: "leaf", Volcanic: "ember", Oceanic: "splash", Frostformed: "shard",
   Stormproven: "bolt", Earthbound: "rock", Skyborne: "gust", Spirit: "wisp",
   Mind: "glyph", Alchemy: "bubble", Abyss: "void", Armored: "plate",
-  Chaos: "glitch",
+  Chaos: "glitch", Radiant: "wisp",
 };
 
 const ALL_ELEMENTS = Object.keys(ELEMENT_ANIM) as Element[];
@@ -120,6 +120,7 @@ export const STRONG_AGAINST: Record<Element, Element[]> = {
   Abyss:       ["Mind", "Chaos"],
   Armored:     ["Frostformed", "Stormproven"],
   Chaos:       ["Spirit", "Mind"],
+  Radiant:     ["Abyss", "Chaos"],
 };
 
 export function effectiveness(atk: Element, def: Element): number {

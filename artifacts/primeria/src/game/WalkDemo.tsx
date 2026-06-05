@@ -268,6 +268,31 @@ const EVO_TABLE: Array<{ from: string; atLevel: number; to: StarterSpec }> = [
   { from:"crysthorn",  atLevel:22, to:{ id:"glacihorn",  name:"Glacihorn",  type:"Frostformed", color:"#50c0ff", img:"./images/glacihorn-wild.png"  } },
   { from:"thornalisk", atLevel:22, to:{ id:"ramorisk",   name:"Ramorisk",   type:"Earthbound",  color:"#a07010", img:"./images/ramorisk-wild.png"   } },
   { from:"lumifang",   atLevel:22, to:{ id:"lumivast",   name:"Lumivast",   type:"Stormproven", color:"#e8a000", img:"./images/lumivast-wild.png"   } },
+  // ── Shore evo lines ──────────────────────────────────────────────────────────
+  // Oceanic dragon line:  Tidescale → Coralcoil → Tidedrake
+  { from:"tidescale",  atLevel:18, to:{ id:"coralcoil",   name:"Coralcoil",   type:"Oceanic",     color:"#3080ff", img:"./images/torrential-wild.png"  } },
+  { from:"coralcoil",  atLevel:30, to:{ id:"tidedrake",   name:"Tidedrake",   type:"Oceanic",     color:"#1050d0", img:"./images/thalassyn-wild.png"   } },
+  // Radiant unicorn line: Lumecolt → Solhoof → Auremane
+  { from:"lumecolt",   atLevel:18, to:{ id:"solhoof",     name:"Solhoof",     type:"Radiant",     color:"#f5d860", img:"./images/solarhowl-wild.png"   } },
+  { from:"solhoof",    atLevel:30, to:{ id:"auremane",    name:"Auremane",    type:"Radiant",     color:"#fff176", img:"./images/sylphara-wild.png"    } },
+  // Nature griffon line: Gryfling → Gryphex → Celestgriff
+  { from:"gryfling",   atLevel:18, to:{ id:"gryphex",     name:"Gryphex",     type:"Nature",      color:"#4ab840", img:"./images/windriel-wild.png"    } },
+  { from:"gryphex",    atLevel:30, to:{ id:"celestgriff", name:"Celestgriff", type:"Nature",      color:"#309020", img:"./images/verdanox-player.png" } },
+  // Volcanic drake line: Cindrakin → Pyrion → Magnadrake
+  { from:"cindrakin",  atLevel:18, to:{ id:"pyrion",      name:"Pyrion",      type:"Volcanic",    color:"#ff5000", img:"./images/emberclaw-wild.png"   } },
+  { from:"pyrion",     atLevel:30, to:{ id:"magnadrake",  name:"Magnadrake",  type:"Volcanic",    color:"#cc2000", img:"./images/wyrmblaze-wild.png"   } },
+  // Abyss raven line:    Shaderow → Voidrook → Nightveil
+  { from:"shaderow",   atLevel:18, to:{ id:"voidrook",    name:"Voidrook",    type:"Abyss",       color:"#5020a0", img:"./images/duskfang-wild.png"    } },
+  { from:"voidrook",   atLevel:30, to:{ id:"nightveil",   name:"Nightveil",   type:"Abyss",       color:"#3d1a5c", img:"./images/voidwraith-wild.png"  } },
+  // Armored crab line:   Shellcrag → Shellvast → Fortishelm
+  { from:"shellcrag",  atLevel:18, to:{ id:"shellvast",   name:"Shellvast",   type:"Armored",     color:"#7a8a9a", img:"./images/cragmite-wild.png"    } },
+  { from:"shellvast",  atLevel:30, to:{ id:"fortishelm",  name:"Fortishelm",  type:"Armored",     color:"#5a6a7a", img:"./images/cragvast-wild.png"    } },
+  // Chaos dragon (2-stage):   Chaoryn → Drakoval
+  { from:"chaoryn",    atLevel:22, to:{ id:"drakoval",    name:"Drakoval",    type:"Chaos",       color:"#cc44cc", img:"./images/wyrmblaze-wild.png"   } },
+  // Storm eagle (2-stage):    Galefledge → Galecrest
+  { from:"galefledge", atLevel:22, to:{ id:"galecrest",   name:"Galecrest",   type:"Stormproven", color:"#e8b000", img:"./images/thunderax-wild.png"   } },
+  // Frost unicorn (2-stage):  Misthorn → Glacimane
+  { from:"misthorn",   atLevel:22, to:{ id:"glacimane",   name:"Glacimane",   type:"Frostformed", color:"#50d0ff", img:"./images/crysthorn-wild.png"   } },
 ];
 
 /** Returns the StarterSpec the starter evolves into when it reaches exactly `atLevel`. */
@@ -397,6 +422,42 @@ const BESTIARY: MonSpec[] = [
   { id:"nightbloom", name:"Nightbloom", type:"Spirit",      rarity:"apex",
     wildImg:"./images/nightbloom-wild.png",  playerImg:"./images/nightbloom-wild.png",
     wildFaces:"left", playerFaces:"left", maxHp:78, baseDmg:[8,14] },
+  // ── Route 1 expansion — 2 per rarity ─────────────────────────────────────
+  // Commons: Thistlekit (spiky hedgehog plant × axolotl) + Muddling (mudskipper toad)
+  { id:"thistlekit",  name:"Thistlekit",  type:"Nature",      rarity:"common",
+    wildImg:"./images/blomath-wild.png",     playerImg:"./images/blomath-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:22, baseDmg:[3,6] as [number,number] },
+  { id:"muddling",    name:"Muddling",    type:"Oceanic",     rarity:"common",
+    wildImg:"./images/driftpaw-wild.png",    playerImg:"./images/driftpaw-player.png",
+    wildFaces:"left", playerFaces:"left", maxHp:25, baseDmg:[3,6] as [number,number] },
+  // Uncommons: Sparksnip (electric pincer beetle) + Mirewarden (swamp armored turtle)
+  { id:"sparksnip",   name:"Sparksnip",   type:"Stormproven", rarity:"uncommon",
+    wildImg:"./images/strikorn-wild.png",    playerImg:"./images/strikorn-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:32, baseDmg:[4,8] as [number,number] },
+  { id:"mirewarden",  name:"Mirewarden",  type:"Armored",     rarity:"uncommon",
+    wildImg:"./images/cragmite-wild.png",    playerImg:"./images/cragmite-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:36, baseDmg:[4,8] as [number,number] },
+  // Rares: Ashpyre (lava-lizard, Gila monster × salamander) + Icevein (frost crystal serpent)
+  { id:"ashpyre",     name:"Ashpyre",     type:"Volcanic",    rarity:"rare",
+    wildImg:"./images/emberclaw-wild.png",   playerImg:"./images/emberclaw-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:44, baseDmg:[5,10] as [number,number] },
+  { id:"icevein",     name:"Icevein",     type:"Frostformed", rarity:"rare",
+    wildImg:"./images/crysthorn-wild.png",   playerImg:"./images/crysthorn-player.png",
+    wildFaces:"left", playerFaces:"left", maxHp:42, baseDmg:[5,10] as [number,number] },
+  // Ultra: Galeking (storm hawk overlord) + Mindwraith (drifting psychic phantom)
+  { id:"galeking",    name:"Galeking",    type:"Skyborne",    rarity:"ultra",
+    wildImg:"./images/skyvast-wild.png",     playerImg:"./images/skyvast-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:60, baseDmg:[7,13] as [number,number] },
+  { id:"mindwraith",  name:"Mindwraith",  type:"Mind",        rarity:"ultra",
+    wildImg:"./images/spectrael-wild.png",   playerImg:"./images/spectrael-wild.png",
+    wildFaces:"right", playerFaces:"right", maxHp:58, baseDmg:[7,13] as [number,number] },
+  // Apex: Verdking (ancient leafed nature titan) + Thunderdread (legendary storm owl-wyvern)
+  { id:"verdking",    name:"Verdking",    type:"Nature",      rarity:"apex",
+    wildImg:"./images/zephyriel-wild.png",   playerImg:"./images/zephyriel-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:82, baseDmg:[9,16] as [number,number] },
+  { id:"thunderdread",name:"Thunderdread",type:"Stormproven", rarity:"apex",
+    wildImg:"./images/thunderowl-wild.png",  playerImg:"./images/thunderowl-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:80, baseDmg:[9,16] as [number,number] },
 ];
 
 // ── Wyvrunt — unique scripted-encounter mon (Chaos type, loyal-only) ────────
@@ -638,6 +699,42 @@ const BESTIARY_A3: MonSpec[] = [
   { id:"foxin_wa",    name:"Foxin",      type:"Spirit",     rarity:"apex",
     wildImg:"./images/vixgrim.png",         playerImg:"./images/vixgrim.png",
     wildFaces:"left", playerFaces:"left", maxHp:88, baseDmg:[10,18] },
+  // ── Area 3 expansion — 2 per rarity ───────────────────────────────────────
+  // Commons: Glimwing (shimmering sky-ray inspired by manta + glowworm) + Emberpup (lava pup, fire salamander)
+  { id:"glimwing",    name:"Glimwing",    type:"Skyborne",    rarity:"common",
+    wildImg:"./images/swiftwing-wild.png",   playerImg:"./images/swiftwing-wild.png",
+    wildFaces:"left", playerFaces:"left",  maxHp:22, baseDmg:[3,6] as [number,number] },
+  { id:"emberpup",    name:"Emberpup",    type:"Volcanic",    rarity:"common",
+    wildImg:"./images/emberveil-wild.png",   playerImg:"./images/emberveil-wild.png",
+    wildFaces:"left", playerFaces:"left",  maxHp:26, baseDmg:[3,7] as [number,number] },
+  // Uncommons: Stormhound (electric wolf, inspired by Tasmanian wolf + storm petrel) + Stonewatch (boulder guardian, rhino beetle × tortoise)
+  { id:"stormhound",  name:"Stormhound",  type:"Stormproven", rarity:"uncommon",
+    wildImg:"./images/thunderax-wild.png",   playerImg:"./images/thunderax-player.png",
+    wildFaces:"left", playerFaces:"left",  maxHp:36, baseDmg:[4,9] as [number,number] },
+  { id:"stonewatch",  name:"Stonewatch",  type:"Earthbound",  rarity:"uncommon",
+    wildImg:"./images/stonebrute-wild.png",  playerImg:"./images/stonebrute-wild.png",
+    wildFaces:"left", playerFaces:"left",  maxHp:40, baseDmg:[4,8] as [number,number] },
+  // Rares: Acidmoth (alchemical moth, luna moth × poison dart frog) + Skybane (sky predator, harpy eagle × barracuda)
+  { id:"acidmoth",    name:"Acidmoth",    type:"Alchemy",     rarity:"rare",
+    wildImg:"./images/alchemor-wild.png",    playerImg:"./images/alchemor-wild.png",
+    wildFaces:"left", playerFaces:"left",  maxHp:46, baseDmg:[5,10] as [number,number] },
+  { id:"skybane",     name:"Skybane",     type:"Skyborne",    rarity:"rare",
+    wildImg:"./images/skyvast-wild.png",     playerImg:"./images/skyvast-wild.png",
+    wildFaces:"left", playerFaces:"left",  maxHp:48, baseDmg:[5,11] as [number,number] },
+  // Ultra: Verdthorn (thorn titan, ancient oak × stegosaurus) + Crystalvast (crystal armored giant, horseshoe crab × pangolin)
+  { id:"verdthorn",   name:"Verdthorn",   type:"Nature",      rarity:"ultra",
+    wildImg:"./images/thornlord-wild.png",   playerImg:"./images/thornlord-wild.png",
+    wildFaces:"left", playerFaces:"left",  maxHp:65, baseDmg:[7,13] as [number,number] },
+  { id:"crystalvast", name:"Crystalvast", type:"Armored",     rarity:"ultra",
+    wildImg:"./images/cragvast-wild.png",    playerImg:"./images/cragvast-wild.png",
+    wildFaces:"left", playerFaces:"left",  maxHp:68, baseDmg:[7,12] as [number,number] },
+  // Apex: Sunvast (radiant sky titan, inspired by a sun deity × leviathan) + Tidegiant (oceanic colossus)
+  { id:"sunvast",     name:"Sunvast",     type:"Radiant",     rarity:"apex",
+    wildImg:"./images/sylphara-wild.png",    playerImg:"./images/sylphara-player.png",
+    wildFaces:"left", playerFaces:"left",  maxHp:94, baseDmg:[10,18] as [number,number] },
+  { id:"tidegiant",   name:"Tidegiant",   type:"Oceanic",     rarity:"apex",
+    wildImg:"./images/thalassyn-player.png", playerImg:"./images/thalassyn-player.png",
+    wildFaces:"left", playerFaces:"left",  maxHp:98, baseDmg:[11,19] as [number,number] },
 ];
 
 // ── Route 2 Bestiary (Farmland Fields + Northern Wilderness) ─────────────────
@@ -722,39 +819,103 @@ const BESTIARY_R2: MonSpec[] = [
   { id:"thornlord",  name:"Thornlord",  type:"Earthbound",  rarity:"apex",
     wildImg:"./images/thornlord-wild.png",   playerImg:"./images/thornlord-wild.png",
     wildFaces:"left", playerFaces:"left", maxHp:85, baseDmg:[10,16] },
+  // ── Route 2 expansion — 2 per rarity ─────────────────────────────────────
+  // Commons: Leafscale (leaf-gecko, green iguana × leaf-tailed gecko) + Icewren (frost sparrow, snowy owl chick × kingfisher)
+  { id:"leafscale",   name:"Leafscale",   type:"Nature",      rarity:"common",
+    wildImg:"./images/fernback-wild.png",    playerImg:"./images/fernback-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:26, baseDmg:[3,6] as [number,number] },
+  { id:"icewren",     name:"Icewren",     type:"Frostformed", rarity:"common",
+    wildImg:"./images/frosthound-wild.png",  playerImg:"./images/frosthound-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:24, baseDmg:[3,6] as [number,number] },
+  // Uncommons: Abysskit (shadow ferret, inspired by black marten × civet) + Tideswimmer (coastal river swimmer, eel × mudpuppy)
+  { id:"abysskit",    name:"Abysskit",    type:"Abyss",       rarity:"uncommon",
+    wildImg:"./images/duskfang-wild.png",    playerImg:"./images/duskfang-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:33, baseDmg:[4,8] as [number,number] },
+  { id:"tideswimmer", name:"Tideswimmer", type:"Oceanic",     rarity:"uncommon",
+    wildImg:"./images/tidalclaw-wild.png",   playerImg:"./images/tidalclaw-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:35, baseDmg:[4,9] as [number,number] },
+  // Rares: Chaosspark (chaotic young wyrm, chameleon × sea serpent) + Stonemace (spike-tail earth lizard, ankylosaur × armadillo)
+  { id:"chaosspark",  name:"Chaosspark",  type:"Chaos",       rarity:"rare",
+    wildImg:"./images/wyrmblaze-wild.png",   playerImg:"./images/wyrmblaze-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:47, baseDmg:[5,11] as [number,number] },
+  { id:"stonemace",   name:"Stonemace",   type:"Earthbound",  rarity:"rare",
+    wildImg:"./images/thornhound-wild.png",  playerImg:"./images/thornhound-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:44, baseDmg:[5,10] as [number,number] },
+  // Ultra: Voidcrest (void apex beast, deep-sea anglerfish × wraith) + Icewall (glacial fortress, polar bear × tortoise)
+  { id:"voidcrest",   name:"Voidcrest",   type:"Abyss",       rarity:"ultra",
+    wildImg:"./images/voidrat-wild.png",     playerImg:"./images/voidrat-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:62, baseDmg:[7,13] as [number,number] },
+  { id:"icewall",     name:"Icewall",     type:"Frostformed", rarity:"ultra",
+    wildImg:"./images/glaciend-wild.png",    playerImg:"./images/glaciend-wild.png",
+    wildFaces:"left", playerFaces:"left", maxHp:65, baseDmg:[7,12] as [number,number] },
+  // Apex: Glacia (frost celestial, born of the deep glacier) + Volcia (volcanic titan, born of the caldera)
+  { id:"glacia_w",    name:"Glacia",      type:"Frostformed", rarity:"apex",
+    wildImg:"./images/glacia.png",           playerImg:"./images/glacia.png",
+    wildFaces:"right", playerFaces:"right", maxHp:92, baseDmg:[10,18] as [number,number] },
+  { id:"volcia_w",    name:"Volcia",      type:"Volcanic",    rarity:"apex",
+    wildImg:"./images/volcia.png",           playerImg:"./images/volcia.png",
+    wildFaces:"right", playerFaces:"right", maxHp:90, baseDmg:[11,19] as [number,number] },
 ];
 
 // ── Bestiary — Tidemark Shore (coastal cliff wild pool) ──────────────────────
 const BESTIARY_SHORE: MonSpec[] = [
-  // Commons — windy + dirty
-  { id:"galekit",    name:"Galekit",    type:"Skyborne",    rarity:"common",
-    wildImg:"./images/hatchick-wild.png",   playerImg:"./images/hatchick-player.png",
-    wildFaces:"left", playerFaces:"left", maxHp:27, baseDmg:[3,6] as [number,number] },
-  { id:"muddrift",   name:"Muddrift",   type:"Earthbound",  rarity:"common",
-    wildImg:"./images/loth-wild.png",       playerImg:"./images/loth-player.png",
-    wildFaces:"left", playerFaces:"left", maxHp:31, baseDmg:[4,7] as [number,number] },
-  // Uncommons — stormy + icy
-  { id:"stormcrest", name:"Stormcrest", type:"Stormproven", rarity:"uncommon",
-    wildImg:"./images/voltowl-wild.png",    playerImg:"./images/voltowl-player.png",
-    wildFaces:"left", playerFaces:"left", maxHp:36, baseDmg:[5,9] as [number,number] },
-  { id:"shiverclaw", name:"Shiverclaw", type:"Frostformed", rarity:"uncommon",
-    wildImg:"./images/stonub-wild.png",     playerImg:"./images/stonub-player.png",
-    wildFaces:"left", playerFaces:"left", maxHp:39, baseDmg:[5,10] as [number,number] },
-  // Rares — lonely + proud
-  { id:"loneshade",  name:"Loneshade",  type:"Abyss",       rarity:"rare",
-    wildImg:"./images/scavencrow-wild.png", playerImg:"./images/scavencrow-player.png",
-    wildFaces:"left", playerFaces:"left", maxHp:46, baseDmg:[6,11] as [number,number] },
-  { id:"crowncrest", name:"Crowncrest", type:"Armored",     rarity:"rare",
-    wildImg:"./images/scalel-wild.png",    playerImg:"./images/scalel-player.png",
-    wildFaces:"left", playerFaces:"left", maxHp:52, baseDmg:[5,10] as [number,number] },
-  // Ultra — storm giant
-  { id:"tempestral", name:"Tempestral", type:"Stormproven", rarity:"ultra",
-    wildImg:"./images/ghosti-wild.png",    playerImg:"./images/ghosti-player.png",
-    wildFaces:"right", playerFaces:"right", maxHp:60, baseDmg:[7,13] as [number,number] },
-  // Apex — glacial leviathan
-  { id:"glacivern",  name:"Glacivern",  type:"Frostformed", rarity:"apex",
-    wildImg:"./images/potent-wild.png",    playerImg:"./images/potent-player.png",
-    wildFaces:"left", playerFaces:"left", maxHp:72, baseDmg:[9,15] as [number,number] },
+  // ── COMMON — three mystical hatchlings of the clifftop shore ────────────────
+  // Tidescale — iridescent sea-snake hatchling (moray eel × sea dragon); Oceanic
+  { id:"tidescale",   name:"Tidescale",   type:"Oceanic",     rarity:"common",
+    wildImg:"./images/tidalclaw-wild.png",    playerImg:"./images/tidalclaw-wild.png",
+    wildFaces:"left", playerFaces:"left",  maxHp:28, baseDmg:[3,6] as [number,number] },
+  // Lumecolt — glowing foal with a nub light-horn; holy newborn of coastal mist; Radiant
+  { id:"lumecolt",    name:"Lumecolt",    type:"Radiant",     rarity:"common",
+    wildImg:"./images/spectrael-wild.png",    playerImg:"./images/spectrael-wild.png",
+    wildFaces:"right", playerFaces:"right", maxHp:26, baseDmg:[3,7] as [number,number] },
+  // Gryfling — fluffy baby griffon (eagle beak + lion cub body); Nature
+  { id:"gryfling",    name:"Gryfling",    type:"Nature",      rarity:"common",
+    wildImg:"./images/verdanox-wild.png",     playerImg:"./images/verdanox-wild.png",
+    wildFaces:"left", playerFaces:"left",  maxHp:30, baseDmg:[3,6] as [number,number] },
+  // ── UNCOMMON — juvenile brutes and shadow creatures ──────────────────────────
+  // Cindrakin — juvenile coastal lava-drake (Komodo dragon × molten ridge lizard); Volcanic
+  { id:"cindrakin",   name:"Cindrakin",   type:"Volcanic",    rarity:"uncommon",
+    wildImg:"./images/emberwyvlet-wild.png",  playerImg:"./images/emberwyvlet-player.png",
+    wildFaces:"left", playerFaces:"left",  maxHp:36, baseDmg:[4,9] as [number,number] },
+  // Shaderow — shadow raven cloaked in void-mist (raven × wraith); Abyss
+  { id:"shaderow",    name:"Shaderow",    type:"Abyss",       rarity:"uncommon",
+    wildImg:"./images/dreadcrow-wild.png",    playerImg:"./images/dreadcrow-wild.png",
+    wildFaces:"left", playerFaces:"left",  maxHp:34, baseDmg:[4,9] as [number,number] },
+  // Shellcrag — armored hermit-crab with crystalline shell (crab × boulder turtle); Armored
+  { id:"shellcrag",   name:"Shellcrag",   type:"Armored",     rarity:"uncommon",
+    wildImg:"./images/crystalback-wild.png",  playerImg:"./images/crystalback-wild.png",
+    wildFaces:"left", playerFaces:"left",  maxHp:40, baseDmg:[4,8] as [number,number] },
+  // ── RARE — great shapes glimpsed at dusk on the clifftop ────────────────────
+  // Chaoryn — young chaos dragon; iridescent shifting scales (peacock × sea dragon); Chaos
+  { id:"chaoryn",     name:"Chaoryn",     type:"Chaos",       rarity:"rare",
+    wildImg:"./images/dracoveil-wild.png",    playerImg:"./images/dracoveil-player.png",
+    wildFaces:"left", playerFaces:"left",  maxHp:50, baseDmg:[5,11] as [number,number] },
+  // Galefledge — storm eagle fledgling; crackling wing-feathers (thunderbird myth); Stormproven
+  { id:"galefledge",  name:"Galefledge",  type:"Stormproven", rarity:"rare",
+    wildImg:"./images/strikorn-wild.png",     playerImg:"./images/strikorn-wild.png",
+    wildFaces:"left", playerFaces:"left",  maxHp:46, baseDmg:[5,10] as [number,number] },
+  // Misthorn — misty unicorn-deer with icy crystalline horn; coastal fog spirit; Frostformed
+  { id:"misthorn",    name:"Misthorn",    type:"Frostformed", rarity:"rare",
+    wildImg:"./images/crysthorn-wild.png",    playerImg:"./images/crysthorn-player.png",
+    wildFaces:"left", playerFaces:"left",  maxHp:48, baseDmg:[5,10] as [number,number] },
+  // ── ULTRA — mid-evolved legends seen at the cliff edge ──────────────────────
+  // Coralcoil — mid-form sea serpent; vast iridescent coils; reef guardian; Oceanic
+  { id:"coralcoil",   name:"Coralcoil",   type:"Oceanic",     rarity:"ultra",
+    wildImg:"./images/torrential-wild.png",   playerImg:"./images/torrential-wild.png",
+    wildFaces:"left", playerFaces:"left",  maxHp:68, baseDmg:[8,14] as [number,number] },
+  // Solhoof — mid-form radiant unicorn; golden mane streaming with holy light; Radiant
+  { id:"solhoof",     name:"Solhoof",     type:"Radiant",     rarity:"ultra",
+    wildImg:"./images/solarhowl-wild.png",    playerImg:"./images/solarhowl-wild.png",
+    wildFaces:"left", playerFaces:"left",  maxHp:65, baseDmg:[8,14] as [number,number] },
+  // ── APEX — the ancients that rule Tidemark Shore ─────────────────────────────
+  // Auremane — Celestial Unicorn-Dragon; holy light made flesh; balanced across all forces; Radiant
+  { id:"auremane",    name:"Auremane",    type:"Radiant",     rarity:"apex",
+    wildImg:"./images/sylphara-wild.png",     playerImg:"./images/sylphara-player.png",
+    wildFaces:"left", playerFaces:"left",  maxHp:100, baseDmg:[11,18] as [number,number] },
+  // Celestgriff — legendary Griffon King; eldest of the coastal cliffs; Nature
+  { id:"celestgriff", name:"Celestgriff", type:"Nature",      rarity:"apex",
+    wildImg:"./images/verdanox-player.png",   playerImg:"./images/verdanox-player.png",
+    wildFaces:"left", playerFaces:"left",  maxHp:96, baseDmg:[10,17] as [number,number] },
 ];
 
 // ── Route 2 (east of Maya's home) ───────────────────────────────────────────
@@ -3281,6 +3442,14 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       "bleater",   "rammid",
       // Route 2 rares
       "emberwyvlet", "crysthorn", "thornalisk", "lumifang",
+      // Shore evo lines
+      "tidescale", "coralcoil",
+      "lumecolt",  "solhoof",
+      "gryfling",  "gryphex",
+      "cindrakin", "pyrion",
+      "shaderow",  "voidrook",
+      "shellcrag", "shellvast",
+      "chaoryn", "galefledge", "misthorn",
     ];
     const evoMap = new Map<number, StarterSpec>();
     cur.forEach((m, i) => {
@@ -3634,7 +3803,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               : scene === "lia"    ? "./images/lia-home.png"
               : scene === "area3"  ? "./images/area3-bg.png"
               : scene === "farm"   ? "./images/farm-bg.png"
-              : scene === "shore"  ? "./images/area4-bg.png"
+              : scene === "shore"  ? "./images/shore-bg.png"
               : scene === "route1" ? "./images/route1-bg.png"
               : scene === "route2" ? "./images/route2-map.png"
               : scene === "overworld"
