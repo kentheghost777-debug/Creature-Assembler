@@ -1062,6 +1062,174 @@ uri = "file://attached_assets/npc_maren.png"
 type = "image"
 title = "generated_image"
 
+[[generated]]
+id = "p_6stlmZGrCno2TgUqLe0"
+uri = "file://artifacts/primeria/public/images/sproutling-wild.png"
+type = "image"
+title = "sproutling vine creature"
+
+[[generated]]
+id = "Pc55FA4FPjHTBEIEAvqnR"
+uri = "file://artifacts/primeria/public/images/barknak-wild.png"
+type = "image"
+title = "barknak beetle creature"
+
+[[generated]]
+id = "acBO78y71d_8ihIomlMXr"
+uri = "file://artifacts/primeria/public/images/twigling-wild.png"
+type = "image"
+title = "twigling stick insect"
+
+[[generated]]
+id = "-Jm1u2SbZ2Z-jsjBW6pUB"
+uri = "file://artifacts/primeria/public/images/gloamite-wild.png"
+type = "image"
+title = "gloamite shadow mantis"
+
+[[generated]]
+id = "L7cpdeqdDNCI_A1jdk2sA"
+uri = "file://artifacts/primeria/public/images/fernfang-wild.png"
+type = "image"
+title = "fernfang fern canine"
+
+[[generated]]
+id = "8fdEnxnNqaAYGcpj2WFOs"
+uri = "file://artifacts/primeria/public/images/rootknot-wild.png"
+type = "image"
+title = "rootknot root golem"
+
+[[generated]]
+id = "hm17up67aU8we0fs8Is-f"
+uri = "file://artifacts/primeria/public/images/dewsprite-wild.png"
+type = "image"
+title = "dewsprite water elemental"
+
+[[generated]]
+id = "RMgnu9LeijaBwE8ymn6sJ"
+uri = "file://artifacts/primeria/public/images/stumpkin-wild.png"
+type = "image"
+title = "stumpkin pumpkin stump"
+
+[[generated]]
+id = "KZIsOvzdL1NQDI6FJQtDj"
+uri = "file://artifacts/primeria/public/images/shimmerfly-wild.png"
+type = "image"
+title = "shimmerfly butterfly"
+
+[[generated]]
+id = "M85Ieh3VGdT1rPqZyonFY"
+uri = "file://artifacts/primeria/public/images/gloomveil-wild.png"
+type = "image"
+title = "gloomveil wraith fox"
+
+[[generated]]
+id = "I8Y9UYEx0VqhEFcMmeMSi"
+uri = "file://artifacts/primeria/public/images/brambleback-wild.png"
+type = "image"
+title = "brambleback thorn hedgehog"
+
+[[generated]]
+id = "s_MhyLNkPUOLTBAHDrfBh"
+uri = "file://artifacts/primeria/public/images/goldleaf-wild.png"
+type = "image"
+title = "goldleaf autumn spirit"
+
+[[generated]]
+id = "JXFbRNpedtU-LLWz8DLMh"
+uri = "file://artifacts/primeria/public/images/faeflicker-wild.png"
+type = "image"
+title = "faeflicker tiny fairy"
+
+[[generated]]
+id = "jKIdQD0fiWvMEf5jIRYO6"
+uri = "file://artifacts/primeria/public/images/mistwalker-wild.png"
+type = "image"
+title = "mistwalker mist apparition"
+
+[[generated]]
+id = "9rel5CYSaa4e0zca-SJjE"
+uri = "file://artifacts/primeria/public/images/cinderbloom-wild.png"
+type = "image"
+title = "cinderbloom ember flower"
+
+[[generated]]
+id = "l9zb8PblGcWvx8i5ZaSUr"
+uri = "file://artifacts/primeria/public/images/aureafern-wild.png"
+type = "image"
+title = "aureafern golden fern"
+
+[[generated]]
+id = "qv7rIKVXOGkzGq_EjsvdL"
+uri = "file://artifacts/primeria/public/images/voidbloom-wild.png"
+type = "image"
+title = "voidbloom dark flower"
+
+[[generated]]
+id = "lYiNbWVakYNVqDpyuwdT-"
+uri = "file://artifacts/primeria/public/images/sylvarex-wild.png"
+type = "image"
+title = "sylvarex clearing dragon"
+
+[[generated]]
+id = "KVHgPjapZSwtn_ZYusSV-"
+uri = "file://artifacts/primeria/public/images/embersap-wild.png"
+type = "image"
+title = "embersap lava tree"
+
+[[generated]]
+id = "HH0S05-6T_un4rWNO-99O"
+uri = "file://artifacts/primeria/public/images/crystalvine-wild.png"
+type = "image"
+title = "crystalvine thorn crystal"
+
+[[generated]]
+id = "doU1Ophqui0qSf75r_Yv-"
+uri = "file://artifacts/primeria/public/images/verdanspear-wild.png"
+type = "image"
+title = "verdanspear leaf drake"
+
+[[generated]]
+id = "z_551iUSp_3DkYlAts8dK"
+uri = "file://artifacts/primeria/public/images/thornwarden-wild.png"
+type = "image"
+title = "thornwarden forest golem"
+
+[[generated]]
+id = "aNuk_6yH9R6NLsnRXrHXa"
+uri = "file://artifacts/primeria/public/images/sunpetal-wild.png"
+type = "image"
+title = "sunpetal sunflower sprite"
+
+[[generated]]
+id = "V9z9vje0REK_8N-ODI1Zg"
+uri = "file://artifacts/primeria/public/images/grassmite-wild.png"
+type = "image"
+title = "grassmite grasshopper"
+
+[[generated]]
+id = "XtW2JbBf2oEducomXL7e_"
+uri = "file://artifacts/primeria/public/images/clovertail-wild.png"
+type = "image"
+title = "clovertail clover rabbit"
+
+[[generated]]
+id = "s3749iDQBDJdI_yL_ji_r"
+uri = "file://artifacts/primeria/public/images/stonechip-wild.png"
+type = "image"
+title = "stonechip rock chick"
+
+[[generated]]
+id = "jHykA2Xj5cpNRmz5BhAB4"
+uri = "file://artifacts/primeria/public/images/lumibug-wild.png"
+type = "image"
+title = "lumibug glow beetle"
+
+[[generated]]
+id = "vr2rbV4arRXdSebT32TmN"
+uri = "file://artifacts/primeria/public/images/pondskip-wild.png"
+type = "image"
+title = "pondskip water sprite"
+
 [[outputs]]
 id = "hj9mwcgl1Uv9QQTG9g6KL"
 uri = "file://kinju_walk_demo.tar.gz"

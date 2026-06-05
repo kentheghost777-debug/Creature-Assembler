@@ -1,5 +1,5 @@
-const CACHE_VERSION = "primeria-v49";
-const ASSET_CACHE   = "primeria-assets-v48";
+const CACHE_VERSION = "primeria-v50";
+const ASSET_CACHE   = "primeria-assets-v49";
 
 // Same host gate as index.html. A service worker that lingers on a dev preview
 // host pins old code (it can serve its own cached index.html, so the in-page

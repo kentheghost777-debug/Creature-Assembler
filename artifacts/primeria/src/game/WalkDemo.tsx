@@ -979,63 +979,63 @@ const BESTIARY_FP: MonSpec[] = [
   // ── COMMON ────────────────────────────────────────────────────────────────────
   // Sproutling — tiny vine-sprout; tumbles through underbrush on leaf-pad feet; Nature
   { id:"sproutling",  name:"Sproutling",  type:"Nature",   rarity:"common",
-    wildImg:"./images/hatchick-wild.png",    playerImg:"./images/hatchick-wild.png",
+    wildImg:"./images/sproutling-wild.png",  playerImg:"./images/sproutling-wild.png",
     wildFaces:"right", playerFaces:"right", maxHp:28, baseDmg:[3,6] as [number,number] },
   // Barknak — bark-plated beetle that trundles through the undergrowth; curls tight when threatened; Armored
   { id:"barknak",     name:"Barknak",     type:"Armored",  rarity:"common",
-    wildImg:"./images/stonub-wild.png",      playerImg:"./images/stonub-wild.png",
+    wildImg:"./images/barknak-wild.png",     playerImg:"./images/barknak-wild.png",
     wildFaces:"right", playerFaces:"right", maxHp:32, baseDmg:[3,6] as [number,number] },
   // Twigling — spindly stick-insect biped; vanishes motionless among branches; Nature
   { id:"twigling",    name:"Twigling",    type:"Nature",   rarity:"common",
-    wildImg:"./images/loth-wild.png",        playerImg:"./images/loth-wild.png",
+    wildImg:"./images/twigling-wild.png",    playerImg:"./images/twigling-wild.png",
     wildFaces:"right", playerFaces:"right", maxHp:26, baseDmg:[3,7] as [number,number] },
   // Gloamite — shadow-mantis that clings to dark canopy patches; sips dew in the dark; Abyss
   { id:"gloamite",    name:"Gloamite",    type:"Abyss",    rarity:"common",
-    wildImg:"./images/ghosti-wild.png",      playerImg:"./images/ghosti-wild.png",
+    wildImg:"./images/gloamite-wild.png",    playerImg:"./images/gloamite-wild.png",
     wildFaces:"left", playerFaces:"left",   maxHp:27, baseDmg:[3,6] as [number,number] },
   // ── UNCOMMON ──────────────────────────────────────────────────────────────────
   // Fernfang — lithe canid with a fanned fern-frond tail; ambushes with swift biting dashes; Nature
   { id:"fernfang",    name:"Fernfang",    type:"Nature",   rarity:"uncommon",
-    wildImg:"./images/potent-wild.png",      playerImg:"./images/potent-wild.png",
+    wildImg:"./images/fernfang-wild.png",    playerImg:"./images/fernfang-wild.png",
     wildFaces:"left", playerFaces:"left",   maxHp:40, baseDmg:[4,9] as [number,number] },
   // Rootknot — gnarly root-golem with amber heartwood core; crashes through undergrowth; Armored
   { id:"rootknot",    name:"Rootknot",    type:"Armored",  rarity:"uncommon",
-    wildImg:"./images/crystalback-wild.png", playerImg:"./images/crystalback-wild.png",
+    wildImg:"./images/rootknot-wild.png",    playerImg:"./images/rootknot-wild.png",
     wildFaces:"left", playerFaces:"left",   maxHp:44, baseDmg:[4,8] as [number,number] },
   // Dewsprite — morning-dew elemental; drifts along shafts of filtered forest light; Radiant
   { id:"dewsprite",   name:"Dewsprite",   type:"Radiant",  rarity:"uncommon",
-    wildImg:"./images/spectrael-wild.png",   playerImg:"./images/spectrael-wild.png",
+    wildImg:"./images/dewsprite-wild.png",   playerImg:"./images/dewsprite-wild.png",
     wildFaces:"right", playerFaces:"right", maxHp:36, baseDmg:[4,9] as [number,number] },
   // Stumpkin — pumpkin-headed stump creature; rumbles awake when the path is disturbed; Nature
   { id:"stumpkin",    name:"Stumpkin",    type:"Nature",   rarity:"uncommon",
-    wildImg:"./images/voltowl-wild.png",     playerImg:"./images/voltowl-wild.png",
+    wildImg:"./images/stumpkin-wild.png",    playerImg:"./images/stumpkin-wild.png",
     wildFaces:"right", playerFaces:"right", maxHp:38, baseDmg:[4,9] as [number,number] },
   // ── RARE ──────────────────────────────────────────────────────────────────────
   // Shimmerfly — giant luminescent butterfly; iridescent wings catch filtered canopy light; Radiant
   { id:"shimmerfly",  name:"Shimmerfly",  type:"Radiant",  rarity:"rare",
-    wildImg:"./images/scalel-wild.png",      playerImg:"./images/scalel-wild.png",
+    wildImg:"./images/shimmerfly-wild.png",  playerImg:"./images/shimmerfly-wild.png",
     wildFaces:"left", playerFaces:"left",   maxHp:52, baseDmg:[5,11] as [number,number] },
   // Gloomveil — wraith-fox that drifts between trees at dusk; muffles all sound around it; Abyss
   { id:"gloomveil",   name:"Gloomveil",   type:"Abyss",    rarity:"rare",
-    wildImg:"./images/scavencrow-wild.png",  playerImg:"./images/scavencrow-wild.png",
+    wildImg:"./images/gloomveil-wild.png",   playerImg:"./images/gloomveil-wild.png",
     wildFaces:"left", playerFaces:"left",   maxHp:50, baseDmg:[5,11] as [number,number] },
   // Embersap — ancient tree whose sap runs with volcanic fire; bark crackles with heat; Volcanic
   { id:"embersap",    name:"Embersap",    type:"Volcanic", rarity:"rare",
-    wildImg:"./images/emberwyvlet-wild.png", playerImg:"./images/emberwyvlet-player.png",
+    wildImg:"./images/embersap-wild.png",    playerImg:"./images/embersap-wild.png",
     wildFaces:"right", playerFaces:"right", maxHp:56, baseDmg:[5,12] as [number,number] },
   // ── ULTRA ─────────────────────────────────────────────────────────────────────
   // Crystalvine — thorn-vine overgrown with translucent crystal nodes; resonates harmonic tone; Armored
   { id:"crystalvine", name:"Crystalvine", type:"Armored",  rarity:"ultra",
-    wildImg:"./images/crysthorn-wild.png",   playerImg:"./images/crysthorn-player.png",
+    wildImg:"./images/crystalvine-wild.png", playerImg:"./images/crystalvine-wild.png",
     wildFaces:"left", playerFaces:"left",   maxHp:72, baseDmg:[8,14] as [number,number] },
   // Verdanspear — swift forest drake that hunts using razor-leaf lances; elusive mid-canopy; Nature
   { id:"verdanspear", name:"Verdanspear", type:"Nature",   rarity:"ultra",
-    wildImg:"./images/dracoveil-wild.png",   playerImg:"./images/dracoveil-player.png",
+    wildImg:"./images/verdanspear-wild.png", playerImg:"./images/verdanspear-wild.png",
     wildFaces:"left", playerFaces:"left",   maxHp:70, baseDmg:[8,15] as [number,number] },
   // ── APEX ──────────────────────────────────────────────────────────────────────
   // Thornwarden — colossal forest guardian draped in ancient bark-armour and thorn lattice; Nature
   { id:"thornwarden", name:"Thornwarden", type:"Nature",   rarity:"apex",
-    wildImg:"./images/verdanox-player.png",  playerImg:"./images/verdanox-wild.png",
+    wildImg:"./images/thornwarden-wild.png", playerImg:"./images/thornwarden-wild.png",
     wildFaces:"left", playerFaces:"left",   maxHp:108, baseDmg:[12,19] as [number,number] },
 ];
 
@@ -1044,63 +1044,63 @@ const BESTIARY_FC: MonSpec[] = [
   // ── COMMON ────────────────────────────────────────────────────────────────────
   // Sunpetal — sunflower sprite that tilts its disc-head toward every shaft of light; Radiant
   { id:"sunpetal",    name:"Sunpetal",    type:"Radiant",  rarity:"common",
-    wildImg:"./images/hatchick-wild.png",    playerImg:"./images/hatchick-wild.png",
+    wildImg:"./images/sunpetal-wild.png",    playerImg:"./images/sunpetal-wild.png",
     wildFaces:"right", playerFaces:"right", maxHp:30, baseDmg:[3,6] as [number,number] },
   // Grassmite — grasshopper-like creature; its legs slap together with a sharp crack; Nature
   { id:"grassmite",   name:"Grassmite",   type:"Nature",   rarity:"common",
-    wildImg:"./images/loth-wild.png",        playerImg:"./images/loth-wild.png",
+    wildImg:"./images/grassmite-wild.png",   playerImg:"./images/grassmite-wild.png",
     wildFaces:"right", playerFaces:"right", maxHp:28, baseDmg:[3,7] as [number,number] },
   // Clovertail — clover-furred rabbit; each pawprint leaves a four-leaf impression; Nature
   { id:"clovertail",  name:"Clovertail",  type:"Nature",   rarity:"common",
-    wildImg:"./images/stonub-wild.png",      playerImg:"./images/stonub-wild.png",
+    wildImg:"./images/clovertail-wild.png",  playerImg:"./images/clovertail-wild.png",
     wildFaces:"right", playerFaces:"right", maxHp:29, baseDmg:[3,6] as [number,number] },
   // Stonechip — fist-sized rock chick; chirps by clicking its stone beak; Armored
   { id:"stonechip",   name:"Stonechip",   type:"Armored",  rarity:"common",
-    wildImg:"./images/voltowl-wild.png",     playerImg:"./images/voltowl-wild.png",
+    wildImg:"./images/stonechip-wild.png",   playerImg:"./images/stonechip-wild.png",
     wildFaces:"right", playerFaces:"right", maxHp:33, baseDmg:[3,6] as [number,number] },
   // ── UNCOMMON ──────────────────────────────────────────────────────────────────
   // Lumibug — bioluminescent beetle; pulses soft light in patterns when agitated; Radiant
   { id:"lumibug",     name:"Lumibug",     type:"Radiant",  rarity:"uncommon",
-    wildImg:"./images/potent-wild.png",      playerImg:"./images/potent-wild.png",
+    wildImg:"./images/lumibug-wild.png",     playerImg:"./images/lumibug-wild.png",
     wildFaces:"left", playerFaces:"left",   maxHp:38, baseDmg:[4,9] as [number,number] },
   // Pondskip — clearing-pool water sprite; leaps surface tension without leaving a ripple; Oceanic
   { id:"pondskip",    name:"Pondskip",    type:"Oceanic",  rarity:"uncommon",
-    wildImg:"./images/tidalclaw-wild.png",   playerImg:"./images/tidalclaw-wild.png",
+    wildImg:"./images/pondskip-wild.png",    playerImg:"./images/pondskip-wild.png",
     wildFaces:"left", playerFaces:"left",   maxHp:40, baseDmg:[4,8] as [number,number] },
   // Brambleback — hedgehog whose spines have grown into briar-thorns; curls tight in defence; Nature
   { id:"brambleback", name:"Brambleback", type:"Nature",   rarity:"uncommon",
-    wildImg:"./images/crystalback-wild.png", playerImg:"./images/crystalback-wild.png",
+    wildImg:"./images/brambleback-wild.png", playerImg:"./images/brambleback-wild.png",
     wildFaces:"right", playerFaces:"right", maxHp:44, baseDmg:[4,9] as [number,number] },
   // Goldleaf — autumn-leaf spirit; floats on air currents and ignites briefly at will; Radiant
   { id:"goldleaf",    name:"Goldleaf",    type:"Radiant",  rarity:"uncommon",
-    wildImg:"./images/spectrael-wild.png",   playerImg:"./images/spectrael-wild.png",
+    wildImg:"./images/goldleaf-wild.png",    playerImg:"./images/goldleaf-wild.png",
     wildFaces:"right", playerFaces:"right", maxHp:36, baseDmg:[4,9] as [number,number] },
   // ── RARE ──────────────────────────────────────────────────────────────────────
   // Faeflicker — finger-length fairy; invisible at rest, blazes gold when startled; Radiant
   { id:"faeflicker",  name:"Faeflicker",  type:"Radiant",  rarity:"rare",
-    wildImg:"./images/scalel-wild.png",      playerImg:"./images/scalel-wild.png",
+    wildImg:"./images/faeflicker-wild.png",  playerImg:"./images/faeflicker-wild.png",
     wildFaces:"left", playerFaces:"left",   maxHp:48, baseDmg:[5,10] as [number,number] },
   // Mistwalker — clearing-mist apparition; forms from pre-dawn fog and dissolves by noon; Abyss
   { id:"mistwalker",  name:"Mistwalker",  type:"Abyss",    rarity:"rare",
-    wildImg:"./images/dreadcrow-wild.png",   playerImg:"./images/dreadcrow-wild.png",
+    wildImg:"./images/mistwalker-wild.png",  playerImg:"./images/mistwalker-wild.png",
     wildFaces:"left", playerFaces:"left",   maxHp:52, baseDmg:[5,11] as [number,number] },
   // Cinderbloom — flower whose petals smoulder; scatters embers as a defence spray; Volcanic
   { id:"cinderbloom", name:"Cinderbloom", type:"Volcanic", rarity:"rare",
-    wildImg:"./images/emberwyvlet-wild.png", playerImg:"./images/emberwyvlet-player.png",
+    wildImg:"./images/cinderbloom-wild.png", playerImg:"./images/cinderbloom-wild.png",
     wildFaces:"right", playerFaces:"right", maxHp:54, baseDmg:[5,12] as [number,number] },
   // ── ULTRA ─────────────────────────────────────────────────────────────────────
   // Aureafern — ancient golden fern spirit; predates the forest itself; Radiant
   { id:"aureafern",   name:"Aureafern",   type:"Radiant",  rarity:"ultra",
-    wildImg:"./images/solarhowl-wild.png",   playerImg:"./images/solarhowl-wild.png",
+    wildImg:"./images/aureafern-wild.png",   playerImg:"./images/aureafern-wild.png",
     wildFaces:"left", playerFaces:"left",   maxHp:78, baseDmg:[8,15] as [number,number] },
   // Voidbloom — black flower that absorbs ambient light; petals are absolute dark; Abyss
   { id:"voidbloom",   name:"Voidbloom",   type:"Abyss",    rarity:"ultra",
-    wildImg:"./images/dracoveil-wild.png",   playerImg:"./images/dracoveil-player.png",
+    wildImg:"./images/voidbloom-wild.png",   playerImg:"./images/voidbloom-wild.png",
     wildFaces:"left", playerFaces:"left",   maxHp:75, baseDmg:[8,15] as [number,number] },
   // ── APEX ──────────────────────────────────────────────────────────────────────
   // Sylvarex — great clearing dragon; coils around the oldest oak at the glade's heart; Nature
   { id:"sylvarex",    name:"Sylvarex",    type:"Nature",   rarity:"apex",
-    wildImg:"./images/verdanox-player.png",  playerImg:"./images/verdanox-wild.png",
+    wildImg:"./images/sylvarex-wild.png",    playerImg:"./images/sylvarex-wild.png",
     wildFaces:"left", playerFaces:"left",   maxHp:115, baseDmg:[12,20] as [number,number] },
 ];
 
