@@ -138,6 +138,7 @@ export type WorldSave = {
   jerbsBattleDone: boolean;  // player won the Jerbs battle
   hasCrystalFang: boolean;   // Crystalfang was received
   crystalFangEvo: "glacia" | "volcia" | "faelia" | null;  // chosen evolution
+  catalystStones: ("glacia"|"volcia"|"faelia")[];         // stones received, not yet used
   // Hollis field-berries (Route 2 farmer gift)
   hollisGifted: boolean;
   duskberries: number;    // restores 30% HP in battle

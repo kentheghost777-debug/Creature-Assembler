@@ -306,7 +306,7 @@ type Phase = "walk" | "d1" | "d2" | "pick" | "d3" | "role_pick" | "d4" | "d5"
            | "jerbs_return_d1" | "jerbs_return_d2" | "jerbs_a3_idle"
            | "jerbs_battle_intro"
           | "jerbs_crystal_d1" | "jerbs_crystal_d2" | "jerbs_crystal_d3"
-          | "jerbs_stone_pick" | "jerbs_crystal_evo"
+          | "jerbs_stone_pick" | "jerbs_crystal_evo" | "jerbs_gift"
           | "demo_end"
           // Primeria Farm NPCs
           | "shella_d1" | "shella_d2" | "shella_d3" | "shella_done" | "shella_idle"
@@ -448,6 +448,9 @@ const CRYSTALFANG_STARTER: StarterSpec = { id:"crystalfang", name:"Crystalfang",
 const GLACIA_SPEC:  StarterSpec = { id:"glacia",  name:"Glacia",  type:"Frostformed", color:"#7de8ff", img:"/__mockup/images/glacia.png" };
 const VOLCIA_SPEC:  StarterSpec = { id:"volcia",  name:"Volcia",  type:"Volcanic",    color:"#ff5520", img:"/__mockup/images/volcia.png" };
 const FAELIA_SPEC:  StarterSpec = { id:"faelia",  name:"Faelia",  type:"Spirit",      color:"#c070ff", img:"/__mockup/images/faelia.png" };
+const GLACIA_MON_SPEC: MonSpec = { id:"glacia", name:"Glacia", type:"Frostformed", rarity:"apex", wildImg:"/__mockup/images/glacia.png",  playerImg:"/__mockup/images/glacia.png",  wildFaces:"right", playerFaces:"right", maxHp:95, baseDmg:[12,20] };
+const VOLCIA_MON_SPEC: MonSpec = { id:"volcia", name:"Volcia", type:"Volcanic",    rarity:"apex", wildImg:"/__mockup/images/volcia.png",  playerImg:"/__mockup/images/volcia.png",  wildFaces:"right", playerFaces:"right", maxHp:90, baseDmg:[14,22] };
+const FAELIA_MON_SPEC: MonSpec = { id:"faelia", name:"Faelia", type:"Spirit",      rarity:"apex", wildImg:"/__mockup/images/faelia.png",  playerImg:"/__mockup/images/faelia.png",  wildFaces:"right", playerFaces:"right", maxHp:88, baseDmg:[11,21] };
 
 type TrainerTier = { team: MonSpec[]; levels: number[] };
 function jayA3Team(wins: number): TrainerTier {
@@ -1509,6 +1512,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const [jerbsBattleDone,      setJerbsBattleDone]      = useState(() => savedWorld?.jerbsBattleDone ?? false);
   const [hasCrystalFang,       setHasCrystalFang]       = useState(() => savedWorld?.hasCrystalFang ?? false);
   const [crystalFangEvo,       setCrystalFangEvo]       = useState<"glacia"|"volcia"|"faelia"|null>(() => savedWorld?.crystalFangEvo ?? null);
+  const [catalystStones,       setCatalystStones]       = useState<("glacia"|"volcia"|"faelia")[]>(() => savedWorld?.catalystStones ?? []);
   const [hollisGifted,         setHollisGifted]         = useState(() => savedWorld?.hollisGifted ?? false);
   const [duskberries,          setDuskberries]          = useState(() => savedWorld?.duskberries ?? 0);
   const [thornberries,         setThornberries]         = useState(() => savedWorld?.thornberries ?? 0);
@@ -1796,7 +1800,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     hasObsidianRealmShell, wyvruntCaught, wyvruntForm, wyrLoyalty,
     jayA3Wins, liaA3Wins, roleChosen, checksStreak,
     cleminusMet, demoComplete,
-    jerbsBattleDone, hasCrystalFang, crystalFangEvo,
+    jerbsBattleDone, hasCrystalFang, crystalFangEvo, catalystStones,
     hollisGifted, duskberries, thornberries, calmberries, brightberries,
     farmVisited, farmShellsGiven, farmRunesGiven, marenGifted,
     ownedBattleShellIds, equippedBattleShellId, ownedBattleRuneIds, slottedBattleRuneId, hasCrucibyx,
@@ -1823,7 +1827,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       hasObsidianRealmShell, wyvruntCaught, wyvruntForm, wyrLoyalty,
       jayA3Wins, liaA3Wins, roleChosen, checksStreak,
       cleminusMet, demoComplete,
-      jerbsBattleDone, hasCrystalFang, crystalFangEvo,
+      jerbsBattleDone, hasCrystalFang, crystalFangEvo, catalystStones,
       hollisGifted, duskberries, thornberries, calmberries, brightberries,
       farmVisited, farmShellsGiven, farmRunesGiven, marenGifted,
       ownedBattleShellIds, equippedBattleShellId, ownedBattleRuneIds, slottedBattleRuneId, hasCrucibyx,
@@ -1839,7 +1843,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     hasObsidianRealmShell, wyvruntCaught, wyvruntForm, wyrLoyalty,
     jayA3Wins, liaA3Wins, roleChosen, checksStreak,
     cleminusMet, demoComplete,
-    jerbsBattleDone, hasCrystalFang, crystalFangEvo,
+    jerbsBattleDone, hasCrystalFang, crystalFangEvo, catalystStones,
     hollisGifted, duskberries, thornberries, calmberries, brightberries,
     farmVisited, farmShellsGiven, farmRunesGiven, marenGifted,
     ownedBattleShellIds, equippedBattleShellId, ownedBattleRuneIds, slottedBattleRuneId, hasCrucibyx,
@@ -2897,7 +2901,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       jerbs_battle_intro: "jerbs_battle_intro",
       jerbs_crystal_d1: "jerbs_crystal_d2",
       jerbs_crystal_d2: "jerbs_crystal_d3",
-      jerbs_crystal_d3: "jerbs_stone_pick",
+      jerbs_crystal_d3: "jerbs_gift",
       jerbs_stone_pick: "jerbs_stone_pick",
       jerbs_crystal_evo: "demo_end",
       jerbs_remind: "walk",
@@ -3087,7 +3091,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     jerbs_battle_intro: "Before you go, Keeper — one more thing. I need to see this resonance in action. One match. Fair. My partner is very small, very new, and absolutely not afraid of anything. Shall we?",
     jerbs_crystal_d1: "...Hm. Even better than I expected. That's good. Alright — I owe you a story. That small one — I call her Crystalfang. Found her three months ago inside a collapsed glacier rift between two realms, curled around a sealed stone, completely unfazed by the cold. I thought she was a ruin artifact. Then she bit me.",
     jerbs_crystal_d2: "Inside the rift were three stones — ancient catalysts. They shape what a Tayanari grows into, based on elemental affinity. I carried all three. I've been waiting to give them to the right Keeper. Someone the resonance would trust. That's you. Crystalfang is yours now.",
-    jerbs_crystal_d3: "The Glacial Stone calls forward Glacia — Frostformed, precise and proud. The Earthfire Stone calls Volcia — Volcanic, raw and rooted. The Faestone calls Faelia — Spirit-touched, strange and bright. Use one on Crystalfang now. Don't worry too much about which you choose. There will be more of her kind. The world gets bigger.",
+    jerbs_crystal_d3: "The Glacial Stone calls forward Glacia — Frostformed, precise and proud. The Earthfire Stone calls Volcia — Volcanic, raw and rooted. The Faestone calls Faelia — Spirit-touched, strange and bright. All three are yours. When you're ready, open your bag and use one on Crystalfang. She'll wait. There will be more of her kind. The world gets bigger.",
+    jerbs_gift: "",
     jerbs_stone_pick: "",
     jerbs_crystal_evo: "",
     demo_end: "",
@@ -4158,7 +4163,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                   width: 45, height: 112,
                   backgroundImage: "url(/__mockup/images/jerbs_sprite.png)",
                   backgroundSize: "224px 336px",
-                  backgroundPosition: jerbsFacing === "front" ? "0px -112px" : "0px 0px",
+                  backgroundPosition: jerbsFacing === "front" ? "-90px -112px" : "0px 0px",
                   backgroundRepeat: "no-repeat",
                   imageRendering: "auto",
                   transition: "background-position 0.25s steps(1)",
@@ -5786,7 +5791,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             <div style={{ display:"flex", justifyContent:"flex-end" }}>
               {jerbsBattleDone ? (
                 <button
-                  onClick={() => setPhase(hasCrystalFang ? "demo_end" : "jerbs_stone_pick")}
+                  onClick={() => setPhase(hasCrystalFang ? "demo_end" : "jerbs_crystal_d1")}
                   style={{ background:"rgba(190,140,40,0.15)", border:"1px solid rgba(190,140,40,0.5)",
                     color:"#e8b840", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}
                 >Next ▶</button>
@@ -5842,6 +5847,54 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           </div>
         )}
 
+        {/* ── JERBS GIFT SCREEN ──────────────────────────────────────── */}
+        {phase === "jerbs_gift" && (
+          <div style={{
+            position:"absolute", inset:0,
+            background:"rgba(2,8,20,0.97)",
+            display:"flex", flexDirection:"column", alignItems:"center",
+            justifyContent:"center", zIndex:30, gap:18, padding:"0 16px",
+          }}>
+            <div style={{ color:"#7de8ff", fontSize:14, fontWeight:900, letterSpacing:2, textAlign:"center" }}>
+              A GIFT FROM JERBS
+            </div>
+            <div style={{ display:"flex", gap:14, alignItems:"flex-end", justifyContent:"center" }}>
+              <img src="/__mockup/images/crystalfang.png" style={{ width:88, height:88, objectFit:"contain" }} alt="Crystalfang"/>
+              <div style={{ display:"flex", flexDirection:"column", gap:5, paddingBottom:4 }}>
+                <img src="/__mockup/images/glacial-stone.png" style={{ width:34, height:34, objectFit:"contain" }} alt="Glacial Stone"/>
+                <img src="/__mockup/images/earthfire-stone.png" style={{ width:34, height:34, objectFit:"contain" }} alt="Earthfire Stone"/>
+                <img src="/__mockup/images/faestone.png" style={{ width:34, height:34, objectFit:"contain" }} alt="Faestone"/>
+              </div>
+            </div>
+            <div style={{ color:"#d4eeff", fontSize:12, lineHeight:1.65, textAlign:"center", maxWidth:280 }}>
+              <span style={{ color:"#7de8ff", fontWeight:800 }}>Crystalfang</span> joins your party.<br/>
+              Three <span style={{ color:"#a0e8ff", fontWeight:700 }}>Catalyst Stones</span> are now in your bag.<br/>
+              Use one on Crystalfang whenever you're ready.
+            </div>
+            <button
+              onClick={() => {
+                const giftMon: PartyMon = {
+                  ...TR_CRYSTALFANG,
+                  id:"crystalfang",
+                  level:5, xp:0,
+                  moves: defaultActiveMoves("Frostformed", 5),
+                };
+                setCaughtParty(prev => [...prev, giftMon]);
+                setCatalystStones(["glacia","volcia","faelia"]);
+                setHasCrystalFang(true);
+                setPhase("demo_end");
+              }}
+              style={{
+                background:"linear-gradient(135deg,rgba(60,160,240,0.18),rgba(40,120,200,0.18))",
+                border:"2px solid rgba(100,180,255,0.65)",
+                color:"#7de8ff", padding:"10px 32px",
+                borderRadius:12, fontSize:13, fontWeight:900,
+                cursor:"pointer", letterSpacing:1,
+              }}
+            >Accept ✓</button>
+          </div>
+        )}
+
         {/* ── JERBS STONE PICKER ────────────────────────────────────────── */}
         {phase === "jerbs_stone_pick" && (
           <div style={{
@@ -5894,7 +5947,17 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             <EvoScene
               preEvoSpec={CRYSTALFANG_STARTER}
               postEvoSpec={crystalFangEvo === "glacia" ? GLACIA_SPEC : crystalFangEvo === "volcia" ? VOLCIA_SPEC : FAELIA_SPEC}
-              onComplete={() => setPhase("demo_end")}
+              onComplete={() => {
+                const evoSpec = crystalFangEvo === "glacia" ? GLACIA_MON_SPEC
+                  : crystalFangEvo === "volcia" ? VOLCIA_MON_SPEC : FAELIA_MON_SPEC;
+                setCaughtParty(prev => prev.map(m =>
+                  m.id === "crystalfang"
+                    ? { ...evoSpec, level:m.level, xp:m.xp, moves: defaultActiveMoves(evoSpec.type as any, m.level) } as PartyMon
+                    : m
+                ));
+                setCatalystStones(stones => stones.filter(s => s !== crystalFangEvo));
+                setPhase("demo_end");
+              }}
             />
           </div>
         )}
@@ -6867,6 +6930,39 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                               <button onClick={() => setSlottedBattleRuneId(isSlotted ? null : id)} style={{ background: isSlotted ? "rgba(200,60,60,0.15)" : "rgba(80,80,200,0.15)", border:`1px solid ${isSlotted ? "#c04040" : "#6060c0"}`, color: isSlotted ? "#d06060" : "#8090e0", padding:"4px 10px", borderRadius:7, fontSize:10, fontWeight:700, cursor:"pointer" }}>
                                 {isSlotted ? "Remove" : "Slot"}
                               </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* ── Catalyst Stones ──────────────────────────── */}
+                    {catalystStones.length > 0 && (
+                      <div style={{ background:"rgba(20,50,80,0.08)", border:"1px solid rgba(100,200,255,0.25)", borderRadius:14, padding:14, marginBottom:12 }}>
+                        <div style={{ color:"#5090b0", fontWeight:900, fontSize:10, letterSpacing:1.5, textTransform:"uppercase", marginBottom:10 }}>✦ Catalyst Stones</div>
+                        {([
+                          { key:"glacia" as const, stone:"glacial-stone.png", name:"Glacial Stone", evo:"→ Glacia", col:"#7de8ff", bd:"rgba(100,200,255,0.5)" },
+                          { key:"volcia" as const, stone:"earthfire-stone.png", name:"Earthfire Stone", evo:"→ Volcia", col:"#ff6630", bd:"rgba(220,100,40,0.5)" },
+                          { key:"faelia" as const, stone:"faestone.png", name:"Faestone", evo:"→ Faelia", col:"#c070ff", bd:"rgba(160,80,240,0.5)" },
+                        ] as const).filter(opt => catalystStones.includes(opt.key)).map(opt => {
+                          const hasCF = caughtParty.some(m => m.id === "crystalfang");
+                          return (
+                            <div key={opt.key} style={{ display:"flex", alignItems:"center", gap:8, padding:"7px 9px", borderRadius:9, marginBottom:6, background:"rgba(0,0,0,0.03)", border:`1px solid ${opt.bd}` }}>
+                              <img src={`/__mockup/images/${opt.stone}`} style={{ width:28, height:28, objectFit:"contain" }} alt={opt.name}/>
+                              <div style={{ flex:1 }}>
+                                <div style={{ color:opt.col, fontWeight:800, fontSize:11 }}>{opt.name}</div>
+                                <div style={{ color:"rgba(180,220,255,0.6)", fontSize:9, marginTop:1 }}>{opt.evo}</div>
+                              </div>
+                              <button
+                                onClick={() => {
+                                  if (!hasCF) return;
+                                  setShowJournal(false);
+                                  setCrystalFangEvo(opt.key);
+                                  setPhase("jerbs_crystal_evo");
+                                }}
+                                disabled={!hasCF}
+                                style={{ background: hasCF ? "rgba(80,160,240,0.15)" : "rgba(60,60,60,0.1)", border:`1px solid ${hasCF ? opt.bd : "rgba(100,100,100,0.3)"}`, color: hasCF ? opt.col : "#666", padding:"4px 10px", borderRadius:7, fontSize:10, fontWeight:700, cursor: hasCF ? "pointer" : "not-allowed" }}
+                              >{hasCF ? "Evolve ▶" : "Need Crystalfang"}</button>
                             </div>
                           );
                         })}
