@@ -9,7 +9,7 @@ import {
   type Move,
 } from "./moves";
 import { type CharId, type RoleId, type PartySave, type PartyMon, type WorldSave, ROLES, readSave, updateParty, updateWorld, updateRole, roleDef } from "./save";
-import { playTrack, playJingle, stopAll, playSfx } from "./audioManager";
+import { playTrack, playJingle, stopAll, playSfx, playSfxFile } from "./audioManager";
 
 /** Hydrate caught/box entries on load. Older saves stored bare MonSpec (no
  *  progression); those default to the level the mon was caught at. */
@@ -5786,6 +5786,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                 onClick={() => {
                   if (phase === "jay_d5") {
                     setPhase("walk");
+                    playSfxFile("./audio/sfx_item.mp3");
                     setHasHealingRune(true);
                     setRuneNotif(true);
                     setTimeout(() => setRuneNotif(false), 3200);
@@ -6073,6 +6074,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               )}
               <button onClick={() => {
                 if (phase === "runrik_d4") {
+                  playSfxFile("./audio/sfx_item.mp3");
                   setFarmRunesGiven(true);
                   advanceDialog(phase);
                 } else {
@@ -6096,6 +6098,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             <div style={{ display:"flex", justifyContent:"flex-end" }}>
               <button onClick={() => {
                 if (phase === "maren_d2" && !marenGifted) {
+                  playSfxFile("./audio/sfx_item.mp3");
                   setMarenGifted(true);
                   setHasCrucibyx(true);
                   const cruciSpec = { id:"crucibyx", name:"Crucibyx", type:"alchemy" as const, color:"#90c060", rarity:"rare" as const, img:"./images/crucibyx.png", wildImg:"./images/crucibyx.png", playerImg:"./images/crucibyx.png", wildFaces:"right" as const, playerFaces:"right" as const, maxHp:40, baseDmg:[8,12] as [number,number] };
@@ -6454,6 +6457,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                 onClick={() => {
                   if (phase === "ellio_d3") {
                     setPhase("walk");
+                    playSfxFile("./audio/sfx_item.mp3");
                     setHasResonanceStone(true);
                     setResonanceNotif(true);
                     setTimeout(() => setResonanceNotif(false), 3200);
@@ -8952,6 +8956,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               if (hollisBerryPick === "thorn")  setThornberries(n => n + 5);
               if (hollisBerryPick === "calm")   setCalmberries(n => n + 5);
               if (hollisBerryPick === "bright") setBrightberries(n => n + 5);
+              playSfxFile("./audio/sfx_item.mp3");
               setHollisGifted(true);
               setShowBerryPicker(false);
               setPhase("walk");

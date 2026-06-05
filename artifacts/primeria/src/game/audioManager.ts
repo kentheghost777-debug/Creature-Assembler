@@ -70,6 +70,19 @@ export function playJingle(src: string, vol: number = JINGLE_VOL): void {
   j.addEventListener("ended", () => { jingleAudio = null; resumeBg(); }, { once: true });
 }
 
+/**
+ * Play a short SFX audio file without interrupting the BGM.
+ * Uses a throwaway HTMLAudioElement — reliable on mobile where Web Audio
+ * context suspension can silently swallow synthesized sounds.
+ */
+export function playSfxFile(src: string, vol = 0.52): void {
+  try {
+    const a = new Audio(src);
+    a.volume = Math.max(0, Math.min(1, vol));
+    a.play().catch(() => {});
+  } catch { /* unsupported */ }
+}
+
 /** Fade out and stop everything. */
 export function stopAll(): void {
   if (bgAudio) {

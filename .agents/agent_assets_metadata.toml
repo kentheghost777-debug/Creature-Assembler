@@ -1355,3 +1355,27 @@ id = "-iDdmcfJrLlF1q_2NVWCi"
 uri = "file://attached_assets/prism_obsidian.png"
 type = "image"
 title = "Obsidian Prism"
+
+[[outputs]]
+id = "kj-NR6JLlIGSL2KE6Ogez"
+uri = "file://artifacts/primeria/public/audio/sfx_hit.mp3"
+type = "audio"
+title = "dark hit impact"
+
+[[outputs]]
+id = "JFwW6JEjniMKTYyjLaT_N"
+uri = "file://artifacts/primeria/public/audio/sfx_attack.mp3"
+type = "audio"
+title = "dark attack whoosh"
+
+[[outputs]]
+id = "Q1Am1HnQU2XR1Ses6URHn"
+uri = "file://artifacts/primeria/public/audio/sfx_miss.mp3"
+type = "audio"
+title = "spectral miss dodge"
+
+[[outputs]]
+id = "h-B6axQQZDmcORQReuYgG"
+uri = "file://artifacts/primeria/public/audio/sfx_item.mp3"
+type = "audio"
+title = "mystical item receive"

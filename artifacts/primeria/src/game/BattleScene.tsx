@@ -5,7 +5,7 @@ import {
   defaultActiveMoves, wildCombatStats, wildLevelFor,
 } from "./moves";
 import { MoveFx, MOVE_FX_KEYFRAMES, ResonanceFx, RESONANCE_FX_KEYFRAMES } from "./battleFx";
-import { playSfx } from "./audioManager";
+import { playSfx, playSfxFile } from "./audioManager";
 
 // Last-resort move when every active move is out of PP.
 const STRUGGLE: Move = {
@@ -542,7 +542,7 @@ export function BattleScene({
       }
       // Accuracy check.
       if (Math.random() * 100 > move.accuracy) {
-        playSfx("miss");
+        playSfx("miss"); playSfxFile("./audio/sfx_miss.mp3");
         setLog(`${currentOpponent.name} uses ${move.name} — but it missed!`);
         later(() => { setHealCd(c => Math.max(0, c - 1)); setBusy(false); afterCb?.(); }, 700);
         return;
@@ -570,7 +570,7 @@ export function BattleScene({
       triggerMove(move.anim, color, "wild", "damage", move.element, move.power);
 
       later(() => {
-        playSfx("hit");
+        playSfx("hit"); playSfxFile("./audio/sfx_hit.mp3");
         setShake("player");
         setScreenFlash("player"); later(() => setScreenFlash(null), 190);
         showDmg("player", dmg, crit);
@@ -617,7 +617,7 @@ export function BattleScene({
     setBusy(true);
     later(() => setShake(null), 600);
     later(() => {
-      playSfx("hit");
+      playSfx("hit"); playSfxFile("./audio/sfx_hit.mp3");
       setShake("wild");
       setScreenFlash("wild"); later(() => setScreenFlash(null), 190);
       showDmg("wild", dmg, crit);
@@ -687,6 +687,7 @@ export function BattleScene({
     if (busy) return;
     setMenu("root");
     setBusy(true);
+    playSfxFile("./audio/sfx_attack.mp3");
     const color = move.element ? typeColor(move.element) : typeColor(active.type);
     if (move.id !== STRUGGLE.id) {
       setPlayerPp(p => ({ ...p, [move.id]: Math.max(0, (p[move.id] ?? 0) - 1) }));
@@ -714,7 +715,7 @@ export function BattleScene({
     triggerMove(move.anim, color, "player", "damage", move.element, move.power);
     if (Math.random() * 100 > move.accuracy) {
       later(() => {
-        playSfx("miss");
+        playSfx("miss"); playSfxFile("./audio/sfx_miss.mp3");
         triggerAux("feint", undefined, "wild", 750);
         setFeinting(true);
         later(() => setFeinting(false), 600);
