@@ -352,7 +352,7 @@ type Phase = "walk" | "d1" | "d2" | "pick" | "d3" | "role_pick" | "d4" | "d5"
           | "town_kid_d1" | "town_kid_idle"
           | "town_scholar_d1" | "town_scholar_d2" | "town_scholar_idle"
           | "town_elder_d1" | "town_elder_d2" | "town_elder_idle";
-type Scene = "overworld" | "lab" | "maya" | "jay" | "home" | "ellio" | "lia" | "route1" | "route2" | "area3" | "battle" | "farm" | "shore" | "town" | "town_left" | "town_right";
+type Scene = "overworld" | "lab" | "maya" | "jay" | "home" | "ellio" | "lia" | "route1" | "route2" | "area3" | "battle" | "farm" | "shore" | "town" | "town_left" | "town_right" | "forest_path" | "forest_clear";
 type Rect  = [number, number, number, number]; // x1 y1 x2 y2 world-px
 
 // ── Bestiary (Route 1 encounter pool) ───────────────────────────────────────
@@ -978,6 +978,108 @@ const RUNRIK_IMG = "/__mockup/images/runrik-npc.png";
 const MAREN_IMG  = "/__mockup/images/maren-npc.png";
 const NO_SOLIDS: Rect[] = [];
 
+// ── Forest Path bestiary (Whisperroot North — between Route 1 and Clearing) ──
+const BESTIARY_FP: MonSpec[] = [
+  // ── COMMON ────────────────────────────────────────────────────────────────────
+  { id:"sproutling",  name:"Sproutling",  type:"Nature",   rarity:"common",
+    wildImg:"/__mockup/images/hatchick-wild.png",    playerImg:"/__mockup/images/hatchick-wild.png",
+    wildFaces:"right", playerFaces:"right", maxHp:28, baseDmg:[3,6] as [number,number] },
+  { id:"mossback",    name:"Mossback",    type:"Armored",  rarity:"common",
+    wildImg:"/__mockup/images/stonub-wild.png",      playerImg:"/__mockup/images/stonub-wild.png",
+    wildFaces:"right", playerFaces:"right", maxHp:32, baseDmg:[3,6] as [number,number] },
+  { id:"twigling",    name:"Twigling",    type:"Nature",   rarity:"common",
+    wildImg:"/__mockup/images/loth-wild.png",        playerImg:"/__mockup/images/loth-wild.png",
+    wildFaces:"right", playerFaces:"right", maxHp:26, baseDmg:[3,7] as [number,number] },
+  { id:"gloamite",    name:"Gloamite",    type:"Abyss",    rarity:"common",
+    wildImg:"/__mockup/images/ghosti-wild.png",      playerImg:"/__mockup/images/ghosti-wild.png",
+    wildFaces:"left", playerFaces:"left",   maxHp:27, baseDmg:[3,6] as [number,number] },
+  // ── UNCOMMON ──────────────────────────────────────────────────────────────────
+  { id:"fernfang",    name:"Fernfang",    type:"Nature",   rarity:"uncommon",
+    wildImg:"/__mockup/images/potent-wild.png",      playerImg:"/__mockup/images/potent-wild.png",
+    wildFaces:"left", playerFaces:"left",   maxHp:40, baseDmg:[4,9] as [number,number] },
+  { id:"rootknot",    name:"Rootknot",    type:"Armored",  rarity:"uncommon",
+    wildImg:"/__mockup/images/crystalback-wild.png", playerImg:"/__mockup/images/crystalback-wild.png",
+    wildFaces:"left", playerFaces:"left",   maxHp:44, baseDmg:[4,8] as [number,number] },
+  { id:"dewsprite",   name:"Dewsprite",   type:"Radiant",  rarity:"uncommon",
+    wildImg:"/__mockup/images/spectrael-wild.png",   playerImg:"/__mockup/images/spectrael-wild.png",
+    wildFaces:"right", playerFaces:"right", maxHp:36, baseDmg:[4,9] as [number,number] },
+  { id:"stumpkin",    name:"Stumpkin",    type:"Nature",   rarity:"uncommon",
+    wildImg:"/__mockup/images/voltowl-wild.png",     playerImg:"/__mockup/images/voltowl-wild.png",
+    wildFaces:"right", playerFaces:"right", maxHp:38, baseDmg:[4,9] as [number,number] },
+  // ── RARE ──────────────────────────────────────────────────────────────────────
+  { id:"shimmerfly",  name:"Shimmerfly",  type:"Radiant",  rarity:"rare",
+    wildImg:"/__mockup/images/scalel-wild.png",      playerImg:"/__mockup/images/scalel-wild.png",
+    wildFaces:"left", playerFaces:"left",   maxHp:52, baseDmg:[5,11] as [number,number] },
+  { id:"gloomveil",   name:"Gloomveil",   type:"Abyss",    rarity:"rare",
+    wildImg:"/__mockup/images/scavencrow-wild.png",  playerImg:"/__mockup/images/scavencrow-wild.png",
+    wildFaces:"left", playerFaces:"left",   maxHp:50, baseDmg:[5,11] as [number,number] },
+  { id:"embersap",    name:"Embersap",    type:"Volcanic", rarity:"rare",
+    wildImg:"/__mockup/images/emberwyvlet-wild.png", playerImg:"/__mockup/images/emberwyvlet-player.png",
+    wildFaces:"right", playerFaces:"right", maxHp:56, baseDmg:[5,12] as [number,number] },
+  // ── ULTRA ─────────────────────────────────────────────────────────────────────
+  { id:"crystalvine", name:"Crystalvine", type:"Armored",  rarity:"ultra",
+    wildImg:"/__mockup/images/crysthorn-wild.png",   playerImg:"/__mockup/images/crysthorn-player.png",
+    wildFaces:"left", playerFaces:"left",   maxHp:72, baseDmg:[8,14] as [number,number] },
+  { id:"verdanspear", name:"Verdanspear", type:"Nature",   rarity:"ultra",
+    wildImg:"/__mockup/images/dracoveil-wild.png",   playerImg:"/__mockup/images/dracoveil-player.png",
+    wildFaces:"left", playerFaces:"left",   maxHp:70, baseDmg:[8,15] as [number,number] },
+  // ── APEX ──────────────────────────────────────────────────────────────────────
+  { id:"thornwarden", name:"Thornwarden", type:"Nature",   rarity:"apex",
+    wildImg:"/__mockup/images/verdanox-player.png",  playerImg:"/__mockup/images/verdanox-wild.png",
+    wildFaces:"left", playerFaces:"left",   maxHp:108, baseDmg:[12,19] as [number,number] },
+];
+
+// ── Forest Clearing bestiary (deep glade — final demo encounter zone) ─────────
+const BESTIARY_FC: MonSpec[] = [
+  // ── COMMON ────────────────────────────────────────────────────────────────────
+  { id:"sunpetal",    name:"Sunpetal",    type:"Radiant",  rarity:"common",
+    wildImg:"/__mockup/images/hatchick-wild.png",    playerImg:"/__mockup/images/hatchick-wild.png",
+    wildFaces:"right", playerFaces:"right", maxHp:30, baseDmg:[3,6] as [number,number] },
+  { id:"grassmite",   name:"Grassmite",   type:"Nature",   rarity:"common",
+    wildImg:"/__mockup/images/loth-wild.png",        playerImg:"/__mockup/images/loth-wild.png",
+    wildFaces:"right", playerFaces:"right", maxHp:28, baseDmg:[3,7] as [number,number] },
+  { id:"clovertail",  name:"Clovertail",  type:"Nature",   rarity:"common",
+    wildImg:"/__mockup/images/stonub-wild.png",      playerImg:"/__mockup/images/stonub-wild.png",
+    wildFaces:"right", playerFaces:"right", maxHp:29, baseDmg:[3,6] as [number,number] },
+  { id:"stonechip",   name:"Stonechip",   type:"Armored",  rarity:"common",
+    wildImg:"/__mockup/images/voltowl-wild.png",     playerImg:"/__mockup/images/voltowl-wild.png",
+    wildFaces:"right", playerFaces:"right", maxHp:33, baseDmg:[3,6] as [number,number] },
+  // ── UNCOMMON ──────────────────────────────────────────────────────────────────
+  { id:"lumibug",     name:"Lumibug",     type:"Radiant",  rarity:"uncommon",
+    wildImg:"/__mockup/images/potent-wild.png",      playerImg:"/__mockup/images/potent-wild.png",
+    wildFaces:"left", playerFaces:"left",   maxHp:38, baseDmg:[4,9] as [number,number] },
+  { id:"pondskip",    name:"Pondskip",    type:"Oceanic",  rarity:"uncommon",
+    wildImg:"/__mockup/images/tidalclaw-wild.png",   playerImg:"/__mockup/images/tidalclaw-wild.png",
+    wildFaces:"left", playerFaces:"left",   maxHp:40, baseDmg:[4,8] as [number,number] },
+  { id:"brambleback", name:"Brambleback", type:"Nature",   rarity:"uncommon",
+    wildImg:"/__mockup/images/crystalback-wild.png", playerImg:"/__mockup/images/crystalback-wild.png",
+    wildFaces:"right", playerFaces:"right", maxHp:44, baseDmg:[4,9] as [number,number] },
+  { id:"goldleaf",    name:"Goldleaf",    type:"Radiant",  rarity:"uncommon",
+    wildImg:"/__mockup/images/spectrael-wild.png",   playerImg:"/__mockup/images/spectrael-wild.png",
+    wildFaces:"right", playerFaces:"right", maxHp:36, baseDmg:[4,9] as [number,number] },
+  // ── RARE ──────────────────────────────────────────────────────────────────────
+  { id:"faeflicker",  name:"Faeflicker",  type:"Radiant",  rarity:"rare",
+    wildImg:"/__mockup/images/scalel-wild.png",      playerImg:"/__mockup/images/scalel-wild.png",
+    wildFaces:"left", playerFaces:"left",   maxHp:48, baseDmg:[5,10] as [number,number] },
+  { id:"mistwalker",  name:"Mistwalker",  type:"Abyss",    rarity:"rare",
+    wildImg:"/__mockup/images/dreadcrow-wild.png",   playerImg:"/__mockup/images/dreadcrow-wild.png",
+    wildFaces:"left", playerFaces:"left",   maxHp:52, baseDmg:[5,11] as [number,number] },
+  { id:"cinderbloom", name:"Cinderbloom", type:"Volcanic", rarity:"rare",
+    wildImg:"/__mockup/images/emberwyvlet-wild.png", playerImg:"/__mockup/images/emberwyvlet-player.png",
+    wildFaces:"right", playerFaces:"right", maxHp:54, baseDmg:[5,12] as [number,number] },
+  // ── ULTRA ─────────────────────────────────────────────────────────────────────
+  { id:"aureafern",   name:"Aureafern",   type:"Radiant",  rarity:"ultra",
+    wildImg:"/__mockup/images/solarhowl-wild.png",   playerImg:"/__mockup/images/solarhowl-wild.png",
+    wildFaces:"left", playerFaces:"left",   maxHp:78, baseDmg:[8,15] as [number,number] },
+  { id:"voidbloom",   name:"Voidbloom",   type:"Abyss",    rarity:"ultra",
+    wildImg:"/__mockup/images/dracoveil-wild.png",   playerImg:"/__mockup/images/dracoveil-player.png",
+    wildFaces:"left", playerFaces:"left",   maxHp:75, baseDmg:[8,15] as [number,number] },
+  // ── APEX ──────────────────────────────────────────────────────────────────────
+  { id:"sylvarex",    name:"Sylvarex",    type:"Nature",   rarity:"apex",
+    wildImg:"/__mockup/images/verdanox-player.png",  playerImg:"/__mockup/images/verdanox-wild.png",
+    wildFaces:"left", playerFaces:"left",   maxHp:115, baseDmg:[12,20] as [number,number] },
+];
+
 // ── Tidemark Shore (south of Route 2 — cliff-edge ocean) ─────────────────────
 const SHORE = { w: 1024, h: 717 };
 const SHORE_SPAWN        = { x: 513, y: 75 };    // entering from Route 2 — spawns near north entry
@@ -1025,11 +1127,48 @@ const RARITY_BASE: Record<MonRarity, number> = {
 };
 
 // Wild encounter levels by zone — deeper areas spawn stronger mons
+// ── Forest Path (north of Route 1, south of Forest Clearing) ─────────────────
+const FP = { w: 1024, h: 820 };              // forest-path-bg.png (1402×1122 → 1024×820)
+const FP_SPAWN            = { x: 512, y: 792 }; // entering from Route 1 (south)
+const FP_FROM_CLEAR_SPAWN = { x: 512, y:  30 }; // entering from Clearing (north)
+let R1_NORTH_EXIT: Rect  = ld("r1_north", [412,   0, 564,  18]); // Route 1 north edge → Forest Path
+let FP_SOUTH_EXIT: Rect  = ld("fp_south", [432, 803, 594, 820]); // Forest Path south → Route 1
+let FP_NORTH_EXIT: Rect  = ld("fp_north", [432,   0, 594,  18]); // Forest Path north → Clearing
+const FP_HOTSPOTS: Hotspot[] = [
+  { x: 175, y: 220, r: 36, kind: "bush" },
+  { x: 290, y: 390, r: 34, kind: "rock" },
+  { x: 160, y: 565, r: 37, kind: "tree" },
+  { x: 350, y: 660, r: 35, kind: "bush" },
+  { x: 710, y: 210, r: 35, kind: "tree" },
+  { x: 830, y: 370, r: 34, kind: "rock" },
+  { x: 760, y: 530, r: 36, kind: "bush" },
+  { x: 870, y: 670, r: 35, kind: "bush" },
+  { x: 490, y: 140, r: 34, kind: "rock" },
+  { x: 530, y: 730, r: 36, kind: "bush" },
+];
+
+// ── Forest Clearing (north of Forest Path — final demo encounter zone) ────────
+const FC = { w: 1024, h: 516 };              // forest-clear-bg.png (1254×633 → 1024×516)
+const FC_SPAWN   = { x: 512, y: 488 };       // entering from Forest Path (south)
+let FC_SOUTH_EXIT: Rect = ld("fc_south", [425, 498, 599, 516]); // Clearing south → Forest Path
+const FC_HOTSPOTS: Hotspot[] = [
+  { x: 175, y: 155, r: 36, kind: "bush" },
+  { x: 310, y: 240, r: 34, kind: "rock" },
+  { x: 200, y: 350, r: 37, kind: "tree" },
+  { x: 495, y: 120, r: 36, kind: "bush" },
+  { x: 700, y: 165, r: 35, kind: "tree" },
+  { x: 840, y: 255, r: 34, kind: "rock" },
+  { x: 620, y: 330, r: 36, kind: "bush" },
+  { x: 810, y: 390, r: 35, kind: "bush" },
+];
+
 const SCENE_WILD_LEVELS: Partial<Record<string, Record<MonRarity, number>>> = {
-  route1: { common:4,  uncommon:6,  rare:9,  ultra:12, apex:15 },
-  route2: { common:8,  uncommon:10, rare:13, ultra:16, apex:19 },
-  area3:  { common:13, uncommon:16, rare:19, ultra:22, apex:25 },
-  shore:  { common:18, uncommon:20, rare:22, ultra:25, apex:28 },
+  route1:       { common:4,  uncommon:6,  rare:9,  ultra:12, apex:15 },
+  route2:       { common:8,  uncommon:10, rare:13, ultra:16, apex:19 },
+  area3:        { common:13, uncommon:16, rare:19, ultra:22, apex:25 },
+  shore:        { common:18, uncommon:20, rare:22, ultra:25, apex:28 },
+  forest_path:  { common:9,  uncommon:12, rare:15, ultra:18, apex:21 },
+  forest_clear: { common:15, uncommon:18, rare:21, ultra:24, apex:27 },
 };
 function wildLevelForScene(rarity: MonRarity, sc: string): number {
   return SCENE_WILD_LEVELS[sc]?.[rarity] ?? wildLevelFor(rarity);
@@ -1055,7 +1194,7 @@ function rollRarity(checksStreak: number): MonRarity {
 }
 
 function pickMonForScene(rarity: MonRarity, sc: string): MonSpec {
-  const list = sc === "area3" ? BESTIARY_A3 : sc === "route2" ? BESTIARY_R2 : sc === "shore" ? BESTIARY_SHORE : BESTIARY;
+  const list = sc === "area3" ? BESTIARY_A3 : sc === "route2" ? BESTIARY_R2 : sc === "shore" ? BESTIARY_SHORE : sc === "forest_path" ? BESTIARY_FP : sc === "forest_clear" ? BESTIARY_FC : BESTIARY;
   const pool = list.filter(m => m.rarity === rarity);
   return pool[Math.floor(Math.random() * pool.length)] ?? list[0];
 }
@@ -1452,6 +1591,10 @@ const DOOR_LIST: DoorEntry[] = [
   { key: "town_south", name: "Town→Farm",  scene: "town",      glowDef: true,  get: () => TOWN_SOUTH_EXIT,      set: (r) => { TOWN_SOUTH_EXIT = r; } },
   { key: "town_west",  name: "Town West",  scene: "town",      glowDef: true,  get: () => TOWN_WEST_EXIT,       set: (r) => { TOWN_WEST_EXIT = r; } },
   { key: "town_east",  name: "Town East",  scene: "town",      glowDef: true,  get: () => TOWN_EAST_EXIT,       set: (r) => { TOWN_EAST_EXIT = r; } },
+  { key: "r1_north",   name: "R1 North",   scene: "route1",    glowDef: true,  get: () => R1_NORTH_EXIT,        set: (r) => { R1_NORTH_EXIT = r; } },
+  { key: "fp_south",   name: "FP→R1",      scene: "forest_path",  glowDef: true, get: () => FP_SOUTH_EXIT,    set: (r) => { FP_SOUTH_EXIT = r; } },
+  { key: "fp_north",   name: "FP→Clear",   scene: "forest_path",  glowDef: true, get: () => FP_NORTH_EXIT,    set: (r) => { FP_NORTH_EXIT = r; } },
+  { key: "fc_south",   name: "Clear→FP",   scene: "forest_clear", glowDef: true, get: () => FC_SOUTH_EXIT,    set: (r) => { FC_SOUTH_EXIT = r; } },
 ];
 const doorGlowOn: Record<string, boolean> = {};
 DOOR_LIST.forEach((d) => { doorGlowOn[d.key] = ldGlow(d.key, d.glowDef); });
@@ -1631,7 +1774,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   // Saves live in localStorage and could be malformed/tampered, so we validate
   // the scene against the known walkable set and require finite coordinates;
   // anything off falls back to the safe home spawn.
-  const WALKABLE_SCENES: Scene[] = ["overworld","lab","maya","jay","home","ellio","lia","route1","route2","area3","farm","shore","town","town_left","town_right"];
+  const WALKABLE_SCENES: Scene[] = ["overworld","lab","maya","jay","home","ellio","lia","route1","route2","area3","farm","shore","town","town_left","town_right","forest_path","forest_clear"];
   const resume = (() => {
     if (!savedWorld) return null;
     const HOME = { scene: "home" as Scene, x: 400, y: 670 };
@@ -1910,7 +2053,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     setDoorEditTick((t) => t + 1);
   };
   const copyDoorLayout = () => {
-    const order: Scene[] = ["overworld", "route1", "route2", "area3", "home", "lia", "maya", "jay", "ellio", "lab"];
+    const order: Scene[] = ["overworld", "route1", "forest_path", "forest_clear", "route2", "area3", "home", "lia", "maya", "jay", "ellio", "lab"];
     const out: string[] = ["PRIMERIA DOOR LAYOUT — paste this back to the assistant"];
     order.forEach((sc) => {
       const inScene = DOOR_LIST.filter((d) => d.scene === sc);
@@ -2459,7 +2602,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   useEffect(() => {
     if (scene === "battle") {
       playTrack(BATTLE_TRACK);
-    } else if (scene === "route1" || scene === "route2" || scene === "area3" || scene === "shore") {
+    } else if (scene === "route1" || scene === "route2" || scene === "area3" || scene === "shore" || scene === "forest_path" || scene === "forest_clear") {
       playTrack(ROUTE_TRACK);
     } else {
       playTrack(TOWN_TRACK);
@@ -2848,8 +2991,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         const h       = heldRef.current;
         const sc      = sceneRef.current;
         const zoom    = sc === "farm" ? 0.62 : ZOOM;
-        const world   = sc === "overworld" ? OW : sc === "lab" ? LB : sc === "route1" ? R1 : sc === "route2" ? R2 : sc === "area3" ? A3 : sc === "farm" ? FARM : sc === "shore" ? SHORE : sc === "town" ? TOWN : sc === "town_left" ? TOWN_L : sc === "town_right" ? TOWN_R : sc === "maya" ? MY : sc === "jay" ? JY : sc === "ellio" ? EH : sc === "lia" ? LH : PH;
-        const zones   = sc === "overworld" ? OW_BLOCKED : sc === "lab" ? LAB_BLOCKED : sc === "route1" ? R1_BLOCKED : sc === "route2" ? R2_BLOCKED : sc === "area3" ? A3_BLOCKED : sc === "farm" ? NO_SOLIDS : sc === "shore" ? NO_SOLIDS : sc === "town" ? NO_SOLIDS : sc === "town_left" ? NO_SOLIDS : sc === "town_right" ? NO_SOLIDS : sc === "maya" ? MAYA_BLOCKED : sc === "jay" ? JAY_BLOCKED : sc === "ellio" ? EH_BLOCKED : sc === "lia" ? LH_BLOCKED : PH_BLOCKED;
+        const world   = sc === "overworld" ? OW : sc === "lab" ? LB : sc === "route1" ? R1 : sc === "route2" ? R2 : sc === "area3" ? A3 : sc === "farm" ? FARM : sc === "shore" ? SHORE : sc === "town" ? TOWN : sc === "town_left" ? TOWN_L : sc === "town_right" ? TOWN_R : sc === "forest_path" ? FP : sc === "forest_clear" ? FC : sc === "maya" ? MY : sc === "jay" ? JY : sc === "ellio" ? EH : sc === "lia" ? LH : PH;
+        const zones   = sc === "overworld" ? OW_BLOCKED : sc === "lab" ? LAB_BLOCKED : sc === "route1" ? R1_BLOCKED : sc === "route2" ? R2_BLOCKED : sc === "area3" ? A3_BLOCKED : sc === "farm" ? NO_SOLIDS : sc === "shore" ? NO_SOLIDS : sc === "town" ? NO_SOLIDS : sc === "town_left" ? NO_SOLIDS : sc === "town_right" ? NO_SOLIDS : sc === "forest_path" ? NO_SOLIDS : sc === "forest_clear" ? NO_SOLIDS : sc === "maya" ? MAYA_BLOCKED : sc === "jay" ? JAY_BLOCKED : sc === "ellio" ? EH_BLOCKED : sc === "lia" ? LH_BLOCKED : PH_BLOCKED;
 
         let newAnim = lastDirRef.current; // stay in last-faced direction when idle
         let newFlip = flipRef.current;
@@ -2885,6 +3028,14 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               && starterRefArc.current && allTownItemsRef.current && route1VisitedRef.current) {
             setWifeOnPath(true);
           }
+        } else if (sc === "route1" && inRect(worldPos.current.x, worldPos.current.y, R1_NORTH_EXIT)) {
+          transitionTo("forest_path", FP_SPAWN.x, FP_SPAWN.y);
+        } else if (sc === "forest_path" && inRect(worldPos.current.x, worldPos.current.y, FP_SOUTH_EXIT)) {
+          transitionTo("route1", 488, 30);      // near top of Route 1 (south of north exit)
+        } else if (sc === "forest_path" && inRect(worldPos.current.x, worldPos.current.y, FP_NORTH_EXIT)) {
+          transitionTo("forest_clear", FC_SPAWN.x, FC_SPAWN.y);
+        } else if (sc === "forest_clear" && inRect(worldPos.current.x, worldPos.current.y, FC_SOUTH_EXIT)) {
+          transitionTo("forest_path", FP_FROM_CLEAR_SPAWN.x, FP_FROM_CLEAR_SPAWN.y);
         } else if (sc === "overworld" && inRect(worldPos.current.x, worldPos.current.y, OW_EAST_EXIT)) {
           if (wifeInterceptedRef.current) {
             transitionTo("route2", R2_SPAWN.x, R2_SPAWN.y);
@@ -3542,9 +3693,11 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
 
   useEffect(() => {
     const isR2Active = scene === "route2" && wyvruntCaughtRef.current;
-    if (scene !== "route1" && scene !== "area3" && !isR2Active) return;
+    const isFPActive = scene === "forest_path";
+    const isFCActive = scene === "forest_clear";
+    if (scene !== "route1" && scene !== "area3" && !isR2Active && !isFPActive && !isFCActive) return;
     setActiveDisturbances({});
-    const hotspots = scene === "area3" ? A3_HOTSPOTS : scene === "route2" ? R2_HOTSPOTS : R1_HOTSPOTS;
+    const hotspots = scene === "area3" ? A3_HOTSPOTS : scene === "route2" ? R2_HOTSPOTS : scene === "forest_path" ? FP_HOTSPOTS : scene === "forest_clear" ? FC_HOTSPOTS : R1_HOTSPOTS;
     const id = window.setInterval(() => {
       const now = Date.now();
       const cur = activeDistRef.current;
@@ -4109,8 +4262,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         {/* World container — camera-scrolled + zoomed */}
         <div ref={worldRef} style={{
           position: "absolute",
-          width:  scene === "overworld" ? OW.w : scene === "lab" ? LB.w : scene === "route1" ? R1.w : scene === "route2" ? R2.w : scene === "area3" ? A3.w : scene === "farm" ? FARM.w : scene === "shore" ? SHORE.w : scene === "town" ? TOWN.w : scene === "town_left" ? TOWN_L.w : scene === "town_right" ? TOWN_R.w : scene === "maya" ? MY.w : scene === "jay" ? JY.w : scene === "ellio" ? EH.w : scene === "lia" ? LH.w : PH.w,
-          height: scene === "overworld" ? OW.h : scene === "lab" ? LB.h : scene === "route1" ? R1.h : scene === "route2" ? R2.h : scene === "area3" ? A3.h : scene === "farm" ? FARM.h : scene === "shore" ? SHORE.h : scene === "town" ? TOWN.h : scene === "town_left" ? TOWN_L.h : scene === "town_right" ? TOWN_R.h : scene === "maya" ? MY.h : scene === "jay" ? JY.h : scene === "ellio" ? EH.h : scene === "lia" ? LH.h : PH.h,
+          width:  scene === "overworld" ? OW.w : scene === "lab" ? LB.w : scene === "route1" ? R1.w : scene === "route2" ? R2.w : scene === "area3" ? A3.w : scene === "farm" ? FARM.w : scene === "shore" ? SHORE.w : scene === "town" ? TOWN.w : scene === "town_left" ? TOWN_L.w : scene === "town_right" ? TOWN_R.w : scene === "forest_path" ? FP.w : scene === "forest_clear" ? FC.w : scene === "maya" ? MY.w : scene === "jay" ? JY.w : scene === "ellio" ? EH.w : scene === "lia" ? LH.w : PH.w,
+          height: scene === "overworld" ? OW.h : scene === "lab" ? LB.h : scene === "route1" ? R1.h : scene === "route2" ? R2.h : scene === "area3" ? A3.h : scene === "farm" ? FARM.h : scene === "shore" ? SHORE.h : scene === "town" ? TOWN.h : scene === "town_left" ? TOWN_L.h : scene === "town_right" ? TOWN_R.h : scene === "forest_path" ? FP.h : scene === "forest_clear" ? FC.h : scene === "maya" ? MY.h : scene === "jay" ? JY.h : scene === "ellio" ? EH.h : scene === "lia" ? LH.h : PH.h,
           willChange: "transform",
           transformOrigin: "0 0",
           transform: `scale(${ZOOM}) translate(${-cam.current.x}px,${-cam.current.y}px)`,
@@ -4123,6 +4276,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               : scene === "area3"  ? "/__mockup/images/area3-bg.png"
               : scene === "farm"       ? "/__mockup/images/farm-bg.png"
               : scene === "shore"      ? "/__mockup/images/shore-bg.png"
+              : scene === "forest_path"  ? "/__mockup/images/forest-path-bg.png"
+              : scene === "forest_clear" ? "/__mockup/images/forest-clear-bg.png"
               : scene === "town"       ? "/__mockup/images/town-hub.png"
               : scene === "town_left"  ? "/__mockup/images/town-left.png"
               : scene === "town_right" ? "/__mockup/images/town-right.png"
@@ -4742,8 +4897,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
 
 
           {/* Encounter zone hotspots — rendered in route1, area3, and route2 (after wyvrunt) */}
-          {(scene === "route1" || scene === "area3" || scene === "shore" || (scene === "route2" && wyvruntCaught)) && (() => {
-            const hs = scene === "area3" ? A3_HOTSPOTS : scene === "route2" ? R2_HOTSPOTS : scene === "shore" ? SHORE_HOTSPOTS : R1_HOTSPOTS;
+          {(scene === "route1" || scene === "area3" || scene === "shore" || (scene === "route2" && wyvruntCaught) || scene === "forest_path" || scene === "forest_clear") && (() => {
+            const hs = scene === "area3" ? A3_HOTSPOTS : scene === "route2" ? R2_HOTSPOTS : scene === "shore" ? SHORE_HOTSPOTS : scene === "forest_path" ? FP_HOTSPOTS : scene === "forest_clear" ? FC_HOTSPOTS : R1_HOTSPOTS;
             return (
               <>
                 {/* Disturbance hotspots — 5-tier rarity-animated encounter circles */}
@@ -8130,7 +8285,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
 
                 {journalTab === "guide" && (() => {
                   // ── helpers ────────────────────────────────────────────────────
-                  const allMons = [...BESTIARY, ...BESTIARY_R2, ...BESTIARY_A3, ...BESTIARY_SHORE];
+                  const allMons = [...BESTIARY, ...BESTIARY_R2, ...BESTIARY_A3, ...BESTIARY_SHORE, ...BESTIARY_FP, ...BESTIARY_FC];
                   const monById: Record<string, { name:string; type:string }> = {};
                   allMons.forEach(m => { monById[m.id] = { name:m.name, type:m.type }; });
                   EVO_TABLE.forEach(e => { if (!monById[e.to.id]) monById[e.to.id] = { name:e.to.name, type:e.to.type }; });
@@ -8203,6 +8358,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                             { label:"Eastern Path",      mons:BESTIARY_R2,    accent:"#40a8ff" },
                             { label:"Westwood Reaches",  mons:BESTIARY_A3,    accent:"#c070ff" },
                             { label:"Tidemark Shore",    mons:BESTIARY_SHORE, accent:"#40d0e0" },
+                            { label:"Forest Path",       mons:BESTIARY_FP,    accent:"#58a838" },
+                            { label:"Forest Clearing",   mons:BESTIARY_FC,    accent:"#80d048" },
                           ]).map(({ label, mons, accent }) => {
                             const uniq = mons.filter((m,i,a) => a.findIndex(x => x.name === m.name) === i);
                             return (
@@ -8302,7 +8459,9 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                     { id:"jay",       label:"Jay",            x:256, y:88,  w:26, h:26, color:"#a8c8d0", textColor:"#102030", shape:"diamond" },
                     { id:"ellio",     label:"Ellio",          x:116, y:128, w:26, h:26, color:"#c8d0a8", textColor:"#202810", shape:"diamond" },
                     { id:"lia",       label:"Lia",            x:290, y:148, w:26, h:26, color:"#d0b8a8", textColor:"#301808", shape:"diamond" },
-                    { id:"route1",    label:"Whisperroot",    sublabel:"Trail", x:148, y:52, w:90, h:70, color:"#70b858", textColor:"#0a2006" },
+                    { id:"route1",    label:"Whisperroot",    sublabel:"Trail",    x:148, y:52,   w:90, h:70, color:"#70b858", textColor:"#0a2006" },
+                    { id:"forest_path",  label:"Forest",     sublabel:"Path",     x:148, y:-18,  w:90, h:65, color:"#3a7828", textColor:"#d0f0b0" },
+                    { id:"forest_clear", label:"Forest",     sublabel:"Clearing", x:148, y:-88,  w:90, h:65, color:"#508838", textColor:"#d0f0b0" },
                     { id:"route2",    label:"Eastern",        sublabel:"Path",  x:290, y:70, w:88, h:110, color:"#5890d0", textColor:"#041830" },
                     { id:"area3",     label:"Westwood",       sublabel:"Reaches", x:36, y:52, w:100, h:110, color:"#9060d0", textColor:"#180830" },
                     { id:"shore",     label:"Tidemark",       sublabel:"Shore", x:36, y:168, w:100, h:70, color:"#40c0d8", textColor:"#042030" },
@@ -8313,6 +8472,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                     ["overworld","home"], ["overworld","lab"], ["overworld","maya"],
                     ["overworld","jay"], ["overworld","ellio"], ["overworld","lia"],
                     ["area3","shore"], ["route2","farm"],
+                    ["route1","forest_path"], ["forest_path","forest_clear"],
                   ];
                   const vb = { w: 420, h: 270 };
                   function cx(r: typeof REGIONS[0]) { return r.x + r.w/2; }
@@ -8324,9 +8484,9 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                         Discovered regions glow — unexplored areas remain dim
                       </div>
                       <div style={{ position:"relative", width:"100%", borderRadius:10, overflow:"hidden", border:"1px solid rgba(100,64,20,0.3)", background:"rgba(20,12,4,0.85)" }}>
-                        <svg viewBox={`0 0 ${vb.w} ${vb.h}`} style={{ width:"100%", display:"block" }}>
-                          <rect x={0} y={0} width={vb.w} height={vb.h} fill="#0a1830"/>
-                          <rect x={0} y={0} width={vb.w} height={vb.h} fill="url(#oceanLinesM)" opacity={0.18}/>
+                        <svg viewBox={`0 -115 ${vb.w} ${vb.h + 115}`} style={{ width:"100%", display:"block" }}>
+                          <rect x={0} y={-115} width={vb.w} height={vb.h + 115} fill="#0a1830"/>
+                          <rect x={0} y={-115} width={vb.w} height={vb.h + 115} fill="url(#oceanLinesM)" opacity={0.18}/>
                           <defs>
                             <pattern id="oceanLinesM" x={0} y={0} width={16} height={16} patternUnits="userSpaceOnUse">
                               <line x1={0} y1={8} x2={16} y2={8} stroke="#4090c0" strokeWidth={0.5}/>
@@ -8387,7 +8547,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                         ))}
                       </div>
                       <div style={{ fontSize:7, color:"#5a4020", textAlign:"center", letterSpacing:0.5 }}>
-                        {visitedScenes.size} of {12} regions explored
+                        {visitedScenes.size} of {14} regions explored
                       </div>
                     </div>
                   );
