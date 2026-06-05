@@ -1009,9 +1009,9 @@ const TR_WEST_EXIT: Rect    = [0,   280, 30,  580];  // right wing west → town
 const TR_SPAWN = { x: 80, y: 432 };     // spawn in right wing (arriving from west)
 const FARM_FROM_TOWN_SPAWN = { x: 679, y: 50 };  // spawn near top of farm from town
 // NPC world positions (farm scene)
-let SHELLA_POS = { x: 536, y: 487 };   // shell vendor — left side near house
-let RUNRIK_POS = { x: 761, y: 420 };   // rune vendor — centre-right
-let MAREN_POS  = { x: 889, y: 525 };   // berry elder — right side
+let SHELLA_POS = { x: 363, y: 372 };   // shell vendor — left side near house
+let RUNRIK_POS = { x: 1060, y: 488 };  // rune vendor — centre-right
+let MAREN_POS  = { x: 855, y: 309 };   // berry elder — right side
 // Farm animal decorations (src, world x/y, display size)
 const FARM_ANIMALS: { src: string; x: number; y: number; w: number; h: number }[] = [
   { src: "/__mockup/images/chicken1.png", x: 435, y: 608, w: 50, h: 50 },
