@@ -3923,7 +3923,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       companionCount: r.xpGained > 0 ? caughtPartyRef.current.length : 0,
     };
     const evo = evoTarget;
-    if (evo && r.xpGained > 0) {
+    // Skip evo overlay if it already played in-battle (evoShownInBattle flag)
+    if (evo && r.xpGained > 0 && !(result.kind === "trainerWin" && result.evoShownInBattle)) {
       pendingEvoDataRef.current = reportData;
       window.setTimeout(() => setPendingEvo(evo), 1000);
     } else if (r.xpGained > 0) {
@@ -3975,6 +3976,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           bench={battleBench}
           onConsumeShell={() => setShellCount(c => Math.max(0, c - 1))}
           onEnd={handleTrainerEnd}
+          onMonDefeated={(accXp) => {
+            if (!starter) return null;
+            const r = calcBattleXp(accXp, role.xpMult, starterLevel, starterXp, starterMoves);
+            const evo = checkStarterEvo(r.newLevel);
+            if (!evo) return null;
+            return { pre: starter as StarterSpec, post: evo };
+          }}
           berries={{ dusk:duskberries, thorn:thornberries, calm:calmberries, bright:brightberries }}
           onUseBerry={type => {
             if (type === "dusk")   setDuskberries(n => Math.max(0, n - 1));

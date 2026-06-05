@@ -164,7 +164,7 @@ export type BattleResult =
   | { kind: "fled";       shellsSet: number }
   | { kind: "fainted";    shellsSet: number }
   | { kind: "ko";         mon: MonSpec; shellsSet: number; xpGained: number; participants?: number[] }
-  | { kind: "trainerWin"; shellsSet: number; xpGained: number; participants?: number[] };
+  | { kind: "trainerWin"; shellsSet: number; xpGained: number; participants?: number[]; evoShownInBattle?: boolean };
 
 export type StarterStats = { hp: number; atk: number; def: number; spd: number };
 
@@ -210,6 +210,10 @@ type Props = {
   slottedPrismStoneId?: PrismStoneId | null;
   onConsumeShell: () => void;
   onEnd: (r: BattleResult) => void;
+  /** Called when a trainer mon is KO'd mid-battle (more remain). Receives
+   *  accumulated XP so far. Return evo specs to show the in-battle evo cutscene
+   *  before the next mon appears; return null to skip (no evo). */
+  onMonDefeated?: (accXp: number) => { pre: StarterSpec; post: StarterSpec } | null;
   /** Hollis field-berries available in battle */
   berries?: { dusk: number; thorn: number; calm: number; bright: number };
   onUseBerry?: (type: "dusk" | "thorn" | "calm" | "bright") => void;
@@ -235,7 +239,7 @@ export function BattleScene({
   keeperTeam, keeperMonLevels, bench,
   slottedRuneId,
   slottedPrismStoneId,
-  onConsumeShell, onEnd,
+  onConsumeShell, onEnd, onMonDefeated,
   berries, onUseBerry,
 }: Props) {
   const isKeeper = opponentKind === "keeper";
@@ -329,6 +333,13 @@ export function BattleScene({
   const [summon,   setSummon]   = useState(true);
   // Quick dodge state for the wild when it feints a strike.
   const [feinting, setFeinting] = useState(false);
+  // Player mon sidestep dodge (speed-based avoidance of wild attacks).
+  const [playerDodge, setPlayerDodge] = useState(false);
+  // In-battle evo overlay — shown between trainer swaps when a mon evolves.
+  const [pendingBattleEvo, setPendingBattleEvo] = useState<{
+    pre: StarterSpec; post: StarterSpec; nextIdx: number; nextMon: MonSpec;
+  } | null>(null);
+  const evoShownRef = useRef(false); // prevents double-show in WalkDemo post-battle
   const fxIdRef = useRef(1);
   const nextFxId = () => ++fxIdRef.current;
 
@@ -513,9 +524,20 @@ export function BattleScene({
 
       // Rune: evasion — 25% chance to dodge any incoming attack
       if (slottedRuneId === "evasion" && Math.random() < 0.25) {
+        setPlayerDodge(true);
         setLog(`${currentOpponent.name} uses ${move.name} — ${active.name} evades it!`);
-        later(() => { setHealCd(c => Math.max(0, c - 1)); setBusy(false); afterCb?.(); }, 700);
+        later(() => { setPlayerDodge(false); setHealCd(c => Math.max(0, c - 1)); setBusy(false); afterCb?.(); }, 700);
         return;
+      }
+      // Speed-based natural dodge — faster mons sidestep sluggish attackers.
+      {
+        const dodgeChance = Math.max(0, Math.min(0.22, (active.stats.spd - 6) * 0.015));
+        if (dodgeChance > 0 && Math.random() < dodgeChance) {
+          setPlayerDodge(true);
+          setLog(`${currentOpponent.name} uses ${move.name} — ${active.name} dodges nimbly!`);
+          later(() => { setPlayerDodge(false); setHealCd(c => Math.max(0, c - 1)); setBusy(false); afterCb?.(); }, 700);
+          return;
+        }
       }
       // Accuracy check.
       if (Math.random() * 100 > move.accuracy) {
@@ -612,19 +634,28 @@ export function BattleScene({
         if (next === 0) {
           const monXp = xpFor(currentOpponent, false);
           if (isKeeper && keeperTeam && trainerMonIdx < keeperTeam.length - 1) {
-            // More trainer mons — accumulate XP and switch to next
+            // More trainer mons — accumulate XP, check for mid-battle evo, then switch
             trainerXpRef.current += monXp;
             const nextIdx = trainerMonIdx + 1;
             const nextMon = keeperTeam[nextIdx];
-            later(() => {
-              setLog(`${currentOpponent.name} is down! (+${monXp} XP) — ${keeperName} sends out ${nextMon.name}!`);
-              setWildHp(nextMon.maxHp);
-              wildHpRef.current = nextMon.maxHp;
-              setBuffs(b => ({ ...b, wAtk: 0, wDef: 0 }));
-              setTrainerMonIdx(nextIdx);
-              setMenu("root");
-              setBusy(false);
-            }, 1400);
+            const evoData = onMonDefeated?.(trainerXpRef.current) ?? null;
+            if (evoData) {
+              evoShownRef.current = true;
+              later(() => {
+                setLog(`${currentOpponent.name} is down! — ${active.name} is evolving!`);
+                setPendingBattleEvo({ ...evoData, nextIdx, nextMon });
+              }, 900);
+            } else {
+              later(() => {
+                setLog(`${currentOpponent.name} is down! (+${monXp} XP) — ${keeperName} sends out ${nextMon.name}!`);
+                setWildHp(nextMon.maxHp);
+                wildHpRef.current = nextMon.maxHp;
+                setBuffs(b => ({ ...b, wAtk: 0, wDef: 0 }));
+                setTrainerMonIdx(nextIdx);
+                setMenu("root");
+                setBusy(false);
+              }, 1400);
+            }
           } else {
             // Last mon — resolve battle
             const totalXp = trainerXpRef.current + monXp;
@@ -637,7 +668,7 @@ export function BattleScene({
               setMenu("ended");
               later(() => onEnd(
                 isKeeper && keeperTeam
-                  ? { kind: "trainerWin", shellsSet: shellsSetRef.current, xpGained: totalXp, participants }
+                  ? { kind: "trainerWin", shellsSet: shellsSetRef.current, xpGained: totalXp, participants, evoShownInBattle: evoShownRef.current }
                   : { kind: "ko", mon: currentOpponent, shellsSet: shellsSetRef.current, xpGained: monXp, participants }
               ), 1100);
             }, 650);
@@ -1023,7 +1054,8 @@ export function BattleScene({
             animation: intro
               ? "introFloat 1.1s ease-out"
               : feinting ? "feintDodge 0.6s ease-out"
-              : (wildShake || "none"),
+              : shake === "wild" ? "shakeFx 0.32s"
+              : "idleBob 2.2s ease-in-out infinite",
             opacity: wildAbsorbed ? 0 : (wildHp === 0 ? 0.3 : 1),
             transition:"opacity 0.45s",
           }}>
@@ -1132,8 +1164,11 @@ export function BattleScene({
         <div style={standOn(POS.mon, formWidthPct(active.id, 24), 3, formAnchor(active.id, 80))}>
           <div style={{
             width:"100%", height:"100%",
-            animation: intro ? "introSlide 1.1s ease-out" : (playerShake || "none"),
-            animationDelay: intro ? "0.15s" : undefined,
+            animation: intro ? "introSlide 1.1s ease-out"
+              : playerDodge ? "playerDodge 0.55s ease-out"
+              : shake === "player" ? "shakeFx 0.32s"
+              : "idleBob 2.2s ease-in-out infinite",
+            animationDelay: intro ? "0.15s" : (!playerDodge && shake !== "player") ? "0.6s" : undefined,
           }}>
             {active.sheet ? (
               <div role="img" aria-label={active.name} style={{
@@ -1602,10 +1637,32 @@ export function BattleScene({
         )}
       </div>
 
+      {/* In-battle evolution cutscene — shown between trainer mon swaps */}
+      {pendingBattleEvo && (
+        <InBattleEvoOverlay
+          pre={pendingBattleEvo.pre}
+          post={pendingBattleEvo.post}
+          imgBase="/__mockup/images/"
+          onComplete={() => {
+            const { nextIdx, nextMon } = pendingBattleEvo;
+            setPendingBattleEvo(null);
+            setLog(`${keeperName} sends out ${nextMon.name}!`);
+            setWildHp(nextMon.maxHp);
+            wildHpRef.current = nextMon.maxHp;
+            setBuffs(b => ({ ...b, wAtk: 0, wDef: 0 }));
+            setTrainerMonIdx(nextIdx);
+            setMenu("root");
+            setBusy(false);
+          }}
+        />
+      )}
+
       <style>{`
         @keyframes introSlide { 0%{transform:translateX(-200px);opacity:0} 100%{transform:translateX(0);opacity:1} }
         @keyframes introFloat { 0%{transform:translateY(-30px);opacity:0} 100%{transform:translateY(0);opacity:1} }
         @keyframes shakeFx    { 0%{transform:translate(0,0)} 20%{transform:translate(-7px,3px)} 45%{transform:translate(7px,-3px)} 65%{transform:translate(-5px,2px)} 82%{transform:translate(3px,-1px)} 100%{transform:translate(0,0)} }
+        @keyframes idleBob    { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
+        @keyframes playerDodge { 0%{transform:translateX(0) scaleX(1)} 28%{transform:translateX(-16px) scaleX(0.9)} 62%{transform:translateX(-12px) scaleX(0.93)} 100%{transform:translateX(0) scaleX(1)} }
 
         /* Attack streaks — origin set inline */
         @keyframes slashRight {
@@ -1923,3 +1980,158 @@ function confirmBtn(color: string): React.CSSProperties {
     cursor:"pointer",
   };
 }
+
+// ── In-Battle Evolution Overlay ─────────────────────────────────────────────
+// Self-contained (no circular import from EvoScene). Shown mid-battle between
+// trainer mon swaps when the player's starter crosses an evolution threshold.
+const EVO_GOLD  = "brightness(0) invert(1) sepia(1) saturate(5) hue-rotate(-12deg)";
+const EVO_WHITE = "brightness(0) invert(1)";
+
+function InBattleEvoOverlay({
+  pre, post, imgBase, onComplete,
+}: { pre: StarterSpec; post: StarterSpec; imgBase: string; onComplete: () => void }) {
+  type Ph = "rise"|"flash"|"whitein"|"sil"|"reveal"|"plate";
+  const [ph, setPh] = useState<Ph>("rise");
+  const doneRef = useRef(false);
+
+  useEffect(() => {
+    if (doneRef.current) return;
+    const ids: number[] = [];
+    const at = (ms: number, fn: () => void) => { ids.push(window.setTimeout(fn, ms)); };
+    at(700,  () => setPh("flash"));
+    at(2500, () => setPh("whitein"));
+    at(3100, () => setPh("sil"));
+    at(3900, () => setPh("reveal"));
+    at(4700, () => setPh("plate"));
+    at(6200, () => { doneRef.current = true; onComplete(); });
+    return () => ids.forEach(clearTimeout);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const preVis   = ph === "rise" || ph === "flash" || ph === "whitein";
+  const postVis  = ph === "sil" || ph === "reveal" || ph === "plate";
+  const beamOn   = ph === "rise" || ph === "flash";
+  const whiteOp  = ph === "whitein" ? 1 : 0;
+  const whiteTr  = ph === "whitein" ? "opacity 0.6s ease-in" : "opacity 0.6s ease-out";
+  const monFilter =
+    ph === "sil"    ? EVO_GOLD :
+    ph === "reveal" ? "drop-shadow(0 0 22px #ffd060) drop-shadow(0 0 55px #ff9010)" :
+    ph === "plate"  ? "drop-shadow(0 0 14px #ffc030)" : "none";
+
+  const monAnim =
+    ph === "rise"    ? "ievoMonIn 0.65s ease-out forwards" :
+    ph === "flash"   ? "ievoFlash 1.8s linear forwards" :
+    ph === "whitein" ? "ievoPreFade 0.6s ease-in forwards" :
+    ph === "sil"     ? "ievoMonIn 0.85s ease-out forwards" :
+    ph === "reveal"  ? "ievoReveal 1s ease-out forwards" :
+                       "ievoFloat 3s ease-in-out infinite";
+
+  const renderMon = (spec: StarterSpec, visible: boolean, filter?: string) => {
+    if (!visible) return null;
+    const style: React.CSSProperties = {
+      position:"absolute",
+      width:"min(220px,48vw)", height:"min(220px,48vw)",
+      marginLeft:"max(-110px,-24vw)", marginTop:"max(-110px,-24vw)",
+      zIndex:3, pointerEvents:"none",
+      animation: monAnim,
+      ...(filter ? { filter } : {}),
+    };
+    if (spec.sheet) {
+      return (
+        <div style={{ ...style, display:"flex", alignItems:"center", justifyContent:"center" }}>
+          <div style={{ height:"100%", aspectRatio:`${spec.sheet.w}/${spec.sheet.h}`, ...sheetBgStyle(spec.sheet) }}/>
+        </div>
+      );
+    }
+    const src = spec.img.startsWith("http") ? spec.img : `${imgBase}${spec.img.replace(/^\.\/images\//, "").replace(/^\/__mockup\/images\//, "")}`;
+    return <img src={src} alt={spec.name} style={{ ...style, objectFit:"contain" }}/>;
+  };
+
+  return (
+    <div style={{
+      position:"fixed", inset:0, zIndex:200, overflow:"hidden",
+      background:"radial-gradient(ellipse at 50% 60%, #130920 0%, #04020c 100%)",
+      animation:"ievoFadeIn 0.4s ease-out",
+    }}>
+      {beamOn && (
+        <div style={{
+          position:"absolute", left:"50%", top:0,
+          width:"min(8px,2vw)", height:"100%",
+          transform:"translateX(-50%)",
+          background:"linear-gradient(180deg, transparent, #ffe060bb 20%, #fff8c0 50%, #ffe060bb 80%, transparent)",
+          filter:"blur(4px)", opacity:0.75,
+          animation:"ievoBeam 1.5s ease-in-out infinite",
+          pointerEvents:"none", zIndex:1,
+        }}/>
+      )}
+      <div style={{
+        position:"absolute", left:"50%", top:"42%",
+        width:"min(280px,60vw)", height:"min(280px,60vw)",
+        marginLeft:"max(-140px,-30vw)", marginTop:"max(-140px,-30vw)",
+        borderRadius:"50%",
+        border:`2px solid rgba(255,200,60,${ph==="rise"?0.7:0.9})`,
+        boxShadow:"0 0 34px #ffe060, 0 0 90px rgba(255,180,30,0.55)",
+        animation: ph==="flash" ? "ievoRingFlash 1.05s ease-in-out infinite" : "ievoRingBreath 3s ease-in-out infinite",
+        pointerEvents:"none",
+      }}/>
+      <div style={{ position:"absolute", left:"50%", top:"42%", width:0, height:0 }}>
+        {renderMon(pre, preVis)}
+        {postVis && renderMon(post, true, monFilter)}
+      </div>
+      <div style={{
+        position:"absolute", inset:0, background:"#fff",
+        opacity:whiteOp, transition:whiteTr,
+        pointerEvents:"none", zIndex:10,
+      }}/>
+      {ph === "plate" && (
+        <div style={{
+          position:"absolute", bottom:"9%", left:0, right:0,
+          textAlign:"center", zIndex:20, padding:"0 24px",
+          animation:"ievoNameplate 0.65s cubic-bezier(.3,.7,.4,1)",
+        }}>
+          <div style={{ fontSize:9, letterSpacing:3.8, color:"#9a7850", fontWeight:900, textTransform:"uppercase", marginBottom:10 }}>
+            ✦  BOND AWAKENING  ✦
+          </div>
+          <div style={{ fontSize:13, color:"#a09080", fontWeight:700, marginBottom:2 }}>{pre.name}</div>
+          <div style={{ fontSize:16, color:"#ffd060", fontWeight:900, letterSpacing:1.5, textShadow:"0 0 16px #ffb030, 0 0 44px #ff7000", margin:"4px 0 6px" }}>
+            evolved into
+          </div>
+          <div style={{ fontSize:30, color:"#fff", fontWeight:900, letterSpacing:0.5, lineHeight:1.1, textShadow:"0 0 22px #ffd060, 0 0 70px #ffb030" }}>
+            {post.name}
+          </div>
+          <div style={{
+            marginTop:12, display:"inline-block", padding:"4px 20px",
+            background:`linear-gradient(90deg, transparent, ${post.color}55, transparent)`,
+            border:`1px solid ${post.color}99`, borderRadius:26,
+            fontSize:10, color:post.color,
+            fontWeight:900, letterSpacing:2.8, textTransform:"uppercase",
+            textShadow:`0 0 10px ${post.color}`,
+          }}>{post.type}</div>
+        </div>
+      )}
+      <div style={{
+        position:"absolute", bottom:"5%", left:0, right:0,
+        textAlign:"center", zIndex:21, opacity: ph==="plate" ? 1 : 0,
+        transition:"opacity 0.6s 0.8s",
+      }}>
+        {ph === "plate" && (
+          <div style={{ fontSize:10, color:"rgba(255,220,140,0.6)", letterSpacing:1.5 }}>
+            battle continues…
+          </div>
+        )}
+      </div>
+      <style>{`
+        @keyframes ievoFadeIn     { from{opacity:0} to{opacity:1} }
+        @keyframes ievoBeam       { 0%,100%{opacity:0.6} 50%{opacity:1} }
+        @keyframes ievoRingBreath { 0%,100%{opacity:0.85} 50%{opacity:1} }
+        @keyframes ievoRingFlash  { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.62;transform:scale(1.04)} }
+        @keyframes ievoMonIn      { 0%{transform:scale(0.42) translateY(44px);opacity:0} 62%{transform:scale(1.08) translateY(-6px);opacity:1} 100%{transform:scale(1) translateY(0);opacity:1} }
+        @keyframes ievoFlash      { 0%{filter:none;opacity:1} 14%{filter:${EVO_WHITE}} 28%{filter:${EVO_GOLD}} 56%{filter:${EVO_WHITE}} 84%{filter:${EVO_GOLD}} 100%{filter:${EVO_WHITE};opacity:0.45} }
+        @keyframes ievoPreFade    { from{filter:${EVO_WHITE};opacity:0.45} to{filter:${EVO_WHITE};opacity:0} }
+        @keyframes ievoReveal     { 0%{filter:${EVO_GOLD};transform:scale(1.14)} 100%{filter:drop-shadow(0 0 22px #ffd060);transform:scale(1)} }
+        @keyframes ievoFloat      { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-9px)} }
+        @keyframes ievoNameplate  { from{transform:translateY(30px);opacity:0} to{transform:translateY(0);opacity:1} }
+      `}</style>
+    </div>
+  );
+}
+
