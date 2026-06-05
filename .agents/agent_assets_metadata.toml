@@ -1020,6 +1020,12 @@ uri = "file://attached_assets/prism_obsidian.png"
 type = "image"
 title = "generated_image"
 
+[[generated]]
+id = "8tVE4rHvwNynpPgnBUAe7"
+uri = "file://attached_assets/town-left-regen.png"
+type = "image"
+title = "generated_image"
+
 [[outputs]]
 id = "hj9mwcgl1Uv9QQTG9g6KL"
 uri = "file://kinju_walk_demo.tar.gz"
