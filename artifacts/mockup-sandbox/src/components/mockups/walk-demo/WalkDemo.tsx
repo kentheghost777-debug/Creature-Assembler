@@ -425,19 +425,22 @@ const AUREYVANT_SPEC: MonSpec = { ...WYVRUNT_SPEC, id:"aureyvant", name:"DiviniD
 const WYV_FORMS: MonSpec[] = [WYVRUNT_SPEC, WYRNAK_SPEC, WYRVAST_SPEC, AUREYVANT_SPEC];
 
 // ── Area 3 trainer battle MonSpecs ───────────────────────────────────────────
-// Jay's team (Spirit-type Foxin as anchor + escalating support). We reuse
-// wild/player images already loaded for the bestiary — no new assets needed.
-const TR_FOXIN:  MonSpec = { id:"tr_foxin",  name:"Foxin",    type:"Spirit",    rarity:"uncommon", wildImg:"/__mockup/images/vixgrim.png",          playerImg:"/__mockup/images/vixgrim.png",          wildFaces:"left", playerFaces:"left", maxHp:58,  baseDmg:[6,12] };
-const TR_STONUB: MonSpec = { id:"tr_stonub", name:"Stonub",   type:"Volcanic",  rarity:"uncommon", wildImg:"/__mockup/images/stonub-wild.png",       playerImg:"/__mockup/images/stonub-player.png",    wildFaces:"left", playerFaces:"left", maxHp:66,  baseDmg:[7,13] };
-const TR_SAVEN:  MonSpec = { id:"tr_saven",  name:"Scavencrow",type:"Abyss",    rarity:"uncommon", wildImg:"/__mockup/images/scavencrow-wild.png",   playerImg:"/__mockup/images/scavencrow-player.png",wildFaces:"left", playerFaces:"left", maxHp:62,  baseDmg:[7,14] };
-const TR_MENTY:  MonSpec = { id:"tr_menty",  name:"Mentyke",  type:"Mind",      rarity:"ultra",    wildImg:"/__mockup/images/mentyke-wild-a.png",    playerImg:"/__mockup/images/mentyke-wild-b.png",   wildFaces:"left", playerFaces:"left", maxHp:80,  baseDmg:[8,16] };
-// Lia's team (Oceanic Cunbubble as anchor + Nature/Storm support).
-const TR_CUNB:   MonSpec = { id:"tr_cunb",   name:"Cunbubble",type:"Oceanic",   rarity:"uncommon", wildImg:"/__mockup/images/phantorch.png",          playerImg:"/__mockup/images/phantorch.png",         wildFaces:"left", playerFaces:"left", maxHp:58,  baseDmg:[6,12] };
-const TR_DRIFT:  MonSpec = { id:"tr_drift",  name:"Driftpaw", type:"Skyborne",  rarity:"uncommon", wildImg:"/__mockup/images/driftpaw-wild.png", playerImg:"/__mockup/images/driftpaw-player.png", wildFaces:"left", playerFaces:"left", maxHp:56,  baseDmg:[6,11] };
-const TR_SPRIG:  MonSpec = { id:"tr_sprig",  name:"Sprigget", type:"Nature",    rarity:"common",   wildImg:"", playerImg:"",                          wildSheet:{ url:"/__mockup/images/a3-wild-sheet.png", x:0, y:0, w:512, h:384, sheetW:1024, sheetH:1536 }, playerSheet:{ url:"/__mockup/images/a3-wild-sheet.png", x:0, y:0, w:512, h:384, sheetW:1024, sheetH:1536 }, wildFaces:"left", playerFaces:"left", maxHp:52, baseDmg:[5,10] };
-const TR_MURK:   MonSpec = { id:"tr_murk",   name:"Murkspine",type:"Abyss",    rarity:"rare",     wildImg:"", playerImg:"",                          wildSheet:{ url:"/__mockup/images/a3-new-sheet.png", x:512, y:0, w:512, h:512, sheetW:1536, sheetH:1024 }, playerSheet:{ url:"/__mockup/images/a3-new-sheet.png", x:512, y:0, w:512, h:512, sheetW:1536, sheetH:1024 }, wildFaces:"left", playerFaces:"left", maxHp:78, baseDmg:[8,15] };
-// Lia's blue-and-grey Wyvburn (Draco) — her ace, strongest battle companion.
-const TR_CINDRAX: MonSpec = { id:"tr_cindrax", name:"Cindrax", type:"Chaos", rarity:"apex", wildImg:"/__mockup/images/cindrax.png", playerImg:"/__mockup/images/cindrax.png", wildFaces:"left", playerFaces:"left", maxHp:92, baseDmg:[12,19] };
+// Jay's team — Spirit anchor + escalating support; evo forms unlock at tier 2+
+const TR_FOXIN:      MonSpec = { id:"tr_foxin",     name:"Foxin",     type:"Spirit",     rarity:"uncommon", wildImg:"/__mockup/images/vixgrim.png",           playerImg:"/__mockup/images/vixgrim.png",           wildFaces:"left", playerFaces:"left", maxHp:58,  baseDmg:[6,12] };
+const TR_FOXIN_EVO:  MonSpec = { id:"tr_foxin_evo", name:"Vixgrim",   type:"Spirit",     rarity:"rare",     wildImg:"/__mockup/images/vixgrim.png",           playerImg:"/__mockup/images/vixgrim.png",           wildFaces:"left", playerFaces:"left", maxHp:76,  baseDmg:[9,16] };
+const TR_STONUB:     MonSpec = { id:"tr_stonub",    name:"Stonub",    type:"Volcanic",   rarity:"uncommon", wildImg:"/__mockup/images/stonub-wild.png",        playerImg:"/__mockup/images/stonub-player.png",     wildFaces:"left", playerFaces:"left", maxHp:66,  baseDmg:[7,13] };
+const TR_STONUB_EVO: MonSpec = { id:"tr_stonub_evo",name:"Stonbrute", type:"Earthbound", rarity:"rare",     wildImg:"/__mockup/images/stonebrute-wild.png",   playerImg:"/__mockup/images/stonebrute-wild.png",   wildFaces:"left", playerFaces:"left", maxHp:86,  baseDmg:[8,14] };
+const TR_SAVEN:      MonSpec = { id:"tr_saven",     name:"Scavencrow",type:"Abyss",      rarity:"uncommon", wildImg:"/__mockup/images/scavencrow-wild.png",   playerImg:"/__mockup/images/scavencrow-player.png", wildFaces:"left", playerFaces:"left", maxHp:62,  baseDmg:[7,14] };
+const TR_MENTY:      MonSpec = { id:"tr_menty",     name:"Mentyke",   type:"Mind",       rarity:"ultra",    wildImg:"/__mockup/images/mentyke-wild-a.png",    playerImg:"/__mockup/images/mentyke-wild-b.png",    wildFaces:"left", playerFaces:"left", maxHp:80,  baseDmg:[8,16] };
+// Lia's team — Oceanic anchor + escalating support; evo forms unlock at tier 2+
+const TR_CUNB:       MonSpec = { id:"tr_cunb",      name:"Cunbubble", type:"Oceanic",    rarity:"uncommon", wildImg:"/__mockup/images/phantorch.png",          playerImg:"/__mockup/images/phantorch.png",         wildFaces:"left", playerFaces:"left", maxHp:58,  baseDmg:[6,12] };
+const TR_DRIFT:      MonSpec = { id:"tr_drift",     name:"Driftpaw",  type:"Skyborne",   rarity:"uncommon", wildImg:"/__mockup/images/driftpaw-wild.png",      playerImg:"/__mockup/images/driftpaw-player.png",   wildFaces:"left", playerFaces:"left", maxHp:56,  baseDmg:[6,11] };
+const TR_DRIFT_EVO:  MonSpec = { id:"tr_drift_evo", name:"Galerix",   type:"Skyborne",   rarity:"ultra",    wildImg:"/__mockup/images/galerix-wild.png",      playerImg:"/__mockup/images/galerix-wild.png",      wildFaces:"left", playerFaces:"left", maxHp:80,  baseDmg:[9,15] };
+const TR_SPRIG:      MonSpec = { id:"tr_sprig",     name:"Sprigget",  type:"Nature",     rarity:"common",   wildImg:"", playerImg:"", wildSheet:{ url:"/__mockup/images/a3-wild-sheet.png", x:0, y:0, w:512, h:384, sheetW:1024, sheetH:1536 }, playerSheet:{ url:"/__mockup/images/a3-wild-sheet.png", x:0, y:0, w:512, h:384, sheetW:1024, sheetH:1536 }, wildFaces:"left", playerFaces:"left", maxHp:52, baseDmg:[5,10] };
+const TR_EMBVEIL:    MonSpec = { id:"tr_embveil",   name:"Emberveil", type:"Volcanic",   rarity:"ultra",    wildImg:"/__mockup/images/emberveil-wild.png",    playerImg:"/__mockup/images/emberveil-wild.png",    wildFaces:"left", playerFaces:"left", maxHp:84,  baseDmg:[9,16] };
+const TR_MURK:       MonSpec = { id:"tr_murk",      name:"Murkspine", type:"Abyss",      rarity:"rare",     wildImg:"", playerImg:"", wildSheet:{ url:"/__mockup/images/a3-new-sheet.png", x:512, y:0, w:512, h:512, sheetW:1536, sheetH:1024 }, playerSheet:{ url:"/__mockup/images/a3-new-sheet.png", x:512, y:0, w:512, h:512, sheetW:1536, sheetH:1024 }, wildFaces:"left", playerFaces:"left", maxHp:78, baseDmg:[8,15] };
+// Shared ace
+const TR_CINDRAX:    MonSpec = { id:"tr_cindrax",   name:"Cindrax",   type:"Chaos",      rarity:"apex",     wildImg:"/__mockup/images/cindrax.png",            playerImg:"/__mockup/images/cindrax.png",           wildFaces:"left", playerFaces:"left", maxHp:92,  baseDmg:[12,19] };
 
 // crystalfang.png — 1536×1024 sprite sheet, 2 cols × 1 row, each frame 768×1024
 const _CRYF = "/__mockup/images/crystalfang.png";
@@ -452,49 +455,41 @@ const GLACIA_MON_SPEC: MonSpec = { id:"glacia", name:"Glacia", type:"Frostformed
 const VOLCIA_MON_SPEC: MonSpec = { id:"volcia", name:"Volcia", type:"Volcanic",    rarity:"apex", wildImg:"/__mockup/images/volcia.png",  playerImg:"/__mockup/images/volcia.png",  wildFaces:"right", playerFaces:"right", maxHp:90, baseDmg:[14,22] };
 const FAELIA_MON_SPEC: MonSpec = { id:"faelia", name:"Faelia", type:"Spirit",      rarity:"apex", wildImg:"/__mockup/images/faelia.png",  playerImg:"/__mockup/images/faelia.png",  wildFaces:"right", playerFaces:"right", maxHp:88, baseDmg:[11,21] };
 
+// Team builder: enemy levels track player level so battles always feel relevant
 type TrainerTier = { team: MonSpec[]; levels: number[] };
-function jayA3Team(wins: number): TrainerTier {
-  if (wins === 0) return { team:[TR_FOXIN],                               levels:[12] };
-  if (wins === 1) return { team:[TR_FOXIN, TR_STONUB],                    levels:[18,16] };
-  if (wins === 2) return { team:[TR_FOXIN, TR_STONUB, TR_SAVEN],          levels:[24,22,20] };
-  return            { team:[TR_FOXIN, TR_STONUB, TR_SAVEN, TR_MENTY],     levels:[28,26,24,30] };
+function jayA3Team(wins: number, playerLevel: number): TrainerTier {
+  const lv = (off: number, mn: number, mx: number) => Math.max(mn, Math.min(mx, playerLevel + off));
+  if (wins === 0) return { team:[TR_FOXIN],                                               levels:[lv(2,8,17)] };
+  if (wins === 1) return { team:[TR_FOXIN, TR_STONUB],                                    levels:[lv(3,12,20), lv(3,12,21)] };
+  if (wins === 2) return { team:[TR_FOXIN_EVO, TR_STONUB, TR_SAVEN],                      levels:[lv(4,16,23), lv(3,15,22), lv(3,15,22)] };
+  return             { team:[TR_FOXIN_EVO, TR_STONUB_EVO, TR_SAVEN, TR_PROF_SANCTYKE],   levels:[lv(5,20,25), lv(4,19,25), lv(4,18,24), lv(6,22,27)] };
 }
-function liaA3Team(wins: number): TrainerTier {
-  if (wins === 0) return { team:[TR_CUNB],                                 levels:[12] };
-  if (wins === 1) return { team:[TR_CUNB, TR_DRIFT],                       levels:[18,16] };
-  if (wins === 2) return { team:[TR_CUNB, TR_DRIFT, TR_SPRIG],             levels:[24,22,20] };
-  return            { team:[TR_CUNB, TR_DRIFT, TR_SPRIG, TR_CINDRAX],     levels:[28,26,24,30] };
+function liaA3Team(wins: number, playerLevel: number): TrainerTier {
+  const lv = (off: number, mn: number, mx: number) => Math.max(mn, Math.min(mx, playerLevel + off));
+  if (wins === 0) return { team:[TR_CUNB],                                                 levels:[lv(2,9,18)] };
+  if (wins === 1) return { team:[TR_CUNB, TR_DRIFT],                                       levels:[lv(3,13,21), lv(3,12,20)] };
+  if (wins === 2) return { team:[TR_CUNB, TR_DRIFT_EVO, TR_SPRIG],                         levels:[lv(4,17,23), lv(4,18,24), lv(3,15,22)] };
+  return             { team:[TR_CUNB, TR_DRIFT_EVO, TR_EMBVEIL, TR_CINDRAX],               levels:[lv(4,20,25), lv(5,21,25), lv(4,19,25), lv(7,25,28)] };
 }
 
-// ── Prof. Irwyn shore challenger team (2nd-form mons, high def, earthbound resonance ace) ──
-const TR_PROF_WYRNAK: MonSpec = {
-  id:"tr_wyrnak",   name:"Wyrnak",   type:"Spirit" as const,
-  rarity:"rare" as const,
-  wildImg:"/__mockup/images/wyrnak.png", playerImg:"/__mockup/images/wyrnak.png",
-  wildFaces:"right" as const, playerFaces:"right" as const, maxHp:68, baseDmg:[8,12] as [number,number],
-};
-const TR_PROF_CARAGNAR: MonSpec = {
-  id:"tr_caragnar", name:"Caragnar", type:"Volcanic" as const,
-  rarity:"rare" as const,
-  wildImg:"/__mockup/images/cerepup_evo1.png", playerImg:"/__mockup/images/cerepup_evo1.png",
-  wildFaces:"left" as const, playerFaces:"left" as const, maxHp:72, baseDmg:[7,11] as [number,number],
-};
-const TR_PROF_SANCTYKE: MonSpec = {
-  id:"tr_sanctyke", name:"Sanctyke", type:"Mind" as const,
-  rarity:"rare" as const,
-  wildImg:"/__mockup/images/mentyke_evo1.png", playerImg:"/__mockup/images/mentyke_evo1.png",
-  wildFaces:"left" as const, playerFaces:"left" as const, maxHp:65, baseDmg:[8,13] as [number,number],
-};
-const TR_PROF_GRAVLOCK: MonSpec = {
-  id:"tr_gravlock", name:"Gravlock", type:"Earthbound" as const,
-  rarity:"ultra" as const,
-  wildImg:"/__mockup/images/stonebrute-wild.png", playerImg:"/__mockup/images/stonebrute-wild.png",
-  wildFaces:"left" as const, playerFaces:"left" as const, maxHp:84, baseDmg:[6,10] as [number,number],
-};
-function profShoreTeam(): TrainerTier {
-  return {
+// ── Prof. Irwyn — shore challenger (scales with wins + player level) ──────────
+// wins 0–1 → mid-evo team;  wins 2+ → final-evo team (hardest in the game)
+const TR_PROF_WYRNAK:   MonSpec = { id:"tr_wyrnak",   name:"Wyrnak",   type:"Spirit"     as const, rarity:"rare"  as const, wildImg:"/__mockup/images/wyrnak.png",        playerImg:"/__mockup/images/wyrnak.png",        wildFaces:"right" as const, playerFaces:"right" as const, maxHp:68, baseDmg:[8,12]  as [number,number] };
+const TR_PROF_CARAGNAR: MonSpec = { id:"tr_caragnar", name:"Caragnar", type:"Volcanic"   as const, rarity:"rare"  as const, wildImg:"/__mockup/images/cerepup_evo1.png",  playerImg:"/__mockup/images/cerepup_evo1.png",  wildFaces:"left"  as const, playerFaces:"left"  as const, maxHp:72, baseDmg:[7,11]  as [number,number] };
+const TR_PROF_SANCTYKE: MonSpec = { id:"tr_sanctyke", name:"Sanctyke", type:"Mind"       as const, rarity:"rare"  as const, wildImg:"/__mockup/images/mentyke_evo1.png",  playerImg:"/__mockup/images/mentyke_evo1.png",  wildFaces:"left"  as const, playerFaces:"left"  as const, maxHp:65, baseDmg:[8,13]  as [number,number] };
+const TR_PROF_GRAVLOCK: MonSpec = { id:"tr_gravlock", name:"Gravlock", type:"Earthbound" as const, rarity:"ultra" as const, wildImg:"/__mockup/images/stonebrute-wild.png",playerImg:"/__mockup/images/stonebrute-wild.png",wildFaces:"left" as const, playerFaces:"left"  as const, maxHp:84, baseDmg:[6,10]  as [number,number] };
+const TR_PROF_WYRVAST:  MonSpec = { id:"tr_wyrvast",  name:"Wyvlord",  type:"Chaos"      as const, rarity:"ultra" as const, wildImg:"/__mockup/images/wyrvast.png",        playerImg:"/__mockup/images/wyrvast.png",        wildFaces:"right" as const, playerFaces:"right" as const, maxHp:95, baseDmg:[13,20] as [number,number] };
+const TR_PROF_BIFERNON: MonSpec = { id:"tr_bifernon", name:"Bifernon", type:"Volcanic"   as const, rarity:"ultra" as const, wildImg:"/__mockup/images/cerepup_evo2.png",  playerImg:"/__mockup/images/cerepup_evo2.png",  wildFaces:"left"  as const, playerFaces:"left"  as const, maxHp:98, baseDmg:[12,19] as [number,number] };
+const TR_PROF_LUMAYKE:  MonSpec = { id:"tr_lumayke",  name:"Lumayke",  type:"Mind"       as const, rarity:"ultra" as const, wildImg:"/__mockup/images/mentyke_evo2.png",  playerImg:"/__mockup/images/mentyke_evo2.png",  wildFaces:"left"  as const, playerFaces:"left"  as const, maxHp:88, baseDmg:[12,18] as [number,number] };
+function profShoreTeam(wins: number, playerLevel: number): TrainerTier {
+  const lv = (off: number, mn: number, mx: number) => Math.max(mn, Math.min(mx, playerLevel + off));
+  if (wins <= 1) return {
     team:   [TR_PROF_WYRNAK, TR_PROF_CARAGNAR, TR_PROF_SANCTYKE, TR_PROF_GRAVLOCK],
-    levels: [21, 22, 22, 23],
+    levels: [lv(5,22,27), lv(5,22,27), lv(5,22,27), lv(6,23,28)],
+  };
+  return {
+    team:   [TR_PROF_WYRVAST, TR_PROF_BIFERNON, TR_PROF_LUMAYKE, TR_PROF_GRAVLOCK],
+    levels: [lv(7,26,30), lv(7,26,30), lv(6,25,30), lv(8,27,30)],
   };
 }
 
@@ -5251,7 +5246,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                     setPrimeriaCoin(c => c + SHORE_COIN_GIFT);
                     setProfShorePaid(p => p + 1);
                   }
-                  const tier = profShoreTeam();
+                  const tier = profShoreTeam(profShoreWins, starterLevel);
                   setTrainerEncounter({ trainer: "prof", name: "Prof. Irwyn", team: tier.team, levels: tier.levels });
                   transitionTo("battle", worldPos.current.x, worldPos.current.y);
                 }} style={{ background:"rgba(220,80,40,0.18)", border:"1px solid rgba(220,80,40,0.55)", color:"#e87050", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}>
@@ -5572,7 +5567,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               ) : phase === "jay_a3_d3" ? (
                 <button
                   onClick={() => {
-                    const tier = jayA3Team(jayA3Wins);
+                    const tier = jayA3Team(jayA3Wins, starterLevel);
                     setTrainerEncounter({ trainer:"jay", name:"Jay", team:tier.team, levels:tier.levels });
                     transitionTo("battle", worldPos.current.x, worldPos.current.y);
                   }}
@@ -5621,7 +5616,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               ) : phase === "lia_a3_d3" ? (
                 <button
                   onClick={() => {
-                    const tier = liaA3Team(liaA3Wins);
+                    const tier = liaA3Team(liaA3Wins, starterLevel);
                     setTrainerEncounter({ trainer:"lia", name:"Lia", team:tier.team, levels:tier.levels });
                     transitionTo("battle", worldPos.current.x, worldPos.current.y);
                   }}
@@ -5799,7 +5794,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                 <button
                   onClick={() => {
                     setTrainerEncounter({ trainer:"jerbs", name:"Jerbs",
-                      team:[TR_CRYSTALFANG, TR_CINDRAX], levels:[22, 26] });
+                      team:[TR_CRYSTALFANG, TR_CINDRAX],
+                      levels:[Math.min(28, Math.max(22, starterLevel + 5)), Math.min(30, Math.max(24, starterLevel + 7))] });
                     transitionTo("battle", worldPos.current.x, worldPos.current.y);
                   }}
                   style={{ background:"rgba(220,60,40,0.18)", border:"1px solid rgba(220,60,40,0.55)",
