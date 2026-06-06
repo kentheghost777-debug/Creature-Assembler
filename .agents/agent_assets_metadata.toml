@@ -1260,6 +1260,54 @@ uri = "file://artifacts/primeria/public/images/lumecolt-wild.png"
 type = "image"
 title = "lumecolt radiant horse foal"
 
+[[generated]]
+id = "N0jJSt9rHfEKtt3jnr_gF"
+uri = "file://artifacts/primeria/public/images/mosscap-shell.png"
+type = "image"
+title = "mosscap shell item"
+
+[[generated]]
+id = "5_VDA1GeCelotEn3XUDVS"
+uri = "file://artifacts/primeria/public/images/stormhusk-shell.png"
+type = "image"
+title = "stormhusk shell item"
+
+[[generated]]
+id = "N-tgFIKiFAMsGzG8sN_a8"
+uri = "file://artifacts/primeria/public/images/veilshell.png"
+type = "image"
+title = "veilshell spirit item"
+
+[[generated]]
+id = "mbb71iUm0OXdvN56cNN_V"
+uri = "file://artifacts/primeria/public/images/tideshell.png"
+type = "image"
+title = "tideshell ocean item"
+
+[[generated]]
+id = "1tNVLR4Lc959t51iIBIxw"
+uri = "file://artifacts/primeria/public/images/warden-rune.png"
+type = "image"
+title = "warden rune item"
+
+[[generated]]
+id = "amCJpbNyfzePjCgvH5inc"
+uri = "file://artifacts/primeria/public/images/resonance-rune.png"
+type = "image"
+title = "resonance rune item"
+
+[[generated]]
+id = "f4ZamvNhKBkJ3-eePldXs"
+uri = "file://artifacts/primeria/public/images/soulforge-rune.png"
+type = "image"
+title = "soulforge rune item"
+
+[[generated]]
+id = "DfKo80fRZY1QDak6Q13Rl"
+uri = "file://artifacts/primeria/public/images/bloodvine-rune.png"
+type = "image"
+title = "bloodvine rune item"
+
 [[outputs]]
 id = "hj9mwcgl1Uv9QQTG9g6KL"
 uri = "file://kinju_walk_demo.tar.gz"

@@ -1679,71 +1679,71 @@ type GroundItemType = "bshell" | "brune" | "gear" | "berry";
 type GroundItemDef = {
   id: string; scene: string; wx: number; wy: number;
   itemType: GroundItemType; itemId: string; count: number;
-  label: string; icon: string; color: string; flavor: string;
+  label: string; icon: string; color: string; flavor: string; img?: string;
 };
 const GROUND_ITEMS: readonly GroundItemDef[] = [
   // ── Overworld (1124×900) ──────────────────────────────────────────────────
-  { id:"gi_ow_1",    scene:"overworld",    wx:615, wy:615, itemType:"bshell", itemId:"bshell_moss",     count:1, label:"Mosscap Shell",     icon:"🌿", color:"#5ac070", flavor:"A shell grown from living moss. Left at the edge of the trail." },
-  { id:"gi_ow_2",    scene:"overworld",    wx:870, wy:740, itemType:"berry",  itemId:"dusk",            count:3, label:"Duskberry ×3",       icon:"🍇", color:"#9860d0", flavor:"Three duskberries, ripe and heavy on the vine." },
+  { id:"gi_ow_1",    scene:"overworld",    wx:615, wy:615, itemType:"bshell", itemId:"bshell_moss",     count:1, label:"Mosscap Shell",     icon:"🌿", color:"#5ac070", img:"./images/mosscap-shell.png",   flavor:"A shell grown from living moss. Left at the edge of the trail." },
+  { id:"gi_ow_2",    scene:"overworld",    wx:870, wy:740, itemType:"berry",  itemId:"dusk",            count:3, label:"Duskberry ×3",       icon:"🍇", color:"#9860d0", img:"./images/duskberry.png",        flavor:"Three duskberries, ripe and heavy on the vine." },
   // ── Route 1 (1024×723) ───────────────────────────────────────────────────
-  { id:"gi_r1_1",    scene:"route1",       wx:280, wy:260, itemType:"brune",  itemId:"brune_warden",    count:1, label:"Warden Rune",        icon:"🛡", color:"#60d080", flavor:"A protective rune chiselled from old trail-marker stone." },
-  { id:"gi_r1_2",    scene:"route1",       wx:680, wy:480, itemType:"berry",  itemId:"thorn",           count:2, label:"Thornberry ×2",      icon:"🫐", color:"#e03030", flavor:"Two thornberries caught in the tall grass." },
+  { id:"gi_r1_1",    scene:"route1",       wx:280, wy:260, itemType:"brune",  itemId:"brune_warden",    count:1, label:"Warden Rune",        icon:"🛡", color:"#60d080", img:"./images/warden-rune.png",      flavor:"A protective rune chiselled from old trail-marker stone." },
+  { id:"gi_r1_2",    scene:"route1",       wx:680, wy:480, itemType:"berry",  itemId:"thorn",           count:2, label:"Thornberry ×2",      icon:"🫐", color:"#e03030", img:"./images/thornberry.png",       flavor:"Two thornberries caught in the tall grass." },
   // ── Route 2 (1024×1536) ──────────────────────────────────────────────────
-  { id:"gi_r2_1",    scene:"route2",       wx:310, wy:750, itemType:"bshell", itemId:"bshell_storm",    count:1, label:"Stormhusk",           icon:"⚡", color:"#ffd040", flavor:"A crackling husk left after a Stormproven encounter." },
-  { id:"gi_r2_2",    scene:"route2",       wx:680, wy:1100,itemType:"berry",  itemId:"calm",            count:2, label:"Calmberry ×2",       icon:"🍋", color:"#30b870", flavor:"Calming berries growing by the eastern fence." },
+  { id:"gi_r2_1",    scene:"route2",       wx:310, wy:750, itemType:"bshell", itemId:"bshell_storm",    count:1, label:"Stormhusk",           icon:"⚡", color:"#ffd040", img:"./images/stormhusk-shell.png",  flavor:"A crackling husk left after a Stormproven encounter." },
+  { id:"gi_r2_2",    scene:"route2",       wx:680, wy:1100,itemType:"berry",  itemId:"calm",            count:2, label:"Calmberry ×2",       icon:"🍋", color:"#30b870", img:"./images/calmberry.png",        flavor:"Calming berries growing by the eastern fence." },
   // ── Area 3 — Westwood Reaches (1024×683) ─────────────────────────────────
-  { id:"gi_a3_1",    scene:"area3",        wx:210, wy:440, itemType:"brune",  itemId:"brune_soulforge", count:1, label:"Soulforge Rune",     icon:"✧", color:"#ffd060", flavor:"Ancient rune etched into fallen ruin stone. Glows faintly." },
-  { id:"gi_a3_2",    scene:"area3",        wx:750, wy:210, itemType:"berry",  itemId:"bright",          count:3, label:"Brightberry ×3",     icon:"⭐", color:"#e0c020", flavor:"Brightberries growing in a crack between the ruin walls." },
-  { id:"gi_a3_gear", scene:"area3",        wx:580, wy:550, itemType:"gear",   itemId:"tb_wristband",    count:1, label:"Trailblazer Wraps",  icon:"🪬", color:"#f0c830", flavor:"Wraps etched with ten thousand steps. Kept here a long time." },
+  { id:"gi_a3_1",    scene:"area3",        wx:210, wy:440, itemType:"brune",  itemId:"brune_soulforge", count:1, label:"Soulforge Rune",     icon:"✧", color:"#ffd060", img:"./images/soulforge-rune.png",   flavor:"Ancient rune etched into fallen ruin stone. Glows faintly." },
+  { id:"gi_a3_2",    scene:"area3",        wx:750, wy:210, itemType:"berry",  itemId:"bright",          count:3, label:"Brightberry ×3",     icon:"⭐", color:"#e0c020", img:"./images/brightberry.png",      flavor:"Brightberries growing in a crack between the ruin walls." },
+  { id:"gi_a3_gear", scene:"area3",        wx:580, wy:550, itemType:"gear",   itemId:"tb_wristband",    count:1, label:"Trailblazer Wraps",  icon:"🪬", color:"#f0c830",                                    flavor:"Wraps etched with ten thousand steps. Kept here a long time." },
   // ── Tidemark Shore (1024×717) ────────────────────────────────────────────
-  { id:"gi_sh_1",    scene:"shore",        wx:200, wy:420, itemType:"bshell", itemId:"bshell_tide",     count:1, label:"Tideshell",           icon:"🌊", color:"#3a90ff", flavor:"A shell washed up on the clifftop. Still smells of tide." },
-  { id:"gi_sh_2",    scene:"shore",        wx:760, wy:560, itemType:"brune",  itemId:"brune_lifesteal", count:1, label:"Bloodvine Rune",     icon:"❤", color:"#ff6060", flavor:"A red rune half-buried in ruin rubble. Ancient and hungry." },
+  { id:"gi_sh_1",    scene:"shore",        wx:200, wy:420, itemType:"bshell", itemId:"bshell_tide",     count:1, label:"Tideshell",           icon:"🌊", color:"#3a90ff", img:"./images/tideshell.png",        flavor:"A shell washed up on the clifftop. Still smells of tide." },
+  { id:"gi_sh_2",    scene:"shore",        wx:760, wy:560, itemType:"brune",  itemId:"brune_lifesteal", count:1, label:"Bloodvine Rune",     icon:"❤", color:"#ff6060", img:"./images/bloodvine-rune.png",   flavor:"A red rune half-buried in ruin rubble. Ancient and hungry." },
   // ── Forest Path (1024×820) ────────────────────────────────────────────────
-  { id:"gi_fp_1",    scene:"forest_path",  wx:400, wy:450, itemType:"bshell", itemId:"bshell_spirit",   count:1, label:"Veilshell",           icon:"✦", color:"#b890e0", flavor:"A translucent shell left on the mossy path. Barely visible." },
+  { id:"gi_fp_1",    scene:"forest_path",  wx:400, wy:450, itemType:"bshell", itemId:"bshell_spirit",   count:1, label:"Veilshell",           icon:"✦", color:"#b890e0", img:"./images/veilshell.png",        flavor:"A translucent shell left on the mossy path. Barely visible." },
   // ── Forest Clearing (1024×516) ───────────────────────────────────────────
-  { id:"gi_fc_1",    scene:"forest_clear", wx:300, wy:220, itemType:"brune",  itemId:"brune_resonance", count:1, label:"Resonance Rune",     icon:"◈", color:"#c0a0ff", flavor:"A rune humming with resonance. Left here by some old Keeper." },
-  { id:"gi_fc_2",    scene:"forest_clear", wx:730, wy:390, itemType:"berry",  itemId:"dusk",            count:2, label:"Duskberry ×2",       icon:"🍇", color:"#9860d0", flavor:"Two duskberries nestled by a mossy stone." },
-  { id:"gi_fc_gear", scene:"forest_clear", wx:160, wy:390, itemType:"gear",   itemId:"rs_headband",     count:1, label:"Resonant Crown",     icon:"💜", color:"#c080ff", flavor:"A crown left in the clearing. Hums with the forest's resonance." },
+  { id:"gi_fc_1",    scene:"forest_clear", wx:300, wy:220, itemType:"brune",  itemId:"brune_resonance", count:1, label:"Resonance Rune",     icon:"◈", color:"#c0a0ff", img:"./images/resonance-rune.png",   flavor:"A rune humming with resonance. Left here by some old Keeper." },
+  { id:"gi_fc_2",    scene:"forest_clear", wx:730, wy:390, itemType:"berry",  itemId:"dusk",            count:2, label:"Duskberry ×2",       icon:"🍇", color:"#9860d0", img:"./images/duskberry.png",        flavor:"Two duskberries nestled by a mossy stone." },
+  { id:"gi_fc_gear", scene:"forest_clear", wx:160, wy:390, itemType:"gear",   itemId:"rs_headband",     count:1, label:"Resonant Crown",     icon:"💜", color:"#c080ff",                                    flavor:"A crown left in the clearing. Hums with the forest's resonance." },
 ];
 
 // ── Cooldown-respawn item spots ──────────────────────────────────────────────
-type RespawnPool = { itemType: GroundItemType; itemId: string; count: number; label: string; icon: string; color: string };
+type RespawnPool = { itemType: GroundItemType; itemId: string; count: number; label: string; icon: string; color: string; img?: string };
 type RespawnSpot  = { id: string; scene: string; wx: number; wy: number; pool: readonly RespawnPool[] };
 const RESPAWN_CD  = 60_000; // 1-minute cooldown
 const BERRY_POOLS: readonly RespawnPool[] = [
-  { itemType:"berry", itemId:"dusk",   count:2, label:"Duskberry ×2",   icon:"🍇", color:"#9860d0" },
-  { itemType:"berry", itemId:"thorn",  count:2, label:"Thornberry ×2",  icon:"🫐", color:"#e04040" },
-  { itemType:"berry", itemId:"calm",   count:2, label:"Calmberry ×2",   icon:"🍋", color:"#30b870" },
-  { itemType:"berry", itemId:"bright", count:2, label:"Brightberry ×2", icon:"⭐", color:"#e0c020" },
+  { itemType:"berry", itemId:"dusk",   count:2, label:"Duskberry ×2",   icon:"🍇", color:"#9860d0", img:"./images/duskberry.png"   },
+  { itemType:"berry", itemId:"thorn",  count:2, label:"Thornberry ×2",  icon:"🫐", color:"#e04040", img:"./images/thornberry.png"  },
+  { itemType:"berry", itemId:"calm",   count:2, label:"Calmberry ×2",   icon:"🍋", color:"#30b870", img:"./images/calmberry.png"   },
+  { itemType:"berry", itemId:"bright", count:2, label:"Brightberry ×2", icon:"⭐", color:"#e0c020", img:"./images/brightberry.png" },
 ];
 const RESPAWN_SPOTS: readonly RespawnSpot[] = [
   // ── Overworld ─────────────────────────────────────────────────────────────
-  { id:"rs_ow_1", scene:"overworld",    wx:310, wy:230, pool:[...BERRY_POOLS, { itemType:"brune",  itemId:"brune_warden",   count:1, label:"Warden Rune",   icon:"🛡", color:"#60d080" }] },
-  { id:"rs_ow_2", scene:"overworld",    wx:950, wy:350, pool:[...BERRY_POOLS, { itemType:"bshell", itemId:"bshell_moss",    count:1, label:"Mosscap Shell", icon:"🌿", color:"#5ac070" }] },
+  { id:"rs_ow_1", scene:"overworld",    wx:310, wy:230, pool:[...BERRY_POOLS, { itemType:"brune",  itemId:"brune_warden",   count:1, label:"Warden Rune",   icon:"🛡", color:"#60d080", img:"./images/warden-rune.png"     }] },
+  { id:"rs_ow_2", scene:"overworld",    wx:950, wy:350, pool:[...BERRY_POOLS, { itemType:"bshell", itemId:"bshell_moss",    count:1, label:"Mosscap Shell", icon:"🌿", color:"#5ac070", img:"./images/mosscap-shell.png"   }] },
   { id:"rs_ow_3", scene:"overworld",    wx:180, wy:570, pool:[...BERRY_POOLS] },
   // ── Route 1 ───────────────────────────────────────────────────────────────
   { id:"rs_r1_1", scene:"route1",       wx:140, wy:350, pool:[...BERRY_POOLS] },
-  { id:"rs_r1_2", scene:"route1",       wx:560, wy:195, pool:[...BERRY_POOLS, { itemType:"brune",  itemId:"brune_resonance",count:1, label:"Resonance Rune",icon:"◈", color:"#c0a0ff" }] },
-  { id:"rs_r1_3", scene:"route1",       wx:820, wy:570, pool:[...BERRY_POOLS, { itemType:"bshell", itemId:"bshell_storm",   count:1, label:"Stormhusk",     icon:"⚡", color:"#ffd040" }] },
+  { id:"rs_r1_2", scene:"route1",       wx:560, wy:195, pool:[...BERRY_POOLS, { itemType:"brune",  itemId:"brune_resonance",count:1, label:"Resonance Rune",icon:"◈", color:"#c0a0ff", img:"./images/resonance-rune.png"  }] },
+  { id:"rs_r1_3", scene:"route1",       wx:820, wy:570, pool:[...BERRY_POOLS, { itemType:"bshell", itemId:"bshell_storm",   count:1, label:"Stormhusk",     icon:"⚡", color:"#ffd040", img:"./images/stormhusk-shell.png" }] },
   // ── Route 2 ───────────────────────────────────────────────────────────────
   { id:"rs_r2_1", scene:"route2",       wx:190, wy:400, pool:[...BERRY_POOLS] },
-  { id:"rs_r2_2", scene:"route2",       wx:760, wy:900, pool:[...BERRY_POOLS, { itemType:"bshell", itemId:"bshell_storm",   count:1, label:"Stormhusk",     icon:"⚡", color:"#ffd040" }] },
-  { id:"rs_r2_3", scene:"route2",       wx:400, wy:1310,pool:[...BERRY_POOLS, { itemType:"brune",  itemId:"brune_soulforge",count:1, label:"Soulforge Rune",icon:"✧", color:"#ffd060" }] },
+  { id:"rs_r2_2", scene:"route2",       wx:760, wy:900, pool:[...BERRY_POOLS, { itemType:"bshell", itemId:"bshell_storm",   count:1, label:"Stormhusk",     icon:"⚡", color:"#ffd040", img:"./images/stormhusk-shell.png" }] },
+  { id:"rs_r2_3", scene:"route2",       wx:400, wy:1310,pool:[...BERRY_POOLS, { itemType:"brune",  itemId:"brune_soulforge",count:1, label:"Soulforge Rune",icon:"✧", color:"#ffd060", img:"./images/soulforge-rune.png"  }] },
   // ── Area 3 — Westwood Reaches ─────────────────────────────────────────────
-  { id:"rs_a3_1", scene:"area3",        wx:360, wy:140, pool:[...BERRY_POOLS, { itemType:"brune",  itemId:"brune_soulforge",count:1, label:"Soulforge Rune",icon:"✧", color:"#ffd060" }] },
-  { id:"rs_a3_2", scene:"area3",        wx:720, wy:500, pool:[...BERRY_POOLS, { itemType:"bshell", itemId:"bshell_spirit",  count:1, label:"Veilshell",     icon:"✦", color:"#b890e0" }] },
+  { id:"rs_a3_1", scene:"area3",        wx:360, wy:140, pool:[...BERRY_POOLS, { itemType:"brune",  itemId:"brune_soulforge",count:1, label:"Soulforge Rune",icon:"✧", color:"#ffd060", img:"./images/soulforge-rune.png"  }] },
+  { id:"rs_a3_2", scene:"area3",        wx:720, wy:500, pool:[...BERRY_POOLS, { itemType:"bshell", itemId:"bshell_spirit",  count:1, label:"Veilshell",     icon:"✦", color:"#b890e0", img:"./images/veilshell.png"       }] },
   { id:"rs_a3_3", scene:"area3",        wx:150, wy:580, pool:[...BERRY_POOLS] },
   // ── Tidemark Shore ────────────────────────────────────────────────────────
-  { id:"rs_sh_1", scene:"shore",        wx:500, wy:190, pool:[...BERRY_POOLS, { itemType:"bshell", itemId:"bshell_tide",    count:1, label:"Tideshell",     icon:"🌊", color:"#3a90ff" }] },
-  { id:"rs_sh_2", scene:"shore",        wx:200, wy:540, pool:[...BERRY_POOLS, { itemType:"brune",  itemId:"brune_lifesteal",count:1, label:"Bloodvine Rune",icon:"❤", color:"#ff6060" }] },
+  { id:"rs_sh_1", scene:"shore",        wx:500, wy:190, pool:[...BERRY_POOLS, { itemType:"bshell", itemId:"bshell_tide",    count:1, label:"Tideshell",     icon:"🌊", color:"#3a90ff", img:"./images/tideshell.png"       }] },
+  { id:"rs_sh_2", scene:"shore",        wx:200, wy:540, pool:[...BERRY_POOLS, { itemType:"brune",  itemId:"brune_lifesteal",count:1, label:"Bloodvine Rune",icon:"❤", color:"#ff6060", img:"./images/bloodvine-rune.png"  }] },
   { id:"rs_sh_3", scene:"shore",        wx:820, wy:310, pool:[...BERRY_POOLS] },
   // ── Forest Path ───────────────────────────────────────────────────────────
   { id:"rs_fp_1", scene:"forest_path",  wx:250, wy:300, pool:[...BERRY_POOLS] },
-  { id:"rs_fp_2", scene:"forest_path",  wx:710, wy:510, pool:[...BERRY_POOLS, { itemType:"brune",  itemId:"brune_resonance",count:1, label:"Resonance Rune",icon:"◈", color:"#c0a0ff" }] },
-  { id:"rs_fp_3", scene:"forest_path",  wx:460, wy:700, pool:[...BERRY_POOLS, { itemType:"bshell", itemId:"bshell_spirit",  count:1, label:"Veilshell",     icon:"✦", color:"#b890e0" }] },
+  { id:"rs_fp_2", scene:"forest_path",  wx:710, wy:510, pool:[...BERRY_POOLS, { itemType:"brune",  itemId:"brune_resonance",count:1, label:"Resonance Rune",icon:"◈", color:"#c0a0ff", img:"./images/resonance-rune.png"  }] },
+  { id:"rs_fp_3", scene:"forest_path",  wx:460, wy:700, pool:[...BERRY_POOLS, { itemType:"bshell", itemId:"bshell_spirit",  count:1, label:"Veilshell",     icon:"✦", color:"#b890e0", img:"./images/veilshell.png"       }] },
   // ── Forest Clearing ───────────────────────────────────────────────────────
-  { id:"rs_fc_1", scene:"forest_clear", wx:510, wy: 95, pool:[...BERRY_POOLS, { itemType:"brune",  itemId:"brune_warden",   count:1, label:"Warden Rune",   icon:"🛡", color:"#60d080" }] },
-  { id:"rs_fc_2", scene:"forest_clear", wx:810, wy:290, pool:[...BERRY_POOLS, { itemType:"bshell", itemId:"bshell_moss",    count:1, label:"Mosscap Shell", icon:"🌿", color:"#5ac070" }] },
+  { id:"rs_fc_1", scene:"forest_clear", wx:510, wy: 95, pool:[...BERRY_POOLS, { itemType:"brune",  itemId:"brune_warden",   count:1, label:"Warden Rune",   icon:"🛡", color:"#60d080", img:"./images/warden-rune.png"     }] },
+  { id:"rs_fc_2", scene:"forest_clear", wx:810, wy:290, pool:[...BERRY_POOLS, { itemType:"bshell", itemId:"bshell_moss",    count:1, label:"Mosscap Shell", icon:"🌿", color:"#5ac070", img:"./images/mosscap-shell.png"   }] },
   { id:"rs_fc_3", scene:"forest_clear", wx:200, wy:400, pool:[...BERRY_POOLS] },
 ];
 function getRespawnItem(spot: RespawnSpot): RespawnPool {
@@ -4784,8 +4784,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             .filter(gi => gi.scene === scene && !collectedGroundItems.includes(gi.id))
             .map(gi => (
               <div key={gi.id} style={{
-                position:"absolute", left: gi.wx - 18, top: gi.wy - 18,
-                width:36, height:36, zIndex:5, pointerEvents:"none",
+                position:"absolute", left: gi.wx - 22, top: gi.wy - 22,
+                width:44, height:44, zIndex:5, pointerEvents:"none",
               }}>
                 <div style={{
                   position:"absolute", inset:-6, borderRadius:"50%",
@@ -4800,8 +4800,12 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                 <div style={{
                   position:"absolute", inset:0, display:"flex",
                   alignItems:"center", justifyContent:"center",
-                  fontSize:16, animation:"giBob 2.5s ease-in-out infinite",
-                }}>{gi.icon}</div>
+                  animation:"giBob 2.5s ease-in-out infinite",
+                }}>
+                  {gi.img
+                    ? <img src={gi.img} alt={gi.label} style={{ width:34, height:34, objectFit:"contain", filter:`drop-shadow(0 0 5px ${gi.color})` }}/>
+                    : <span style={{ fontSize:18 }}>{gi.icon}</span>}
+                </div>
               </div>
             ))}
 
@@ -4811,10 +4815,14 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             .map(s => {
               const item = getRespawnItem(s);
               return (
-                <div key={s.id} style={{ position:"absolute", left:s.wx-18, top:s.wy-18, width:36, height:36, zIndex:5, pointerEvents:"none" }}>
+                <div key={s.id} style={{ position:"absolute", left:s.wx-20, top:s.wy-20, width:40, height:40, zIndex:5, pointerEvents:"none" }}>
                   <div style={{ position:"absolute", inset:-6, borderRadius:"50%", border:`2px dashed ${item.color}`, opacity:0.65, animation:"giPulse 2.5s ease-in-out infinite" }}/>
                   <div style={{ position:"absolute", inset:0, borderRadius:"50%", background:`${item.color}18`, animation:"giPulse 2.5s ease-in-out infinite 0.4s" }}/>
-                  <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", fontSize:15, animation:"giBob 3s ease-in-out infinite" }}>{item.icon}</div>
+                  <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", animation:"giBob 3s ease-in-out infinite" }}>
+                    {item.img
+                      ? <img src={item.img} alt={item.label} style={{ width:30, height:30, objectFit:"contain", filter:`drop-shadow(0 0 4px ${item.color})` }}/>
+                      : <span style={{ fontSize:16 }}>{item.icon}</span>}
+                  </div>
                   <div style={{ position:"absolute", bottom:-4, right:-4, background:item.color, color:"#fff", borderRadius:"50%", width:12, height:12, fontSize:7, fontWeight:900, display:"flex", alignItems:"center", justifyContent:"center" }}>↺</div>
                 </div>
               );
@@ -5863,7 +5871,9 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                 zIndex:12, whiteSpace:"nowrap",
                 textShadow:"0 1px 3px #0008",
               }}
-            >✦ {gi.label}</button>
+            >{gi.img
+              ? <><img src={gi.img} alt="" style={{ width:16, height:16, objectFit:"contain", verticalAlign:"middle", marginRight:4 }}/>{gi.label}</>
+              : `✦ ${gi.label}`}</button>
           );
         })()}
 
@@ -5887,7 +5897,9 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                 zIndex:12, whiteSpace:"nowrap",
                 textShadow:"0 1px 3px #0008",
               }}
-            >↺ {item.label}</button>
+            >{item.img
+              ? <><img src={item.img} alt="" style={{ width:16, height:16, objectFit:"contain", verticalAlign:"middle", marginRight:4 }}/>{item.label}</>
+              : `↺ ${item.label}`}</button>
           );
         })()}
 
