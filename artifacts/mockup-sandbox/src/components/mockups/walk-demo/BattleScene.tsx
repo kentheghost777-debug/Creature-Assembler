@@ -18,6 +18,11 @@ const STRUGGLE: Move = {
 function typeColor(type: string): string {
   return (ELEMENT_COLOR as Record<string, string>)[type] ?? "#ffe080";
 }
+const ELEMENT_ICON: Record<string, string> = {
+  Nature:"🌿", Volcanic:"🔥", Oceanic:"🌊", Stormproven:"⚡",
+  Frostformed:"❄", Spirit:"✦", Abyss:"◉", Alchemy:"⚗",
+  Mind:"◈", Neutral:"◇",
+};
 
 // Evolution-chain form tier: 1 = mid-form, 2 = final form; absent = base/standalone.
 const FORM_TIER: Record<string, 1 | 2> = {
@@ -305,6 +310,7 @@ export function BattleScene({
   const [log,      setLog]        = useState<string>(
     isKeeper ? `${keeperName} sends out ${wild.name}!` : `A wild ${wild.name} appears!`,
   );
+  const [logKey,   setLogKey]     = useState(0);
   const [busy,     setBusy]       = useState(true);
   const [menu,     setMenu]       = useState<Menu>("root");
   const [healCd,   setHealCd]     = useState(0);              // turns remaining
@@ -417,6 +423,7 @@ export function BattleScene({
   const [buffs, setBuffs] = useState<Buffs>({ pAtk: 0, pDef: 0, wAtk: 0, wDef: 0 });
   const buffsRef = useRef(buffs);
   useEffect(() => { buffsRef.current = buffs; }, [buffs]);
+  useEffect(() => { setLogKey(k => k + 1); }, [log]);
 
   // HP refs (latest values for delayed AI/KO logic).
   const wildHpRef   = useRef(wild.maxHp);
@@ -1009,10 +1016,10 @@ export function BattleScene({
           backgroundImage:"url(/__mockup/images/forest-arena.png)",
           backgroundSize:"cover", backgroundPosition:"center",
         }}>
-        {/* Wild HP plate (top-right) — compact */}
-        <div style={hpPlateStyle("enemy")}>
-          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:4, marginBottom:2 }}>
-            <span style={{ color:"#fff", fontSize:11, fontWeight:800, lineHeight:1 }}>
+        {/* Wild HP plate (top-right) */}
+        <div style={hpPlateStyle("enemy", typeColor(currentOpponent.type))}>
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:4, marginBottom:4 }}>
+            <span style={{ color:"#fff", fontSize:13, fontWeight:900, lineHeight:1 }}>
               {currentOpponent.name}
               {currentOpponent.nameIcon && (
                 <span style={{
@@ -1030,32 +1037,40 @@ export function BattleScene({
               textTransform:"uppercase", letterSpacing:0.8, flexShrink:0,
             }}>{RARITY_LABEL[currentOpponent.rarity]}</span>
           </div>
-          {!isKeeper && caughtIds.includes(currentOpponent.id) && (
-            <div style={{
-              display:"inline-flex", alignItems:"center", gap:2, marginBottom:2,
-              background:"rgba(80,210,110,0.12)", borderRadius:4,
-              padding:"0px 5px", border:"1px solid rgba(80,210,110,0.28)",
-            }}>
-              <span style={{ color:"#70e888", fontSize:7, fontWeight:800, letterSpacing:0.8, textTransform:"uppercase" }}>✦ bonded</span>
-            </div>
-          )}
-          <HpBar hp={wildHp} max={currentOpponent.maxHp} />
-          <div style={{ display:"flex", justifyContent:"space-between", marginTop:1 }}>
-            <span style={{ color:"#a8c0d0", fontSize:8 }}>{currentOpponent.type}</span>
-            <span style={{ color:"#c8c8c8", fontSize:8, fontWeight:700 }}>{wildHp}/{currentOpponent.maxHp}</span>
+          <div style={{ display:"flex", alignItems:"center", gap:5, marginBottom:5 }}>
+            <span style={{
+              background:`${typeColor(currentOpponent.type)}22`,
+              border:`1px solid ${typeColor(currentOpponent.type)}55`,
+              color: typeColor(currentOpponent.type),
+              padding:"1px 6px", borderRadius:4, fontSize:8, fontWeight:700, letterSpacing:0.3,
+            }}>{ELEMENT_ICON[currentOpponent.type] ?? "◇"} {currentOpponent.type}</span>
+            {!isKeeper && caughtIds.includes(currentOpponent.id) && (
+              <span style={{ color:"#70e888", fontSize:7, fontWeight:800, letterSpacing:0.8 }}>✦ bonded</span>
+            )}
+          </div>
+          <HpBar hp={wildHp} max={currentOpponent.maxHp} glowColor={typeColor(currentOpponent.type)} />
+          <div style={{ display:"flex", justifyContent:"flex-end", marginTop:2 }}>
+            <span style={{ color:"#b0b8c8", fontSize:8, fontWeight:700 }}>{wildHp}/{currentOpponent.maxHp}</span>
           </div>
         </div>
 
-        {/* Player HP plate (top-left) — compact */}
-        <div style={hpPlateStyle("player")}>
-          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:4, marginBottom:2 }}>
-            <span style={{ color:"#fff", fontSize:11, fontWeight:800, lineHeight:1 }}>{active.name}</span>
-            <span style={{ color:"#bbb", fontSize:8, fontWeight:700, flexShrink:0 }}>Lv.{active.level}</span>
+        {/* Player HP plate (top-left) */}
+        <div style={hpPlateStyle("player", active.color)}>
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:4, marginBottom:4 }}>
+            <span style={{ color:"#fff", fontSize:13, fontWeight:900, lineHeight:1 }}>{active.name}</span>
+            <span style={{ color:"#c8c0a0", fontSize:8, fontWeight:700, flexShrink:0 }}>Lv.{active.level}</span>
           </div>
-          <HpBar hp={playerHp} max={playerMaxHp} />
-          <div style={{ display:"flex", justifyContent:"space-between", marginTop:1 }}>
-            <span style={{ color: active.color, fontSize:8 }}>{active.type}</span>
-            <span style={{ color:"#c8c8c8", fontSize:8, fontWeight:700 }}>{playerHp}/{playerMaxHp}</span>
+          <div style={{ display:"flex", alignItems:"center", gap:5, marginBottom:5 }}>
+            <span style={{
+              background:`${active.color}22`,
+              border:`1px solid ${active.color}55`,
+              color: active.color,
+              padding:"1px 6px", borderRadius:4, fontSize:8, fontWeight:700, letterSpacing:0.3,
+            }}>{ELEMENT_ICON[active.type] ?? "◇"} {active.type}</span>
+          </div>
+          <HpBar hp={playerHp} max={playerMaxHp} glowColor={active.color} />
+          <div style={{ display:"flex", justifyContent:"flex-end", marginTop:2 }}>
+            <span style={{ color:"#b0b8c8", fontSize:8, fontWeight:700 }}>{playerHp}/{playerMaxHp}</span>
           </div>
         </div>
 
@@ -1515,13 +1530,17 @@ export function BattleScene({
         borderTop:"2px solid rgba(180,130,60,0.5)",
         padding:"8px 10px 10px",
       }}>
-        <div style={{
-          color:"#f0d890", fontSize:12, lineHeight:1.4, minHeight:32,
-          padding:"6px 8px",
-          background:"rgba(0,0,0,0.35)",
-          borderRadius:6,
-          border:"1px solid rgba(120,80,30,0.35)",
-        }}>{log}</div>
+        <div
+          key={logKey}
+          style={{
+            color:"#f0e8a8", fontSize:12, lineHeight:1.5, minHeight:34,
+            padding:"7px 10px",
+            background:"rgba(0,0,0,0.42)",
+            borderRadius:7,
+            border:"1px solid rgba(140,100,40,0.42)",
+            animation:"logFade 0.25s ease-out",
+          }}
+        >{log}</div>
 
         {(menu === "switch" || menu === "switchForced") ? (
           <div style={{ display:"flex", flexDirection:"column", gap:5, marginTop:8 }}>
@@ -1637,7 +1656,7 @@ export function BattleScene({
             gridTemplateColumns:"repeat(3, 1fr)",
             gap:5, marginTop:8,
           }}>
-            <BattleBtn label="Moves"    sub="select"         disabled={busy} onClick={() => setMenu("moves")}/>
+            <BattleBtn label="Moves"    sub="select"  primary disabled={busy} onClick={() => setMenu("moves")}/>
             <BattleBtn label="Resonate" sub={hasResonanceStone ? `${resBar}/15` : "locked"} disabled={busy || !hasResonanceStone || resBar < 15} onClick={onResonate}/>
             <BattleBtn label="Set Shell" sub={isKeeper ? "bonded" : `×${shellsCount}`} disabled={busy || isKeeper || shellsCount <= 0} onClick={onShell}/>
             <BattleBtn label="Heal"     sub={healCd > 0 ? `CD ${healCd}` : "50%"} disabled={busy || healCd > 0} onClick={onHeal}/>
@@ -1674,6 +1693,8 @@ export function BattleScene({
         @keyframes introFloat { 0%{transform:translateY(-30px);opacity:0} 100%{transform:translateY(0);opacity:1} }
         @keyframes shakeFx    { 0%{transform:translate(0,0)} 20%{transform:translate(-7px,3px)} 45%{transform:translate(7px,-3px)} 65%{transform:translate(-5px,2px)} 82%{transform:translate(3px,-1px)} 100%{transform:translate(0,0)} }
         @keyframes idleBob    { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
+        @keyframes hpFlash    { 0%{opacity:0.72} 100%{opacity:0} }
+        @keyframes logFade    { 0%{opacity:0;transform:translateY(3px)} 100%{opacity:1;transform:translateY(0)} }
         @keyframes playerDodge { 0%{transform:translateX(0) scaleX(1)} 28%{transform:translateX(-16px) scaleX(0.9)} 62%{transform:translateX(-12px) scaleX(0.93)} 100%{transform:translateX(0) scaleX(1)} }
 
         /* Attack streaks — origin set inline */
@@ -1825,18 +1846,20 @@ export function BattleScene({
     </div>
   );
 
-  function hpPlateStyle(who: "enemy" | "player"): React.CSSProperties {
+  function hpPlateStyle(who: "enemy" | "player", glowColor?: string): React.CSSProperties {
     return {
       position:"absolute",
       top:    6,
       left:   who === "player" ? 6 : "auto",
       right:  who === "enemy"  ? 6 : "auto",
-      padding:"4px 7px",
-      background:"linear-gradient(180deg, rgba(28,20,10,0.93), rgba(14,8,4,0.93))",
-      border:"1.5px solid rgba(180,130,60,0.45)",
-      borderRadius:7,
-      minWidth:"min(118px, 36vw)",
-      boxShadow:"0 2px 6px rgba(0,0,0,0.55)",
+      padding:"6px 10px",
+      background:"linear-gradient(180deg, rgba(22,14,6,0.95), rgba(10,5,2,0.96))",
+      border: glowColor ? `1.5px solid ${glowColor}50` : "1.5px solid rgba(180,130,60,0.45)",
+      borderRadius:10,
+      minWidth:"min(130px, 38vw)",
+      boxShadow: glowColor
+        ? `0 2px 10px rgba(0,0,0,0.65), 0 0 14px ${glowColor}20`
+        : "0 2px 6px rgba(0,0,0,0.55)",
     };
   }
 }
@@ -1881,48 +1904,85 @@ function SummonBurst({ x, y, color, delay }: { x: number; y: number; color: stri
   );
 }
 
-function HpBar({ hp, max }: { hp: number; max: number }) {
-  const frac = hp / max;
-  const color = frac > 0.5 ? "#5acc5a" : frac > 0.25 ? "#e8c040" : "#e85a4a";
+function HpBar({ hp, max, glowColor }: { hp: number; max: number; glowColor?: string }) {
+  const frac = Math.max(0, hp / max);
+  const prevHpRef = useRef(hp);
+  const [flash, setFlash] = useState(false);
+  useEffect(() => {
+    let cleanup: (() => void) | undefined;
+    if (hp < prevHpRef.current) {
+      setFlash(true);
+      const t = setTimeout(() => setFlash(false), 320);
+      cleanup = () => clearTimeout(t);
+    }
+    prevHpRef.current = hp;
+    return cleanup;
+  }, [hp]);
+  const barGrad = frac > 0.5
+    ? "linear-gradient(90deg, #2ea84a, #5acc6a)"
+    : frac > 0.25
+    ? "linear-gradient(90deg, #b87820, #e8c040)"
+    : "linear-gradient(90deg, #b02828, #e85a4a)";
   return (
-    <div>
+    <div style={{ position:"relative" }}>
       <div style={{
-        height:7, borderRadius:4,
-        background:"rgba(0,0,0,0.5)",
-        border:"1px solid rgba(120,80,30,0.5)",
+        height:9, borderRadius:5,
+        background:"rgba(0,0,0,0.6)",
         overflow:"hidden",
+        boxShadow: glowColor ? `0 0 8px ${glowColor}30, inset 0 1px 3px rgba(0,0,0,0.6)` : "inset 0 1px 3px rgba(0,0,0,0.6)",
       }}>
         <div style={{
-          height:"100%", width:`${Math.max(0, frac) * 100}%`,
-          background: color,
-          transition:"width 0.4s, background 0.4s",
-        }}/>
-      </div>
-      <div style={{ color:"#d0c090", fontSize:9, marginTop:2, fontWeight:700 }}>
-        {hp}/{max}
+          height:"100%", width:`${frac * 100}%`,
+          background: barGrad,
+          transition:"width 0.45s ease-out",
+          position:"relative", borderRadius:5,
+        }}>
+          <div style={{
+            position:"absolute", top:0, left:0, right:0, height:"42%",
+            background:"rgba(255,255,255,0.2)", borderRadius:"5px 5px 0 0",
+            pointerEvents:"none",
+          }}/>
+        </div>
+        {flash && (
+          <div style={{
+            position:"absolute", inset:0,
+            background:"rgba(255,255,255,0.72)",
+            animation:"hpFlash 0.32s ease-out forwards",
+            pointerEvents:"none",
+          }}/>
+        )}
       </div>
     </div>
   );
 }
 
 function BattleBtn({
-  label, sub, disabled, placeholder, onClick,
-}: { label: string; sub: string; disabled?: boolean; placeholder?: boolean; onClick: () => void; }) {
+  label, sub, disabled, placeholder, primary, onClick,
+}: { label: string; sub: string; disabled?: boolean; placeholder?: boolean; primary?: boolean; onClick: () => void; }) {
+  const bg = placeholder ? "rgba(20,12,6,0.6)"
+    : primary && !disabled ? "linear-gradient(180deg, rgba(130,96,28,0.98), rgba(84,60,16,0.98))"
+    : disabled ? BTN_BG : BTN_BG_HI;
+  const borderColor = placeholder ? "rgba(80,60,30,0.3)"
+    : primary && !disabled ? "rgba(240,196,72,0.75)"
+    : "rgba(180,130,60,0.55)";
+  const textColor = placeholder ? "rgba(160,130,80,0.35)"
+    : disabled ? "#7a6438" : "#f0d890";
   return (
     <button
       onClick={onClick}
       disabled={disabled}
       style={{
-        padding:"7px 4px",
-        background: placeholder ? "rgba(20,12,6,0.6)" : (disabled ? BTN_BG : BTN_BG_HI),
-        border:`1.5px solid ${placeholder ? "rgba(80,60,30,0.3)" : "rgba(180,130,60,0.55)"}`,
-        borderRadius:7,
-        color: placeholder ? "rgba(160,130,80,0.35)" : (disabled ? "#7a6438" : "#f0d890"),
-        fontSize:11, fontWeight:800,
+        padding: primary ? "10px 4px" : "7px 4px",
+        background: bg,
+        border:`1.5px solid ${borderColor}`,
+        borderRadius:8,
+        color: textColor,
+        fontSize: primary ? 12 : 11, fontWeight:900,
         cursor: disabled ? "default" : "pointer",
         display:"flex", flexDirection:"column", alignItems:"center", gap:1,
         opacity: disabled && !placeholder ? 0.55 : 1,
-        minHeight:42,
+        minHeight: primary ? 50 : 42,
+        boxShadow: primary && !disabled ? "0 0 14px rgba(240,196,72,0.18)" : undefined,
       }}
     >
       <span>{label}</span>
@@ -1931,8 +1991,7 @@ function BattleBtn({
   );
 }
 
-// In-battle move button — shows name, element/category tag, RP (cur/max), and an
-// effectiveness hint vs. the current opponent.
+// In-battle move button — name, element pill, RP bar, effectiveness badge.
 function MoveBtn({
   move, pp, maxPp, eff, disabled, onClick,
 }: { move: Move; pp: number; maxPp: number; eff: number; disabled?: boolean; onClick: () => void }) {
@@ -1945,37 +2004,52 @@ function MoveBtn({
   const tag =
     move.category === "damage" ? (move.element ?? "Neutral")
     : move.category === "heal" ? "Heal"
-    : move.category === "buff" ? "Attack ↑" : "Defense ↑";
-  const effHint = move.category === "damage" && eff !== 1
-    ? (eff >= 2 ? "▲ strong" : "▼ weak") : "";
-  const rpLabel = move.pp >= 99 ? "RP ∞" : `RP ${pp}/${maxPp}`;
-  const rpColor = pp <= 0 ? "#c06040" : pp <= Math.ceil(maxPp / 3) ? "#e8b040" : "#a0d0b0";
+    : move.category === "buff" ? "Atk ↑" : "Def ↑";
+  const elemIcon = ELEMENT_ICON[move.element ?? ""] ?? "";
+  const effLabel = move.category === "damage" && eff !== 1
+    ? (eff >= 2 ? "▲ Strong" : "▼ Weak") : null;
+  const effColor = eff >= 2 ? "#60e878" : "#e87060";
+  const ppFrac = move.pp >= 99 ? 1 : Math.max(0, pp / maxPp);
+  const ppColor = pp <= 0 ? "#c06040" : pp <= Math.ceil(maxPp / 3) ? "#e8b040" : "#7ec898";
   return (
     <button
       onClick={onClick}
       disabled={disabled}
       style={{
-        padding:"7px 9px", textAlign:"left",
+        padding:"8px 10px", textAlign:"left",
         background: disabled ? BTN_BG : BTN_BG_HI,
-        border:`1.5px solid ${accent}88`,
-        borderLeft:`4px solid ${accent}`,
-        borderRadius:7,
-        color: disabled ? "#9a8458" : "#f4dca0",
+        border:`1.5px solid ${accent}60`,
+        borderLeft:`4px solid ${disabled ? accent + "55" : accent}`,
+        borderRadius:8,
+        color: disabled ? "#8a7248" : "#f4dca0",
         cursor: disabled ? "default" : "pointer",
         opacity: disabled ? 0.6 : 1,
-        display:"flex", flexDirection:"column", gap:2, minHeight:46,
+        display:"flex", flexDirection:"column", gap:5, minHeight:52,
       }}
     >
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", gap:6 }}>
-        <span style={{ fontSize:12, fontWeight:800 }}>{move.name}</span>
-        <span style={{ fontSize:9, fontWeight:700, color: rpColor }}>{rpLabel}</span>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", gap:4 }}>
+        <span style={{ fontSize:13, fontWeight:900, lineHeight:1 }}>{move.name}</span>
+        {effLabel && (
+          <span style={{
+            fontSize:8, fontWeight:800, color: effColor,
+            background:`${effColor}18`, border:`1px solid ${effColor}44`,
+            padding:"1px 5px", borderRadius:4, flexShrink:0,
+          }}>{effLabel}</span>
+        )}
       </div>
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", gap:6 }}>
-        <span style={{ fontSize:9, fontWeight:700, color: accent }}>{tag}</span>
-        {effHint && (
-          <span style={{ fontSize:9, fontWeight:800, color: eff >= 2 ? "#7dff8a" : "#ff8a7a" }}>
-            {effHint}
-          </span>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:6 }}>
+        <span style={{ fontSize:8, fontWeight:700, color: accent }}>
+          {elemIcon ? `${elemIcon} ` : ""}{tag}
+        </span>
+        {move.pp >= 99 ? (
+          <span style={{ fontSize:8, fontWeight:700, color:"#7ec898" }}>RP ∞</span>
+        ) : (
+          <div style={{ display:"flex", alignItems:"center", gap:4, flexShrink:0 }}>
+            <div style={{ width:36, height:4, borderRadius:2, background:"rgba(0,0,0,0.55)", overflow:"hidden" }}>
+              <div style={{ height:"100%", width:`${ppFrac*100}%`, background:ppColor, borderRadius:2, transition:"width 0.3s" }}/>
+            </div>
+            <span style={{ fontSize:8, fontWeight:700, color:ppColor }}>{pp}/{maxPp}</span>
+          </div>
         )}
       </div>
     </button>
