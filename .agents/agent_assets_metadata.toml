@@ -1308,6 +1308,18 @@ uri = "file://artifacts/primeria/public/images/bloodvine-rune.png"
 type = "image"
 title = "bloodvine rune item"
 
+[[generated]]
+id = "gFkzMnuD9SMr_nf3goaCf"
+uri = "file://attached_assets/sun_crest.png"
+type = "image"
+title = "sun crest held item"
+
+[[generated]]
+id = "tTDEkMEWnyAkETQQDQiZi"
+uri = "file://attached_assets/moon_talisman.png"
+type = "image"
+title = "moon talisman held item"
+
 [[outputs]]
 id = "hj9mwcgl1Uv9QQTG9g6KL"
 uri = "file://kinju_walk_demo.tar.gz"
