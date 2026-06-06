@@ -545,9 +545,13 @@ const WYVCHAOS_SPEC:  MonSpec = { ...WYVRUNT_SPEC, id:"aureyvant_chaos", name:"V
 const WYV_FORMS: MonSpec[] = [WYVRUNT_SPEC, WYRNAK_SPEC, WYRVAST_SPEC, AUREYVANT_SPEC, WYVCHAOS_SPEC];
 const WYV_CHAIN_IDS = ["wyvrunt","wyrnak","wyrvast","aureyvant","aureyvant_chaos"] as const;
 type HeldItemEvoEntry = { fromId: string; itemId: HeldItemId; toSpec: MonSpec; wyvFormIdx?: number };
+const BURG_LOYALTY_SPEC: MonSpec = { id:"burg_loyalty", name:"Glaciburg Prime", type:"Frostformed" as const, rarity:"apex" as const, wildImg:"/__mockup/images/burg_loyalty.png", playerImg:"/__mockup/images/burg_loyalty.png", wildFaces:"right" as const, playerFaces:"right" as const, maxHp:118, baseDmg:[14,22] as [number,number] };
+const BURG_CHAOS_SPEC:   MonSpec = { id:"burg_chaos",   name:"Glaciburg Void",  type:"Chaos"       as const, rarity:"apex" as const, wildImg:"/__mockup/images/burg_chaos.png",   playerImg:"/__mockup/images/burg_chaos.png",   wildFaces:"left"  as const, playerFaces:"left"  as const, maxHp:122, baseDmg:[15,24] as [number,number] };
 const HELD_ITEM_EVO_TABLE: HeldItemEvoEntry[] = [
-  { fromId:"wyrvast", itemId:"sun_crest",     toSpec:AUREYVANT_SPEC, wyvFormIdx:3 },
-  { fromId:"wyrvast", itemId:"moon_talisman", toSpec:WYVCHAOS_SPEC,  wyvFormIdx:4 },
+  { fromId:"wyrvast",  itemId:"sun_crest",     toSpec:AUREYVANT_SPEC,  wyvFormIdx:3 },
+  { fromId:"wyrvast",  itemId:"moon_talisman", toSpec:WYVCHAOS_SPEC,   wyvFormIdx:4 },
+  { fromId:"burg_3",   itemId:"sun_crest",     toSpec:BURG_LOYALTY_SPEC },
+  { fromId:"burg_3",   itemId:"moon_talisman", toSpec:BURG_CHAOS_SPEC  },
 ];
 
 // ── Area 3 trainer battle MonSpecs ───────────────────────────────────────────
