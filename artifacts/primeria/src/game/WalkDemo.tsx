@@ -541,7 +541,7 @@ const WYVRUNT_SPEC: MonSpec = {
 const WYRNAK_SPEC:    MonSpec = { ...WYVRUNT_SPEC, id:"wyrnak",    name:"Wyburn",      nameIcon:"☯", wildImg:"./images/wyrnak.png",    playerImg:"./images/wyrnak.png",    maxHp:80,  baseDmg:[11,18] };
 const WYRVAST_SPEC:   MonSpec = { ...WYVRUNT_SPEC, id:"wyrvast",   name:"Wyvlord",     nameIcon:"☯", wildImg:"./images/wyrvast.png",   playerImg:"./images/wyrvast.png",   maxHp:100, baseDmg:[13,22] };
 const AUREYVANT_SPEC: MonSpec = { ...WYVRUNT_SPEC, id:"aureyvant",      name:"DiviniDrake", nameIcon:"✦", wildImg:"./images/aureyvant.png", playerImg:"./images/aureyvant.png", maxHp:120, baseDmg:[16,26] };
-const WYVCHAOS_SPEC:  MonSpec = { ...WYVRUNT_SPEC, id:"aureyvant_chaos", name:"VoidDrake",   nameIcon:"☯", wildImg:"./images/aureyvant.png", playerImg:"./images/aureyvant.png", maxHp:120, baseDmg:[17,28] };
+const WYVCHAOS_SPEC:  MonSpec = { ...WYVRUNT_SPEC, id:"aureyvant_chaos", name:"VoidDrake",   nameIcon:"☯", wildImg:"./images/aureyvant_chaos.png", playerImg:"./images/aureyvant_chaos.png", maxHp:120, baseDmg:[17,28] };
 const WYV_FORMS: MonSpec[] = [WYVRUNT_SPEC, WYRNAK_SPEC, WYRVAST_SPEC, AUREYVANT_SPEC, WYVCHAOS_SPEC];
 const WYV_CHAIN_IDS = ["wyvrunt","wyrnak","wyrvast","aureyvant","aureyvant_chaos"] as const;
 type HeldItemEvoEntry = { fromId: string; itemId: HeldItemId; toSpec: MonSpec; wyvFormIdx?: number };
@@ -567,6 +567,7 @@ const TR_EMBVEIL:    MonSpec = { id:"tr_embveil",   name:"Emberveil", type:"Volc
 const TR_MURK:       MonSpec = { id:"tr_murk",      name:"Murkspine", type:"Abyss",      rarity:"rare",     wildImg:"", playerImg:"", wildSheet:{ url:"./images/a3-new-sheet.png", x:512, y:0, w:512, h:512, sheetW:1536, sheetH:1024 }, playerSheet:{ url:"./images/a3-new-sheet.png", x:512, y:0, w:512, h:512, sheetW:1536, sheetH:1024 }, wildFaces:"left", playerFaces:"left", maxHp:78, baseDmg:[8,15] };
 // Shared ace
 const TR_CINDRAX:    MonSpec = { id:"tr_cindrax",   name:"Cindrax",   type:"Chaos",      rarity:"apex",     wildImg:"./images/cindrax.png",            playerImg:"./images/cindrax.png",           wildFaces:"left", playerFaces:"left", maxHp:92,  baseDmg:[12,19] };
+const TR_LIA_AUREY:  MonSpec = { id:"tr_lia_aurey", name:"DiviniDrake", type:"Chaos" as const, rarity:"apex" as const, wildImg:"./images/lia_aureyvant.png", playerImg:"./images/lia_aureyvant.png", wildFaces:"right" as const, playerFaces:"right" as const, maxHp:115, baseDmg:[15,24] as [number,number] };
 
 // crystalfang.png — 1536×1024 sprite sheet, 2 cols × 1 row, each frame 768×1024
 const _CRYF = "./images/crystalfang.png";
@@ -595,7 +596,7 @@ function liaA3Team(wins: number, playerLevel: number): TrainerTier {
   if (wins === 0) return { team:[TR_CUNB],                                                 levels:[lv(2,9,18)] };
   if (wins === 1) return { team:[TR_CUNB, TR_DRIFT],                                       levels:[lv(3,13,21), lv(3,12,20)] };
   if (wins === 2) return { team:[TR_CUNB, TR_DRIFT_EVO, TR_SPRIG],                         levels:[lv(4,17,23), lv(4,18,24), lv(3,15,22)] };
-  return             { team:[TR_CUNB, TR_DRIFT_EVO, TR_EMBVEIL, TR_CINDRAX],               levels:[lv(4,20,25), lv(5,21,25), lv(4,19,25), lv(7,25,28)] };
+  return             { team:[TR_CUNB, TR_DRIFT_EVO, TR_EMBVEIL, TR_CINDRAX, TR_LIA_AUREY], levels:[lv(4,20,25), lv(5,21,25), lv(4,19,25), lv(7,25,28), lv(8,28,30)] };
 }
 
 // ── Prof. Irwyn — shore challenger (scales with wins + player level) ──────────
