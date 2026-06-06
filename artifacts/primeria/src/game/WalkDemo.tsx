@@ -1706,6 +1706,53 @@ const GROUND_ITEMS: readonly GroundItemDef[] = [
   { id:"gi_fc_gear", scene:"forest_clear", wx:160, wy:390, itemType:"gear",   itemId:"rs_headband",     count:1, label:"Resonant Crown",     icon:"💜", color:"#c080ff", flavor:"A crown left in the clearing. Hums with the forest's resonance." },
 ];
 
+// ── Cooldown-respawn item spots ──────────────────────────────────────────────
+type RespawnPool = { itemType: GroundItemType; itemId: string; count: number; label: string; icon: string; color: string };
+type RespawnSpot  = { id: string; scene: string; wx: number; wy: number; pool: readonly RespawnPool[] };
+const RESPAWN_CD  = 60_000; // 1-minute cooldown
+const BERRY_POOLS: readonly RespawnPool[] = [
+  { itemType:"berry", itemId:"dusk",   count:2, label:"Duskberry ×2",   icon:"🍇", color:"#9860d0" },
+  { itemType:"berry", itemId:"thorn",  count:2, label:"Thornberry ×2",  icon:"🫐", color:"#e04040" },
+  { itemType:"berry", itemId:"calm",   count:2, label:"Calmberry ×2",   icon:"🍋", color:"#30b870" },
+  { itemType:"berry", itemId:"bright", count:2, label:"Brightberry ×2", icon:"⭐", color:"#e0c020" },
+];
+const RESPAWN_SPOTS: readonly RespawnSpot[] = [
+  // ── Overworld ─────────────────────────────────────────────────────────────
+  { id:"rs_ow_1", scene:"overworld",    wx:310, wy:230, pool:[...BERRY_POOLS, { itemType:"brune",  itemId:"brune_warden",   count:1, label:"Warden Rune",   icon:"🛡", color:"#60d080" }] },
+  { id:"rs_ow_2", scene:"overworld",    wx:950, wy:350, pool:[...BERRY_POOLS, { itemType:"bshell", itemId:"bshell_moss",    count:1, label:"Mosscap Shell", icon:"🌿", color:"#5ac070" }] },
+  { id:"rs_ow_3", scene:"overworld",    wx:180, wy:570, pool:[...BERRY_POOLS] },
+  // ── Route 1 ───────────────────────────────────────────────────────────────
+  { id:"rs_r1_1", scene:"route1",       wx:140, wy:350, pool:[...BERRY_POOLS] },
+  { id:"rs_r1_2", scene:"route1",       wx:560, wy:195, pool:[...BERRY_POOLS, { itemType:"brune",  itemId:"brune_resonance",count:1, label:"Resonance Rune",icon:"◈", color:"#c0a0ff" }] },
+  { id:"rs_r1_3", scene:"route1",       wx:820, wy:570, pool:[...BERRY_POOLS, { itemType:"bshell", itemId:"bshell_storm",   count:1, label:"Stormhusk",     icon:"⚡", color:"#ffd040" }] },
+  // ── Route 2 ───────────────────────────────────────────────────────────────
+  { id:"rs_r2_1", scene:"route2",       wx:190, wy:400, pool:[...BERRY_POOLS] },
+  { id:"rs_r2_2", scene:"route2",       wx:760, wy:900, pool:[...BERRY_POOLS, { itemType:"bshell", itemId:"bshell_storm",   count:1, label:"Stormhusk",     icon:"⚡", color:"#ffd040" }] },
+  { id:"rs_r2_3", scene:"route2",       wx:400, wy:1310,pool:[...BERRY_POOLS, { itemType:"brune",  itemId:"brune_soulforge",count:1, label:"Soulforge Rune",icon:"✧", color:"#ffd060" }] },
+  // ── Area 3 — Westwood Reaches ─────────────────────────────────────────────
+  { id:"rs_a3_1", scene:"area3",        wx:360, wy:140, pool:[...BERRY_POOLS, { itemType:"brune",  itemId:"brune_soulforge",count:1, label:"Soulforge Rune",icon:"✧", color:"#ffd060" }] },
+  { id:"rs_a3_2", scene:"area3",        wx:720, wy:500, pool:[...BERRY_POOLS, { itemType:"bshell", itemId:"bshell_spirit",  count:1, label:"Veilshell",     icon:"✦", color:"#b890e0" }] },
+  { id:"rs_a3_3", scene:"area3",        wx:150, wy:580, pool:[...BERRY_POOLS] },
+  // ── Tidemark Shore ────────────────────────────────────────────────────────
+  { id:"rs_sh_1", scene:"shore",        wx:500, wy:190, pool:[...BERRY_POOLS, { itemType:"bshell", itemId:"bshell_tide",    count:1, label:"Tideshell",     icon:"🌊", color:"#3a90ff" }] },
+  { id:"rs_sh_2", scene:"shore",        wx:200, wy:540, pool:[...BERRY_POOLS, { itemType:"brune",  itemId:"brune_lifesteal",count:1, label:"Bloodvine Rune",icon:"❤", color:"#ff6060" }] },
+  { id:"rs_sh_3", scene:"shore",        wx:820, wy:310, pool:[...BERRY_POOLS] },
+  // ── Forest Path ───────────────────────────────────────────────────────────
+  { id:"rs_fp_1", scene:"forest_path",  wx:250, wy:300, pool:[...BERRY_POOLS] },
+  { id:"rs_fp_2", scene:"forest_path",  wx:710, wy:510, pool:[...BERRY_POOLS, { itemType:"brune",  itemId:"brune_resonance",count:1, label:"Resonance Rune",icon:"◈", color:"#c0a0ff" }] },
+  { id:"rs_fp_3", scene:"forest_path",  wx:460, wy:700, pool:[...BERRY_POOLS, { itemType:"bshell", itemId:"bshell_spirit",  count:1, label:"Veilshell",     icon:"✦", color:"#b890e0" }] },
+  // ── Forest Clearing ───────────────────────────────────────────────────────
+  { id:"rs_fc_1", scene:"forest_clear", wx:510, wy: 95, pool:[...BERRY_POOLS, { itemType:"brune",  itemId:"brune_warden",   count:1, label:"Warden Rune",   icon:"🛡", color:"#60d080" }] },
+  { id:"rs_fc_2", scene:"forest_clear", wx:810, wy:290, pool:[...BERRY_POOLS, { itemType:"bshell", itemId:"bshell_moss",    count:1, label:"Mosscap Shell", icon:"🌿", color:"#5ac070" }] },
+  { id:"rs_fc_3", scene:"forest_clear", wx:200, wy:400, pool:[...BERRY_POOLS] },
+];
+function getRespawnItem(spot: RespawnSpot): RespawnPool {
+  const epoch = Math.floor(Date.now() / RESPAWN_CD);
+  let h = epoch >>> 0;
+  for (let i = 0; i < spot.id.length; i++) h = (Math.imul(h, 31) + spot.id.charCodeAt(i)) >>> 0;
+  return spot.pool[h % spot.pool.length];
+}
+
 let JESS_POS = { x: 395, y: 370 }; // Jess standing in the open center of the home
 let OW_PLAYER_HOME_DOOR: Rect = ld("ow_home", [520, 718, 580, 748]); // nudged +6 east; also requires "up" key to enter (anti walk-by)
 let PLAYER_HOME_EXIT: Rect = ld("home_exit", [305, 725, 505, 790]); // bottom-center door
@@ -2149,6 +2196,9 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const [nearGroundItem,        setNearGroundItem]        = useState<string | null>(null);
   const [groundItemInteractPos, setGroundItemInteractPos] = useState({ sx: 0, sy: 0 });
   const [collectedGroundItems,  setCollectedGroundItems]  = useState<string[]>(() => savedWorld?.collectedGroundItems ?? []);
+  const [itemPickupTimes,       setItemPickupTimes]       = useState<Record<string,number>>(() => savedWorld?.itemPickupTimes ?? {});
+  const [nearRespawnSpot,       setNearRespawnSpot]       = useState<string | null>(null);
+  const [respawnInteractPos,    setRespawnInteractPos]    = useState({ sx: 0, sy: 0 });
   const [baseGearGranted,       setBaseGearGranted]       = useState(() => savedWorld?.baseGearGranted ?? false);
   const [portalFrame,          setPortalFrame]          = useState(0);
   const [portalOpen,           setPortalOpen]           = useState(false);
@@ -2503,7 +2553,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     ownedPrismStoneIds, slottedPrismStoneId,
     primeriaCoin, profShoreWins, profShorePaid,
     corvinMet,
-    collectedGroundItems, baseGearGranted,
+    collectedGroundItems, baseGearGranted, itemPickupTimes,
   });
   const persistWorld = useCallback(() => {
     const safe = lastSafeRef.current;
@@ -2532,7 +2582,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       ownedPrismStoneIds, slottedPrismStoneId,
       primeriaCoin, profShoreWins, profShorePaid,
       corvinMet,
-      collectedGroundItems, baseGearGranted,
+      collectedGroundItems, baseGearGranted, itemPickupTimes,
       visitedScenes: Array.from(visitedScenes),
     };
     persistWorld();
@@ -2551,7 +2601,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     ownedPrismStoneIds, slottedPrismStoneId,
     primeriaCoin, profShoreWins, profShorePaid,
     corvinMet,
-    collectedGroundItems, baseGearGranted,
+    collectedGroundItems, baseGearGranted, itemPickupTimes,
     visitedScenes,
     persistWorld,
   ]);
@@ -2575,6 +2625,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   // Mirror collectedGroundItems into a ref so the game loop can read it without stale closure.
   const collectedGroundItemsRef = useRef<string[]>(collectedGroundItems);
   useEffect(() => { collectedGroundItemsRef.current = collectedGroundItems; }, [collectedGroundItems]);
+  const itemPickupTimesRef = useRef<Record<string,number>>(itemPickupTimes);
+  useEffect(() => { itemPickupTimesRef.current = itemPickupTimes; }, [itemPickupTimes]);
 
   // Base gear grant — on first starter receipt, hand out the Keeper starter pack.
   useEffect(() => {
@@ -2615,6 +2667,29 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     const screenX = (gi.wx - cam.current.x) * ZOOM;
     const screenY = (gi.wy - cam.current.y) * ZOOM - 20;
     setFloatMsg({ x: screenX, y: screenY, text: `Found ${gi.label}!`, key: Date.now() });
+    window.setTimeout(() => setFloatMsg(null), 2500);
+  }
+
+  function pickupRespawnSpot(id: string) {
+    const spot = RESPAWN_SPOTS.find(s => s.id === id);
+    if (!spot) return;
+    const now = Date.now();
+    if (now - (itemPickupTimesRef.current[id] ?? 0) < RESPAWN_CD) return;
+    const item = getRespawnItem(spot);
+    setItemPickupTimes(prev => ({ ...prev, [id]: now }));
+    if (item.itemType === "bshell") {
+      setOwnedBattleShellIds(prev => prev.includes(item.itemId) ? prev : [...prev, item.itemId]);
+    } else if (item.itemType === "brune") {
+      setOwnedBattleRuneIds(prev => prev.includes(item.itemId) ? prev : [...prev, item.itemId]);
+    } else if (item.itemType === "berry") {
+      if (item.itemId === "dusk")        setDuskberries(n => n + item.count);
+      else if (item.itemId === "thorn")  setThornberries(n => n + item.count);
+      else if (item.itemId === "calm")   setCalmberries(n => n + item.count);
+      else if (item.itemId === "bright") setBrightberries(n => n + item.count);
+    }
+    const screenX = (spot.wx - cam.current.x) * ZOOM;
+    const screenY = (spot.wy - cam.current.y) * ZOOM - 20;
+    setFloatMsg({ x: screenX, y: screenY, text: `Found ${item.label}!`, key: Date.now() });
     window.setTimeout(() => setFloatMsg(null), 2500);
   }
 
@@ -3665,6 +3740,23 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           }
           setNearGroundItem(foundId);
         }
+
+        // ── Respawn-spot proximity ────────────────────────────────────────
+        {
+          const now = Date.now();
+          const avail = RESPAWN_SPOTS.filter(s => s.scene === sc && now - (itemPickupTimesRef.current[s.id] ?? 0) >= RESPAWN_CD);
+          let foundRs: string | null = null;
+          for (const s of avail) {
+            if (dist(px, py, s.wx, s.wy) < 60) {
+              foundRs = s.id;
+              const sx = (s.wx - cam.current.x) * zoom;
+              const sy = (s.wy - cam.current.y - topOff - 38) * zoom;
+              setRespawnInteractPos({ sx, sy });
+              break;
+            }
+          }
+          setNearRespawnSpot(foundRs);
+        }
       }
 
       raf = requestAnimationFrame(loop);
@@ -4699,6 +4791,21 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                 }}>{gi.icon}</div>
               </div>
             ))}
+
+          {/* ── Respawn item sparkles (world-space) ─────────────────────── */}
+          {RESPAWN_SPOTS
+            .filter(s => s.scene === scene && Date.now() - (itemPickupTimes[s.id] ?? 0) >= RESPAWN_CD)
+            .map(s => {
+              const item = getRespawnItem(s);
+              return (
+                <div key={s.id} style={{ position:"absolute", left:s.wx-18, top:s.wy-18, width:36, height:36, zIndex:5, pointerEvents:"none" }}>
+                  <div style={{ position:"absolute", inset:-6, borderRadius:"50%", border:`2px dashed ${item.color}`, opacity:0.65, animation:"giPulse 2.5s ease-in-out infinite" }}/>
+                  <div style={{ position:"absolute", inset:0, borderRadius:"50%", background:`${item.color}18`, animation:"giPulse 2.5s ease-in-out infinite 0.4s" }}/>
+                  <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"center", justifyContent:"center", fontSize:15, animation:"giBob 3s ease-in-out infinite" }}>{item.icon}</div>
+                  <div style={{ position:"absolute", bottom:-4, right:-4, background:item.color, color:"#fff", borderRadius:"50%", width:12, height:12, fontSize:7, fontWeight:900, display:"flex", alignItems:"center", justifyContent:"center" }}>↺</div>
+                </div>
+              );
+            })}
 
           {/* ── D-pad control hint (first overworld visit) ──────────────── */}
           {showDpadHint && scene === "overworld" && phase === "walk" && (
@@ -5744,6 +5851,30 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                 textShadow:"0 1px 3px #0008",
               }}
             >✦ {gi.label}</button>
+          );
+        })()}
+
+        {/* ── INTERACT BUTTON — Respawn item pickup ────────────────────── */}
+        {nearRespawnSpot && phase === "walk" && (() => {
+          const spot = RESPAWN_SPOTS.find(s => s.id === nearRespawnSpot);
+          if (!spot || Date.now() - (itemPickupTimes[nearRespawnSpot] ?? 0) < RESPAWN_CD) return null;
+          const item = getRespawnItem(spot);
+          return (
+            <button
+              onClick={() => pickupRespawnSpot(nearRespawnSpot)}
+              style={{
+                position:"absolute",
+                left: respawnInteractPos.sx - 28, top: respawnInteractPos.sy,
+                padding:"3px 10px", borderRadius:14,
+                background: item.color, border:"2px solid rgba(255,255,255,0.9)",
+                color:"#fff", fontSize:10, fontWeight:900,
+                cursor:"pointer", letterSpacing:0.5,
+                boxShadow:`0 0 10px ${item.color}aa`,
+                animation:"bounce 0.7s ease-in-out infinite",
+                zIndex:12, whiteSpace:"nowrap",
+                textShadow:"0 1px 3px #0008",
+              }}
+            >↺ {item.label}</button>
           );
         })()}
 

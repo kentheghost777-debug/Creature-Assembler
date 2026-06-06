@@ -133,6 +133,7 @@ export type WorldSave = {
   corvinMet: boolean;
   collectedGroundItems: string[];
   baseGearGranted: boolean;
+  itemPickupTimes?: Record<string,number>;
   visitedScenes?: string[];
 };
 
