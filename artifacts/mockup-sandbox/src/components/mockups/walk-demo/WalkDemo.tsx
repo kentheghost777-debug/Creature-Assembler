@@ -360,6 +360,7 @@ type Phase = "walk" | "d1" | "d2" | "pick" | "d3" | "role_pick" | "d4" | "d5"
            | "prof2_d1" | "prof2_d2" | "prof2_d3" | "prof2_d4"
            | "farm_d1" | "farm_d2" | "farm_d3" | "farm_d4" | "farm_idle"
            | "scripted_t1" | "scripted_t2" | "scripted_set" | "scripted_caught"
+           | "wyv_post1" | "wyv_post2" | "wyv_post3"
            // Ambient "always talkable" idle chats (set no flags, never gate quests)
            | "prof_idle" | "jay_idle" | "maya_idle" | "maya_wait"
            | "ellio_idle" | "lia_idle" | "jess_idle"
@@ -2118,6 +2119,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const [wifeIntercepted,      setWifeIntercepted]      = useState(() => savedWorld?.wifeIntercepted ?? false);
   const [route2Greeted,        setRoute2Greeted]        = useState(() => savedWorld?.route2Greeted ?? false);
   const [profRoute2Done,       setProfRoute2Done]       = useState(() => savedWorld?.profRoute2Done ?? false);
+  const [profR2Leaving,        setProfR2Leaving]        = useState(false);
+  const [showWyvGuide,         setShowWyvGuide]         = useState(false);
   const [nearProfR2,           setNearProfR2]           = useState(false);
   const [profR2InteractPos,    setProfR2InteractPos]    = useState({ sx: 0, sy: 0 });
   const [nearFarmerR2,         setNearFarmerR2]         = useState(false);
@@ -3141,6 +3144,16 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     return () => timers.forEach(clearTimeout);
   }, [scene]);
 
+  // Wyvrunt navigation guide — auto-dismiss after 10s, also dismiss on entering farm/area3
+  useEffect(() => {
+    if (!showWyvGuide) return;
+    const t = setTimeout(() => setShowWyvGuide(false), 10000);
+    return () => clearTimeout(t);
+  }, [showWyvGuide]);
+  useEffect(() => {
+    if (scene === "farm" || scene === "area3") setShowWyvGuide(false);
+  }, [scene]);
+
   // D-pad control hint — shown once on very first overworld entry, auto-dismisses after 5s
   useEffect(() => {
     if (scene !== "overworld" || !showDpadHint) return;
@@ -3189,7 +3202,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
 
   // Draw Prof Irwyn portrait for Route 2 dialogue + scripted catch phases
   useEffect(() => {
-    if (!phase.startsWith("prof2_") && !phase.startsWith("scripted_")) return;
+    if (!phase.startsWith("prof2_") && !phase.startsWith("scripted_") && !phase.startsWith("wyv_post")) return;
     const src = "/__mockup/images/prof-irwyn-sprite.png";
     const tryDraw = () => {
       const c = profR2PortraitRef.current;
@@ -3821,7 +3834,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       prof_shore_win: "walk", prof_shore_lose: "walk",
       prof_shore_idle: "walk", prof_shore_done: "walk",
       scripted_t1: "scripted_t2", scripted_t2: "scripted_set",
-      scripted_set: "scripted_caught", scripted_caught: "walk",
+      scripted_set: "scripted_caught", scripted_caught: "wyv_post1",
+      wyv_post1: "wyv_post2", wyv_post2: "wyv_post3",
       // Ambient idle chats just close (no flags touched).
       prof_idle: "walk", jay_idle: "walk", maya_idle: "walk", maya_wait: "walk",
       ellio_idle: "walk", lia_idle: "walk", jess_idle: "walk",
@@ -4026,6 +4040,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     scripted_t2: "Something in its posture shifts — the tension releasing by degrees, curiosity replacing caution. The sigils brighten. It has made a decision. PROF: \"Now. The shell. Set it down. It's ready.\"",
     scripted_set: "You place the Obsidianeye Realm Shell open on the ground before it. The Wyvrunt tilts its head — considers — and doesn't move away.",
     scripted_caught: "The shell hums. A slow, deep resonance that you feel more than hear. It drinks the light around it, and seals. Wyvrunt ☯ chose you. PROF: \"...Remarkable. First attempt. I have never seen that before.\"",
+    wyv_post1: "Before you head east — swing back north through the village. Old Hollis has the farm just past the gate, and the people up there wanted to see you off properly. They've been watching for you. Let them see what you've become.",
+    wyv_post2: role.id === "keeper"
+      ? "After the farm — Jay and Lia are training in the field west of the home village. Find them. Every battle you walk into beside Wyvrunt builds the bond deeper. That is the Keeper's path: you grow together, clash by clash, until neither of you is what you were at the start."
+      : role.id === "hopeful"
+      ? "After the farm — Jay and Lia are in the field west of the home village. Observe them. A Hopeful reads the pattern before they act — watch how they fight, then fight smarter. You don't just bond Tayanari. You learn to understand them."
+      : "After the farm — Jay and Lia are out in the field west of home. Even a Wanderer needs to know when to stand their ground. Go find them. You've bonded now — that changes the road ahead of you.",
+    wyv_post3: "...Safe roads. I have field reports that won't write themselves, and a Tayanari on the southern ridge who won't sit still long enough for a scan. We'll cross paths again — I'm certain of it. Keep your eyes open out there, and trust the bond.",
     // The lab role-pick uses a custom modal, not this dialog strip.
     role_pick: "",
     // ── Ambient idle chats (always available; set no flags) ──────────────────
@@ -6690,10 +6711,10 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         )}
 
         {/* ── SCRIPTED WYVRUNT CATCH ───────────────────────────────────── */}
-        {(phase === "scripted_t1" || phase === "scripted_t2" || phase === "scripted_set" || phase === "scripted_caught") && (
+        {(phase === "scripted_t1" || phase === "scripted_t2" || phase === "scripted_set" || phase === "scripted_caught" || phase === "wyv_post1" || phase === "wyv_post2" || phase === "wyv_post3") && (
           <>
-            {/* Floating Wyvrunt above the dialog */}
-            <div style={{
+            {/* Floating Wyvrunt above the dialog — hidden during post-catch send-off */}
+            {!phase.startsWith("wyv_post") && <div style={{
               position:"absolute", left:"50%", top:"20%",
               transform:"translateX(-50%)",
               width:150, textAlign:"center", zIndex:25, pointerEvents:"none",
@@ -6715,7 +6736,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                   CHAOS · APEX
                 </div>
               </div>
-            </div>
+            </div>}
 
             {/* Catch flash overlay during set / caught */}
             {(phase === "scripted_set" || phase === "scripted_caught") && (
@@ -6734,7 +6755,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               background:"linear-gradient(to top,rgba(20,12,2,0.97),rgba(26,16,4,0.93))",
               borderTop:"2px solid rgba(240,200,90,0.6)",
               padding:"10px 14px 14px",
-              zIndex:26, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out",
+              zIndex:26, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)",
+              animation: profR2Leaving ? "profLeave 0.85s ease-out forwards" : "dialogIn 0.2s ease-out",
             }}>
               <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
                 <canvas ref={profR2PortraitRef}
@@ -6769,9 +6791,16 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                         followFrameRef.current   = 0;
                         followFlipRef.current    = false;
                         followLastSrc.current    = "";
-                        setPhase("walk");
+                        setPhase("wyv_post1");
                         window.setTimeout(() => { fadingRef.current = false; setFading(false); }, 450);
                       }, 450);
+                    } else if (phase === "wyv_post3") {
+                      setProfR2Leaving(true);
+                      window.setTimeout(() => {
+                        setPhase("walk");
+                        setShowWyvGuide(true);
+                        setProfR2Leaving(false);
+                      }, 900);
                     } else {
                       advanceDialog(phase);
                     }
@@ -6786,11 +6815,34 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                 >{
                   phase === "scripted_set" ? "Set Obsidianeye Shell ☯"
                   : phase === "scripted_caught" ? "OK"
+                  : phase === "wyv_post3" ? "Farewell ▶"
                   : "Next ▶"
                 }</button>
               </div>
             </div>
           </>
+        )}
+
+        {/* ── WYVRUNT NAVIGATION GUIDE ─────────────────────────────────── */}
+        {showWyvGuide && (scene === "route2" || scene === "overworld" || scene === "home") && (
+          <div style={{
+            position:"absolute", top:10, left:"50%", transform:"translateX(-50%)",
+            background:"linear-gradient(135deg,rgba(14,10,2,0.96),rgba(22,14,3,0.93))",
+            border:"1.5px solid rgba(240,200,90,0.55)",
+            borderRadius:12, padding:"9px 16px 10px",
+            zIndex:55, pointerEvents:"none", textAlign:"center",
+            boxShadow:"0 4px 20px rgba(0,0,0,0.55)",
+            animation:"dialogIn 0.3s ease-out",
+            minWidth:220,
+          }}>
+            <div style={{ color:"#f0d070", fontSize:10, fontWeight:800, letterSpacing:1.2, marginBottom:6 }}>
+              PROF. IRWYN'S DIRECTIONS
+            </div>
+            <div style={{ color:"#ece0c8", fontSize:11, lineHeight:1.6 }}>
+              <span style={{ color:"#8ec850", fontWeight:700 }}>↑ NORTH</span> — Farm · village send-off<br/>
+              <span style={{ color:"#80c8ff", fontWeight:700 }}>← WEST</span> — Jay &amp; Lia · Area training
+            </div>
+          </div>
         )}
 
         {/* ── EAST GATE / LOCKED NOTICES ───────────────────────────────── */}
@@ -10147,6 +10199,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         @keyframes notifPop    { 0%{opacity:0;transform:translate(-50%,-50%) scale(0.85)} 25%{opacity:1;transform:translate(-50%,-50%) scale(1.05)} 100%{opacity:1;transform:translate(-50%,-50%) scale(1)} }
         @keyframes encounterFlash { 0%{opacity:0;transform:scale(0.4)} 18%{opacity:1;transform:scale(1.04)} 55%{opacity:0.75} 100%{opacity:0;transform:scale(1.9)} }
         @keyframes dialogIn        { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes profLeave       { 0%{opacity:1;transform:translateY(0)} 60%{opacity:0.4;transform:translateY(10px)} 100%{opacity:0;transform:translateY(28px)} }
         @keyframes npcReact        { 0%{transform:translateY(0)} 20%{transform:translateY(-10px)} 45%{transform:translateY(-2px)} 65%{transform:translateY(-6px)} 82%{transform:translateY(-1px)} 100%{transform:translateY(0)} }
         @keyframes moteFloat       { 0%{opacity:0;transform:translateY(0) scale(1)} 35%{opacity:1} 75%{opacity:0.45} 100%{opacity:0;transform:translateY(-55px) scale(0.4)} }
         @keyframes prismGemPulse   { 0%,100%{filter:drop-shadow(0 0 5px currentColor) brightness(1)} 50%{filter:drop-shadow(0 0 14px currentColor) brightness(1.25)} }
