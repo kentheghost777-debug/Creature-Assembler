@@ -2096,6 +2096,11 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const [profRoute2Done,       setProfRoute2Done]       = useState(() => savedWorld?.profRoute2Done ?? false);
   const [profR2Leaving,        setProfR2Leaving]        = useState(false);
   const [showWyvGuide,         setShowWyvGuide]         = useState(false);
+  const [wyvBattleActive,      setWyvBattleActive]      = useState(false);
+  const [wyvBattlePhase,       setWyvBattlePhase]       = useState<
+    "entry"|"prof1"|"atk_ready"|"atk_anim"|"prof2"|"berry_anim"|"prof3"|"shell_anim"|"caught_flash"|"prof4"|"fade"
+  >("entry");
+  const [wyvHpPct,             setWyvHpPct]             = useState(100);
   const [nearProfR2,           setNearProfR2]           = useState(false);
   const [profR2InteractPos,    setProfR2InteractPos]    = useState({ sx: 0, sy: 0 });
   const [nearFarmerR2,         setNearFarmerR2]         = useState(false);
@@ -2847,6 +2852,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const liaPortraitRef     = useRef<HTMLCanvasElement>(null);
   const profR2CanvasRef    = useRef<HTMLCanvasElement>(null);
   const profR2PortraitRef  = useRef<HTMLCanvasElement>(null);
+  const wyvBattleActiveRef = useRef(false);
+  const wyvProfCanvasRef   = useRef<HTMLCanvasElement>(null);
   const jessPathCanvasRef  = useRef<HTMLCanvasElement>(null);
   const jessPathPortraitRef= useRef<HTMLCanvasElement>(null);
   const jayA3CanvasRef     = useRef<HTMLCanvasElement>(null);
@@ -3133,6 +3140,64 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   useEffect(() => {
     if (scene === "farm" || scene === "area3") setShowWyvGuide(false);
   }, [scene]);
+  // Sync wyvBattleActive to ref for game loop access
+  useEffect(() => { wyvBattleActiveRef.current = wyvBattleActive; }, [wyvBattleActive]);
+  // Draw prof portrait for the scripted battle
+  useEffect(() => {
+    if (!wyvBattleActive) return;
+    const src = "./images/prof-irwyn-sprite.png";
+    const tryDraw = () => {
+      const c = wyvProfCanvasRef.current;
+      if (!c) return;
+      if (!drawSprite(c, src, false)) setTimeout(tryDraw, 150);
+    };
+    tryDraw();
+  }, [wyvBattleActive]);
+  // Drive timed phases of the scripted Wyvrunt battle
+  useEffect(() => {
+    if (!wyvBattleActive) return;
+    if (wyvBattlePhase === "entry") {
+      const t = setTimeout(() => setWyvBattlePhase("prof1"), 1500);
+      return () => clearTimeout(t);
+    }
+    if (wyvBattlePhase === "atk_anim") {
+      const t1 = setTimeout(() => setWyvHpPct(62), 350);
+      const t2 = setTimeout(() => setWyvBattlePhase("prof2"), 780);
+      return () => { clearTimeout(t1); clearTimeout(t2); };
+    }
+    if (wyvBattlePhase === "berry_anim") {
+      const t = setTimeout(() => setWyvBattlePhase("prof3"), 1000);
+      return () => clearTimeout(t);
+    }
+    if (wyvBattlePhase === "shell_anim") {
+      const t = setTimeout(() => setWyvBattlePhase("caught_flash"), 950);
+      return () => clearTimeout(t);
+    }
+    if (wyvBattlePhase === "caught_flash") {
+      const t = setTimeout(() => setWyvBattlePhase("prof4"), 700);
+      return () => clearTimeout(t);
+    }
+    if (wyvBattlePhase === "fade") {
+      const t = setTimeout(() => {
+        setWyvruntCaught(true);
+        addCaughtMon(WYVRUNT_SPEC, true, 10);
+        breadcrumbsRef.current   = [];
+        followPosRef.current     = { x: worldPos.current.x, y: worldPos.current.y + 24 };
+        followAnimRef.current    = "idle_down";
+        followLastDirRef.current = "idle_down";
+        followFrameRef.current   = 0;
+        followFlipRef.current    = false;
+        followLastSrc.current    = "";
+        setWyvBattleActive(false);
+        setWyvBattlePhase("entry");
+        setWyvHpPct(100);
+        setPhase("wyv_post1");
+      }, 800);
+      return () => clearTimeout(t);
+    }
+    return undefined;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wyvBattleActive, wyvBattlePhase]);
 
   // D-pad control hint — shown once on very first overworld entry, auto-dismisses after 5s
   useEffect(() => {
@@ -3694,8 +3759,9 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           if (profRoute2DoneRef.current && !wyvruntCaughtRef.current) {
             const dw = dist(px, py, WYV_R2_POS.x, WYV_R2_POS.y);
             setNearWyvrunt(dw < 90);
-            if (dw < 55 && phaseRef.current === "walk") {
-              setPhase("scripted_t1");
+            if (dw < 55 && phaseRef.current === "walk" && !wyvBattleActiveRef.current) {
+              setWyvBattleActive(true);
+              setWyvBattlePhase("entry");
             }
           }
         }
@@ -3914,6 +3980,15 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
 
   const { x: px, y: py } = worldPos.current;
   const topOff = Math.round(SPRITE_PX * ANCHOR);
+
+  // ── Wyvrunt scripted battle dialogue (phase keys match wyvBattlePhase) ──────
+  const WYV_BATTLE_LINES: {[k: string]: string} = {
+    prof1:     "Don't move yet. Let it finish reading you. Do you see the sigils on its scales? They're still deciding.",
+    atk_ready: "It's testing you — it wants to know if you'll face it without flinching. One strike only. Show it you're not afraid.",
+    prof2:     "Good. Now the berry — reach out slowly. It doesn't need to be beaten. It needs to feel safe. Let it smell the hearthberry.",
+    prof3:     "There. Now the Obsidianeye Shell. Set it open on the ground and step back. Don't rush. It will decide on its own time.",
+    prof4:     "...Remarkable. First attempt. I have never written those words in a field report before. That bond was chosen — not caught.",
+  };
 
   // ── Dialog lines (d3 is dynamic) ─────────────────────────────────────────
   const LINES: Record<Phase, string> = {
@@ -6765,117 +6840,166 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           </div>
         )}
 
-        {/* ── SCRIPTED WYVRUNT CATCH ───────────────────────────────────── */}
-        {(phase === "scripted_t1" || phase === "scripted_t2" || phase === "scripted_set" || phase === "scripted_caught" || phase === "wyv_post1" || phase === "wyv_post2" || phase === "wyv_post3") && (
-          <>
-            {/* Floating Wyvrunt above the dialog — hidden during post-catch send-off */}
-            {!phase.startsWith("wyv_post") && <div style={{
-              position:"absolute", left:"50%", top:"20%",
-              transform:"translateX(-50%)",
-              width:150, textAlign:"center", zIndex:25, pointerEvents:"none",
-            }}>
-              <img
-                src="./images/wyvrunt.png"
-                alt="Wyvrunt"
-                style={{
-                  width:140, height:140, objectFit:"contain",
-                  filter:"drop-shadow(0 0 16px rgba(255,200,80,0.75)) drop-shadow(0 0 6px rgba(255,255,255,0.6))",
-                  animation: phase === "scripted_set" ? "pulse 0.6s ease-in-out infinite" : "pulse 1.8s ease-in-out infinite",
-                }}
-              />
-              <div style={{
-                marginTop:-4, color:"#ffd060", fontSize:13, fontWeight:900, letterSpacing:1,
-                textShadow:"0 0 6px #ffa030,0 0 12px #ff8020,0 0 3px #000",
-              }}>WYVRUNT <span style={{ color:"#ffe080" }}>☯</span>
-                <div style={{ fontSize:8, fontWeight:700, letterSpacing:1.5, color:"#ffbe60", marginTop:2 }}>
-                  CHAOS · APEX
+        {/* ── SCRIPTED WYVRUNT BATTLE ─────────────────────────────────── */}
+        {wyvBattleActive && (
+          <div style={{
+            position:"absolute", inset:0, zIndex:48, fontFamily:"inherit",
+            background:"linear-gradient(180deg,#0d0510 0%,#180d20 45%,#0b0915 100%)",
+            display:"flex", flexDirection:"column",
+          }}>
+            {/* Enemy area */}
+            <div style={{ flex:"0 0 42%", position:"relative", display:"flex", alignItems:"flex-end", justifyContent:"flex-end", paddingRight:24, paddingBottom:8 }}>
+              <div style={{ position:"absolute", top:14, left:12, width:170 }}>
+                <div style={{ fontSize:9, color:"#ffd060", fontWeight:800, letterSpacing:1, marginBottom:3 }}>WYVRUNT ☯ · CHAOS · APEX</div>
+                <div style={{ background:"rgba(0,0,0,0.6)", borderRadius:4, height:10, border:"1px solid rgba(255,200,80,0.4)", overflow:"hidden" }}>
+                  <div style={{ width:`${wyvHpPct}%`, height:"100%", background:"linear-gradient(90deg,#c02828,#e84040,#ff6060)", transition:"width 0.8s ease-out", borderRadius:4 }}/>
                 </div>
               </div>
-            </div>}
-
-            {/* Catch flash overlay during set / caught */}
-            {(phase === "scripted_set" || phase === "scripted_caught") && (
-              <div style={{
-                position:"absolute", inset:0, zIndex:24, pointerEvents:"none",
-                background: phase === "scripted_caught"
-                  ? "radial-gradient(circle at 50% 28%, rgba(255,225,130,0.7) 0%, transparent 62%)"
-                  : "radial-gradient(circle at 50% 28%, rgba(255,180,80,0.3) 0%, transparent 70%)",
-                animation:"pulse 0.9s ease-in-out infinite",
+              <img src="./images/wyvrunt.png" style={{
+                width:108, height:108, objectFit:"contain",
+                filter:wyvBattlePhase==="caught_flash"
+                  ?"drop-shadow(0 0 32px rgba(255,220,80,1)) brightness(2)"
+                  :"drop-shadow(0 0 18px rgba(255,200,80,0.85)) drop-shadow(0 0 6px rgba(255,255,255,0.5))",
+                animation:"wyvIdleBob 2.2s ease-in-out infinite",
               }}/>
-            )}
-
-            {/* Prof narration dialog */}
-            <div style={{
-              position:"absolute", bottom:0, left:0, right:0,
-              background:"linear-gradient(to top,rgba(20,12,2,0.97),rgba(26,16,4,0.93))",
-              borderTop:"2px solid rgba(240,200,90,0.6)",
-              padding:"10px 14px 14px",
-              zIndex:26, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)",
-              animation: profR2Leaving ? "profLeave 0.85s ease-out forwards" : "dialogIn 0.2s ease-out",
-            }}>
-              <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
-                <canvas ref={profR2PortraitRef}
-                  style={{ width:44, height:44, borderRadius:8,
-                    background:"#140c02", border:"1px solid rgba(240,200,90,0.4)" }}
-                />
-                <span style={{ color:"#f0d070", fontWeight:700, fontSize:13, letterSpacing:1 }}>
-                  PROF. IRWYN
-                </span>
+            </div>
+            {/* Ground divider */}
+            <div style={{ height:1, background:"linear-gradient(90deg,transparent 5%,rgba(255,200,80,0.25) 50%,transparent 95%)", margin:"0 16px" }}/>
+            {/* Player area */}
+            <div style={{ flex:"0 0 32%", position:"relative", display:"flex", alignItems:"flex-end", justifyContent:"flex-start", paddingLeft:24, paddingBottom:8 }}>
+              <div style={{ position:"absolute", top:8, right:14, width:150 }}>
+                <div style={{ fontSize:9, color:"#a8e888", fontWeight:800, letterSpacing:1, marginBottom:3 }}>{starter?.name?.toUpperCase() ?? "YOUR PARTNER"}</div>
+                <div style={{ background:"rgba(0,0,0,0.6)", borderRadius:4, height:10, border:"1px solid rgba(120,220,80,0.4)", overflow:"hidden" }}>
+                  <div style={{ width:"100%", height:"100%", background:"linear-gradient(90deg,#28a028,#40d040,#80ff80)", borderRadius:4 }}/>
+                </div>
               </div>
-              <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>
-                {LINES[phase]}
+              <img src={starter?.img ?? "./images/wyvrunt.png"} style={{ width:88, height:88, objectFit:"contain", filter:"drop-shadow(0 4px 14px rgba(0,0,0,0.7))" }}/>
+              {wyvBattlePhase === "atk_anim" && (
+                <div style={{ position:"absolute", top:"15%", left:"45%", width:64, height:64, borderRadius:"50%",
+                  background:"radial-gradient(circle,rgba(255,255,200,0.95),rgba(255,200,50,0.6),transparent)",
+                  animation:"wyvAtkFlash 0.7s ease-out forwards", pointerEvents:"none" }}/>
+              )}
+              {wyvBattlePhase === "berry_anim" && (
+                <div style={{ position:"absolute", top:"25%", left:"55%", fontSize:22,
+                  animation:"wyvItemFly 0.9s ease-out forwards", pointerEvents:"none" }}>🍓</div>
+              )}
+              {wyvBattlePhase === "shell_anim" && (
+                <div style={{ position:"absolute", top:"25%", left:"55%", fontSize:26, color:"#ffd060",
+                  textShadow:"0 0 10px rgba(255,200,80,0.9)", animation:"wyvItemFly 0.9s ease-out forwards", pointerEvents:"none" }}>☯</div>
+              )}
+            </div>
+            {/* Prof dialogue */}
+            <div style={{ flex:1, background:"linear-gradient(to top,rgba(14,8,2,0.99),rgba(20,12,3,0.96))", borderTop:"2px solid rgba(240,200,90,0.5)", padding:"10px 14px 12px" }}>
+              <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+                <canvas ref={wyvProfCanvasRef} style={{ width:40, height:40, borderRadius:7, background:"#120508", border:"1px solid rgba(240,200,90,0.4)", flexShrink:0 }}/>
+                <span style={{ color:"#f0d070", fontWeight:700, fontSize:13, letterSpacing:1 }}>PROF. IRWYN</span>
+              </div>
+              <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px", minHeight:40 }}>
+                {WYV_BATTLE_LINES[wyvBattlePhase] ?? "\u00a0"}
               </p>
               <div style={{ display:"flex", justifyContent:"flex-end" }}>
-                <button
-                  onClick={() => {
-                    if (phase === "scripted_set") {
-                      window.setTimeout(() => setPhase("scripted_caught"), 650);
-                    } else if (phase === "scripted_caught") {
-                      fadingRef.current = true; setFading(true);
-                      window.setTimeout(() => {
-                        setWyvruntCaught(true);
-                        addCaughtMon(WYVRUNT_SPEC, true, 10); // story creature — level 10 baby form
-                        // Seed the follower beside the player so it activates in-place
-                        breadcrumbsRef.current   = [];
-                        followPosRef.current     = {
-                          x: worldPos.current.x,
-                          y: worldPos.current.y + 24,
-                        };
-                        followAnimRef.current    = "idle_down";
-                        followLastDirRef.current = "idle_down";
-                        followFrameRef.current   = 0;
-                        followFlipRef.current    = false;
-                        followLastSrc.current    = "";
-                        setPhase("wyv_post1");
-                        window.setTimeout(() => { fadingRef.current = false; setFading(false); }, 450);
-                      }, 450);
-                    } else if (phase === "wyv_post3") {
-                      setProfR2Leaving(true);
-                      window.setTimeout(() => {
-                        setPhase("walk");
-                        setShowWyvGuide(true);
-                        setProfR2Leaving(false);
-                      }, 900);
-                    } else {
-                      advanceDialog(phase);
-                    }
-                  }}
-                  style={{
-                    background:"rgba(240,200,90,0.18)",
-                    border:"1px solid rgba(240,200,90,0.55)",
-                    color:"#f5d878", padding:"6px 18px",
-                    borderRadius:8, fontSize:13, fontWeight:700,
-                    cursor:"pointer",
-                  }}
-                >{
-                  phase === "scripted_set" ? "Set Obsidianeye Shell ☯"
-                  : phase === "scripted_caught" ? "OK"
-                  : phase === "wyv_post3" ? "Farewell ▶"
-                  : "Next ▶"
-                }</button>
+                {wyvBattlePhase === "atk_ready" && (
+                  <button onClick={() => setWyvBattlePhase("atk_anim")}
+                    style={{ background:"linear-gradient(135deg,#b01818,#e83030)", border:"none", color:"#fff",
+                      padding:"8px 26px", borderRadius:8, fontSize:14, fontWeight:800, cursor:"pointer",
+                      letterSpacing:1, boxShadow:"0 0 16px rgba(255,60,60,0.55)" }}>
+                    ▶ ATTACK
+                  </button>
+                )}
+                {(wyvBattlePhase === "prof1" || wyvBattlePhase === "prof2" || wyvBattlePhase === "prof3") && (
+                  <button
+                    onClick={() => setWyvBattlePhase(
+                      wyvBattlePhase === "prof1" ? "atk_ready" :
+                      wyvBattlePhase === "prof2" ? "berry_anim" : "shell_anim"
+                    )}
+                    style={{ background:"rgba(240,200,90,0.18)", border:"1px solid rgba(240,200,90,0.5)",
+                      color:"#f5d878", padding:"6px 18px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}>
+                    Next ▶
+                  </button>
+                )}
+                {wyvBattlePhase === "prof4" && (
+                  <button onClick={() => setWyvBattlePhase("fade")}
+                    style={{ background:"rgba(240,200,90,0.18)", border:"1px solid rgba(240,200,90,0.5)",
+                      color:"#f5d878", padding:"6px 18px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}>
+                    OK
+                  </button>
+                )}
               </div>
             </div>
-          </>
+            {/* Catch flash */}
+            {wyvBattlePhase === "caught_flash" && (
+              <div style={{ position:"absolute", inset:0, zIndex:5, pointerEvents:"none",
+                background:"radial-gradient(circle at 55% 38%, rgba(255,220,90,0.94) 0%, rgba(255,180,40,0.65) 38%, transparent 68%)",
+                animation:"wyvCatchFlash 0.7s ease-out forwards" }}/>
+            )}
+            {/* Fade to black */}
+            <div style={{ position:"absolute", inset:0, background:"#000", zIndex:7, pointerEvents:"none",
+              opacity: wyvBattlePhase === "fade" ? 1 : 0,
+              transition: wyvBattlePhase === "fade" ? "opacity 0.7s ease-in" : "none" }}/>
+            {/* LoD entry: diagonal bars sweep in then sweep out */}
+            {wyvBattlePhase === "entry" && (
+              <div style={{ position:"absolute", inset:0, zIndex:10, overflow:"hidden", pointerEvents:"none" }}>
+                {[0,1,2,3,4,5,6].map(i => (
+                  <div key={i} style={{
+                    position:"absolute",
+                    top:`${i*17-14}%`, left:"-25%",
+                    width:"150%", height:"22%",
+                    background: i%2===0 ? "#07030d" : "#0d0514",
+                    transform:"skewY(-6deg)",
+                    animation:`lodEntryBar 1.2s ${i*0.075}s ease-in-out both`,
+                  }}/>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── WYVRUNT POST-CATCH PROF SEND-OFF ─────────────────────────── */}
+        {(phase === "wyv_post1" || phase === "wyv_post2" || phase === "wyv_post3") && (
+          <div style={{
+            position:"absolute", bottom:0, left:0, right:0,
+            background:"linear-gradient(to top,rgba(20,12,2,0.97),rgba(26,16,4,0.93))",
+            borderTop:"2px solid rgba(240,200,90,0.6)",
+            padding:"10px 14px 14px",
+            zIndex:26, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)",
+            animation: profR2Leaving ? "profLeave 0.85s ease-out forwards" : "dialogIn 0.2s ease-out",
+          }}>
+            <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
+              <canvas ref={profR2PortraitRef}
+                style={{ width:44, height:44, borderRadius:8,
+                  background:"#140c02", border:"1px solid rgba(240,200,90,0.4)" }}
+              />
+              <span style={{ color:"#f0d070", fontWeight:700, fontSize:13, letterSpacing:1 }}>
+                PROF. IRWYN
+              </span>
+            </div>
+            <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>
+              {LINES[phase]}
+            </p>
+            <div style={{ display:"flex", justifyContent:"flex-end" }}>
+              <button
+                onClick={() => {
+                  if (phase === "wyv_post3") {
+                    setProfR2Leaving(true);
+                    window.setTimeout(() => {
+                      setPhase("walk");
+                      setShowWyvGuide(true);
+                      setProfR2Leaving(false);
+                    }, 900);
+                  } else {
+                    advanceDialog(phase);
+                  }
+                }}
+                style={{
+                  background:"rgba(240,200,90,0.18)",
+                  border:"1px solid rgba(240,200,90,0.55)",
+                  color:"#f5d878", padding:"6px 18px",
+                  borderRadius:8, fontSize:13, fontWeight:700,
+                  cursor:"pointer",
+                }}
+              >{phase === "wyv_post3" ? "Farewell ▶" : "Next ▶"}</button>
+            </div>
+          </div>
         )}
 
         {/* ── WYVRUNT NAVIGATION GUIDE ─────────────────────────────────── */}
@@ -10313,6 +10437,11 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         @keyframes encounterFlash { 0%{opacity:0;transform:scale(0.4)} 18%{opacity:1;transform:scale(1.04)} 55%{opacity:0.75} 100%{opacity:0;transform:scale(1.9)} }
         @keyframes dialogIn        { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
         @keyframes profLeave       { 0%{opacity:1;transform:translateY(0)} 60%{opacity:0.4;transform:translateY(10px)} 100%{opacity:0;transform:translateY(28px)} }
+        @keyframes lodEntryBar     { 0%{transform:skewY(-6deg) translateX(-130%)} 38%{transform:skewY(-6deg) translateX(0%)} 62%{transform:skewY(-6deg) translateX(0%)} 100%{transform:skewY(-6deg) translateX(130%)} }
+        @keyframes wyvIdleBob      { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+        @keyframes wyvAtkFlash     { 0%{opacity:0;transform:scale(0.2)} 40%{opacity:1;transform:scale(1.3)} 100%{opacity:0;transform:scale(2.2)} }
+        @keyframes wyvItemFly      { 0%{opacity:1;transform:translate(0,0) rotate(0deg)} 100%{opacity:0;transform:translate(90px,-30px) rotate(180deg) scale(0.4)} }
+        @keyframes wyvCatchFlash   { 0%{opacity:0} 25%{opacity:1} 100%{opacity:0} }
         @keyframes npcReact        { 0%{transform:translateY(0)} 20%{transform:translateY(-10px)} 45%{transform:translateY(-2px)} 65%{transform:translateY(-6px)} 82%{transform:translateY(-1px)} 100%{transform:translateY(0)} }
         @keyframes moteFloat       { 0%{opacity:0;transform:translateY(0) scale(1)} 35%{opacity:1} 75%{opacity:0.45} 100%{opacity:0;transform:translateY(-55px) scale(0.4)} }
         @keyframes prismGemPulse   { 0%,100%{filter:drop-shadow(0 0 5px currentColor) brightness(1)} 50%{filter:drop-shadow(0 0 14px currentColor) brightness(1.25)} }
