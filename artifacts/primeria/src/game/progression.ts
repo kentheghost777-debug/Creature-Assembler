@@ -762,3 +762,42 @@ export const CLEARBELL_RUNES: readonly ShopRuneItem[] = [
     desc:"+8 ATK when facing Stormproven-type opponents.", flavor:"Still crackles. Still hungry.",
     statBonus:{ atk:8 } },
 ];
+
+// ── Held Items (4th-form evo catalysts) ────────────────────────────────────
+export type HeldItemId = "sun_crest" | "moon_talisman";
+export type HeldItemDef = {
+  id: HeldItemId;
+  name: string;
+  icon: string;
+  color: string;            // accent color for charge bar + label
+  flavor: string;
+  path: "loyalty" | "chaos";
+  chargePerWild: number;    // charge gained per wild battle win (ko or catch)
+  chargePerTrainer: number; // charge gained per trainer battle win
+};
+
+export const HELD_ITEMS: readonly HeldItemDef[] = [
+  {
+    id: "sun_crest",
+    name: "Sun Crest",
+    icon: "☀",
+    color: "#c88820",
+    flavor: "A warm disc of compressed solar memory. Pulses softly when near a bonded Tayanari.",
+    path: "loyalty",
+    chargePerWild: 8,
+    chargePerTrainer: 14,
+  },
+  {
+    id: "moon_talisman",
+    name: "Moon Talisman",
+    icon: "☽",
+    color: "#5050c0",
+    flavor: "A curved shard of lunar ore. Hums faintly in the dark, pulling toward something unnamed.",
+    path: "chaos",
+    chargePerWild: 8,
+    chargePerTrainer: 14,
+  },
+];
+
+export const HELD_ITEMS_BY_ID: Readonly<Record<HeldItemId, HeldItemDef>> =
+  Object.fromEntries(HELD_ITEMS.map(h => [h.id, h])) as Record<HeldItemId, HeldItemDef>;
