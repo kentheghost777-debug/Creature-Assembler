@@ -1320,6 +1320,12 @@ uri = "file://attached_assets/moon_talisman.png"
 type = "image"
 title = "moon talisman held item"
 
+[[generated]]
+id = "mYaRQFCrpDta8ELC-ASqj"
+uri = "file://attached_assets/generated_images/baby_dragon_hatchling_chibi_8956.png"
+type = "image"
+title = "generated_image"
+
 [[outputs]]
 id = "hj9mwcgl1Uv9QQTG9g6KL"
 uri = "file://kinju_walk_demo.tar.gz"
