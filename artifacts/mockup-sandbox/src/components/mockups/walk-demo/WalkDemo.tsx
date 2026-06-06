@@ -355,6 +355,7 @@ type Phase = "walk" | "d1" | "d2" | "pick" | "d3" | "role_pick" | "d4" | "d5"
            | "jay_d1"  | "jay_d2"  | "jay_d3"  | "jay_d4"  | "jay_d5"  | "jay_done"
            | "jess_d1" | "jess_d2" | "jess_d3"
            | "ellio_d1" | "ellio_d2" | "ellio_d3" | "ellio_done"
+           | "ellio_moon_d1" | "ellio_moon_d2" | "ellio_moon_done"
            | "lia_d1"  | "lia_d2"  | "lia_d3"  | "lia_d4"  | "lia_d5"  | "lia_done"
            | "jess_path_d1" | "jess_path_d2"
            | "prof2_d1" | "prof2_d2" | "prof2_d3" | "prof2_d4"
@@ -388,7 +389,7 @@ type Phase = "walk" | "d1" | "d2" | "pick" | "d3" | "role_pick" | "d4" | "d5"
           | "maren_d1" | "maren_d2" | "maren_done" | "maren_idle"
           // Tidemark Shore — Prof. Irwyn challenger battle
           | "prof_shore_d1" | "prof_shore_d2" | "prof_shore_battle"
-          | "prof_shore_win" | "prof_shore_lose" | "prof_shore_idle" | "prof_shore_done"
+          | "prof_shore_win" | "prof_shore_moon_d1" | "prof_shore_lose" | "prof_shore_idle" | "prof_shore_done"
           // Overworld ambient townspeople (lore flavor, set no quest flags)
           | "tova_d1" | "tova_d2" | "tova_idle"
           | "senna_d1" | "senna_d2" | "senna_idle"
@@ -2111,6 +2112,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const [mayaInitDone,   setMayaInitDone]   = useState(() => savedWorld?.mayaInitDone ?? false); // after first convo (d4)
   const [mayaDone,       setMayaDone]       = useState(() => savedWorld?.mayaDone ?? false); // after post-shell convo (post3)
   const [ellioDone,      setEllioDone]      = useState(() => savedWorld?.ellioDone ?? false);
+  const [ellioMoonGifted, setEllioMoonGifted] = useState(() => savedWorld?.ellioMoonGifted ?? false);
   const [nearLia,          setNearLia]          = useState(false);
   const [liaInteractPos,   setLiaInteractPos]   = useState({ sx: 0, sy: 0 });
   const [liaDone,          setLiaDone]          = useState(() => savedWorld?.liaDone ?? false);
@@ -2586,7 +2588,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     firstHomeGreeting, jessDone, jayDone, mayaInitDone, mayaDone, ellioDone, liaDone,
     route1Visited, wifeOnPath, wifeIntercepted, route2Greeted, profRoute2Done,
     hasObsidianRealmShell, wyvruntCaught, wyvruntForm, wyrLoyalty,
-    hasSunCrest, hasMoonTalisman,
+    hasSunCrest, hasMoonTalisman, ellioMoonGifted,
     jayA3Wins, liaA3Wins, roleChosen, checksStreak,
     cleminusMet, demoComplete,
     jerbsBattleDone, hasCrystalFang, crystalFangEvo, catalystStones,
@@ -2616,7 +2618,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       firstHomeGreeting, jessDone, jayDone, mayaInitDone, mayaDone, ellioDone, liaDone,
       route1Visited, wifeOnPath, wifeIntercepted, route2Greeted, profRoute2Done,
       hasObsidianRealmShell, wyvruntCaught, wyvruntForm, wyrLoyalty,
-      hasSunCrest, hasMoonTalisman,
+      hasSunCrest, hasMoonTalisman, ellioMoonGifted,
       jayA3Wins, liaA3Wins, roleChosen, checksStreak,
       cleminusMet, demoComplete,
       jerbsBattleDone, hasCrystalFang, crystalFangEvo, catalystStones,
@@ -2636,7 +2638,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     firstHomeGreeting, jessDone, jayDone, mayaInitDone, mayaDone, ellioDone, liaDone,
     route1Visited, wifeOnPath, wifeIntercepted, route2Greeted, profRoute2Done,
     hasObsidianRealmShell, wyvruntCaught, wyvruntForm, wyrLoyalty,
-    hasSunCrest, hasMoonTalisman,
+    hasSunCrest, hasMoonTalisman, ellioMoonGifted,
     jayA3Wins, liaA3Wins, roleChosen, checksStreak,
     cleminusMet, demoComplete,
     jerbsBattleDone, hasCrystalFang, crystalFangEvo, catalystStones,
@@ -3928,7 +3930,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       maren_done: "walk", maren_idle: "walk",
       // Tidemark Shore — Prof. Irwyn challenger battle
       prof_shore_d1: "prof_shore_d2", prof_shore_d2: "prof_shore_battle",
-      prof_shore_win: "walk", prof_shore_lose: "walk",
+      prof_shore_win: "walk", prof_shore_moon_d1: "walk", prof_shore_lose: "walk",
       prof_shore_idle: "walk", prof_shore_done: "walk",
       scripted_t1: "scripted_t2", scripted_t2: "scripted_set",
       scripted_set: "scripted_caught", scripted_caught: "wyv_post1",
@@ -4078,6 +4080,9 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     ellio_d2: "A Resonance Stone. I picked it up on a caravan last season — the merchants hauling it kept it wrapped in three layers of cloth and wouldn't explain why. I held it once, just to see. Something responded — like a sound just below the range of hearing, resonating specifically with whoever holds it. I'm not a Keeper. It wasn't calibrated for me. But I know what it means when something is looking for the right person.",
     ellio_d3: "What it does: in battle, you can use it from the Items menu on yourself — not on your Tayanari. When you do, it channels your bond's elemental energy and strikes the opponent directly. It reads your active partner's type and fires an attack tuned to that element. One use per fight. It's not subtle, but it doesn't need to be. Take it — it was never going to sit in a crate. It was looking for a Keeper.",
     ellio_done: "Safe roads. Come find me when you've got stories — I want to hear what the ruins look like from the inside.",
+    ellio_moon_d1: "The professor sent word this morning — finally. Three weeks I've had this wrapped in cloth, not a word to a soul. Merchants Collective honor. I was starting to wonder if he'd forgotten.",
+    ellio_moon_d2: "It's a Moon Talisman. Came through the Collective from traders far south — the kind who don't ask too many questions about provenance. They said it resonates with Tayanari who've chosen the chaos path. The professor wanted to make sure the Keeper receiving it was ready first. That's you, apparently.",
+    ellio_moon_done: "Take care of it. And yourself. The Elder's Trial isn't just about what your Tayanari can do — it's about what kind of Keeper you're becoming.",
     lia_d1: "Oh, look — you finally made it to my door. Took long enough. Come in. Draco won't bite... probably. He always knows when someone worth meeting is at the threshold. I stopped questioning it years ago.",
     lia_d2: "That's Draco. Stone-Flame type. Stubborn, fierce, runs entirely on attitude and spite. I found him on my first Trial — threw a shell and he crushed it. Didn't bond, just destroyed it and left. He came back three days later and sat outside my tent. We've been together ever since. We understand each other completely.",
     lia_d3: "Strength alone isn't enough out there. My second year in the field I lost three bonding attempts in a row — went in too hard every time. I was treating it like a fight instead of an offer. An old Keeper named Serah on the eastern road told me about Hearthberries. Eat one before you try to bond a wild Tayanari — it reads as calm intent. Their guard drops. Not guaranteed, but it changes the odds significantly.",
@@ -4211,6 +4216,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     prof_shore_lose: "A fine battle. The shore will humble you — that's its gift. Come back whenever you're ready to try again.",
     prof_shore_idle: "The tide turns on its own schedule. Challenge me whenever the moment feels right.",
     prof_shore_done: "You've proven yourself here. The sea beyond these cliffs holds deeper mysteries still — keep exploring.",
+    prof_shore_moon_d1: "One more thing — before you head out, go back and see Ellio in the village. He's been holding something for you. I asked him not to mention it until I was certain you were ready. Chaos paths don't forgive a Keeper who isn't.",
   };
 
   // ── Encounter handlers & disturbance tick ──────────────────────────────────
@@ -5896,7 +5902,15 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         {/* ── INTERACT BUTTON — Ellio ───────────────────────────────────── */}
         {scene === "ellio" && nearEllio && phase === "walk" && (
           <button
-            onClick={() => setPhase(ellioDone ? "ellio_idle" : (hasResonanceStone ? "ellio_done" : "ellio_d1"))}
+            onClick={() => {
+              if (!ellioDone) {
+                setPhase(hasResonanceStone ? "ellio_done" : "ellio_d1");
+              } else if (!ellioMoonGifted && profShoreWins >= 1) {
+                setPhase("ellio_moon_d1");
+              } else {
+                setPhase("ellio_idle");
+              }
+            }}
             style={{
               position:"absolute",
               left: ellioInteractPos.sx - 14,
@@ -5907,7 +5921,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               cursor:"pointer", zIndex:10,
               display:"flex", alignItems:"center", justifyContent:"center",
               animation:"bounce 0.7s ease-in-out infinite",
-            }}>{ellioDone ? "…" : "!"}</button>
+            }}>{(!ellioDone || (!ellioMoonGifted && profShoreWins >= 1)) ? "!" : "…"}</button>
         )}
 
         {/* ── INTERACT BUTTON — Lia ─────────────────────────────────────── */}
@@ -6746,7 +6760,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         )}
 
         {/* ── PROF IRWYN — Tidemark Shore challenger dialogue ─────────────── */}
-        {(phase === "prof_shore_d1" || phase === "prof_shore_d2" || phase === "prof_shore_win" || phase === "prof_shore_lose" || phase === "prof_shore_idle" || phase === "prof_shore_done") && (
+        {(phase === "prof_shore_d1" || phase === "prof_shore_d2" || phase === "prof_shore_win" || phase === "prof_shore_moon_d1" || phase === "prof_shore_lose" || phase === "prof_shore_idle" || phase === "prof_shore_done") && (
           <div style={{ position:"absolute", bottom:0, left:0, right:0, background:"linear-gradient(to top,rgba(10,16,30,0.97),rgba(14,20,38,0.93))", borderTop:"2px solid rgba(64,128,224,0.7)", padding:"10px 14px 14px", zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out" }}>
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
               <canvas ref={profShorePortraitRef} width={44} height={44} style={{ width:44, height:44, borderRadius:8, background:"#08101e", border:"1px solid rgba(64,128,224,0.4)" }}/>
@@ -6758,7 +6772,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>
               {phase === "prof_shore_d1" && "Ah — a Keeper who made it to Tidemark Shore. The waves here test the spirit. I've been waiting for someone worth challenging."}
               {phase === "prof_shore_d2" && `Before we begin, take ${SHORE_COIN_GIFT} PrimeriaCoin. Win or lose — it's yours. Consider it funding for your journey. Now, shall we?`}
-              {phase === "prof_shore_win" && (profShoreWins >= 1 ? "Exceptional. You've bested my team. Take the Resonance Rune — you've more than earned it." : "Well done. Very well done. Your Tayanari fight with real conviction.")}
+              {phase === "prof_shore_win" && "Well done. Very well done. Your Tayanari fight with real conviction."}
+              {phase === "prof_shore_moon_d1" && LINES["prof_shore_moon_d1"]}
               {phase === "prof_shore_lose" && "A fine battle. The shore will humble you — that's its gift. Come back whenever you're ready to try again."}
               {phase === "prof_shore_idle" && "The tide turns on its own schedule. Challenge me whenever the moment feels right."}
               {phase === "prof_shore_done" && "You've proven yourself here. The sea beyond these cliffs holds deeper mysteries still — keep exploring."}
@@ -6777,9 +6792,15 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                   ⚔ Battle!
                 </button>
               ) : (
-                <button onClick={() => advanceDialog(phase)}
+                <button onClick={() => {
+                  if (phase === "prof_shore_win" && profShoreWins === 1 && !ellioMoonGifted) {
+                    setPhase("prof_shore_moon_d1");
+                  } else {
+                    advanceDialog(phase);
+                  }
+                }}
                   style={{ background:"rgba(64,128,224,0.15)", border:"1px solid rgba(64,128,224,0.5)", color:"#78aae8", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}>
-                  {phase === "prof_shore_win" || phase === "prof_shore_lose" || phase === "prof_shore_idle" || phase === "prof_shore_done" ? "OK" : "Next ▶"}
+                  {phase === "prof_shore_win" || phase === "prof_shore_moon_d1" || phase === "prof_shore_lose" || phase === "prof_shore_idle" || phase === "prof_shore_done" ? "OK" : "Next ▶"}
                 </button>
               )}
             </div>
@@ -7040,7 +7061,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         )}
 
         {/* ── ELLIO DIALOG BOX ─────────────────────────────────────────── */}
-        {(phase === "ellio_d1" || phase === "ellio_d2" || phase === "ellio_d3" || phase === "ellio_done") && (
+        {(phase === "ellio_d1" || phase === "ellio_d2" || phase === "ellio_d3" || phase === "ellio_done"
+          || phase === "ellio_moon_d1" || phase === "ellio_moon_d2" || phase === "ellio_moon_done") && (
           <div style={{
             position:"absolute", bottom:0, left:0, right:0,
             background:"linear-gradient(to top,rgba(4,14,4,0.97),rgba(6,18,6,0.93))",
@@ -7075,6 +7097,11 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                   } else if (phase === "ellio_done") {
                     setPhase("walk");
                     setEllioDone(true);
+                  } else if (phase === "ellio_moon_done") {
+                    setPhase("walk");
+                    setHasMoonTalisman(true);
+                    setEllioMoonGifted(true);
+                    playSfxFile("/__mockup/audio/sfx_item.mp3");
                   } else {
                     advanceDialog(phase);
                   }

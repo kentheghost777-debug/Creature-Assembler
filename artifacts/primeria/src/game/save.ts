@@ -108,6 +108,7 @@ export type WorldSave = {
   wyrLoyalty: number;
   hasSunCrest: boolean;
   hasMoonTalisman: boolean;
+  ellioMoonGifted: boolean;
   jayA3Wins: number;
   liaA3Wins: number;
   roleChosen: boolean;
