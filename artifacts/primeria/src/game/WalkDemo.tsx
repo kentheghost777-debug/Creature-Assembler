@@ -1136,7 +1136,7 @@ let TOWN_EAST_EXIT: Rect  = ld("town_east",  [1506, 280, 1536, 580]); // town ce
 const TL_EAST_EXIT: Rect    = [1506, 280, 1536, 580]; // left wing east  → town center
 const TL_SPAWN = { x: 1456, y: 432 };   // spawn in left wing (arriving from east)
 const TR_WEST_EXIT: Rect    = [0,   280, 30,  580];  // right wing west → town center
-const TR_SPAWN = { x: 80, y: 432 };     // spawn in right wing (arriving from west)
+const TR_SPAWN = { x: 556, y: 668 };    // spawn in right wing (arriving at the east gate)
 const FARM_FROM_TOWN_SPAWN = { x: 679, y: 50 };  // spawn near top of farm from town
 // NPC world positions (farm scene)
 let SHELLA_POS = { x: 363, y: 372 };   // shell vendor — left side near house
