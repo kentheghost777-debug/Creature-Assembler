@@ -592,6 +592,7 @@ export type GearEffect = {
   defBonus?:     number;   // flat DEF bonus in battle
   catchBonus?:   number;   // flat catch rate bonus
   bagSlots?:     number;   // extra item carry slots
+  itemFind?:     number;   // bonus items from field respawn spots
 };
 
 export type GearItem = {

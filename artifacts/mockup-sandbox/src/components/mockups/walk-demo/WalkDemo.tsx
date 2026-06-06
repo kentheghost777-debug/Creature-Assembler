@@ -2108,6 +2108,9 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const [liaDone,          setLiaDone]          = useState(() => savedWorld?.liaDone ?? false);
   const [hasHearthberries, setHasHearthberries] = useState(() => savedWorld?.hasHearthberries ?? false);
   const [hasSatchel,       setHasSatchel]       = useState(() => savedWorld?.hasSatchel ?? false);
+  const [satchelEquipped,  setSatchelEquipped]  = useState(() => savedWorld?.satchelEquipped ?? false);
+  const satchelEquippedRef = useRef(satchelEquipped);
+  useEffect(() => { satchelEquippedRef.current = satchelEquipped; }, [satchelEquipped]);
   const [liaItemsNotif,    setLiaItemsNotif]    = useState(false);
   // ── Route 2 / Wyvrunt arc ────────────────────────────────────────────────
   const [route1Visited,        setRoute1Visited]        = useState(() => savedWorld?.route1Visited ?? false);
@@ -2562,7 +2565,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   // Live snapshot of the quest flags (scene + position come from lastSafeRef).
   const worldSnapRef = useRef<Omit<WorldSave, "scene" | "posX" | "posY">>({
     shellsCollected, hasHealingRune, healingRuneEquipped,
-    hasResonanceStone, resonanceStoneEquipped, hasHearthberries, hasSatchel,
+    hasResonanceStone, resonanceStoneEquipped, hasHearthberries, hasSatchel, satchelEquipped,
     firstHomeGreeting, jessDone, jayDone, mayaInitDone, mayaDone, ellioDone, liaDone,
     route1Visited, wifeOnPath, wifeIntercepted, route2Greeted, profRoute2Done,
     hasObsidianRealmShell, wyvruntCaught, wyvruntForm, wyrLoyalty,
@@ -2591,7 +2594,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   useEffect(() => {
     worldSnapRef.current = {
       shellsCollected, hasHealingRune, healingRuneEquipped,
-      hasResonanceStone, resonanceStoneEquipped, hasHearthberries, hasSatchel,
+      hasResonanceStone, resonanceStoneEquipped, hasHearthberries, hasSatchel, satchelEquipped,
       firstHomeGreeting, jessDone, jayDone, mayaInitDone, mayaDone, ellioDone, liaDone,
       route1Visited, wifeOnPath, wifeIntercepted, route2Greeted, profRoute2Done,
       hasObsidianRealmShell, wyvruntCaught, wyvruntForm, wyrLoyalty,
@@ -2610,7 +2613,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     persistWorld();
   }, [
     scene, shellsCollected, hasHealingRune, healingRuneEquipped,
-    hasResonanceStone, resonanceStoneEquipped, hasHearthberries, hasSatchel,
+    hasResonanceStone, resonanceStoneEquipped, hasHearthberries, hasSatchel, satchelEquipped,
     firstHomeGreeting, jessDone, jayDone, mayaInitDone, mayaDone, ellioDone, liaDone,
     route1Visited, wifeOnPath, wifeIntercepted, route2Greeted, profRoute2Done,
     hasObsidianRealmShell, wyvruntCaught, wyvruntForm, wyrLoyalty,
@@ -2709,9 +2712,19 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       else if (item.itemId === "calm")   setCalmberries(n => n + item.count);
       else if (item.itemId === "bright") setBrightberries(n => n + item.count);
     }
+    // Keeper's Satchel +1 item find — grant a bonus berry from the spot pool
+    if (satchelEquippedRef.current) {
+      const berryPool = ["dusk", "thorn", "calm", "bright"] as const;
+      const bonusId = berryPool[(spot.id.charCodeAt(0) + (spot.id.charCodeAt(spot.id.length - 1) ?? 0)) % 4];
+      if (bonusId === "dusk")        setDuskberries(n => n + 1);
+      else if (bonusId === "thorn")  setThornberries(n => n + 1);
+      else if (bonusId === "calm")   setCalmberries(n => n + 1);
+      else if (bonusId === "bright") setBrightberries(n => n + 1);
+    }
     const screenX = (spot.wx - cam.current.x) * ZOOM;
     const screenY = (spot.wy - cam.current.y) * ZOOM - 20;
-    setFloatMsg({ x: screenX, y: screenY, text: `Found ${item.label}!`, key: Date.now() });
+    const bonusTag = satchelEquippedRef.current ? " +1" : "";
+    setFloatMsg({ x: screenX, y: screenY, text: `Found ${item.label}!${bonusTag}`, key: Date.now() });
     window.setTimeout(() => setFloatMsg(null), 2500);
   }
 
@@ -8704,14 +8717,19 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                           <div style={{ color:"#7a6030", fontSize:10, fontWeight:700, marginTop:4 }}>
                             +4 item slots
                           </div>
+                          {satchelEquipped && (
+                            <div style={{ color:"#3a8040", fontSize:9, fontWeight:800, marginTop:3, letterSpacing:1 }}>✓ EQUIPPED — Natural Resonance · +1 item find</div>
+                          )}
                         </div>
-                        <div style={{
-                          color:"#6a4818", fontSize:14, fontWeight:900,
-                          background:"rgba(120,80,30,0.10)",
-                          padding:"4px 12px", borderRadius:20,
-                          border:"1px solid rgba(160,110,50,0.22)",
-                          flexShrink:0,
-                        }}>×1</div>
+                        <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:4, flexShrink:0 }}>
+                          <div style={{
+                            color:"#6a4818", fontSize:14, fontWeight:900,
+                            background:"rgba(120,80,30,0.10)",
+                            padding:"4px 12px", borderRadius:20,
+                            border:"1px solid rgba(160,110,50,0.22)",
+                          }}>×1</div>
+                          <button onClick={() => setJournalTab("equipment")} style={{ background:"rgba(60,100,40,0.12)", border:"1px solid rgba(60,150,60,0.4)", color:"#3a7030", padding:"3px 8px", borderRadius:6, fontSize:8, fontWeight:700, cursor:"pointer", letterSpacing:0.5 }}>{satchelEquipped ? "Equipped ✓" : "→ Equip"}</button>
+                        </div>
                       </div>
                     )}
 
@@ -8743,19 +8761,25 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                         const equippedId = equippedGear[eq.id] ?? null;
                         const equippedItem = equippedId ? GEAR_BY_ID[equippedId] : null;
                         const owned = ownedGearIds.filter(id => { const g = GEAR_BY_ID[id]; return g && g.slot === eq.id; });
+                        const isSatchelBack = eq.id === "backpack" && hasSatchel;
+                        const satchelActive = isSatchelBack && satchelEquipped && !equippedId;
+                        const showEquipped = !!equippedItem || satchelActive;
+                        const dispName   = equippedItem ? equippedItem.name   : satchelActive ? "Keeper's Satchel" : eq.label;
+                        const dispFlavor = equippedItem ? equippedItem.flavor : satchelActive ? "Natural Resonance · +1 item find" : (owned.length > 0 ? `${owned.length} owned` : (isSatchelBack ? "Keeper's Satchel · not equipped" : "— Empty —"));
+                        const hasAnyOwned = owned.length > 0 || isSatchelBack;
                         return (
-                          <div key={eq.id} style={{ display:"flex", alignItems:"center", gap:11, padding:"9px 12px", borderRadius:10, background: equippedItem ? "rgba(60,120,40,0.07)" : "rgba(60,40,10,0.04)", border:`1.5px ${equippedItem ? "solid rgba(60,160,60,0.35)" : "dashed rgba(100,64,20,0.20)"}` }}>
-                            <div style={{ width:38, height:38, borderRadius:8, background: equippedItem ? "rgba(40,120,40,0.12)" : "rgba(60,40,10,0.06)", border:`1.5px ${equippedItem ? "solid rgba(60,160,60,0.4)" : "dashed rgba(100,64,20,0.22)"}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:17, flexShrink:0 }}>
+                          <div key={eq.id} style={{ display:"flex", alignItems:"center", gap:11, padding:"9px 12px", borderRadius:10, background: showEquipped ? "rgba(60,120,40,0.07)" : "rgba(60,40,10,0.04)", border:`1.5px ${showEquipped ? "solid rgba(60,160,60,0.35)" : "dashed rgba(100,64,20,0.20)"}` }}>
+                            <div style={{ width:38, height:38, borderRadius:8, background: showEquipped ? "rgba(40,120,40,0.12)" : "rgba(60,40,10,0.06)", border:`1.5px ${showEquipped ? "solid rgba(60,160,60,0.4)" : "dashed rgba(100,64,20,0.22)"}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:17, flexShrink:0 }}>
                               {eq.icon}
                             </div>
                             <div style={{ flex:1, minWidth:0 }}>
-                              <div style={{ color: equippedItem ? "#3a8040" : "#8a5c22", fontSize:8, fontWeight:800, letterSpacing:1.8, textTransform:"uppercase" }}>{eq.slot}</div>
-                              <div style={{ color:"#2a1206", fontWeight:700, fontSize:11, marginTop:2 }}>{equippedItem ? equippedItem.name : eq.label}</div>
-                              <div style={{ fontSize:9, marginTop:2, color: equippedItem ? "#3a9050" : "rgba(100,64,20,0.38)", fontStyle: equippedItem ? "normal" : "italic" }}>
-                                {equippedItem ? equippedItem.flavor : owned.length > 0 ? `${owned.length} owned` : "— Empty —"}
+                              <div style={{ color: showEquipped ? "#3a8040" : "#8a5c22", fontSize:8, fontWeight:800, letterSpacing:1.8, textTransform:"uppercase" }}>{eq.slot}</div>
+                              <div style={{ color:"#2a1206", fontWeight:700, fontSize:11, marginTop:2 }}>{dispName}</div>
+                              <div style={{ fontSize:9, marginTop:2, color: showEquipped ? "#3a9050" : "rgba(100,64,20,0.38)", fontStyle: showEquipped ? "normal" : "italic" }}>
+                                {dispFlavor}
                               </div>
                             </div>
-                            {owned.length > 0 && (
+                            {hasAnyOwned && (
                               <div style={{ display:"flex", flexDirection:"column", gap:3, flexShrink:0 }}>
                                 {equippedId && (
                                   <button onClick={() => { const ng = { ...equippedGear, [eq.id]: null }; setEquippedGear(ng); localStorage.setItem("primeria_gear", JSON.stringify(ng)); }} style={{ background:"rgba(180,40,40,0.10)", border:"1px solid rgba(180,60,60,0.5)", color:"#c05050", padding:"4px 9px", borderRadius:6, fontSize:9, fontWeight:700, cursor:"pointer" }}>Remove</button>
@@ -8764,6 +8788,12 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                                   const g = GEAR_BY_ID[owned[0]];
                                   return g ? <button onClick={() => { const ng = { ...equippedGear, [eq.id]: owned[0] }; setEquippedGear(ng); localStorage.setItem("primeria_gear", JSON.stringify(ng)); }} style={{ background:"rgba(40,120,40,0.12)", border:"1px solid rgba(60,160,60,0.5)", color:"#3a8040", padding:"4px 9px", borderRadius:6, fontSize:9, fontWeight:700, cursor:"pointer" }}>Equip</button> : null;
                                 })()}
+                                {isSatchelBack && !equippedId && !satchelEquipped && (
+                                  <button onClick={() => setSatchelEquipped(true)} style={{ background:"rgba(40,120,40,0.12)", border:"1px solid rgba(60,160,60,0.5)", color:"#3a8040", padding:"4px 9px", borderRadius:6, fontSize:9, fontWeight:700, cursor:"pointer" }}>Equip</button>
+                                )}
+                                {isSatchelBack && satchelActive && (
+                                  <button onClick={() => setSatchelEquipped(false)} style={{ background:"rgba(180,40,40,0.10)", border:"1px solid rgba(180,60,60,0.5)", color:"#c05050", padding:"4px 9px", borderRadius:6, fontSize:9, fontWeight:700, cursor:"pointer" }}>Remove</button>
+                                )}
                               </div>
                             )}
                           </div>

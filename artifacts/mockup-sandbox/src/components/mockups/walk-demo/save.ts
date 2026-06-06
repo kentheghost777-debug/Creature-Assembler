@@ -134,6 +134,7 @@ export type WorldSave = {
   collectedGroundItems: string[];
   baseGearGranted: boolean;
   itemPickupTimes?: Record<string,number>;
+  satchelEquipped?: boolean;
   visitedScenes?: string[];
 };
 
