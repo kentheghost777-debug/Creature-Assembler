@@ -1,0 +1,12 @@
+
+> build
+> npm run build --workspace=@workspace/mockup-sandbox
+
+npm error No workspaces found:
+npm error   --workspace=@workspace/mockup-sandbox
+npm error A complete log of this run can be found in: /root/.npm/_logs/2026-09-01T19_38_48_468Z-debug-0.log
+npm notice
+npm notice New major version of npm available! 10.9.8 -> 12.0.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
+npm notice To update run: npm install -g npm@12.0.2
+npm notice

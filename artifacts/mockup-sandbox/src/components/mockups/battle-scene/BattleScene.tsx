@@ -130,7 +130,7 @@ export function BattleScene() {
 
       {/* Background */}
       <img
-        src="/__mockup/images/forest-arena.png"
+        src="/images/forest-arena.png"
         alt="Forest Arena"
         style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
       />
@@ -146,7 +146,7 @@ export function BattleScene() {
 
       {/* Kinju — far left edge, behind bear, faces right */}
       <img
-        src="/__mockup/images/kinju.png"
+        src="/images/kinju.png"
         alt="Kinju"
         style={{
           position: "absolute",
@@ -162,7 +162,7 @@ export function BattleScene() {
 
       {/* Frostbite (bear) — on yellow circle (left), flipped to face right */}
       <img
-        src="/__mockup/images/polar-bear.png"
+        src="/images/polar-bear.png"
         alt="Frostbite"
         style={{
           position: "absolute",
@@ -179,7 +179,7 @@ export function BattleScene() {
 
       {/* Grr-ountain (ape) — on blue circle (right), faces left (already fine) */}
       <img
-        src="/__mockup/images/stone-ape.png"
+        src="/images/stone-ape.png"
         alt="Grr-ountain"
         style={{
           position: "absolute",
@@ -196,7 +196,7 @@ export function BattleScene() {
 
       {/* Prof Irwyn — far right edge, behind ape, faces left (flipped) */}
       <img
-        src="/__mockup/images/prof-irwyn.png"
+        src="/images/prof-irwyn.png"
         alt="Prof Irwyn"
         style={{
           position: "absolute",
@@ -220,7 +220,7 @@ export function BattleScene() {
         maxHp={180}
         rp={200}
         maxRp={200}
-        portrait="/__mockup/images/polar-bear.png"
+        portrait="/images/polar-bear.png"
         align="left"
         hpColor="#40c0f0"
       />
@@ -233,7 +233,7 @@ export function BattleScene() {
         maxHp={210}
         rp={200}
         maxRp={200}
-        portrait="/__mockup/images/stone-ape.png"
+        portrait="/images/stone-ape.png"
         align="right"
         hpColor="#70c840"
       />

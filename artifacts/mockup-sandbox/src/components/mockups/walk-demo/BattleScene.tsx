@@ -238,8 +238,8 @@ const BTN_BG_HI = "linear-gradient(180deg, rgba(90,62,30,0.96), rgba(56,36,16,0.
 export function BattleScene({
   wild, starter, starterLevel, starterStats, starterMoves, hasResonanceStone, healingRuneEquipped,
   catchMult = 1, wildLevel, shellsCount, caughtIds = [] as string[],
-  opponentKind = "wild", keeperName = "Keeper", keeperImg = "/__mockup/images/rowan_side_1.png",
-  heroImg = "/__mockup/images/walk_side_1.png",
+  opponentKind = "wild", keeperName = "Keeper", keeperImg = "/images/rowan_side_1.png",
+  heroImg = "/images/walk_side_1.png",
   keeperSheet,
   keeperTeam, keeperMonLevels, bench,
   teamRuneEffects,
@@ -248,6 +248,32 @@ export function BattleScene({
   berries, onUseBerry,
 }: Props) {
   const isKeeper = opponentKind === "keeper";
+
+  // ── DEV TOOLS ────────────────────────────────────────────────────────────
+  const [devMode, setDevMode] = useState(false);
+  const [devSprites, setDevSprites] = useState<Record<string, { x: number, y: number, scale: number, flip: boolean, flags: string[] }>>({});
+  const [dragSprite, setDragSprite] = useState<string | null>(null);
+  const [dragStart, setDragStart] = useState({ sx: 0, sy: 0, ix: 0, iy: 0 });
+
+  const getDevSprite = (id: string, defaultScale = 1) => devSprites[id] || { x: 0, y: 0, scale: defaultScale, flip: false, flags: [] };
+  const updateDevSprite = (id: string, updates: Partial<{ x: number, y: number, scale: number, flip: boolean, flags: string[] }>) => {
+    setDevSprites(prev => ({ ...prev, [id]: { ...getDevSprite(id), ...updates } }));
+  };
+
+  const handlePointerDown = (e: React.PointerEvent, id: string) => {
+    if (!devMode) return;
+    e.stopPropagation();
+    setDragSprite(id);
+    const sp = getDevSprite(id);
+    setDragStart({ sx: e.clientX, sy: e.clientY, ix: sp.x, iy: sp.y });
+  };
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!devMode || !dragSprite) return;
+    const dx = e.clientX - dragStart.sx;
+    const dy = e.clientY - dragStart.sy;
+    updateDevSprite(dragSprite, { x: dragStart.ix + dx, y: dragStart.iy + dy });
+  };
+  const handlePointerUp = () => setDragSprite(null);
 
   // ── Trainer team cycling ─────────────────────────────────────────────────
   const [trainerMonIdx, setTrainerMonIdx] = useState(0);
@@ -559,7 +585,7 @@ export function BattleScene({
       }
       // Accuracy check.
       if (Math.random() * 100 > move.accuracy) {
-        playSfx("miss"); playSfxFile("/__mockup/audio/sfx_miss.mp3");
+        playSfx("miss"); playSfxFile("/audio/sfx_miss.mp3");
         setLog(`${currentOpponent.name} uses ${move.name} — but it missed!`);
         later(() => { setHealCd(c => Math.max(0, c - 1)); setBusy(false); afterCb?.(); }, 700);
         return;
@@ -587,7 +613,7 @@ export function BattleScene({
       triggerMove(move.anim, color, "wild", "damage", move.element, move.power);
 
       later(() => {
-        playSfx("hit"); playSfxFile("/__mockup/audio/sfx_hit.mp3");
+        playSfx("hit"); playSfxFile("/audio/sfx_hit.mp3");
         setShake("player");
         setScreenFlash("player"); later(() => setScreenFlash(null), 190);
         showDmg("player", dmg, crit);
@@ -634,7 +660,7 @@ export function BattleScene({
     setBusy(true);
     later(() => setShake(null), 600);
     later(() => {
-      playSfx("hit"); playSfxFile("/__mockup/audio/sfx_hit.mp3");
+      playSfx("hit"); playSfxFile("/audio/sfx_hit.mp3");
       setShake("wild");
       setScreenFlash("wild"); later(() => setScreenFlash(null), 190);
       showDmg("wild", dmg, crit);
@@ -704,7 +730,7 @@ export function BattleScene({
     if (busy) return;
     setMenu("root");
     setBusy(true);
-    playSfxFile("/__mockup/audio/sfx_attack.mp3");
+    playSfxFile("/audio/sfx_attack.mp3");
     const color = move.element ? typeColor(move.element) : typeColor(active.type);
     if (move.id !== STRUGGLE.id) {
       setPlayerPp(p => ({ ...p, [move.id]: Math.max(0, (p[move.id] ?? 0) - 1) }));
@@ -732,7 +758,7 @@ export function BattleScene({
     triggerMove(move.anim, color, "player", "damage", move.element, move.power);
     if (Math.random() * 100 > move.accuracy) {
       later(() => {
-        playSfx("miss"); playSfxFile("/__mockup/audio/sfx_miss.mp3");
+        playSfx("miss"); playSfxFile("/audio/sfx_miss.mp3");
         triggerAux("feint", undefined, "wild", 750);
         setFeinting(true);
         later(() => setFeinting(false), 600);
@@ -988,7 +1014,11 @@ export function BattleScene({
   });
 
   return (
-    <div style={{
+    <div 
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerLeave={handlePointerUp}
+      style={{
       position:"absolute", inset:0,
       background:"#000",
       display:"flex", flexDirection:"column",
@@ -1003,7 +1033,7 @@ export function BattleScene({
         {/* Blurred backdrop fills the letterbox bands above/below the arena */}
         <div style={{
           position:"absolute", inset:0,
-          backgroundImage:"url(/__mockup/images/forest-arena.png)",
+          backgroundImage:"url(/images/forest-arena.png)",
           backgroundSize:"cover", backgroundPosition:"center",
           filter:"blur(14px) brightness(0.45)",
           transform:"scale(1.12)",
@@ -1013,7 +1043,7 @@ export function BattleScene({
           position:"absolute", left:0, right:0, top:"50%",
           transform:"translateY(-50%)",
           width:"100%", aspectRatio:"1536 / 1024",
-          backgroundImage:"url(/__mockup/images/forest-arena.png)",
+          backgroundImage:"url(/images/forest-arena.png)",
           backgroundSize:"cover", backgroundPosition:"center",
         }}>
         {/* Wild HP plate (top-right) */}
@@ -1133,13 +1163,20 @@ export function BattleScene({
                 </div>
               );
             })() : (
-              <img src={currentOpponent.wildImg} alt={currentOpponent.name} style={{
-                width:"100%", height:"100%", objectFit:"contain",
-                transform: (wildFlip + wildExtra).trim() || "none",
-                transformOrigin:"center center",
-                transition:"transform 0.45s ease-in, opacity 0.45s",
-                filter:"drop-shadow(0 6px 8px rgba(0,0,0,0.5))",
-              }}/>
+              <img 
+                onPointerDown={(e) => handlePointerDown(e, "OpponentMon")}
+                src={currentOpponent.wildImg} alt={currentOpponent.name} style={{
+                  position: "absolute", left: "50%", bottom: 0,
+                  transformOrigin: "center bottom",
+                  width: 140, height: 140,
+                  objectFit: "contain",
+                  filter: `drop-shadow(0 12px 16px rgba(0,0,0,0.5)) ${currentOpponent.id === "crucibyx" ? "drop-shadow(0 0 16px rgba(180,240,110,0.25))" : ""}`,
+                  transition: "transform 0.25s, opacity 0.25s, filter 0.25s",
+                  imageRendering: currentOpponent.id.startsWith("tov_") ? "pixelated" : "auto",
+                  transform: devMode ? `translate(${getDevSprite("OpponentMon", 1).x}px, ${getDevSprite("OpponentMon", 1).y}px) scale(${getDevSprite("OpponentMon", 1).scale}) scaleX(${getDevSprite("OpponentMon", 1).flip ? -1 : 1})` : `translateX(-50%) ${wildExtra} ${wildFlip}`,
+                  cursor: devMode ? "move" : "default",
+                  border: (devMode && getDevSprite("OpponentMon").flags?.length > 0) ? "2px solid red" : "none"
+                }}/>
             )}
           </div>
         </div>
@@ -1151,11 +1188,15 @@ export function BattleScene({
             width:"100%", height:"100%",
             animation: intro ? "introSlide 1.1s ease-out" : "none",
           }}>
-            <img src={heroImg} alt="Keeper" style={{
-              width:"100%", height:"100%", objectFit:"contain",
-              filter:"drop-shadow(0 6px 8px rgba(0,0,0,0.5))",
-              imageRendering:"auto",
-            }}/>
+            <img 
+              onPointerDown={(e) => handlePointerDown(e, "Hero")}
+              src={heroImg} alt="Keeper" style={{
+                width: 156, height: 156, objectFit: "contain",
+                filter: "drop-shadow(0 6px 16px rgba(0,0,0,0.6))",
+                transform: devMode ? `translate(${getDevSprite("Hero", 1).x}px, ${getDevSprite("Hero", 1).y}px) scale(${getDevSprite("Hero", 1).scale}) scaleX(${getDevSprite("Hero", 1).flip ? -1 : 1})` : "scaleX(-1)",
+                cursor: devMode ? "move" : "default",
+                border: (devMode && getDevSprite("Hero").flags?.length > 0) ? "2px solid red" : "none"
+              }}/>
           </div>
         </div>
 
@@ -1176,11 +1217,14 @@ export function BattleScene({
                   }}/>
                 </div>
               ) : (
-                <img src={keeperImg} alt={keeperName} style={{
-                  width:"100%", height:"100%", objectFit:"contain",
-                  transform:"scaleX(-1)",
-                  filter:"drop-shadow(0 6px 8px rgba(0,0,0,0.5))",
-                  imageRendering:"auto",
+                <img 
+                onPointerDown={(e) => handlePointerDown(e, "KeeperTrainer")}
+                src={keeperImg} alt={keeperName} style={{
+                  width: 170, height: 170, objectFit: "contain",
+                  filter: "drop-shadow(0 8px 18px rgba(0,0,0,0.6))",
+                  transform: devMode ? `translate(${getDevSprite("KeeperTrainer", 1).x}px, ${getDevSprite("KeeperTrainer", 1).y}px) scale(${getDevSprite("KeeperTrainer", 1).scale}) scaleX(${getDevSprite("KeeperTrainer", 1).flip ? -1 : 1})` : "none",
+                  cursor: devMode ? "move" : "default",
+                  border: (devMode && getDevSprite("KeeperTrainer").flags?.length > 0) ? "2px solid red" : "none"
                 }}/>
               )}
             </div>
@@ -1209,12 +1253,16 @@ export function BattleScene({
                   : "drop-shadow(0 6px 8px rgba(0,0,0,0.5))",
               }}/>
             ) : (
-              <img src={active.img} alt={active.name} style={{
+              <img 
+                onPointerDown={(e) => handlePointerDown(e, "PlayerMon")}
+                src={active.playerImg || active.img} alt={active.name} style={{
                 width:"100%", height:"100%", objectFit:"contain",
-                transform: (playerFlip + playerExtra).trim() || "none",
                 transformOrigin:"center center",
                 transition:"transform 0.45s ease-in, opacity 0.45s",
-                filter: prismCssFilter
+                filter: prismCssFilter,
+                transform: devMode ? `translate(${getDevSprite("PlayerMon", 1).x}px, ${getDevSprite("PlayerMon", 1).y}px) scale(${getDevSprite("PlayerMon", 1).scale}) scaleX(${getDevSprite("PlayerMon", 1).flip ? -1 : 1})` : ((playerFlip + playerExtra).trim() || "none"),
+                cursor: devMode ? "move" : "default",
+                border: (devMode && getDevSprite("PlayerMon").flags?.length > 0) ? "2px solid red" : "none" 
                   ? `${prismCssFilter} drop-shadow(0 6px 8px rgba(0,0,0,0.5))`
                   : "drop-shadow(0 6px 8px rgba(0,0,0,0.5))",
               }}/>
@@ -1435,7 +1483,7 @@ export function BattleScene({
                 shellFx.phase === "caught" ? "shellCaught 0.75s ease-out forwards" :
                                               "shellBreak 0.7s ease-out forwards",
             }}>
-              <img src="/__mockup/images/weathered-shell.png" alt="" style={{
+              <img src="/images/weathered-shell.png" alt="" style={{
                 width:"100%", height:"100%", objectFit:"contain",
                 filter:"drop-shadow(0 0 12px rgba(200,160,90,0.85))",
               }}/>
@@ -1624,10 +1672,10 @@ export function BattleScene({
           <div style={{ marginTop:8 }}>
             <div style={{ color:"#c8a44a", fontSize:10, fontWeight:900, letterSpacing:1.5, marginBottom:6, textTransform:"uppercase" }}>Field Berries</div>
             {[
-              { key:"dusk"  as const, label:"Duskberry",   sub:"HP +30%",  count:berryCount.dusk,   img:"/__mockup/images/duskberry.png",   color:"#9860d0", onClick:onUseDusk   },
-              { key:"thorn" as const, label:"Thornberry",  sub:"ATK +8",   count:berryCount.thorn,  img:"/__mockup/images/thornberry.png",  color:"#e03030", onClick:onUseThorn  },
-              { key:"calm"  as const, label:"Calmberry",   sub:"DEF +8",   count:berryCount.calm,   img:"/__mockup/images/calmberry.png",   color:"#30b870", onClick:onUseCalm   },
-              { key:"bright"as const, label:"Brightberry", sub:"PP+CD fix",count:berryCount.bright,img:"/__mockup/images/brightberry.png", color:"#e0c020", onClick:onUseBright },
+              { key:"dusk"  as const, label:"Duskberry",   sub:"HP +30%",  count:berryCount.dusk,   img:"/images/duskberry.png",   color:"#9860d0", onClick:onUseDusk   },
+              { key:"thorn" as const, label:"Thornberry",  sub:"ATK +8",   count:berryCount.thorn,  img:"/images/thornberry.png",  color:"#e03030", onClick:onUseThorn  },
+              { key:"calm"  as const, label:"Calmberry",   sub:"DEF +8",   count:berryCount.calm,   img:"/images/calmberry.png",   color:"#30b870", onClick:onUseCalm   },
+              { key:"bright"as const, label:"Brightberry", sub:"PP+CD fix",count:berryCount.bright,img:"/images/brightberry.png", color:"#e0c020", onClick:onUseBright },
             ].map(b => (
               <button key={b.key} disabled={busy || b.count <= 0} onClick={b.onClick} style={{
                 display:"flex", alignItems:"center", gap:10, width:"100%",
@@ -1673,7 +1721,7 @@ export function BattleScene({
         <InBattleEvoOverlay
           pre={pendingBattleEvo.pre}
           post={pendingBattleEvo.post}
-          imgBase="/__mockup/images/"
+          imgBase="/images/"
           onComplete={() => {
             const { nextIdx, nextMon } = pendingBattleEvo;
             setPendingBattleEvo(null);
@@ -1867,7 +1915,11 @@ export function BattleScene({
 // Element-tinted glimmer that blooms where a mon materializes at battle start.
 function SummonBurst({ x, y, color, delay }: { x: number; y: number; color: string; delay: number }) {
   return (
-    <div style={{ position:"absolute", left:`${x}%`, top:`${y}%`, width:0, height:0 }}>
+    <div 
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerLeave={handlePointerUp}
+      style={{ position:"absolute", left:`${x}%`, top:`${y}%`, width:0, height:0 }}>
       {/* Expanding ring */}
       <div style={{
         position:"absolute", left:0, top:0,
@@ -1900,6 +1952,62 @@ function SummonBurst({ x, y, color, delay }: { x: number; y: number; color: stri
           mixBlendMode:"screen",
         }}/>
       ))}
+
+      {/* ── DEV HUD ───────────────────────────────────────────────────── */}
+      <button
+        onClick={() => setDevMode(v => !v)}
+        style={{
+          position: "absolute", top: 14, right: 14, zIndex: 9999,
+          padding: "6px 10px", borderRadius: 8, border: "1px solid #2a78ff",
+          background: devMode ? "#2a78ff" : "rgba(10,10,12,0.7)",
+          color: "#fff", fontSize: 12, fontWeight: 800, fontFamily: "monospace", cursor: "pointer",
+        }}
+      >{devMode ? "DEV ✕" : "DEV"}</button>
+      
+      {devMode && (
+        <div style={{
+          position: "absolute", top: 50, right: 14, zIndex: 9998,
+          width: 280, background: "rgba(10,10,14,0.85)", border: "1px solid #2a78ff",
+          borderRadius: 8, padding: "10px", color: "#fff", fontSize: 12, fontFamily: "monospace",
+          maxHeight: "80vh", overflowY: "auto"
+        }}>
+          <div style={{ fontWeight: 800, color: "#7fb0ff", marginBottom: 6 }}>BATTLE DEV TOOLS</div>
+          <div style={{ color: "#aaa", marginBottom: 12, fontSize: 10 }}>Drag sprites to move them.</div>
+          
+          {Object.entries(devSprites).map(([id, sp]) => (
+            <div key={id} style={{ marginBottom: 10, padding: 6, background: "rgba(255,255,255,0.1)", borderRadius: 6 }}>
+              <div style={{ fontWeight: "bold", color: "#ffcf3a" }}>{id}</div>
+              <div style={{ display: "flex", gap: 4, marginTop: 4 }}>
+                <button onClick={() => updateDevSprite(id, { scale: Math.max(0.1, sp.scale - 0.1) })} style={{ padding: "2px 6px" }}>- Size</button>
+                <button onClick={() => updateDevSprite(id, { scale: sp.scale + 0.1 })} style={{ padding: "2px 6px" }}>+ Size</button>
+                <button onClick={() => updateDevSprite(id, { flip: !sp.flip })} style={{ padding: "2px 6px" }}>Flip</button>
+              </div>
+              <div style={{ marginTop: 4 }}>
+                <button onClick={() => {
+                  const flag = prompt("Enter flag reason (e.g., bad crop, duplicate, wrong colors):");
+                  if (flag) {
+                    const newFlags = [...(sp.flags || []), flag];
+                    updateDevSprite(id, { flags: newFlags });
+                  }
+                }} style={{ padding: "2px 6px", background: "#7a2222", color: "#fff", border: "1px solid #ff4444" }}>+ Flag Issue</button>
+              </div>
+              {sp.flags && sp.flags.length > 0 && (
+                <div style={{ marginTop: 4, color: "#ff8888", fontSize: 10 }}>
+                  Flags: {sp.flags.join(", ")}
+                </div>
+              )}
+              <div style={{ fontSize: 10, color: "#888", marginTop: 4 }}>
+                Pos: {Math.round(sp.x)}, {Math.round(sp.y)} | Scale: {sp.scale.toFixed(1)}
+              </div>
+            </div>
+          ))}
+          
+          <button onClick={() => {
+            navigator.clipboard.writeText(JSON.stringify(devSprites, null, 2));
+            alert("Dev state copied to clipboard!");
+          }} style={{ marginTop: 10, width: "100%", padding: 6 }}>Copy All Dev States</button>
+        </div>
+      )}
     </div>
   );
 }
@@ -1924,7 +2032,11 @@ function HpBar({ hp, max, glowColor }: { hp: number; max: number; glowColor?: st
     ? "linear-gradient(90deg, #b87820, #e8c040)"
     : "linear-gradient(90deg, #b02828, #e85a4a)";
   return (
-    <div style={{ position:"relative" }}>
+    <div 
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerLeave={handlePointerUp}
+      style={{ position:"relative" }}>
       <div style={{
         height:9, borderRadius:5,
         background:"rgba(0,0,0,0.6)",
@@ -1952,6 +2064,62 @@ function HpBar({ hp, max, glowColor }: { hp: number; max: number; glowColor?: st
           }}/>
         )}
       </div>
+
+      {/* ── DEV HUD ───────────────────────────────────────────────────── */}
+      <button
+        onClick={() => setDevMode(v => !v)}
+        style={{
+          position: "absolute", top: 14, right: 14, zIndex: 9999,
+          padding: "6px 10px", borderRadius: 8, border: "1px solid #2a78ff",
+          background: devMode ? "#2a78ff" : "rgba(10,10,12,0.7)",
+          color: "#fff", fontSize: 12, fontWeight: 800, fontFamily: "monospace", cursor: "pointer",
+        }}
+      >{devMode ? "DEV ✕" : "DEV"}</button>
+      
+      {devMode && (
+        <div style={{
+          position: "absolute", top: 50, right: 14, zIndex: 9998,
+          width: 280, background: "rgba(10,10,14,0.85)", border: "1px solid #2a78ff",
+          borderRadius: 8, padding: "10px", color: "#fff", fontSize: 12, fontFamily: "monospace",
+          maxHeight: "80vh", overflowY: "auto"
+        }}>
+          <div style={{ fontWeight: 800, color: "#7fb0ff", marginBottom: 6 }}>BATTLE DEV TOOLS</div>
+          <div style={{ color: "#aaa", marginBottom: 12, fontSize: 10 }}>Drag sprites to move them.</div>
+          
+          {Object.entries(devSprites).map(([id, sp]) => (
+            <div key={id} style={{ marginBottom: 10, padding: 6, background: "rgba(255,255,255,0.1)", borderRadius: 6 }}>
+              <div style={{ fontWeight: "bold", color: "#ffcf3a" }}>{id}</div>
+              <div style={{ display: "flex", gap: 4, marginTop: 4 }}>
+                <button onClick={() => updateDevSprite(id, { scale: Math.max(0.1, sp.scale - 0.1) })} style={{ padding: "2px 6px" }}>- Size</button>
+                <button onClick={() => updateDevSprite(id, { scale: sp.scale + 0.1 })} style={{ padding: "2px 6px" }}>+ Size</button>
+                <button onClick={() => updateDevSprite(id, { flip: !sp.flip })} style={{ padding: "2px 6px" }}>Flip</button>
+              </div>
+              <div style={{ marginTop: 4 }}>
+                <button onClick={() => {
+                  const flag = prompt("Enter flag reason (e.g., bad crop, duplicate, wrong colors):");
+                  if (flag) {
+                    const newFlags = [...(sp.flags || []), flag];
+                    updateDevSprite(id, { flags: newFlags });
+                  }
+                }} style={{ padding: "2px 6px", background: "#7a2222", color: "#fff", border: "1px solid #ff4444" }}>+ Flag Issue</button>
+              </div>
+              {sp.flags && sp.flags.length > 0 && (
+                <div style={{ marginTop: 4, color: "#ff8888", fontSize: 10 }}>
+                  Flags: {sp.flags.join(", ")}
+                </div>
+              )}
+              <div style={{ fontSize: 10, color: "#888", marginTop: 4 }}>
+                Pos: {Math.round(sp.x)}, {Math.round(sp.y)} | Scale: {sp.scale.toFixed(1)}
+              </div>
+            </div>
+          ))}
+          
+          <button onClick={() => {
+            navigator.clipboard.writeText(JSON.stringify(devSprites, null, 2));
+            alert("Dev state copied to clipboard!");
+          }} style={{ marginTop: 10, width: "100%", padding: 6 }}>Copy All Dev States</button>
+        </div>
+      )}
     </div>
   );
 }
@@ -2133,7 +2301,11 @@ function InBattleEvoOverlay({
   };
 
   return (
-    <div style={{
+    <div 
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerLeave={handlePointerUp}
+      style={{
       position:"fixed", inset:0, zIndex:200, overflow:"hidden",
       background:"radial-gradient(ellipse at 50% 60%, #130920 0%, #04020c 100%)",
       animation:"ievoFadeIn 0.4s ease-out",
@@ -2217,6 +2389,62 @@ function InBattleEvoOverlay({
         @keyframes ievoFloat      { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-9px)} }
         @keyframes ievoNameplate  { from{transform:translateY(30px);opacity:0} to{transform:translateY(0);opacity:1} }
       `}</style>
+
+      {/* ── DEV HUD ───────────────────────────────────────────────────── */}
+      <button
+        onClick={() => setDevMode(v => !v)}
+        style={{
+          position: "absolute", top: 14, right: 14, zIndex: 9999,
+          padding: "6px 10px", borderRadius: 8, border: "1px solid #2a78ff",
+          background: devMode ? "#2a78ff" : "rgba(10,10,12,0.7)",
+          color: "#fff", fontSize: 12, fontWeight: 800, fontFamily: "monospace", cursor: "pointer",
+        }}
+      >{devMode ? "DEV ✕" : "DEV"}</button>
+      
+      {devMode && (
+        <div style={{
+          position: "absolute", top: 50, right: 14, zIndex: 9998,
+          width: 280, background: "rgba(10,10,14,0.85)", border: "1px solid #2a78ff",
+          borderRadius: 8, padding: "10px", color: "#fff", fontSize: 12, fontFamily: "monospace",
+          maxHeight: "80vh", overflowY: "auto"
+        }}>
+          <div style={{ fontWeight: 800, color: "#7fb0ff", marginBottom: 6 }}>BATTLE DEV TOOLS</div>
+          <div style={{ color: "#aaa", marginBottom: 12, fontSize: 10 }}>Drag sprites to move them.</div>
+          
+          {Object.entries(devSprites).map(([id, sp]) => (
+            <div key={id} style={{ marginBottom: 10, padding: 6, background: "rgba(255,255,255,0.1)", borderRadius: 6 }}>
+              <div style={{ fontWeight: "bold", color: "#ffcf3a" }}>{id}</div>
+              <div style={{ display: "flex", gap: 4, marginTop: 4 }}>
+                <button onClick={() => updateDevSprite(id, { scale: Math.max(0.1, sp.scale - 0.1) })} style={{ padding: "2px 6px" }}>- Size</button>
+                <button onClick={() => updateDevSprite(id, { scale: sp.scale + 0.1 })} style={{ padding: "2px 6px" }}>+ Size</button>
+                <button onClick={() => updateDevSprite(id, { flip: !sp.flip })} style={{ padding: "2px 6px" }}>Flip</button>
+              </div>
+              <div style={{ marginTop: 4 }}>
+                <button onClick={() => {
+                  const flag = prompt("Enter flag reason (e.g., bad crop, duplicate, wrong colors):");
+                  if (flag) {
+                    const newFlags = [...(sp.flags || []), flag];
+                    updateDevSprite(id, { flags: newFlags });
+                  }
+                }} style={{ padding: "2px 6px", background: "#7a2222", color: "#fff", border: "1px solid #ff4444" }}>+ Flag Issue</button>
+              </div>
+              {sp.flags && sp.flags.length > 0 && (
+                <div style={{ marginTop: 4, color: "#ff8888", fontSize: 10 }}>
+                  Flags: {sp.flags.join(", ")}
+                </div>
+              )}
+              <div style={{ fontSize: 10, color: "#888", marginTop: 4 }}>
+                Pos: {Math.round(sp.x)}, {Math.round(sp.y)} | Scale: {sp.scale.toFixed(1)}
+              </div>
+            </div>
+          ))}
+          
+          <button onClick={() => {
+            navigator.clipboard.writeText(JSON.stringify(devSprites, null, 2));
+            alert("Dev state copied to clipboard!");
+          }} style={{ marginTop: 10, width: "100%", padding: 6 }}>Copy All Dev States</button>
+        </div>
+      )}
     </div>
   );
 }

@@ -109,7 +109,7 @@ function UtilFxImg({ imgKey, color, imgBase }: { imgKey: string; color: string; 
 }
 
 export function MoveFx({
-  anim, color, from, category, element, power, imgBase = "/__mockup/images",
+  anim, color, from, category, element, power, imgBase = "/images",
 }: {
   anim: MoveAnim; color: string; from: "player" | "wild";
   category: MoveCategory; element?: string; power?: number; imgBase?: string;
@@ -314,7 +314,7 @@ export function MoveFx({
 }
 
 export function ResonanceFx({
-  element, color, imgBase = "/__mockup/images",
+  element, color, imgBase = "/images",
 }: {
   element: string; color: string; imgBase?: string;
 }) {
