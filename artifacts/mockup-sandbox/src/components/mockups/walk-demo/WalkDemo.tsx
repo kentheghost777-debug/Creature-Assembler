@@ -10,6 +10,7 @@ import {
 } from "./moves";
 import { type CharId, type RoleId, type PartySave, type PartyMon, type WorldSave, type HeldItemId, type HeldItem, ROLES, readSave, updateParty, updateWorld, updateRole, roleDef } from "./save";
 import { playTrack, playJingle, stopAll, playSfx, playSfxFile } from "./audioManager";
+import { createTayanariSystem } from "./tayanariSystem";
 
 /** Hydrate caught/box entries on load. Older saves stored bare MonSpec (no
  *  progression); those default to the level the mon was caught at. */
@@ -344,7 +345,7 @@ const EVO_TABLE: Array<{ from: string; atLevel: number; to: StarterSpec }> = [
 
 /** Returns the StarterSpec the starter evolves into when it reaches exactly `atLevel`. */
 function evoAt(currentId: string, atLevel: number): StarterSpec | null {
-  return EVO_TABLE.find(e => e.from === currentId && e.atLevel === atLevel)?.to ?? null;
+  return TAYANARI_SYSTEM.evolutionAt(currentId, atLevel)?.to ?? null;
 }
 
 // ── Dialog phases ───────────────────────────────────────────────────────────
@@ -2002,6 +2003,25 @@ function saveDevCasts() {
 const PARTY_CAP = 8;
 // Storage Box at the lab holds up to this many extra Tayanari.
 const STORAGE_CAP = 100;
+
+// ── Unified Tayanari coordination layer ─────────────────────────────────────
+// This is the single runtime gateway used by the Dex and level-evolution
+// lookups. Creature IDs and existing save records remain unchanged.
+const TAYANARI_SYSTEM = createTayanariSystem<MonSpec, StarterSpec>({
+  regions: [
+    { key:"r1",    label:"Whisperroot Trail", mons:BESTIARY,       accent:"#50c040" },
+    { key:"r2",    label:"Eastern Path",       mons:BESTIARY_R2,    accent:"#40a8ff" },
+    { key:"a3",    label:"Westwood Reaches",   mons:BESTIARY_A3,    accent:"#c070ff" },
+    { key:"shore", label:"Tidemark Shore",     mons:BESTIARY_SHORE, accent:"#40d0e0" },
+    { key:"fp",    label:"Forest Path",        mons:BESTIARY_FP,    accent:"#58a838" },
+    { key:"fc",    label:"Forest Clearing",    mons:BESTIARY_FC,    accent:"#80d048" },
+  ],
+  evolutions: EVO_TABLE,
+});
+
+if (import.meta.env.DEV && TAYANARI_SYSTEM.issues.length > 0) {
+  console.warn("[Primeria:TayanariSystem] catalog audit", TAYANARI_SYSTEM.issues);
+}
 
 // ── Main component ──────────────────────────────────────────────────────────
 export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" }: { characterId?: CharId; roleId?: RoleId } = {}) {
@@ -9336,15 +9356,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                       {/* DEX tab */}
                       {dexSub === "dex" && (
                         <div style={{ display:"flex", flexDirection:"column", gap:2 }}>
-                          {([
-                            { label:"Whisperroot Trail", mons:BESTIARY,       accent:"#50c040" },
-                            { label:"Eastern Path",      mons:BESTIARY_R2,    accent:"#40a8ff" },
-                            { label:"Westwood Reaches",  mons:BESTIARY_A3,    accent:"#c070ff" },
-                            { label:"Tidemark Shore",    mons:BESTIARY_SHORE, accent:"#40d0e0" },
-                            { label:"Forest Path",       mons:BESTIARY_FP,    accent:"#58a838" },
-                            { label:"Forest Clearing",   mons:BESTIARY_FC,    accent:"#80d048" },
-                          ]).map(({ label, mons, accent }) => {
-                            const uniq = mons.filter((m,i,a) => a.findIndex(x => x.name === m.name) === i);
+                          {TAYANARI_SYSTEM.regions.map(({ key, label, mons, accent }) => {
+                            const uniq = TAYANARI_SYSTEM.uniqueRegionMons({ key, label, mons, accent });
                             return (
                               <div key={label} style={{ marginBottom:12 }}>
                                 <div style={{ color:accent, fontSize:9.5, fontWeight:900, letterSpacing:1.8, textTransform:"uppercase", padding:"8px 2px 6px", borderBottom:`1px solid ${accent}55`, marginBottom:6 }}>
@@ -9354,8 +9367,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                                   {uniq.map(m => {
                                     const rc = RARITY_COLOR[m.rarity];
                                     const tc = ELEMENT_COLOR[m.type as keyof typeof ELEMENT_COLOR] ?? "#aaa";
-                                    const e1 = EVO_TABLE.find(e => e.from === m.id);
-                                    const e2 = e1 ? EVO_TABLE.find(e => e.from === e1.to.id) : null;
+                                    const e1 = TAYANARI_SYSTEM.nextEvolution(m.id);
+                                    const e2 = e1 ? TAYANARI_SYSTEM.nextEvolution(e1.to.id) : null;
                                     return (
                                       <div key={m.id} style={{ display:"flex", flexDirection:"column", alignItems:"center", background:"rgba(255,248,230,0.5)", borderRadius:7, padding:"6px 4px 5px", gap:1, border:`1px solid ${rc}33` }}>
                                         {m.wildImg ? <img src={m.wildImg} alt={m.name} style={{ width:52, height:52, objectFit:"contain" }}/> : m.wildSheet ? <div style={{ width:52, height:52, backgroundRepeat:"no-repeat", ...sheetBgStyle(m.wildSheet) }}/> : <div style={{ width:52, height:52, borderRadius:6, background:tc+"33", border:`1px solid ${tc}55` }}/>}
