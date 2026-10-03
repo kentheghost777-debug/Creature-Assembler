@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ELEMENT_COLOR, PRISM_STONES_BY_ID, prismFilter, type PrismStoneId } from "./progression";
 import {
   type Move, getMove, asElement, computeDamage, effectiveness, effLabel,
-  defaultActiveMoves, wildCombatStats, wildLevelFor,
+  MAX_ACTIVE_MOVES, defaultActiveMoves, wildCombatStats, wildLevelFor,
 } from "./moves";
 import { MoveFx, MOVE_FX_KEYFRAMES, ResonanceFx, RESONANCE_FX_KEYFRAMES } from "./battleFx";
 import { playSfx, playSfxFile } from "./audioManager";
@@ -178,7 +178,7 @@ type Props = {
   starter: StarterSpec;
   starterLevel: number;
   starterStats: StarterStats;
-  /** Active move loadout (≤4 move ids) the player brought into battle. */
+  /** Active move loadout (≤6 move ids) the player brought into battle. */
   starterMoves: string[];
   hasResonanceStone: boolean;
   healingRuneEquipped: boolean;
@@ -201,6 +201,9 @@ type Props = {
   keeperSheet?: SpriteSheet;
   /** Player's own hero sprite (faces east). Defaults to the generic walker. */
   heroImg?: string;
+  heroName?: string;
+  /** Keeper attunement awakened by the original starter choice. */
+  resonanceElement?: string;
   /** Full team for a trainer battle (wild = team[0]). When set, defeated mons
    *  cycle through the roster and the battle ends with `trainerWin`. */
   keeperTeam?: MonSpec[];
@@ -239,7 +242,8 @@ export function BattleScene({
   wild, starter, starterLevel, starterStats, starterMoves, hasResonanceStone, healingRuneEquipped,
   catchMult = 1, wildLevel, shellsCount, caughtIds = [] as string[],
   opponentKind = "wild", keeperName = "Keeper", keeperImg = "/images/rowan_side_1.png",
-  heroImg = "/images/walk_side_1.png",
+  heroImg = "/images/walk_side_1.png", heroName = "Keeper",
+  resonanceElement = starter.type,
   keeperSheet,
   keeperTeam, keeperMonLevels, bench,
   teamRuneEffects,
@@ -293,6 +297,7 @@ export function BattleScene({
   const lead: BattleMon = {
     id: starter.id, name: starter.name, type: starter.type,
     color: starter.color, level: starterLevel, stats: starterStats,
+    sheet: starter.sheet,
     moves: starterMoves, img: starter.img, faces: starter.faces ?? "right",
   };
   const team: BattleMon[] = [lead, ...(bench ?? [])];
@@ -306,7 +311,7 @@ export function BattleScene({
     if (!isMountedRef.current) { isMountedRef.current = true; return; }
     const effects = teamRuneEffects?.[activeIdx] ?? [];
     activeRuneEffectsRef.current = effects;
-    setResBar(effects.includes("resonance_fill") ? 15 : 0);
+    if (effects.includes("resonance_fill")) setResBar(15);
     setBarrierActive(effects.includes("barrier"));
     setSwiftUsed(false);
   }, [activeIdx]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -339,6 +344,7 @@ export function BattleScene({
   const [logKey,   setLogKey]     = useState(0);
   const [busy,     setBusy]       = useState(true);
   const [menu,     setMenu]       = useState<Menu>("root");
+  const [keeperActionUsed, setKeeperActionUsed] = useState(false);
   const [healCd,   setHealCd]     = useState(0);              // turns remaining
   const [runeUses, setRuneUses]   = useState(healingRuneEquipped ? 3 : 0);
   const [berryCount, setBerryCount] = useState(() => berries ?? { dusk:0, thorn:0, calm:0, bright:0 });
@@ -387,11 +393,11 @@ export function BattleScene({
   const nextFxId = () => ++fxIdRef.current;
 
   // ── Move system: derived combatants ──────────────────────────────────────
-  // Resolve a battle mon's active loadout (≤4), falling back to its element
+  // Resolve a battle mon's active loadout (≤6), falling back to its element
   // defaults, then Struggle. Shared by the active mon and per-mon PP pools.
   function resolveMoves(m: BattleMon): Move[] {
     const resolved = m.moves.map(getMove).filter((x): x is Move => !!x);
-    if (resolved.length) return resolved.slice(0, 4);
+    if (resolved.length) return resolved.slice(0, MAX_ACTIVE_MOVES);
     const el = asElement(m.type);
     if (el) {
       const def = defaultActiveMoves(el, m.level).map(getMove).filter((x): x is Move => !!x);
@@ -534,6 +540,7 @@ export function BattleScene({
 
   // ── Wild's turn ─────────────────────────────────────────────────────────
   function wildTurn(afterCb?: () => void) {
+    setKeeperActionUsed(false);
     later(() => {
       // Rune: swift — wild's very first action is skipped once
       if (activeRuneEffectsRef.current.includes("swift") && !swiftUsed) {
@@ -779,23 +786,24 @@ export function BattleScene({
   }
 
   function onHeal() {
-    if (busy || healCd > 0) return;
+    if (busy || keeperActionUsed || playerHp >= playerMaxHp) return;
     setBusy(true);
     const before = playerHp;
     const heal   = Math.floor(playerMaxHp * 0.5);
     const next   = Math.min(playerMaxHp, before + heal);
     setPlayerHp(next);
     setLog(`${active.name} recovers ${next - before} HP!`);
-    setHealCd(2);
+    setKeeperActionUsed(true);
     triggerAux("heal", "#80ff80", "player", 1000);
-    later(() => wildTurn(), 700);
+    later(() => setBusy(false), 700);
   }
 
   function onRune() {
-    if (busy) return;
+    if (busy || keeperActionUsed) return;
     if (!healingRuneEquipped) { setLog("No rune equipped."); return; }
     if (runeUses <= 0)        { setLog("Rune is spent for this battle."); return; }
     setBusy(true);
+    setKeeperActionUsed(true);
     const heal = Math.floor(playerMaxHp * 0.25);
     const next = Math.min(playerMaxHp, playerHp + heal);
     setPlayerHp(next);
@@ -812,13 +820,13 @@ export function BattleScene({
     if (resBar < 15)        { setLog(`Resonance not ready (${resBar}/15).`); return; }
     setBusy(true);  // lock input immediately — FX delays would otherwise leak a turn
     setResBar(0);
-    const resColor = typeColor(active.type);
+    const resColor = typeColor(resonanceElement);
     triggerAux("resonate", resColor, undefined, 900);
     const rxId = nextFxId();
-    setResonanceFx({ element: active.type, color: resColor, id: rxId });
+    setResonanceFx({ element: resonanceElement, color: resColor, id: rxId });
     later(() => setResonanceFx(curr => curr?.id === rxId ? null : curr), 1400);
-    if (active.type === "Spirit") {
-      // Fae-like: revival/cleanse — heals fully. Resonance = Keeper action; player retains turn.
+    if (resonanceElement === "Spirit") {
+      // Fae-like: revival/cleanse — heals fully. Resonance is a bonus action; player retains turn.
       setBusy(true);
       setPlayerHp(playerMaxHp);
       setLog(`Spirit Resonance — ${active.name} is fully restored!`);
@@ -826,14 +834,15 @@ export function BattleScene({
       return;
     }
     const dmg = Math.round(6 + starterLevel * 0.6 + Math.random() * (starterLevel * 0.5 + 4));
-    // Resonance = Keeper action; pass noWildTurn so player keeps their turn after the burst.
-    later(() => playerHit(dmg, `${active.type} Resonance bursts! ${dmg} damage!`, false, 1, undefined, true), 350);
+    // Resonance is a bonus action; pass noWildTurn so player keeps their turn after the burst.
+    later(() => playerHit(dmg, `${resonanceElement} Resonance bursts! ${dmg} damage!`, false, 1, undefined, true), 350);
   }
 
   // ── Berry bag handlers (Hollis field-berries) ────────────────────────────
   function onUseDusk() {
-    if (busy || berryCount.dusk <= 0) return;
+    if (busy || keeperActionUsed || berryCount.dusk <= 0) return;
     setBusy(true);
+    setKeeperActionUsed(true);
     const before = playerHp;
     const heal   = Math.floor(playerMaxHp * 0.30);
     const next   = Math.min(playerMaxHp, before + heal);
@@ -842,31 +851,34 @@ export function BattleScene({
     onUseBerry?.("dusk");
     setLog(`Duskberry — ${next - before} HP restored!`);
     triggerAux("heal", "#9860d0", "player", 900);
-    later(() => { setMenu("root"); wildTurn(); }, 800);
+    later(() => { setMenu("root"); setBusy(false); }, 800);
   }
   function onUseThorn() {
-    if (busy || berryCount.thorn <= 0) return;
+    if (busy || keeperActionUsed || berryCount.thorn <= 0) return;
     setBusy(true);
+    setKeeperActionUsed(true);
     setBuffs(b => ({ ...b, pAtk: b.pAtk + 8 }));
     setBerryCount(b => ({ ...b, thorn: b.thorn - 1 }));
     onUseBerry?.("thorn");
     setLog(`Thornberry — ${active.name}'s attack sharpened!`);
     triggerAux("rune", "#e03030", "player", 850);
-    later(() => { setMenu("root"); wildTurn(); }, 800);
+    later(() => { setMenu("root"); setBusy(false); }, 800);
   }
   function onUseCalm() {
-    if (busy || berryCount.calm <= 0) return;
+    if (busy || keeperActionUsed || berryCount.calm <= 0) return;
     setBusy(true);
+    setKeeperActionUsed(true);
     setBuffs(b => ({ ...b, pDef: b.pDef + 8 }));
     setBerryCount(b => ({ ...b, calm: b.calm - 1 }));
     onUseBerry?.("calm");
     setLog(`Calmberry — ${active.name}'s guard steadied!`);
     triggerAux("rune", "#30b870", "player", 850);
-    later(() => { setMenu("root"); wildTurn(); }, 800);
+    later(() => { setMenu("root"); setBusy(false); }, 800);
   }
   function onUseBright() {
-    if (busy || berryCount.bright <= 0) return;
+    if (busy || keeperActionUsed || berryCount.bright <= 0) return;
     setBusy(true);
+    setKeeperActionUsed(true);
     setHealCd(0);
     const lowestMove = playerMoves.reduce((a, b) =>
       (playerPp[a.id] ?? 0) < (playerPp[b.id] ?? 0) ? a : b
@@ -876,7 +888,7 @@ export function BattleScene({
     onUseBerry?.("bright");
     setLog(`Brightberry — Cooldowns cleared, ${lowestMove.name} PP restored!`);
     triggerAux("heal", "#e0c020", "player", 900);
-    later(() => { setMenu("root"); wildTurn(); }, 800);
+    later(() => { setMenu("root"); setBusy(false); }, 800);
   }
 
   function onFlee() {
@@ -895,22 +907,23 @@ export function BattleScene({
   }
 
   function onShell() {
-    if (busy) return;
+    if (busy || keeperActionUsed) return;
     // Keeper battles: the opposing Tayanari is already bonded to its Keeper and
     // can never be bonded to you. Setting a shell is impossible here.
     if (isKeeper) {
       setLog(`${wild.name} is already bonded to ${keeperName} — you can't set a shell on it.`);
       return;
     }
-    if (shellsCount <= 0) { setLog("No Worn Realm Shells left."); return; }
+    if (shellsCount <= 0) { setLog("No Weathered Shells left."); return; }
     setMenu("shellConfirm");
   }
 
   function doShellSet() {
-    if (isKeeper) return; // safety: keeper mons are never bondable
+    if (busy || keeperActionUsed || isKeeper || shellsCount <= 0) return; // keeper mons are never bondable
     setMenu("root");
     setBusy(true);
     playSfx("shell_throw");
+    setKeeperActionUsed(true);
     onConsumeShell();
     shellsSetRef.current += 1;
     setShellsSet(shellsSetRef.current);
@@ -950,7 +963,7 @@ export function BattleScene({
         later(() => {
           setShellFx(null);
           setLog(`${wild.name} broke free! (Shell empty — recoverable after battle)`);
-          wildTurn();
+          setBusy(false);
         }, 700);
       }
     }, 2100);
@@ -1014,7 +1027,7 @@ export function BattleScene({
   });
 
   return (
-    <div 
+    <div
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerUp}
@@ -1046,8 +1059,9 @@ export function BattleScene({
           backgroundImage:"url(/images/forest-arena.png)",
           backgroundSize:"cover", backgroundPosition:"center",
         }}>
-        {/* Wild HP plate (top-right) */}
+        {/* Opponent status below its Tayanari */}
         <div style={hpPlateStyle("enemy", typeColor(currentOpponent.type))}>
+          <BattlePortrait name={currentOpponent.name} img={currentOpponent.wildImg} sheet={currentOpponent.wildSheet} />
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:4, marginBottom:4 }}>
             <span style={{ color:"#fff", fontSize:13, fontWeight:900, lineHeight:1 }}>
               {currentOpponent.name}
@@ -1084,8 +1098,9 @@ export function BattleScene({
           </div>
         </div>
 
-        {/* Player HP plate (top-left) */}
+        {/* Player status below its Tayanari */}
         <div style={hpPlateStyle("player", active.color)}>
+          <BattlePortrait name={active.name} img={active.img} sheet={active.sheet} />
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:4, marginBottom:4 }}>
             <span style={{ color:"#fff", fontSize:13, fontWeight:900, lineHeight:1 }}>{active.name}</span>
             <span style={{ color:"#c8c0a0", fontSize:8, fontWeight:700, flexShrink:0 }}>Lv.{active.level}</span>
@@ -1163,7 +1178,7 @@ export function BattleScene({
                 </div>
               );
             })() : (
-              <img 
+              <img
                 onPointerDown={(e) => handlePointerDown(e, "OpponentMon")}
                 src={currentOpponent.wildImg} alt={currentOpponent.name} style={{
                   position: "absolute", left: "50%", bottom: 0,
@@ -1188,7 +1203,7 @@ export function BattleScene({
             width:"100%", height:"100%",
             animation: intro ? "introSlide 1.1s ease-out" : "none",
           }}>
-            <img 
+            <img
               onPointerDown={(e) => handlePointerDown(e, "Hero")}
               src={heroImg} alt="Keeper" style={{
                 width: 156, height: 156, objectFit: "contain",
@@ -1217,7 +1232,7 @@ export function BattleScene({
                   }}/>
                 </div>
               ) : (
-                <img 
+                <img
                 onPointerDown={(e) => handlePointerDown(e, "KeeperTrainer")}
                 src={keeperImg} alt={keeperName} style={{
                   width: 170, height: 170, objectFit: "contain",
@@ -1253,18 +1268,16 @@ export function BattleScene({
                   : "drop-shadow(0 6px 8px rgba(0,0,0,0.5))",
               }}/>
             ) : (
-              <img 
+              <img
                 onPointerDown={(e) => handlePointerDown(e, "PlayerMon")}
-                src={active.playerImg || active.img} alt={active.name} style={{
+                src={active.img} alt={active.name} style={{
                 width:"100%", height:"100%", objectFit:"contain",
                 transformOrigin:"center center",
                 transition:"transform 0.45s ease-in, opacity 0.45s",
-                filter: prismCssFilter,
+                filter: prismCssFilter ? `${prismCssFilter} drop-shadow(0 6px 8px rgba(0,0,0,0.5))` : "drop-shadow(0 6px 8px rgba(0,0,0,0.5))",
                 transform: devMode ? `translate(${getDevSprite("PlayerMon", 1).x}px, ${getDevSprite("PlayerMon", 1).y}px) scale(${getDevSprite("PlayerMon", 1).scale}) scaleX(${getDevSprite("PlayerMon", 1).flip ? -1 : 1})` : ((playerFlip + playerExtra).trim() || "none"),
                 cursor: devMode ? "move" : "default",
-                border: (devMode && getDevSprite("PlayerMon").flags?.length > 0) ? "2px solid red" : "none" 
-                  ? `${prismCssFilter} drop-shadow(0 6px 8px rgba(0,0,0,0.5))`
-                  : "drop-shadow(0 6px 8px rgba(0,0,0,0.5))",
+                border: (devMode && getDevSprite("PlayerMon").flags?.length > 0) ? "2px solid red" : "none",
               }}/>
             )}
             {prismStone && (
@@ -1568,10 +1581,72 @@ export function BattleScene({
             </div>
           </div>
         )}
+        <div style={{ position:"absolute", left:"10%", top:"80%", transform:"translateX(-50%)", zIndex:15 }}>
+          <BattlePortrait name={heroName} img={heroImg} />
+        </div>
+        {isKeeper && <div style={{ position:"absolute", left:"87.5%", top:"80%", transform:"translateX(-50%)", zIndex:15 }}>
+          <BattlePortrait name={keeperName} img={keeperImg} sheet={keeperSheet} />
+        </div>}
         </div>{/* arena */}
       </div>{/* stage */}
 
-      {/* Log + menu */}
+      {/* ── DEV HUD ───────────────────────────────────────────────────── */}
+      <button
+        onClick={() => setDevMode(v => !v)}
+        style={{
+          position: "absolute", top: 14, right: 14, zIndex: 9999,
+          padding: "6px 10px", borderRadius: 8, border: "1px solid #2a78ff",
+          background: devMode ? "#2a78ff" : "rgba(10,10,12,0.7)",
+          color: "#fff", fontSize: 12, fontWeight: 800, fontFamily: "monospace", cursor: "pointer",
+        }}
+      >{devMode ? "DEV ✕" : "DEV"}</button>
+
+      {devMode && (
+        <div style={{
+          position: "absolute", top: 50, right: 14, zIndex: 9998,
+          width: 280, background: "rgba(10,10,14,0.85)", border: "1px solid #2a78ff",
+          borderRadius: 8, padding: "10px", color: "#fff", fontSize: 12, fontFamily: "monospace",
+          maxHeight: "80vh", overflowY: "auto"
+        }}>
+          <div style={{ fontWeight: 800, color: "#7fb0ff", marginBottom: 6 }}>BATTLE DEV TOOLS</div>
+          <div style={{ color: "#aaa", marginBottom: 12, fontSize: 10 }}>Drag sprites to move them.</div>
+
+          {Object.entries(devSprites).map(([id, sp]) => (
+            <div key={id} style={{ marginBottom: 10, padding: 6, background: "rgba(255,255,255,0.1)", borderRadius: 6 }}>
+              <div style={{ fontWeight: "bold", color: "#ffcf3a" }}>{id}</div>
+              <div style={{ display: "flex", gap: 4, marginTop: 4 }}>
+                <button onClick={() => updateDevSprite(id, { scale: Math.max(0.1, sp.scale - 0.1) })} style={{ padding: "2px 6px" }}>- Size</button>
+                <button onClick={() => updateDevSprite(id, { scale: sp.scale + 0.1 })} style={{ padding: "2px 6px" }}>+ Size</button>
+                <button onClick={() => updateDevSprite(id, { flip: !sp.flip })} style={{ padding: "2px 6px" }}>Flip</button>
+              </div>
+              <div style={{ marginTop: 4 }}>
+                <button onClick={() => {
+                  const flag = prompt("Enter flag reason (e.g., bad crop, duplicate, wrong colors):");
+                  if (flag) {
+                    const newFlags = [...(sp.flags || []), flag];
+                    updateDevSprite(id, { flags: newFlags });
+                  }
+                }} style={{ padding: "2px 6px", background: "#7a2222", color: "#fff", border: "1px solid #ff4444" }}>+ Flag Issue</button>
+              </div>
+              {sp.flags && sp.flags.length > 0 && (
+                <div style={{ marginTop: 4, color: "#ff8888", fontSize: 10 }}>
+                  Flags: {sp.flags.join(", ")}
+                </div>
+              )}
+              <div style={{ fontSize: 10, color: "#888", marginTop: 4 }}>
+                Pos: {Math.round(sp.x)}, {Math.round(sp.y)} | Scale: {sp.scale.toFixed(1)}
+              </div>
+            </div>
+          ))}
+
+          <button onClick={() => {
+            navigator.clipboard.writeText(JSON.stringify(devSprites, null, 2));
+            alert("Dev state copied to clipboard!");
+          }} style={{ marginTop: 10, width: "100%", padding: 6 }}>Copy All Dev States</button>
+        </div>
+      )}
+
+      {/* Keeper utility action precedes the Tayanari action; Resonance is separate. */}
       <div style={{
         flexShrink:0,
         background:"linear-gradient(180deg, rgba(20,12,6,0.96), rgba(8,4,2,0.98))",
@@ -1590,6 +1665,7 @@ export function BattleScene({
           }}
         >{log}</div>
 
+        <div style={{ color:"#cdb783", fontSize:10, marginBottom:4 }}>Keeper action: {keeperActionUsed ? "used" : "ready"} · Tayanari action: ready</div>
         {(menu === "switch" || menu === "switchForced") ? (
           <div style={{ display:"flex", flexDirection:"column", gap:5, marginTop:8 }}>
             <div style={{ color:"#f0d890", fontSize:11, fontWeight:800, textAlign:"center", marginBottom:2 }}>
@@ -1677,7 +1753,7 @@ export function BattleScene({
               { key:"calm"  as const, label:"Calmberry",   sub:"DEF +8",   count:berryCount.calm,   img:"/images/calmberry.png",   color:"#30b870", onClick:onUseCalm   },
               { key:"bright"as const, label:"Brightberry", sub:"PP+CD fix",count:berryCount.bright,img:"/images/brightberry.png", color:"#e0c020", onClick:onUseBright },
             ].map(b => (
-              <button key={b.key} disabled={busy || b.count <= 0} onClick={b.onClick} style={{
+              <button key={b.key} disabled={busy || keeperActionUsed || b.count <= 0} onClick={b.onClick} style={{
                 display:"flex", alignItems:"center", gap:10, width:"100%",
                 background: b.count > 0 ? BTN_BG : "rgba(30,20,10,0.6)",
                 border:`1.5px solid ${b.count > 0 ? "rgba(180,130,60,0.45)" : "rgba(100,70,30,0.2)"}`,
@@ -1705,13 +1781,13 @@ export function BattleScene({
             gap:5, marginTop:8,
           }}>
             <BattleBtn label="Moves"    sub="select"  primary disabled={busy} onClick={() => setMenu("moves")}/>
-            <BattleBtn label="Resonate" sub={hasResonanceStone ? `${resBar}/15` : "locked"} disabled={busy || !hasResonanceStone || resBar < 15} onClick={onResonate}/>
-            <BattleBtn label="Set Shell" sub={isKeeper ? "bonded" : `×${shellsCount}`} disabled={busy || isKeeper || shellsCount <= 0} onClick={onShell}/>
-            <BattleBtn label="Heal"     sub={healCd > 0 ? `CD ${healCd}` : "50%"} disabled={busy || healCd > 0} onClick={onHeal}/>
-            <BattleBtn label="Rune"     sub={healingRuneEquipped ? `×${runeUses}` : "—"} disabled={busy || !healingRuneEquipped || runeUses <= 0} onClick={onRune}/>
-            <BattleBtn label="Switch"   sub={hasReserve ? "party" : "none"} disabled={busy || !hasReserve} onClick={() => setMenu("switch")}/>
+            <BattleBtn label="Resonance" sub={hasResonanceStone ? `${resBar}/15` : "locked"} disabled={busy || !hasResonanceStone || resBar < 15} onClick={onResonate}/>
+            <BattleBtn label="Shells" sub={isKeeper ? "bonded" : `×${shellsCount}`} disabled={busy || keeperActionUsed || isKeeper || shellsCount <= 0} onClick={onShell}/>
+            <BattleBtn label="Heal"     sub={keeperActionUsed ? "used" : "50%"} disabled={busy || keeperActionUsed || playerHp >= playerMaxHp} onClick={onHeal}/>
+            <BattleBtn label="Runes"     sub={healingRuneEquipped ? `×${runeUses}` : "—"} disabled={busy || keeperActionUsed || !healingRuneEquipped || runeUses <= 0} onClick={onRune}/>
+            <BattleBtn label="Switch"   sub={hasReserve ? "party" : "none"} disabled={busy || keeperActionUsed || !hasReserve} onClick={() => setMenu("switch")}/>
             <BattleBtn label="Flee"     sub={isKeeper ? "locked" : "70%"} disabled={busy || isKeeper} onClick={onFlee}/>
-            <BattleBtn label="Bag"      sub={`×${berryCount.dusk+berryCount.thorn+berryCount.calm+berryCount.bright}`} disabled={busy} onClick={() => setMenu("bag")}/>
+            <BattleBtn label="Berries"      sub={`×${berryCount.dusk+berryCount.thorn+berryCount.calm+berryCount.bright}`} disabled={busy || keeperActionUsed} onClick={() => setMenu("bag")}/>
           </div>
         )}
       </div>
@@ -1897,9 +1973,11 @@ export function BattleScene({
   function hpPlateStyle(who: "enemy" | "player", glowColor?: string): React.CSSProperties {
     return {
       position:"absolute",
-      top:    6,
-      left:   who === "player" ? 6 : "auto",
-      right:  who === "enemy"  ? 6 : "auto",
+      top: "65%",
+      left: who === "player" ? "25.5%" : "70%",
+      transform: "translateX(-50%)",
+      zIndex: 15,
+      pointerEvents: "none",
       padding:"6px 10px",
       background:"linear-gradient(180deg, rgba(22,14,6,0.95), rgba(10,5,2,0.96))",
       border: glowColor ? `1.5px solid ${glowColor}50` : "1.5px solid rgba(180,130,60,0.45)",
@@ -1915,10 +1993,7 @@ export function BattleScene({
 // Element-tinted glimmer that blooms where a mon materializes at battle start.
 function SummonBurst({ x, y, color, delay }: { x: number; y: number; color: string; delay: number }) {
   return (
-    <div 
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerLeave={handlePointerUp}
+    <div
       style={{ position:"absolute", left:`${x}%`, top:`${y}%`, width:0, height:0 }}>
       {/* Expanding ring */}
       <div style={{
@@ -1953,61 +2028,7 @@ function SummonBurst({ x, y, color, delay }: { x: number; y: number; color: stri
         }}/>
       ))}
 
-      {/* ── DEV HUD ───────────────────────────────────────────────────── */}
-      <button
-        onClick={() => setDevMode(v => !v)}
-        style={{
-          position: "absolute", top: 14, right: 14, zIndex: 9999,
-          padding: "6px 10px", borderRadius: 8, border: "1px solid #2a78ff",
-          background: devMode ? "#2a78ff" : "rgba(10,10,12,0.7)",
-          color: "#fff", fontSize: 12, fontWeight: 800, fontFamily: "monospace", cursor: "pointer",
-        }}
-      >{devMode ? "DEV ✕" : "DEV"}</button>
-      
-      {devMode && (
-        <div style={{
-          position: "absolute", top: 50, right: 14, zIndex: 9998,
-          width: 280, background: "rgba(10,10,14,0.85)", border: "1px solid #2a78ff",
-          borderRadius: 8, padding: "10px", color: "#fff", fontSize: 12, fontFamily: "monospace",
-          maxHeight: "80vh", overflowY: "auto"
-        }}>
-          <div style={{ fontWeight: 800, color: "#7fb0ff", marginBottom: 6 }}>BATTLE DEV TOOLS</div>
-          <div style={{ color: "#aaa", marginBottom: 12, fontSize: 10 }}>Drag sprites to move them.</div>
-          
-          {Object.entries(devSprites).map(([id, sp]) => (
-            <div key={id} style={{ marginBottom: 10, padding: 6, background: "rgba(255,255,255,0.1)", borderRadius: 6 }}>
-              <div style={{ fontWeight: "bold", color: "#ffcf3a" }}>{id}</div>
-              <div style={{ display: "flex", gap: 4, marginTop: 4 }}>
-                <button onClick={() => updateDevSprite(id, { scale: Math.max(0.1, sp.scale - 0.1) })} style={{ padding: "2px 6px" }}>- Size</button>
-                <button onClick={() => updateDevSprite(id, { scale: sp.scale + 0.1 })} style={{ padding: "2px 6px" }}>+ Size</button>
-                <button onClick={() => updateDevSprite(id, { flip: !sp.flip })} style={{ padding: "2px 6px" }}>Flip</button>
-              </div>
-              <div style={{ marginTop: 4 }}>
-                <button onClick={() => {
-                  const flag = prompt("Enter flag reason (e.g., bad crop, duplicate, wrong colors):");
-                  if (flag) {
-                    const newFlags = [...(sp.flags || []), flag];
-                    updateDevSprite(id, { flags: newFlags });
-                  }
-                }} style={{ padding: "2px 6px", background: "#7a2222", color: "#fff", border: "1px solid #ff4444" }}>+ Flag Issue</button>
-              </div>
-              {sp.flags && sp.flags.length > 0 && (
-                <div style={{ marginTop: 4, color: "#ff8888", fontSize: 10 }}>
-                  Flags: {sp.flags.join(", ")}
-                </div>
-              )}
-              <div style={{ fontSize: 10, color: "#888", marginTop: 4 }}>
-                Pos: {Math.round(sp.x)}, {Math.round(sp.y)} | Scale: {sp.scale.toFixed(1)}
-              </div>
-            </div>
-          ))}
-          
-          <button onClick={() => {
-            navigator.clipboard.writeText(JSON.stringify(devSprites, null, 2));
-            alert("Dev state copied to clipboard!");
-          }} style={{ marginTop: 10, width: "100%", padding: 6 }}>Copy All Dev States</button>
-        </div>
-      )}
+
     </div>
   );
 }
@@ -2032,10 +2053,7 @@ function HpBar({ hp, max, glowColor }: { hp: number; max: number; glowColor?: st
     ? "linear-gradient(90deg, #b87820, #e8c040)"
     : "linear-gradient(90deg, #b02828, #e85a4a)";
   return (
-    <div 
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerLeave={handlePointerUp}
+    <div
       style={{ position:"relative" }}>
       <div style={{
         height:9, borderRadius:5,
@@ -2065,61 +2083,7 @@ function HpBar({ hp, max, glowColor }: { hp: number; max: number; glowColor?: st
         )}
       </div>
 
-      {/* ── DEV HUD ───────────────────────────────────────────────────── */}
-      <button
-        onClick={() => setDevMode(v => !v)}
-        style={{
-          position: "absolute", top: 14, right: 14, zIndex: 9999,
-          padding: "6px 10px", borderRadius: 8, border: "1px solid #2a78ff",
-          background: devMode ? "#2a78ff" : "rgba(10,10,12,0.7)",
-          color: "#fff", fontSize: 12, fontWeight: 800, fontFamily: "monospace", cursor: "pointer",
-        }}
-      >{devMode ? "DEV ✕" : "DEV"}</button>
-      
-      {devMode && (
-        <div style={{
-          position: "absolute", top: 50, right: 14, zIndex: 9998,
-          width: 280, background: "rgba(10,10,14,0.85)", border: "1px solid #2a78ff",
-          borderRadius: 8, padding: "10px", color: "#fff", fontSize: 12, fontFamily: "monospace",
-          maxHeight: "80vh", overflowY: "auto"
-        }}>
-          <div style={{ fontWeight: 800, color: "#7fb0ff", marginBottom: 6 }}>BATTLE DEV TOOLS</div>
-          <div style={{ color: "#aaa", marginBottom: 12, fontSize: 10 }}>Drag sprites to move them.</div>
-          
-          {Object.entries(devSprites).map(([id, sp]) => (
-            <div key={id} style={{ marginBottom: 10, padding: 6, background: "rgba(255,255,255,0.1)", borderRadius: 6 }}>
-              <div style={{ fontWeight: "bold", color: "#ffcf3a" }}>{id}</div>
-              <div style={{ display: "flex", gap: 4, marginTop: 4 }}>
-                <button onClick={() => updateDevSprite(id, { scale: Math.max(0.1, sp.scale - 0.1) })} style={{ padding: "2px 6px" }}>- Size</button>
-                <button onClick={() => updateDevSprite(id, { scale: sp.scale + 0.1 })} style={{ padding: "2px 6px" }}>+ Size</button>
-                <button onClick={() => updateDevSprite(id, { flip: !sp.flip })} style={{ padding: "2px 6px" }}>Flip</button>
-              </div>
-              <div style={{ marginTop: 4 }}>
-                <button onClick={() => {
-                  const flag = prompt("Enter flag reason (e.g., bad crop, duplicate, wrong colors):");
-                  if (flag) {
-                    const newFlags = [...(sp.flags || []), flag];
-                    updateDevSprite(id, { flags: newFlags });
-                  }
-                }} style={{ padding: "2px 6px", background: "#7a2222", color: "#fff", border: "1px solid #ff4444" }}>+ Flag Issue</button>
-              </div>
-              {sp.flags && sp.flags.length > 0 && (
-                <div style={{ marginTop: 4, color: "#ff8888", fontSize: 10 }}>
-                  Flags: {sp.flags.join(", ")}
-                </div>
-              )}
-              <div style={{ fontSize: 10, color: "#888", marginTop: 4 }}>
-                Pos: {Math.round(sp.x)}, {Math.round(sp.y)} | Scale: {sp.scale.toFixed(1)}
-              </div>
-            </div>
-          ))}
-          
-          <button onClick={() => {
-            navigator.clipboard.writeText(JSON.stringify(devSprites, null, 2));
-            alert("Dev state copied to clipboard!");
-          }} style={{ marginTop: 10, width: "100%", padding: 6 }}>Copy All Dev States</button>
-        </div>
-      )}
+
     </div>
   );
 }
@@ -2301,10 +2265,7 @@ function InBattleEvoOverlay({
   };
 
   return (
-    <div 
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerLeave={handlePointerUp}
+    <div
       style={{
       position:"fixed", inset:0, zIndex:200, overflow:"hidden",
       background:"radial-gradient(ellipse at 50% 60%, #130920 0%, #04020c 100%)",
@@ -2390,62 +2351,17 @@ function InBattleEvoOverlay({
         @keyframes ievoNameplate  { from{transform:translateY(30px);opacity:0} to{transform:translateY(0);opacity:1} }
       `}</style>
 
-      {/* ── DEV HUD ───────────────────────────────────────────────────── */}
-      <button
-        onClick={() => setDevMode(v => !v)}
-        style={{
-          position: "absolute", top: 14, right: 14, zIndex: 9999,
-          padding: "6px 10px", borderRadius: 8, border: "1px solid #2a78ff",
-          background: devMode ? "#2a78ff" : "rgba(10,10,12,0.7)",
-          color: "#fff", fontSize: 12, fontWeight: 800, fontFamily: "monospace", cursor: "pointer",
-        }}
-      >{devMode ? "DEV ✕" : "DEV"}</button>
-      
-      {devMode && (
-        <div style={{
-          position: "absolute", top: 50, right: 14, zIndex: 9998,
-          width: 280, background: "rgba(10,10,14,0.85)", border: "1px solid #2a78ff",
-          borderRadius: 8, padding: "10px", color: "#fff", fontSize: 12, fontFamily: "monospace",
-          maxHeight: "80vh", overflowY: "auto"
-        }}>
-          <div style={{ fontWeight: 800, color: "#7fb0ff", marginBottom: 6 }}>BATTLE DEV TOOLS</div>
-          <div style={{ color: "#aaa", marginBottom: 12, fontSize: 10 }}>Drag sprites to move them.</div>
-          
-          {Object.entries(devSprites).map(([id, sp]) => (
-            <div key={id} style={{ marginBottom: 10, padding: 6, background: "rgba(255,255,255,0.1)", borderRadius: 6 }}>
-              <div style={{ fontWeight: "bold", color: "#ffcf3a" }}>{id}</div>
-              <div style={{ display: "flex", gap: 4, marginTop: 4 }}>
-                <button onClick={() => updateDevSprite(id, { scale: Math.max(0.1, sp.scale - 0.1) })} style={{ padding: "2px 6px" }}>- Size</button>
-                <button onClick={() => updateDevSprite(id, { scale: sp.scale + 0.1 })} style={{ padding: "2px 6px" }}>+ Size</button>
-                <button onClick={() => updateDevSprite(id, { flip: !sp.flip })} style={{ padding: "2px 6px" }}>Flip</button>
-              </div>
-              <div style={{ marginTop: 4 }}>
-                <button onClick={() => {
-                  const flag = prompt("Enter flag reason (e.g., bad crop, duplicate, wrong colors):");
-                  if (flag) {
-                    const newFlags = [...(sp.flags || []), flag];
-                    updateDevSprite(id, { flags: newFlags });
-                  }
-                }} style={{ padding: "2px 6px", background: "#7a2222", color: "#fff", border: "1px solid #ff4444" }}>+ Flag Issue</button>
-              </div>
-              {sp.flags && sp.flags.length > 0 && (
-                <div style={{ marginTop: 4, color: "#ff8888", fontSize: 10 }}>
-                  Flags: {sp.flags.join(", ")}
-                </div>
-              )}
-              <div style={{ fontSize: 10, color: "#888", marginTop: 4 }}>
-                Pos: {Math.round(sp.x)}, {Math.round(sp.y)} | Scale: {sp.scale.toFixed(1)}
-              </div>
-            </div>
-          ))}
-          
-          <button onClick={() => {
-            navigator.clipboard.writeText(JSON.stringify(devSprites, null, 2));
-            alert("Dev state copied to clipboard!");
-          }} style={{ marginTop: 10, width: "100%", padding: 6 }}>Copy All Dev States</button>
-        </div>
-      )}
+
     </div>
   );
 }
 
+
+function BattlePortrait({ name, img, sheet }: { name: string; img?: string; sheet?: SpriteSheet }) {
+  return <div style={{ display:"flex", alignItems:"center", gap:5, color:"#ead8b0", fontSize:9, fontWeight:800, marginBottom:3 }}>
+    <span style={{ width:24, height:24, borderRadius:"50%", overflow:"hidden", border:"1px solid #bca36b", background:"rgba(15,10,5,0.8)", flexShrink:0 }}>
+      {sheet ? <span role="img" aria-label={name} style={{ display:"block", width:"100%", height:"100%", ...sheetBgStyle(sheet) }} /> : <img src={img} alt="" style={{ width:"100%", height:"100%", objectFit:"contain" }} />}
+    </span>
+    <span>{name}</span>
+  </div>;
+}

@@ -3,7 +3,7 @@ import { BattleScene, RARITY_COLOR, sheetBgStyle, type SpriteSheet, type MonSpec
 import { EvoScene } from "./EvoScene";
 import { SHELLS, ELEMENT_COLOR, BATTLE_SHELLS, BATTLE_RUNES, BATTLE_SHELLS_BY_ID, BATTLE_RUNES_BY_ID, GEAR_ITEMS, GEAR_BY_ID, CLEARBELL_BERRIES, CLEARBELL_SHELLS, CLEARBELL_SHELLS_BY_ID, CLEARBELL_RUNES, PRISM_STONES, PRISM_STONES_BY_ID, prismFilter, HELD_ITEMS, HELD_ITEMS_BY_ID, type GearSlot, type GearItem, type PrismStoneId, type BattleRuneId, type HeldItemDef } from "./progression";
 import {
-  getMove, moveName, asElement,
+  MAX_ACTIVE_MOVES, getMove, moveName, asElement,
   learnedMoveIds, movesLearnedAt, defaultActiveMoves, sanitizeActiveMoves,
   partyBattleStats, wildLevelFor,
   type Move,
@@ -49,7 +49,7 @@ function rollLevelUpGains(): Partial<Record<StatKey, number>> {
 }
 
 // ── Out-of-battle move manager ────────────────────────────────────────────
-// Lets the player choose which (up to 4) of their learned moves are active in
+// Lets the player choose which (up to 6) of their learned moves are active in
 // battle. Rendered inside the party tab of the journal. Pure UI — parent owns
 // the active-move id list and persists it.
 function MoveManager({
@@ -65,7 +65,7 @@ function MoveManager({
       if (activeValid.length <= 1) return;            // always keep ≥1 active
       onChange(activeValid.filter(x => x !== id));
     } else {
-      if (activeValid.length >= 4) return;            // 4 active slots max
+      if (activeValid.length >= MAX_ACTIVE_MOVES) return;            // 6 active slots max
       onChange([...activeValid, id]);
     }
   };
@@ -85,7 +85,7 @@ function MoveManager({
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", marginBottom:7 }}>
         <span style={{ fontSize:10, fontWeight:900, letterSpacing:1.6, color:"#8a5c22" }}>MOVES</span>
         <span style={{ fontSize:9.5, fontWeight:700, color:"#a07848" }}>
-          {activeValid.length}/4 active · tap to {activeValid.length >= 4 ? "swap" : "equip"}
+          {activeValid.length}/{MAX_ACTIVE_MOVES} active · tap to {activeValid.length >= MAX_ACTIVE_MOVES ? "swap" : "equip"}
         </span>
       </div>
       <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
@@ -2556,11 +2556,29 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const [castEditMode, setCastEditMode] = useState(false);
 
   const [itemEditMode, setItemEditMode] = useState(false);
+  const itemDragRef = useRef<{ id:string; type:"ground"|"respawn"; sx:number; sy:number; ox:number; oy:number } | null>(null);
+  const [, setItemEditTick] = useState(0);
   const onItemDown = (id: string, type: 'ground'|'respawn') => (e: React.PointerEvent) => {
     if (!itemEditMode) return;
-    e.stopPropagation(); e.target.setPointerCapture(e.pointerId);
-    dragIdRef.current = id;
-    dragTypeRef.current = type;
+    const item = type === "ground" ? GROUND_ITEMS.find(g => g.id === id) : RESPAWN_SPOTS.find(g => g.id === id);
+    if (!item) return;
+    e.stopPropagation(); e.currentTarget.setPointerCapture(e.pointerId);
+    itemDragRef.current = { id, type, sx:e.clientX, sy:e.clientY, ox:item.wx, oy:item.wy };
+  };
+  const onItemMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const d = itemDragRef.current;
+    if (!d) return;
+    e.stopPropagation();
+    const item = d.type === "ground" ? GROUND_ITEMS.find(g => g.id === d.id) : RESPAWN_SPOTS.find(g => g.id === d.id);
+    if (!item) return;
+    item.wx = Math.round(d.ox + (e.clientX - d.sx) / mapZoomRef.current);
+    item.wy = Math.round(d.oy + (e.clientY - d.sy) / mapZoomRef.current);
+    setItemEditTick(t => t + 1);
+  };
+  const onItemUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    itemDragRef.current = null;
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
   };
   const [castCopied, setCastCopied] = useState(false);
   const castDragRef = useRef<{ key: string; sx: number; sy: number; ox: number; oy: number } | null>(null);
@@ -4461,7 +4479,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       if (lvEl) {
         for (const id of movesLearnedAt(lvEl, newLevel)) {
           newMoves.push(moveName(id));
-          if (workingMoves.length < 4 && !workingMoves.includes(id)) workingMoves.push(id);
+          if (workingMoves.length < MAX_ACTIVE_MOVES && !workingMoves.includes(id)) workingMoves.push(id);
         }
       }
       threshold = newLevel * 10 + 10;
@@ -4880,6 +4898,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           catchMult={0}
           shellsCount={shellCount}
           heroImg={heroSideImg}
+          heroName={characterId[0].toUpperCase() + characterId.slice(1)}
+          resonanceElement={(STARTERS.find(s => s.id === savedParty?.starterId) ?? starter).type}
           opponentKind="keeper"
           keeperImg={trainerEncounter.trainer === "jay" ? "/images/jay_side_idle.png" : trainerEncounter.trainer === "lia" ? "/images/lia_side_idle.png" : trainerEncounter.trainer === "prof" ? "/images/prof_side_idle.png" : "/images/jerbs_sprite.png"}
           keeperSheet={trainerEncounter.trainer === "jerbs" ? { url:"/images/jerbs_sprite.png", x:410, y:512, w:205, h:512, sheetW:1024, sheetH:1536 } : undefined}
@@ -4942,6 +4962,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           shellsCount={shellCount}
           caughtIds={[...caughtParty.map(m => m.id), ...storageBox.map(m => m.id)]}
           heroImg={heroSideImg}
+          heroName={characterId[0].toUpperCase() + characterId.slice(1)}
+          resonanceElement={(STARTERS.find(s => s.id === savedParty?.starterId) ?? starter).type}
           bench={battleBench}
           onConsumeShell={() => setShellCount(c => Math.max(0, c - 1))}
           onEnd={handleBattleEnd}
@@ -5258,6 +5280,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           {devMode && itemEditMode && GROUND_ITEMS.filter(g => g.scene === scene).map(g => (
             <div key={g.id}
               onPointerDown={onItemDown(g.id, 'ground')}
+              onPointerMove={onItemMove} onPointerUp={onItemUp} onPointerCancel={onItemUp}
               style={{
                 position:"absolute", left: g.wx - 24, top: g.wy - 24, width: 48, height: 48,
                 border: "2.5px dotted #ff88ff", borderRadius: "50%", background: "rgba(255,136,255,0.2)",
@@ -5268,6 +5291,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           {devMode && itemEditMode && RESPAWN_SPOTS.filter(s => s.scene === scene).map(s => (
             <div key={s.id}
               onPointerDown={onItemDown(s.id, 'respawn')}
+              onPointerMove={onItemMove} onPointerUp={onItemUp} onPointerCancel={onItemUp}
               style={{
                 position:"absolute", left: s.wx - 24, top: s.wy - 24, width: 48, height: 48,
                 border: "2.5px dotted #88ffff", borderRadius: "50%", background: "rgba(136,255,255,0.2)",
