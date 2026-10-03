@@ -1,0 +1,46 @@
+@keyframes primeriaPageTurn {
+  from {
+    transform: perspective(1400px) rotateY(-18deg);
+    opacity: 0.45;
+  }
+  to {
+    transform: perspective(1400px) rotateY(0);
+    opacity: 1;
+  }
+}
+.chronicle-page {
+  transform-origin: left center;
+  animation: primeriaPageTurn 0.48s ease-out;
+  position: relative;
+}
+.chronicle-frame {
+  box-sizing: border-box;
+  border: 8px solid #402411;
+  border-left: 18px solid #29160d;
+  border-radius: 12px;
+  box-shadow:
+    inset 20px 0 28px #0005,
+    0 15px 55px #0008;
+  background: linear-gradient(
+    90deg,
+    #ac8444,
+    #f5e9cc 5%,
+    #e8d5a7 49%,
+    #a78149 50%,
+    #f5e9cc 52%,
+    #e8d5a7
+  );
+  color: #382410;
+}
+.chronicle-frame:after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border: 1px solid #c8a44a66;
+}
+@media (prefers-reduced-motion: reduce) {
+  .chronicle-page {
+    animation: none;
+  }
+}

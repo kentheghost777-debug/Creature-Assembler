@@ -1,8 +1,10 @@
+import {SPELLS,SYSTEM_TUNING,normalizeJourney,bondEvent,captureChance,SHELL_QUALITIES,type Journey} from "./journeySystems";
+import type {RoleId} from "./save";
 import { useEffect, useRef, useState } from "react";
-import { ELEMENT_COLOR, PRISM_STONES_BY_ID, prismFilter, type PrismStoneId } from "./progression";
+import { BATTLE_RUNES, BATTLE_SHELLS, ELEMENT_COLOR, PRISM_STONES_BY_ID, prismFilter, type PrismStoneId } from "./progression";
 import {
   type Move, getMove, asElement, computeDamage, effectiveness, effLabel,
-  defaultActiveMoves, wildCombatStats, wildLevelFor,
+  MAX_ACTIVE_MOVES, defaultActiveMoves, wildCombatStats, wildLevelFor,
 } from "./moves";
 import { MoveFx, MOVE_FX_KEYFRAMES, ResonanceFx, RESONANCE_FX_KEYFRAMES } from "./battleFx";
 import { playSfx, playSfxFile } from "./audioManager";
@@ -29,6 +31,8 @@ const FORM_TIER: Record<string, 1 | 2> = {
   wyrnak: 1, caragnar: 1, sanctyke: 1,
   wyrvast: 2, aureyvant: 2, bifernon: 2, lumayke: 2,
 };
+export function masteryForm(id:string):number {return 1+(FORM_TIER[id]??0);}
+
 /** Scale sprite width % by evo form tier (base=your default %, e.g. 26 for wild). */
 function formWidthPct(id: string, base: number): number {
   const t = FORM_TIER[id];
@@ -165,7 +169,7 @@ function rollOutcome(hpFrac: number): typeof SHELL_OUTCOMES[number] {
 }
 
 export type BattleResult =
-  | { kind: "caught";     mon: MonSpec; shellsSet: number; xpGained: number; participants?: number[] }
+  | { kind: "caught"; bondShellId?:string; mon: MonSpec; shellsSet: number; xpGained: number; participants?: number[] }
   | { kind: "fled";       shellsSet: number }
   | { kind: "fainted";    shellsSet: number }
   | { kind: "ko";         mon: MonSpec; shellsSet: number; xpGained: number; participants?: number[] }
@@ -174,11 +178,19 @@ export type BattleResult =
 export type StarterStats = { hp: number; atk: number; def: number; spd: number };
 
 type Props = {
+  keeperRuneSlots?:number;
+  gearDefense?:number;
+  gearResonanceMult?:number;
+  teamShellIds?: (string|null|undefined)[];
+  journey?: Journey;
+  roleId?: RoleId;
+  bondKeys?: string[];
+  onJourneyChange?: (journey:Journey)=>void;
   wild: MonSpec;
   starter: StarterSpec;
   starterLevel: number;
   starterStats: StarterStats;
-  /** Active move loadout (≤4 move ids) the player brought into battle. */
+  /** Active move loadout (≤6 move ids) the player brought into battle. */
   starterMoves: string[];
   hasResonanceStone: boolean;
   healingRuneEquipped: boolean;
@@ -201,6 +213,9 @@ type Props = {
   keeperSheet?: SpriteSheet;
   /** Player's own hero sprite (faces east). Defaults to the generic walker. */
   heroImg?: string;
+  heroName?: string;
+  /** Keeper attunement awakened by the original starter choice. */
+  resonanceElement?: string;
   /** Full team for a trainer battle (wild = team[0]). When set, defeated mons
    *  cycle through the roster and the battle ends with `trainerWin`. */
   keeperTeam?: MonSpec[];
@@ -230,7 +245,7 @@ function xpFor(wild: MonSpec, caught: boolean): number {
   return caught ? Math.round(base * 1.10) : base;
 }
 
-type Menu = "root" | "moves" | "shellConfirm" | "ended" | "switch" | "switchForced" | "bag";
+type Menu = "root" | "moves" | "shellConfirm" | "ended" | "switch" | "switchForced" | "bag" | "spells" | "prime" | "resonance";
 
 const BTN_BG    = "linear-gradient(180deg, rgba(60,40,20,0.92), rgba(36,22,10,0.92))";
 const BTN_BG_HI = "linear-gradient(180deg, rgba(90,62,30,0.96), rgba(56,36,16,0.96))";
@@ -239,14 +254,33 @@ export function BattleScene({
   wild, starter, starterLevel, starterStats, starterMoves, hasResonanceStone, healingRuneEquipped,
   catchMult = 1, wildLevel, shellsCount, caughtIds = [] as string[],
   opponentKind = "wild", keeperName = "Keeper", keeperImg = "/images/rowan_side_1.png",
-  heroImg = "/images/walk_side_1.png",
+  heroImg = "/images/walk_side_1.png", heroName = "Keeper",
+  resonanceElement = starter.type,
   keeperSheet,
   keeperTeam, keeperMonLevels, bench,
   teamRuneEffects,
   slottedPrismStoneId,
-  onConsumeShell, onEnd, onMonDefeated,
-  berries, onUseBerry,
+  onConsumeShell, onEnd:finishBattleCallback, onMonDefeated,
+  berries, onUseBerry, gearDefense=0, keeperRuneSlots=3, gearResonanceMult=1, teamShellIds=[], journey:initialJourney, roleId="keeper", bondKeys=[], onJourneyChange,
 }: Props) {
+  const battleResolvedRef=useRef(false);
+  const journeyRef=useRef(normalizeJourney(initialJourney));
+  const journey=journeyRef.current;
+  const keeperRuneEffects=journey.keeperRunes.slice(0,keeperRuneSlots).map(id=>BATTLE_RUNES.find(r=>r.id===id)?.effect);
+  const reportJourney=(next:Journey)=>{journeyRef.current=next;onJourneyChange?.(next);};
+  const [opponentMana,setOpponentMana]=useState(40);
+  const opponentManaRef=useRef(40);
+  const [mana,setMana]=useState(40+Math.floor(journey.keeperXp/100)*4);
+  const [tayanariActionUsed,setTayanariActionUsed]=useState(false);
+  const tayanariUsedRef=useRef(false);
+  const [resAssist,setResAssist]=useState<BattleMon|null>(null);
+  const chainRunning=useRef(false);
+  const [resMode,setResMode]=useState("attack");
+  const [fleePhase,setFleePhase]=useState<"recall"|"turn"|"exit"|null>(null);
+  const captureFailures=useRef(0);
+  const [selectedVessel,setSelectedVessel]=useState("");
+  const vessel=journey.vessels.find(v=>v.id===selectedVessel&&v.count>0);
+  const primeArmed=useRef(false);
   const isKeeper = opponentKind === "keeper";
 
   // ── DEV TOOLS ────────────────────────────────────────────────────────────
@@ -287,12 +321,15 @@ export function BattleScene({
     ? (keeperMonLevels[trainerMonIdx] ?? Math.max(5, starterLevel))
     : (isKeeper ? Math.max(5, starterLevel) : (wildLevel ?? wildLevelFor(wild.rarity)));
 
+  const battleTargetRef=useRef(currentOpponent.id);battleTargetRef.current=currentOpponent.id;
+
   // ── Player team (lead + bench) ──────────────────────────────────────────
   // The lead is built from the starter props; caught companions ride `bench`.
   // Any non-fainted mon can be made active by switching (no turn is spent).
   const lead: BattleMon = {
     id: starter.id, name: starter.name, type: starter.type,
     color: starter.color, level: starterLevel, stats: starterStats,
+    sheet: starter.sheet,
     moves: starterMoves, img: starter.img, faces: starter.faces ?? "right",
   };
   const team: BattleMon[] = [lead, ...(bench ?? [])];
@@ -306,7 +343,7 @@ export function BattleScene({
     if (!isMountedRef.current) { isMountedRef.current = true; return; }
     const effects = teamRuneEffects?.[activeIdx] ?? [];
     activeRuneEffectsRef.current = effects;
-    setResBar(effects.includes("resonance_fill") ? 15 : 0);
+    if (effects.includes("resonance_fill")) setResBar(15);
     setBarrierActive(effects.includes("barrier"));
     setSwiftUsed(false);
   }, [activeIdx]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -319,6 +356,9 @@ export function BattleScene({
   const teamHpRef = useRef<number[]>(team.map(m => m.stats.hp));
 
   const playerMaxHp = active.stats.hp;
+  const bondedShellId=teamShellIds[activeIdx];
+  const bondedVessel=journey.vessels.find(v=>v.id===bondedShellId);
+  const bondedShellName=BATTLE_SHELLS.find(s=>s.id===bondedShellId)?.name??(bondedVessel?`${SHELL_QUALITIES[bondedVessel.quality].name} ${bondedVessel.element} Shell`:"Weathered Shell");
   const playerHp    = teamHp[activeIdx] ?? 0;
   // Compatibility shim — updates the ACTIVE mon's HP slot (clamped ≥ 0).
   function setPlayerHp(v: number | ((hp: number) => number)) {
@@ -339,10 +379,12 @@ export function BattleScene({
   const [logKey,   setLogKey]     = useState(0);
   const [busy,     setBusy]       = useState(true);
   const [menu,     setMenu]       = useState<Menu>("root");
+  const [keeperActionUsed, setKeeperActionUsed] = useState(false);
+  const keeperUsedRef=useRef(false);
   const [healCd,   setHealCd]     = useState(0);              // turns remaining
   const [runeUses, setRuneUses]   = useState(healingRuneEquipped ? 3 : 0);
   const [berryCount, setBerryCount] = useState(() => berries ?? { dusk:0, thorn:0, calm:0, bright:0 });
-  const [resBar,   setResBar]     = useState((teamRuneEffects?.[0] ?? []).includes("resonance_fill") ? 15 : 0); // 0..15
+  const [resBar,   setResBar]     = useState(((teamRuneEffects?.[0] ?? []).includes("resonance_fill")||keeperRuneEffects.includes("resonance_fill")) ? 15 : 0); // 0..15
   const [barrierActive, setBarrierActive] = useState(() => (teamRuneEffects?.[0] ?? []).includes("barrier"));
   const [swiftUsed,     setSwiftUsed]     = useState(false);
   const [intro,    setIntro]      = useState(true);
@@ -387,11 +429,11 @@ export function BattleScene({
   const nextFxId = () => ++fxIdRef.current;
 
   // ── Move system: derived combatants ──────────────────────────────────────
-  // Resolve a battle mon's active loadout (≤4), falling back to its element
+  // Resolve a battle mon's active loadout (≤6), falling back to its element
   // defaults, then Struggle. Shared by the active mon and per-mon PP pools.
   function resolveMoves(m: BattleMon): Move[] {
     const resolved = m.moves.map(getMove).filter((x): x is Move => !!x);
-    if (resolved.length) return resolved.slice(0, 4);
+    if (resolved.length) return resolved.slice(0, MAX_ACTIVE_MOVES);
     const el = asElement(m.type);
     if (el) {
       const def = defaultActiveMoves(el, m.level).map(getMove).filter((x): x is Move => !!x);
@@ -504,8 +546,8 @@ export function BattleScene({
   }
 
   // Effective stats after battle-long buffs.
-  function pAtk() { return active.stats.atk + buffsRef.current.pAtk; }
-  function pDef() { return active.stats.def + buffsRef.current.pDef; }
+  function pAtk() { const nodes=journey.tayanariNodes[bondKeys[activeIdx]]??[]; return (journey.bonds[bondKeys[activeIdx]]?.path==="chaos"?4:0) + active.stats.atk + buffsRef.current.pAtk + nodes.filter(n=>n.startsWith("0-")).length*2 + (roleId==="keeper"?2:0); }
+  function pDef() {const nodes=journey.tayanariNodes[bondKeys[activeIdx]]??[]; return (journey.bonds[bondKeys[activeIdx]]?.path==="loyalty"?4:0) + gearDefense + active.stats.def + buffsRef.current.pDef + nodes.filter(n=>n.startsWith("1-")).length*2 + (roleId==="wanderer"?2:0); }
   function wAtk() { return wildStats.atk + buffsRef.current.wAtk; }
   function wDef() { return wildStats.def + buffsRef.current.wDef; }
 
@@ -533,7 +575,51 @@ export function BattleScene({
   }
 
   // ── Wild's turn ─────────────────────────────────────────────────────────
-  function wildTurn(afterCb?: () => void) {
+  function onEnd(result:BattleResult) {
+    if(battleResolvedRef.current)return;battleResolvedRef.current=true;
+    let next=journeyRef.current;
+    teamHpRef.current.forEach((hp,i)=>{if(hp<=0)next=bondEvent(next,bondKeys[i]??`party-${i}`,"fainted");});
+    reportJourney(next);finishBattleCallback(result);
+  }
+  function castSpell(id:string) {
+    const spell=SPELLS.find(s=>s.id===id);
+    if(!spell||busy||keeperActionUsed||!journey.spells.includes(id)||mana<SYSTEM_TUNING.spellCost)return;
+    if(spell.effect==="revive"&&!teamHpRef.current.some(h=>h<=0))return;
+    setMana(m=>m-SYSTEM_TUNING.spellCost);keeperUsedRef.current=true;setKeeperActionUsed(true);setBusy(true);setMenu("root");
+    if(spell.effect==="strike"){
+      const dmg=Math.max(1,Math.round((6+starterLevel*.65)*(keeperRuneEffects.includes("power_boost")?1.4:1)));
+      if(keeperRuneEffects.includes("lifesteal"))setPlayerHp(h=>Math.min(playerMaxHp,h+Math.round(dmg*.25)));
+      playerHit(dmg,`${heroName} casts ${spell.name}!`,false,1,undefined,true);
+      later(()=>finishKeeperAction(),1000);return;
+    }
+    if(spell.effect==="guard"){setBuffs(b=>({...b,pDef:b.pDef+(keeperRuneEffects.includes("defense_boost")?9:6)}));if(keeperRuneEffects.includes("barrier"))setBarrierActive(true);}
+    if(spell.effect==="weaken")setBuffs(b=>({...b,wAtk:b.wAtk-6,wDef:b.wDef-3}));
+    if(spell.effect==="heal")setPlayerHp(h=>Math.min(playerMaxHp,h+Math.round(playerMaxHp*.3)));
+    if(spell.effect==="restore")setPlayerPp(pp=>Object.fromEntries(Object.keys(pp).map(id=>[id,Math.min(getMove(id)?.pp??10,pp[id]+3)])));
+    if(spell.effect==="revive"){
+      const idx=teamHpRef.current.findIndex(h=>h<=0);const hp=Math.max(1,Math.round(team[idx].stats.hp*.5));
+      const arr=[...teamHpRef.current];arr[idx]=hp;teamHpRef.current=arr;setTeamHp(arr);
+      reportJourney(bondEvent(journeyRef.current,bondKeys[idx]??`party-${idx}`,"revive"));
+    }
+    setLog(`${heroName} casts ${spell.name}.`);triggerAux("rune",typeColor(resonanceElement),"player",900);later(()=>finishKeeperAction(),750);
+  }
+
+  function wildTurn(afterCb?:()=>void,force=false) {
+    tayanariUsedRef.current=true;setTayanariActionUsed(true);
+    if(!keeperUsedRef.current&&!force){setBusy(false);setMenu("root");setLog("Tayanari action complete. Your Keeper can act or pass.");return;}
+    opponentTurn(afterCb);
+  }
+  function finishKeeperAction(){if(wildHpRef.current<=0)return;if(tayanariUsedRef.current)opponentTurn();else setBusy(false);}
+  function opponentTurn(afterCb?: () => void) {
+    tayanariUsedRef.current=false;setTayanariActionUsed(false);
+    keeperUsedRef.current=false;setKeeperActionUsed(false);
+    if(isKeeper && opponentManaRef.current>=SYSTEM_TUNING.spellCost){
+      opponentManaRef.current-=SYSTEM_TUNING.spellCost;setOpponentMana(opponentManaRef.current);
+      if(wildHpRef.current<currentOpponent.maxHp*.45){const next=Math.min(currentOpponent.maxHp,wildHpRef.current+Math.round(currentOpponent.maxHp*.3));wildHpRef.current=next;setWildHp(next);setLog(`${keeperName} casts Mending Light.`);}
+      else if(buffsRef.current.wDef<4){setBuffs(b=>({...b,wDef:b.wDef+2}));setLog(`${keeperName} casts Living Ward.`);}
+      else {setBuffs(b=>({...b,wAtk:b.wAtk+2,pDef:b.pDef-1}));setLog(`${keeperName} channels an elemental spell.`);}
+      triggerAux("rune",typeColor(currentOpponent.type),"wild",700);
+    }
     later(() => {
       // Rune: swift — wild's very first action is skipped once
       if (activeRuneEffectsRef.current.includes("swift") && !swiftUsed) {
@@ -575,7 +661,7 @@ export function BattleScene({
       }
       // Speed-based natural dodge — faster mons sidestep sluggish attackers.
       {
-        const dodgeChance = Math.max(0, Math.min(0.22, (active.stats.spd - 6) * 0.015));
+        const dodgeChance = Math.max(0, Math.min(0.22, (active.stats.spd + (roleId==="hopeful"?2:roleId==="wanderer"?1:0) + (journey.tayanariNodes[bondKeys[activeIdx]]??[]).filter(n=>n.startsWith("2-")).length - 6) * 0.015));
         if (dodgeChance > 0 && Math.random() < dodgeChance) {
           setPlayerDodge(true);
           setLog(`${currentOpponent.name} uses ${move.name} — ${active.name} dodges nimbly!`);
@@ -623,12 +709,13 @@ export function BattleScene({
       }, 380);
       later(() => setShake(null), 600);
       later(() => {
-        setTeamHp(prev => {
+        {
+          const prev=teamHpRef.current;
           const idx = activeIdxRef.current;
           const next = Math.max(0, (prev[idx] ?? 0) - dmg);
           const arr = [...prev];
           arr[idx] = next;
-          teamHpRef.current = arr;
+          teamHpRef.current = arr;setTeamHp(arr);
           if (next === 0) {
             const faintedName = team[idx]?.name ?? "Your Tayanari";
             const anyAlive = arr.some((h, i) => i !== idx && h > 0);
@@ -650,13 +737,13 @@ export function BattleScene({
               afterCb?.();
             }, 520);
           }
-          return arr;
-        });
+        }
       }, 380);
     }, 560);
   }
 
   function playerHit(dmg: number, msg: string, crit = false, eff = 1, afterCb?: () => void, noWildTurn = false) {
+    if(wildHpRef.current<=0)return;
     setBusy(true);
     later(() => setShake(null), 600);
     later(() => {
@@ -671,8 +758,10 @@ export function BattleScene({
         const steal = Math.max(1, Math.round(dmg * 0.15));
         setPlayerHp(hp => Math.min(active.stats.hp, hp + steal));
       }
-      setWildHp(hp => {
-        const next = Math.max(0, hp - dmg);
+      if(wildHpRef.current<=0)return;
+      {
+        const next = Math.max(0, wildHpRef.current - dmg);
+        setWildHp(next);
         wildHpRef.current = next;
         setResBar(b => Math.min(15, b + 5));
         if (next === 0) {
@@ -696,6 +785,7 @@ export function BattleScene({
                 wildHpRef.current = nextMon.maxHp;
                 setBuffs(b => ({ ...b, wAtk: 0, wDef: 0 }));
                 setTrainerMonIdx(nextIdx);
+                keeperUsedRef.current=false;setKeeperActionUsed(false);tayanariUsedRef.current=false;setTayanariActionUsed(false);
                 setMenu("root");
                 setBusy(false);
               }, 1400);
@@ -718,16 +808,17 @@ export function BattleScene({
             }, 650);
           }
         } else {
-          if (noWildTurn) setBusy(false); else wildTurn(afterCb);
+          if (noWildTurn) {if(!chainRunning.current)setBusy(false);} else wildTurn(afterCb);
         }
-        return next;
-      });
+      }
     }, 380);
   }
 
   // ── Player picks a move ─────────────────────────────────────────────────
   function onMove(move: Move) {
-    if (busy) return;
+    if (busy || tayanariUsedRef.current) return;
+    const isPrime=primeArmed.current;primeArmed.current=false;
+    if(isPrime){if(keeperActionUsed||mana<SYSTEM_TUNING.primeCost||move.category!=="damage"||move.element!==resonanceElement)return;setMana(m=>m-SYSTEM_TUNING.primeCost);keeperUsedRef.current=true;setKeeperActionUsed(true);}
     setMenu("root");
     setBusy(true);
     playSfxFile("/audio/sfx_attack.mp3");
@@ -774,28 +865,29 @@ export function BattleScene({
       power: move.power, attackerAtk: pAtk(), defenderDef: wDef(), stab, effectiveness: eff,
     });
     // Rune: power_boost — +40% damage dealt
-    const dmg = activeRuneEffectsRef.current.includes("power_boost") ? Math.round(rawAtk * 1.4) : rawAtk;
-    later(() => playerHit(dmg, `${active.name} uses ${move.name}!`, crit, eff), 140);
+    const dmg = Math.round((activeRuneEffectsRef.current.includes("power_boost") ? rawAtk * 1.4 : rawAtk) + (isPrime ? 6 + starterLevel*.65 : 0));
+    later(() => playerHit(dmg, `${isPrime ? heroName+" channels Prime — " : ""}${active.name} uses ${move.name}!`, crit, eff, undefined, false), 140);
   }
 
   function onHeal() {
-    if (busy || healCd > 0) return;
+    if (busy || keeperActionUsed || playerHp >= playerMaxHp) return;
     setBusy(true);
     const before = playerHp;
     const heal   = Math.floor(playerMaxHp * 0.5);
     const next   = Math.min(playerMaxHp, before + heal);
     setPlayerHp(next);
     setLog(`${active.name} recovers ${next - before} HP!`);
-    setHealCd(2);
+    keeperUsedRef.current=true;setKeeperActionUsed(true);
     triggerAux("heal", "#80ff80", "player", 1000);
-    later(() => wildTurn(), 700);
+    later(() => finishKeeperAction(), 700);
   }
 
   function onRune() {
-    if (busy) return;
+    if (busy || keeperActionUsed) return;
     if (!healingRuneEquipped) { setLog("No rune equipped."); return; }
     if (runeUses <= 0)        { setLog("Rune is spent for this battle."); return; }
     setBusy(true);
+    keeperUsedRef.current=true;setKeeperActionUsed(true);
     const heal = Math.floor(playerMaxHp * 0.25);
     const next = Math.min(playerMaxHp, playerHp + heal);
     setPlayerHp(next);
@@ -803,7 +895,7 @@ export function BattleScene({
     setLog(`Healing Rune pulses — ${next - playerHp} HP restored.`);
     triggerAux("rune", "#80ffc0", "player", 950);
     // Rune is a Keeper action (not the mon's turn) — player keeps the initiative.
-    later(() => setBusy(false), 700);
+    later(() => finishKeeperAction(), 700);
   }
 
   function onResonate() {
@@ -812,61 +904,76 @@ export function BattleScene({
     if (resBar < 15)        { setLog(`Resonance not ready (${resBar}/15).`); return; }
     setBusy(true);  // lock input immediately — FX delays would otherwise leak a turn
     setResBar(0);
-    const resColor = typeColor(active.type);
+    reportJourney({...journeyRef.current,resonanceXp:journeyRef.current.resonanceXp+25});
+    if(journey.resonanceNodes.includes("loyalty")&&team.some((_,i)=>journey.bonds[bondKeys[i]]?.path==="loyalty")){setBarrierActive(true);}
+    if(journey.resonanceNodes.includes("chaos")&&team.some((_,i)=>journey.bonds[bondKeys[i]]?.path==="chaos")){setBuffs(b=>({...b,wAtk:b.wAtk-4,wDef:b.wDef-4}));}
+    if(resMode==="support"&&journey.resonanceNodes.includes("support")){setTeamHp(prev=>{const arr=prev.map((hp,i)=>hp>0?Math.min(team[i].stats.hp,hp+Math.round(team[i].stats.hp*.35)):hp);teamHpRef.current=arr;return arr;});setLog("Support Resonance shelters your companions.");later(()=>setBusy(false),850);return;}
+    if(resMode==="control"&&journey.resonanceNodes.includes("control")){setBuffs(b=>({...b,wAtk:b.wAtk-8,wDef:b.wDef-6}));setLog("Control Resonance quiets the opposing current.");later(()=>setBusy(false),850);return;}
+    const resColor = typeColor(resonanceElement);
     triggerAux("resonate", resColor, undefined, 900);
     const rxId = nextFxId();
-    setResonanceFx({ element: active.type, color: resColor, id: rxId });
+    setResonanceFx({ element: resonanceElement, color: resColor, id: rxId });
     later(() => setResonanceFx(curr => curr?.id === rxId ? null : curr), 1400);
-    if (active.type === "Spirit") {
-      // Fae-like: revival/cleanse — heals fully. Resonance = Keeper action; player retains turn.
+    if (resonanceElement === "Spirit") {
+      // Fae-like: revival/cleanse — heals fully. Resonance is a bonus action; player retains turn.
       setBusy(true);
       setPlayerHp(playerMaxHp);
       setLog(`Spirit Resonance — ${active.name} is fully restored!`);
       later(() => setBusy(false), 850);
       return;
     }
-    const dmg = Math.round(6 + starterLevel * 0.6 + Math.random() * (starterLevel * 0.5 + 4));
-    // Resonance = Keeper action; pass noWildTurn so player keeps their turn after the burst.
-    later(() => playerHit(dmg, `${active.type} Resonance bursts! ${dmg} damage!`, false, 1, undefined, true), 350);
+    const assists=journey.resonanceNodes.includes("chain")?team.filter((_,i)=>i!==activeIdx&&teamHp[i]>0):journey.resonanceNodes.includes("bench")?team.filter((_,i)=>i!==activeIdx&&teamHp[i]>0).slice(0,1):[];
+    const dmg = Math.round(gearResonanceMult * (6 + starterLevel * 0.6 + Math.random() * (starterLevel * 0.5 + 4)));
+    if(assists.length){
+      const target=currentOpponent.id;chainRunning.current=true;
+      assists.forEach((mon,i)=>later(()=>{if(wildHpRef.current>0 && battleTargetRef.current===target){setResAssist(mon);playerHit(Math.max(1,Math.round(mon.stats.atk*.4*gearResonanceMult)),`${mon.name} joins the Resonance chain!`,false,1,undefined,true);}},900+i*700));
+      later(()=>{chainRunning.current=false;setResAssist(null);if(wildHpRef.current>0)setBusy(false);},1500+assists.length*700);
+    }
+    // Resonance is a bonus action; pass noWildTurn so player keeps their turn after the burst.
+    later(() => playerHit(dmg, `${resonanceElement} Resonance bursts! ${dmg} damage!`, false, 1, undefined, true), 350);
   }
 
   // ── Berry bag handlers (Hollis field-berries) ────────────────────────────
   function onUseDusk() {
-    if (busy || berryCount.dusk <= 0) return;
+    if (busy || keeperActionUsed || berryCount.dusk <= 0) return;
     setBusy(true);
+    keeperUsedRef.current=true;setKeeperActionUsed(true);
     const before = playerHp;
-    const heal   = Math.floor(playerMaxHp * 0.30);
+    const heal   = Math.floor(playerMaxHp * (roleId==="herbalist" ? .45 : .30));
     const next   = Math.min(playerMaxHp, before + heal);
     setPlayerHp(next);
     setBerryCount(b => ({ ...b, dusk: b.dusk - 1 }));
     onUseBerry?.("dusk");
     setLog(`Duskberry — ${next - before} HP restored!`);
     triggerAux("heal", "#9860d0", "player", 900);
-    later(() => { setMenu("root"); wildTurn(); }, 800);
+    later(() => { setMenu("root"); finishKeeperAction(); }, 800);
   }
   function onUseThorn() {
-    if (busy || berryCount.thorn <= 0) return;
+    if (busy || keeperActionUsed || berryCount.thorn <= 0) return;
     setBusy(true);
-    setBuffs(b => ({ ...b, pAtk: b.pAtk + 8 }));
+    keeperUsedRef.current=true;setKeeperActionUsed(true);
+    setBuffs(b => ({ ...b, pAtk: b.pAtk + (roleId==="herbalist"?12:8) }));
     setBerryCount(b => ({ ...b, thorn: b.thorn - 1 }));
     onUseBerry?.("thorn");
     setLog(`Thornberry — ${active.name}'s attack sharpened!`);
     triggerAux("rune", "#e03030", "player", 850);
-    later(() => { setMenu("root"); wildTurn(); }, 800);
+    later(() => { setMenu("root"); finishKeeperAction(); }, 800);
   }
   function onUseCalm() {
-    if (busy || berryCount.calm <= 0) return;
+    if (busy || keeperActionUsed || berryCount.calm <= 0) return;
     setBusy(true);
-    setBuffs(b => ({ ...b, pDef: b.pDef + 8 }));
+    keeperUsedRef.current=true;setKeeperActionUsed(true);
+    setBuffs(b => ({ ...b, pDef: b.pDef + (roleId==="herbalist"?12:8) }));
     setBerryCount(b => ({ ...b, calm: b.calm - 1 }));
     onUseBerry?.("calm");
     setLog(`Calmberry — ${active.name}'s guard steadied!`);
     triggerAux("rune", "#30b870", "player", 850);
-    later(() => { setMenu("root"); wildTurn(); }, 800);
+    later(() => { setMenu("root"); finishKeeperAction(); }, 800);
   }
   function onUseBright() {
-    if (busy || berryCount.bright <= 0) return;
+    if (busy || keeperActionUsed || berryCount.bright <= 0) return;
     setBusy(true);
+    keeperUsedRef.current=true;setKeeperActionUsed(true);
     setHealCd(0);
     const lowestMove = playerMoves.reduce((a, b) =>
       (playerPp[a.id] ?? 0) < (playerPp[b.id] ?? 0) ? a : b
@@ -876,43 +983,44 @@ export function BattleScene({
     onUseBerry?.("bright");
     setLog(`Brightberry — Cooldowns cleared, ${lowestMove.name} PP restored!`);
     triggerAux("heal", "#e0c020", "player", 900);
-    later(() => { setMenu("root"); wildTurn(); }, 800);
+    later(() => { setMenu("root"); finishKeeperAction(); }, 800);
   }
 
   function onFlee() {
-    if (busy) return;
+    if (busy || keeperActionUsed) return;
     // A Keeper's challenge cannot be fled — see it through.
     if (isKeeper) { setLog(`There's no fleeing ${keeperName}'s challenge!`); return; }
     setBusy(true);
     if (Math.random() < 0.70) {
-      setLog("You slip away…");
-      setMenu("ended");
-      later(() => onEnd({ kind: "fled", shellsSet: shellsSetRef.current }), 800);
+      setLog(`${active.name} returns to its ${bondedShellName}. You carry the shell with you.`);
+      setFleePhase("recall");setMenu("ended");
+      later(()=>setFleePhase("turn"),750);later(()=>setFleePhase("exit"),1100);
+      later(() => onEnd({ kind: "fled", shellsSet: shellsSetRef.current }), 1800);
     } else {
       setLog("Couldn't escape!");
-      wildTurn();
+      opponentTurn();
     }
   }
 
   function onShell() {
-    if (busy) return;
+    if (busy || keeperActionUsed) return;
     // Keeper battles: the opposing Tayanari is already bonded to its Keeper and
     // can never be bonded to you. Setting a shell is impossible here.
     if (isKeeper) {
       setLog(`${wild.name} is already bonded to ${keeperName} — you can't set a shell on it.`);
       return;
     }
-    if (shellsCount <= 0) { setLog("No Worn Realm Shells left."); return; }
+    if (shellsCount <= 0 && !vessel) { setLog("No Weathered Shells left."); return; }
     setMenu("shellConfirm");
   }
 
   function doShellSet() {
-    if (isKeeper) return; // safety: keeper mons are never bondable
+    if (busy || keeperActionUsed || isKeeper || (shellsCount <= 0&&!vessel)) return; // keeper mons are never bondable
     setMenu("root");
     setBusy(true);
     playSfx("shell_throw");
-    onConsumeShell();
-    shellsSetRef.current += 1;
+    keeperUsedRef.current=true;setKeeperActionUsed(true);
+    if(!vessel){onConsumeShell();shellsSetRef.current += 1;}
     setShellsSet(shellsSetRef.current);
     const hpFrac = wildHp / wild.maxHp;
     const outcome = rollOutcome(hpFrac);
@@ -928,9 +1036,11 @@ export function BattleScene({
 
     later(() => {
       // Hopeful's boon: capture odds scaled by catchMult, clamped to a sure thing.
-      const catchPct = Math.min(1, outcome.pct * catchMult);
+      const catchPct = captureChance({hpFraction:hpFrac,quality:vessel?SHELL_QUALITIES[vessel.quality].mult:1,match:vessel?(vessel.element===wild.type?1.5:.35):1,role:catchMult,failures:captureFailures.current,will:{common:100,uncommon:100,rare:150,ultra:220,apex:350}[wild.rarity??"common"]});
       const caught = Math.random() < catchPct;
+      if(!caught)captureFailures.current++;
       if (caught) {
+        if(vessel)reportJourney({...journeyRef.current,vessels:journeyRef.current.vessels.map(v=>v.id===vessel.id?{...v,count:Math.max(0,v.count-1)}:v)});
         playSfx("shell_catch");
         setShellFx({ phase: "caught", id: seqId });
         const xp = xpFor(wild, true);
@@ -939,7 +1049,7 @@ export function BattleScene({
           setMenu("ended");
           setShellFx(null);
           later(() => onEnd({
-            kind: "caught", mon: wild,
+            kind: "caught", bondShellId:vessel?.id, mon: wild,
             shellsSet: shellsSetRef.current, xpGained: xp,
             participants: [...participatedRef.current],
           }), 900);
@@ -950,7 +1060,7 @@ export function BattleScene({
         later(() => {
           setShellFx(null);
           setLog(`${wild.name} broke free! (Shell empty — recoverable after battle)`);
-          wildTurn();
+          finishKeeperAction();
         }, 700);
       }
     }, 2100);
@@ -1014,7 +1124,7 @@ export function BattleScene({
   });
 
   return (
-    <div 
+    <div
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerUp}
@@ -1046,8 +1156,9 @@ export function BattleScene({
           backgroundImage:"url(/images/forest-arena.png)",
           backgroundSize:"cover", backgroundPosition:"center",
         }}>
-        {/* Wild HP plate (top-right) */}
+        {/* Opponent status below its Tayanari */}
         <div style={hpPlateStyle("enemy", typeColor(currentOpponent.type))}>
+          <BattlePortrait name={currentOpponent.name} img={currentOpponent.wildImg} sheet={currentOpponent.wildSheet} />
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:4, marginBottom:4 }}>
             <span style={{ color:"#fff", fontSize:13, fontWeight:900, lineHeight:1 }}>
               {currentOpponent.name}
@@ -1084,8 +1195,9 @@ export function BattleScene({
           </div>
         </div>
 
-        {/* Player HP plate (top-left) */}
+        {/* Player status below its Tayanari */}
         <div style={hpPlateStyle("player", active.color)}>
+          <BattlePortrait name={active.name} img={active.img} sheet={active.sheet} />
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:4, marginBottom:4 }}>
             <span style={{ color:"#fff", fontSize:13, fontWeight:900, lineHeight:1 }}>{active.name}</span>
             <span style={{ color:"#c8c0a0", fontSize:8, fontWeight:700, flexShrink:0 }}>Lv.{active.level}</span>
@@ -1163,7 +1275,7 @@ export function BattleScene({
                 </div>
               );
             })() : (
-              <img 
+              <img
                 onPointerDown={(e) => handlePointerDown(e, "OpponentMon")}
                 src={currentOpponent.wildImg} alt={currentOpponent.name} style={{
                   position: "absolute", left: "50%", bottom: 0,
@@ -1186,14 +1298,15 @@ export function BattleScene({
         <div style={standOn(POS.hero, 22, 4, 84)}>
           <div style={{
             width:"100%", height:"100%",
-            animation: intro ? "introSlide 1.1s ease-out" : "none",
+            animation: fleePhase==="exit" ? "keeperExit .7s ease-in forwards" : intro ? "introSlide 1.1s ease-out" : "none",
           }}>
-            <img 
+            <img
               onPointerDown={(e) => handlePointerDown(e, "Hero")}
               src={heroImg} alt="Keeper" style={{
                 width: 156, height: 156, objectFit: "contain",
                 filter: "drop-shadow(0 6px 16px rgba(0,0,0,0.6))",
-                transform: devMode ? `translate(${getDevSprite("Hero", 1).x}px, ${getDevSprite("Hero", 1).y}px) scale(${getDevSprite("Hero", 1).scale}) scaleX(${getDevSprite("Hero", 1).flip ? -1 : 1})` : "scaleX(-1)",
+                transform: devMode ? `translate(${getDevSprite("Hero", 1).x}px, ${getDevSprite("Hero", 1).y}px) scale(${getDevSprite("Hero", 1).scale}) scaleX(${getDevSprite("Hero", 1).flip ? -1 : 1})` : fleePhase==="turn"||fleePhase==="exit" ? "scaleX(1)" : "scaleX(-1)",
+                transition:"transform .3s ease",
                 cursor: devMode ? "move" : "default",
                 border: (devMode && getDevSprite("Hero").flags?.length > 0) ? "2px solid red" : "none"
               }}/>
@@ -1217,7 +1330,7 @@ export function BattleScene({
                   }}/>
                 </div>
               ) : (
-                <img 
+                <img
                 onPointerDown={(e) => handlePointerDown(e, "KeeperTrainer")}
                 src={keeperImg} alt={keeperName} style={{
                   width: 170, height: 170, objectFit: "contain",
@@ -1235,11 +1348,11 @@ export function BattleScene({
         <div style={standOn(POS.mon, formWidthPct(active.id, 24), 3, formAnchor(active.id, 80))}>
           <div style={{
             width:"100%", height:"100%",
-            animation: intro ? "introSlide 1.1s ease-out"
+            animation: fleePhase ? "shellRecall .7s ease-in forwards" : intro ? "introSlide 1.1s ease-out"
               : playerDodge ? "playerDodge 0.55s ease-out"
               : shake === "player" ? "shakeFx 0.32s"
               : "idleBob 2.2s ease-in-out infinite",
-            animationDelay: intro ? "0.15s" : (!playerDodge && shake !== "player") ? "0.6s" : undefined,
+            animationDelay: fleePhase ? "0s" : intro ? "0.15s" : (!playerDodge && shake !== "player") ? "0.6s" : undefined,
           }}>
             {active.sheet ? (
               <div role="img" aria-label={active.name} style={{
@@ -1253,18 +1366,16 @@ export function BattleScene({
                   : "drop-shadow(0 6px 8px rgba(0,0,0,0.5))",
               }}/>
             ) : (
-              <img 
+              <img
                 onPointerDown={(e) => handlePointerDown(e, "PlayerMon")}
-                src={active.playerImg || active.img} alt={active.name} style={{
+                src={active.img} alt={active.name} style={{
                 width:"100%", height:"100%", objectFit:"contain",
                 transformOrigin:"center center",
                 transition:"transform 0.45s ease-in, opacity 0.45s",
-                filter: prismCssFilter,
+                filter: prismCssFilter ? `${prismCssFilter} drop-shadow(0 6px 8px rgba(0,0,0,0.5))` : "drop-shadow(0 6px 8px rgba(0,0,0,0.5))",
                 transform: devMode ? `translate(${getDevSprite("PlayerMon", 1).x}px, ${getDevSprite("PlayerMon", 1).y}px) scale(${getDevSprite("PlayerMon", 1).scale}) scaleX(${getDevSprite("PlayerMon", 1).flip ? -1 : 1})` : ((playerFlip + playerExtra).trim() || "none"),
                 cursor: devMode ? "move" : "default",
-                border: (devMode && getDevSprite("PlayerMon").flags?.length > 0) ? "2px solid red" : "none" 
-                  ? `${prismCssFilter} drop-shadow(0 6px 8px rgba(0,0,0,0.5))`
-                  : "drop-shadow(0 6px 8px rgba(0,0,0,0.5))",
+                border: (devMode && getDevSprite("PlayerMon").flags?.length > 0) ? "2px solid red" : "none",
               }}/>
             )}
             {prismStone && (
@@ -1568,10 +1679,72 @@ export function BattleScene({
             </div>
           </div>
         )}
+        <div style={{ position:"absolute", left:"10%", top:"80%", transform:"translateX(-50%)", zIndex:15 }}>
+          <BattlePortrait name={heroName} img={heroImg} />
+        </div>
+        {isKeeper && <div style={{ position:"absolute", left:"87.5%", top:"80%", transform:"translateX(-50%)", zIndex:15 }}>
+          <BattlePortrait name={keeperName} img={keeperImg} sheet={keeperSheet} />
+        </div>}
         </div>{/* arena */}
       </div>{/* stage */}
 
-      {/* Log + menu */}
+      {/* ── DEV HUD ───────────────────────────────────────────────────── */}
+      <button
+        onClick={() => setDevMode(v => !v)}
+        style={{
+          position: "absolute", top: 14, right: 14, zIndex: 9999,
+          padding: "6px 10px", borderRadius: 8, border: "1px solid #2a78ff",
+          background: devMode ? "#2a78ff" : "rgba(10,10,12,0.7)",
+          color: "#fff", fontSize: 12, fontWeight: 800, fontFamily: "monospace", cursor: "pointer",
+        }}
+      >{devMode ? "DEV ✕" : "DEV"}</button>
+
+      {devMode && (
+        <div style={{
+          position: "absolute", top: 50, right: 14, zIndex: 9998,
+          width: 280, background: "rgba(10,10,14,0.85)", border: "1px solid #2a78ff",
+          borderRadius: 8, padding: "10px", color: "#fff", fontSize: 12, fontFamily: "monospace",
+          maxHeight: "80vh", overflowY: "auto"
+        }}>
+          <div style={{ fontWeight: 800, color: "#7fb0ff", marginBottom: 6 }}>BATTLE DEV TOOLS</div>
+          <div style={{ color: "#aaa", marginBottom: 12, fontSize: 10 }}>Drag sprites to move them.</div>
+
+          {Object.entries(devSprites).map(([id, sp]) => (
+            <div key={id} style={{ marginBottom: 10, padding: 6, background: "rgba(255,255,255,0.1)", borderRadius: 6 }}>
+              <div style={{ fontWeight: "bold", color: "#ffcf3a" }}>{id}</div>
+              <div style={{ display: "flex", gap: 4, marginTop: 4 }}>
+                <button onClick={() => updateDevSprite(id, { scale: Math.max(0.1, sp.scale - 0.1) })} style={{ padding: "2px 6px" }}>- Size</button>
+                <button onClick={() => updateDevSprite(id, { scale: sp.scale + 0.1 })} style={{ padding: "2px 6px" }}>+ Size</button>
+                <button onClick={() => updateDevSprite(id, { flip: !sp.flip })} style={{ padding: "2px 6px" }}>Flip</button>
+              </div>
+              <div style={{ marginTop: 4 }}>
+                <button onClick={() => {
+                  const flag = prompt("Enter flag reason (e.g., bad crop, duplicate, wrong colors):");
+                  if (flag) {
+                    const newFlags = [...(sp.flags || []), flag];
+                    updateDevSprite(id, { flags: newFlags });
+                  }
+                }} style={{ padding: "2px 6px", background: "#7a2222", color: "#fff", border: "1px solid #ff4444" }}>+ Flag Issue</button>
+              </div>
+              {sp.flags && sp.flags.length > 0 && (
+                <div style={{ marginTop: 4, color: "#ff8888", fontSize: 10 }}>
+                  Flags: {sp.flags.join(", ")}
+                </div>
+              )}
+              <div style={{ fontSize: 10, color: "#888", marginTop: 4 }}>
+                Pos: {Math.round(sp.x)}, {Math.round(sp.y)} | Scale: {sp.scale.toFixed(1)}
+              </div>
+            </div>
+          ))}
+
+          <button onClick={() => {
+            navigator.clipboard.writeText(JSON.stringify(devSprites, null, 2));
+            alert("Dev state copied to clipboard!");
+          }} style={{ marginTop: 10, width: "100%", padding: 6 }}>Copy All Dev States</button>
+        </div>
+      )}
+
+      {/* Keeper utility action precedes the Tayanari action; Resonance is separate. */}
       <div style={{
         flexShrink:0,
         background:"linear-gradient(180deg, rgba(20,12,6,0.96), rgba(8,4,2,0.98))",
@@ -1590,6 +1763,9 @@ export function BattleScene({
           }}
         >{log}</div>
 
+        {!isKeeper && <label style={{color:"#cdb783",fontSize:11}}>Bonding shell <select aria-label="Bonding shell" value={selectedVessel} disabled={busy||keeperActionUsed} onChange={e=>setSelectedVessel(e.target.value)}><option value="">Weathered Shell ×{shellsCount}</option>{journey.vessels.filter(v=>v.count>0).map(v=><option key={v.id} value={v.id}>{SHELL_QUALITIES[v.quality].name} {v.element} ×{v.count}</option>)}</select></label>}
+        <div style={{ color:"#cdb783", fontSize:10, marginBottom:4 }}>Keeper action: {keeperActionUsed ? "used" : "ready"} · Tayanari action: {tayanariActionUsed?"used":"ready"} {journey.bonds[bondKeys[activeIdx]]?.path?`· ${journey.bonds[bondKeys[activeIdx]].path} branch`:""} · Guide Soul {mana} MP {isKeeper?`· ${keeperName} ${opponentMana} MP`:""}</div>
+        {menu === "spells" ? <div>{journey.spells.map(id=>{const spell=SPELLS.find(s=>s.id===id)!;return <BattleBtn key={id} label={spell.name} sub={`${SYSTEM_TUNING.spellCost} MP`} disabled={busy||keeperActionUsed||mana<SYSTEM_TUNING.spellCost||(spell.effect==="revive"&&!teamHp.some(h=>h<=0))} onClick={()=>castSpell(id)}/>})}<BattleBtn label="Back" onClick={()=>setMenu("root")}/></div> : menu === "prime" ? <div>{playerMoves.filter(m=>m.category==="damage"&&m.element===resonanceElement).map(m=><BattleBtn key={m.id} label={m.name} sub="Prime" disabled={busy||keeperActionUsed||tayanariActionUsed||mana<SYSTEM_TUNING.primeCost||(playerPp[m.id]??0)<=0} onClick={()=>{primeArmed.current=true;onMove(m);}}/>)}<BattleBtn label="Back" onClick={()=>setMenu("root")}/></div> : menu === "resonance" ? <div>{["attack","support","control"].map(mode=><BattleBtn key={mode} label={mode} disabled={mode!=="attack"&&!journey.resonanceNodes.includes(mode)} onClick={()=>{setResMode(mode);setMenu("root");}}/>)}<BattleBtn label="Back" onClick={()=>setMenu("root")}/></div> : null}
         {(menu === "switch" || menu === "switchForced") ? (
           <div style={{ display:"flex", flexDirection:"column", gap:5, marginTop:8 }}>
             <div style={{ color:"#f0d890", fontSize:11, fontWeight:800, textAlign:"center", marginBottom:2 }}>
@@ -1677,7 +1853,7 @@ export function BattleScene({
               { key:"calm"  as const, label:"Calmberry",   sub:"DEF +8",   count:berryCount.calm,   img:"/images/calmberry.png",   color:"#30b870", onClick:onUseCalm   },
               { key:"bright"as const, label:"Brightberry", sub:"PP+CD fix",count:berryCount.bright,img:"/images/brightberry.png", color:"#e0c020", onClick:onUseBright },
             ].map(b => (
-              <button key={b.key} disabled={busy || b.count <= 0} onClick={b.onClick} style={{
+              <button key={b.key} disabled={busy || keeperActionUsed || b.count <= 0} onClick={b.onClick} style={{
                 display:"flex", alignItems:"center", gap:10, width:"100%",
                 background: b.count > 0 ? BTN_BG : "rgba(30,20,10,0.6)",
                 border:`1.5px solid ${b.count > 0 ? "rgba(180,130,60,0.45)" : "rgba(100,70,30,0.2)"}`,
@@ -1698,24 +1874,30 @@ export function BattleScene({
               borderRadius:7, color:"#f0d890", fontSize:11, fontWeight:800, cursor:"pointer", marginTop:2,
             }}>← Back</button>
           </div>
-        ) : (
+        ) : menu === "root" ? (
           <div style={{
             display:"grid",
             gridTemplateColumns:"repeat(3, 1fr)",
             gap:5, marginTop:8,
           }}>
-            <BattleBtn label="Moves"    sub="select"  primary disabled={busy} onClick={() => setMenu("moves")}/>
-            <BattleBtn label="Resonate" sub={hasResonanceStone ? `${resBar}/15` : "locked"} disabled={busy || !hasResonanceStone || resBar < 15} onClick={onResonate}/>
-            <BattleBtn label="Set Shell" sub={isKeeper ? "bonded" : `×${shellsCount}`} disabled={busy || isKeeper || shellsCount <= 0} onClick={onShell}/>
-            <BattleBtn label="Heal"     sub={healCd > 0 ? `CD ${healCd}` : "50%"} disabled={busy || healCd > 0} onClick={onHeal}/>
-            <BattleBtn label="Rune"     sub={healingRuneEquipped ? `×${runeUses}` : "—"} disabled={busy || !healingRuneEquipped || runeUses <= 0} onClick={onRune}/>
-            <BattleBtn label="Switch"   sub={hasReserve ? "party" : "none"} disabled={busy || !hasReserve} onClick={() => setMenu("switch")}/>
-            <BattleBtn label="Flee"     sub={isKeeper ? "locked" : "70%"} disabled={busy || isKeeper} onClick={onFlee}/>
-            <BattleBtn label="Bag"      sub={`×${berryCount.dusk+berryCount.thorn+berryCount.calm+berryCount.bright}`} disabled={busy} onClick={() => setMenu("bag")}/>
+            <BattleBtn label="Spells" sub={`${mana} MP`} disabled={busy||keeperActionUsed} onClick={()=>setMenu("spells")}/>
+            <BattleBtn label="Prime" sub="fused" disabled={busy||keeperActionUsed||tayanariActionUsed||!journey.resonanceNodes.includes("prime")||mana<SYSTEM_TUNING.primeCost} onClick={()=>setMenu("prime")}/>
+            <BattleBtn label="Resonance Path" sub={resMode} disabled={busy} onClick={()=>setMenu("resonance")}/>
+            <BattleBtn label="Pass Keeper" disabled={busy||keeperActionUsed} onClick={()=>{keeperUsedRef.current=true;setKeeperActionUsed(true);if(tayanariUsedRef.current)opponentTurn();}}/>
+            <BattleBtn label="Moves"    sub="select"  primary disabled={busy||tayanariActionUsed} onClick={() => setMenu("moves")}/>
+            <BattleBtn label="Resonance" sub={hasResonanceStone ? `${resBar}/15` : "locked"} disabled={busy || !hasResonanceStone || resBar < 15} onClick={onResonate}/>
+            <BattleBtn label="Shells" sub={isKeeper ? "bonded" : `×${shellsCount}`} disabled={busy || keeperActionUsed || isKeeper || (shellsCount <= 0&&!vessel)} onClick={onShell}/>
+            <BattleBtn label="Heal"     sub={keeperActionUsed ? "used" : "50%"} disabled={busy || keeperActionUsed || playerHp >= playerMaxHp} onClick={onHeal}/>
+            <BattleBtn label="Runes"     sub={healingRuneEquipped ? `×${runeUses}` : "—"} disabled={busy || keeperActionUsed || !healingRuneEquipped || runeUses <= 0} onClick={onRune}/>
+            <BattleBtn label="Switch"   sub={hasReserve ? "party" : "none"} disabled={busy || keeperActionUsed || tayanariActionUsed || !hasReserve} onClick={() => setMenu("switch")}/>
+            <BattleBtn label="Flee"     sub={isKeeper ? "locked" : "70%"} disabled={busy || keeperActionUsed || isKeeper} onClick={onFlee}/>
+            <BattleBtn label="Berries"      sub={`×${berryCount.dusk+berryCount.thorn+berryCount.calm+berryCount.bright}`} disabled={busy || keeperActionUsed} onClick={() => setMenu("bag")}/>
           </div>
-        )}
+        ) : null}
       </div>
 
+      {fleePhase&&<div role="status" style={{position:"absolute",left:"30%",top:"62%",color:"#edd69b",zIndex:10}}>◉ {bondedShellName}</div>}
+      {resAssist&&<div aria-label={`Resonance assist ${resAssist.name}`} style={{position:"absolute",left:"38%",top:"30%",height:"30%",zIndex:12,animation:"introFloat .35s ease-out",pointerEvents:"none"}}><img src={resAssist.img} alt={resAssist.name} style={{height:"100%",objectFit:"contain",filter:"drop-shadow(0 0 20px #e8d89b)"}}/><div style={{color:"#efdfa5",textAlign:"center"}}>{resAssist.name} · Resonance</div></div>}
       {/* In-battle evolution cutscene — shown between trainer mon swaps */}
       {pendingBattleEvo && (
         <InBattleEvoOverlay
@@ -1730,6 +1912,7 @@ export function BattleScene({
             wildHpRef.current = nextMon.maxHp;
             setBuffs(b => ({ ...b, wAtk: 0, wDef: 0 }));
             setTrainerMonIdx(nextIdx);
+                keeperUsedRef.current=false;setKeeperActionUsed(false);tayanariUsedRef.current=false;setTayanariActionUsed(false);
             setMenu("root");
             setBusy(false);
           }}
@@ -1738,6 +1921,8 @@ export function BattleScene({
 
       <style>{`
         @keyframes introSlide { 0%{transform:translateX(-200px);opacity:0} 100%{transform:translateX(0);opacity:1} }
+        @keyframes shellRecall {to {transform:scale(.05);opacity:0}}
+        @keyframes keeperExit {to {transform:translateX(-240px);opacity:0}}
         @keyframes introFloat { 0%{transform:translateY(-30px);opacity:0} 100%{transform:translateY(0);opacity:1} }
         @keyframes shakeFx    { 0%{transform:translate(0,0)} 20%{transform:translate(-7px,3px)} 45%{transform:translate(7px,-3px)} 65%{transform:translate(-5px,2px)} 82%{transform:translate(3px,-1px)} 100%{transform:translate(0,0)} }
         @keyframes idleBob    { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
@@ -1897,9 +2082,11 @@ export function BattleScene({
   function hpPlateStyle(who: "enemy" | "player", glowColor?: string): React.CSSProperties {
     return {
       position:"absolute",
-      top:    6,
-      left:   who === "player" ? 6 : "auto",
-      right:  who === "enemy"  ? 6 : "auto",
+      top: "65%",
+      left: who === "player" ? "25.5%" : "70%",
+      transform: "translateX(-50%)",
+      zIndex: 15,
+      pointerEvents: "none",
       padding:"6px 10px",
       background:"linear-gradient(180deg, rgba(22,14,6,0.95), rgba(10,5,2,0.96))",
       border: glowColor ? `1.5px solid ${glowColor}50` : "1.5px solid rgba(180,130,60,0.45)",
@@ -1915,10 +2102,7 @@ export function BattleScene({
 // Element-tinted glimmer that blooms where a mon materializes at battle start.
 function SummonBurst({ x, y, color, delay }: { x: number; y: number; color: string; delay: number }) {
   return (
-    <div 
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerLeave={handlePointerUp}
+    <div
       style={{ position:"absolute", left:`${x}%`, top:`${y}%`, width:0, height:0 }}>
       {/* Expanding ring */}
       <div style={{
@@ -1953,61 +2137,7 @@ function SummonBurst({ x, y, color, delay }: { x: number; y: number; color: stri
         }}/>
       ))}
 
-      {/* ── DEV HUD ───────────────────────────────────────────────────── */}
-      <button
-        onClick={() => setDevMode(v => !v)}
-        style={{
-          position: "absolute", top: 14, right: 14, zIndex: 9999,
-          padding: "6px 10px", borderRadius: 8, border: "1px solid #2a78ff",
-          background: devMode ? "#2a78ff" : "rgba(10,10,12,0.7)",
-          color: "#fff", fontSize: 12, fontWeight: 800, fontFamily: "monospace", cursor: "pointer",
-        }}
-      >{devMode ? "DEV ✕" : "DEV"}</button>
-      
-      {devMode && (
-        <div style={{
-          position: "absolute", top: 50, right: 14, zIndex: 9998,
-          width: 280, background: "rgba(10,10,14,0.85)", border: "1px solid #2a78ff",
-          borderRadius: 8, padding: "10px", color: "#fff", fontSize: 12, fontFamily: "monospace",
-          maxHeight: "80vh", overflowY: "auto"
-        }}>
-          <div style={{ fontWeight: 800, color: "#7fb0ff", marginBottom: 6 }}>BATTLE DEV TOOLS</div>
-          <div style={{ color: "#aaa", marginBottom: 12, fontSize: 10 }}>Drag sprites to move them.</div>
-          
-          {Object.entries(devSprites).map(([id, sp]) => (
-            <div key={id} style={{ marginBottom: 10, padding: 6, background: "rgba(255,255,255,0.1)", borderRadius: 6 }}>
-              <div style={{ fontWeight: "bold", color: "#ffcf3a" }}>{id}</div>
-              <div style={{ display: "flex", gap: 4, marginTop: 4 }}>
-                <button onClick={() => updateDevSprite(id, { scale: Math.max(0.1, sp.scale - 0.1) })} style={{ padding: "2px 6px" }}>- Size</button>
-                <button onClick={() => updateDevSprite(id, { scale: sp.scale + 0.1 })} style={{ padding: "2px 6px" }}>+ Size</button>
-                <button onClick={() => updateDevSprite(id, { flip: !sp.flip })} style={{ padding: "2px 6px" }}>Flip</button>
-              </div>
-              <div style={{ marginTop: 4 }}>
-                <button onClick={() => {
-                  const flag = prompt("Enter flag reason (e.g., bad crop, duplicate, wrong colors):");
-                  if (flag) {
-                    const newFlags = [...(sp.flags || []), flag];
-                    updateDevSprite(id, { flags: newFlags });
-                  }
-                }} style={{ padding: "2px 6px", background: "#7a2222", color: "#fff", border: "1px solid #ff4444" }}>+ Flag Issue</button>
-              </div>
-              {sp.flags && sp.flags.length > 0 && (
-                <div style={{ marginTop: 4, color: "#ff8888", fontSize: 10 }}>
-                  Flags: {sp.flags.join(", ")}
-                </div>
-              )}
-              <div style={{ fontSize: 10, color: "#888", marginTop: 4 }}>
-                Pos: {Math.round(sp.x)}, {Math.round(sp.y)} | Scale: {sp.scale.toFixed(1)}
-              </div>
-            </div>
-          ))}
-          
-          <button onClick={() => {
-            navigator.clipboard.writeText(JSON.stringify(devSprites, null, 2));
-            alert("Dev state copied to clipboard!");
-          }} style={{ marginTop: 10, width: "100%", padding: 6 }}>Copy All Dev States</button>
-        </div>
-      )}
+
     </div>
   );
 }
@@ -2032,10 +2162,7 @@ function HpBar({ hp, max, glowColor }: { hp: number; max: number; glowColor?: st
     ? "linear-gradient(90deg, #b87820, #e8c040)"
     : "linear-gradient(90deg, #b02828, #e85a4a)";
   return (
-    <div 
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerLeave={handlePointerUp}
+    <div
       style={{ position:"relative" }}>
       <div style={{
         height:9, borderRadius:5,
@@ -2065,68 +2192,14 @@ function HpBar({ hp, max, glowColor }: { hp: number; max: number; glowColor?: st
         )}
       </div>
 
-      {/* ── DEV HUD ───────────────────────────────────────────────────── */}
-      <button
-        onClick={() => setDevMode(v => !v)}
-        style={{
-          position: "absolute", top: 14, right: 14, zIndex: 9999,
-          padding: "6px 10px", borderRadius: 8, border: "1px solid #2a78ff",
-          background: devMode ? "#2a78ff" : "rgba(10,10,12,0.7)",
-          color: "#fff", fontSize: 12, fontWeight: 800, fontFamily: "monospace", cursor: "pointer",
-        }}
-      >{devMode ? "DEV ✕" : "DEV"}</button>
-      
-      {devMode && (
-        <div style={{
-          position: "absolute", top: 50, right: 14, zIndex: 9998,
-          width: 280, background: "rgba(10,10,14,0.85)", border: "1px solid #2a78ff",
-          borderRadius: 8, padding: "10px", color: "#fff", fontSize: 12, fontFamily: "monospace",
-          maxHeight: "80vh", overflowY: "auto"
-        }}>
-          <div style={{ fontWeight: 800, color: "#7fb0ff", marginBottom: 6 }}>BATTLE DEV TOOLS</div>
-          <div style={{ color: "#aaa", marginBottom: 12, fontSize: 10 }}>Drag sprites to move them.</div>
-          
-          {Object.entries(devSprites).map(([id, sp]) => (
-            <div key={id} style={{ marginBottom: 10, padding: 6, background: "rgba(255,255,255,0.1)", borderRadius: 6 }}>
-              <div style={{ fontWeight: "bold", color: "#ffcf3a" }}>{id}</div>
-              <div style={{ display: "flex", gap: 4, marginTop: 4 }}>
-                <button onClick={() => updateDevSprite(id, { scale: Math.max(0.1, sp.scale - 0.1) })} style={{ padding: "2px 6px" }}>- Size</button>
-                <button onClick={() => updateDevSprite(id, { scale: sp.scale + 0.1 })} style={{ padding: "2px 6px" }}>+ Size</button>
-                <button onClick={() => updateDevSprite(id, { flip: !sp.flip })} style={{ padding: "2px 6px" }}>Flip</button>
-              </div>
-              <div style={{ marginTop: 4 }}>
-                <button onClick={() => {
-                  const flag = prompt("Enter flag reason (e.g., bad crop, duplicate, wrong colors):");
-                  if (flag) {
-                    const newFlags = [...(sp.flags || []), flag];
-                    updateDevSprite(id, { flags: newFlags });
-                  }
-                }} style={{ padding: "2px 6px", background: "#7a2222", color: "#fff", border: "1px solid #ff4444" }}>+ Flag Issue</button>
-              </div>
-              {sp.flags && sp.flags.length > 0 && (
-                <div style={{ marginTop: 4, color: "#ff8888", fontSize: 10 }}>
-                  Flags: {sp.flags.join(", ")}
-                </div>
-              )}
-              <div style={{ fontSize: 10, color: "#888", marginTop: 4 }}>
-                Pos: {Math.round(sp.x)}, {Math.round(sp.y)} | Scale: {sp.scale.toFixed(1)}
-              </div>
-            </div>
-          ))}
-          
-          <button onClick={() => {
-            navigator.clipboard.writeText(JSON.stringify(devSprites, null, 2));
-            alert("Dev state copied to clipboard!");
-          }} style={{ marginTop: 10, width: "100%", padding: 6 }}>Copy All Dev States</button>
-        </div>
-      )}
+
     </div>
   );
 }
 
 function BattleBtn({
   label, sub, disabled, placeholder, primary, onClick,
-}: { label: string; sub: string; disabled?: boolean; placeholder?: boolean; primary?: boolean; onClick: () => void; }) {
+}: { label: string; sub?: string; disabled?: boolean; placeholder?: boolean; primary?: boolean; onClick: () => void; }) {
   const bg = placeholder ? "rgba(20,12,6,0.6)"
     : primary && !disabled ? "linear-gradient(180deg, rgba(130,96,28,0.98), rgba(84,60,16,0.98))"
     : disabled ? BTN_BG : BTN_BG_HI;
@@ -2301,10 +2374,7 @@ function InBattleEvoOverlay({
   };
 
   return (
-    <div 
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerLeave={handlePointerUp}
+    <div
       style={{
       position:"fixed", inset:0, zIndex:200, overflow:"hidden",
       background:"radial-gradient(ellipse at 50% 60%, #130920 0%, #04020c 100%)",
@@ -2390,62 +2460,17 @@ function InBattleEvoOverlay({
         @keyframes ievoNameplate  { from{transform:translateY(30px);opacity:0} to{transform:translateY(0);opacity:1} }
       `}</style>
 
-      {/* ── DEV HUD ───────────────────────────────────────────────────── */}
-      <button
-        onClick={() => setDevMode(v => !v)}
-        style={{
-          position: "absolute", top: 14, right: 14, zIndex: 9999,
-          padding: "6px 10px", borderRadius: 8, border: "1px solid #2a78ff",
-          background: devMode ? "#2a78ff" : "rgba(10,10,12,0.7)",
-          color: "#fff", fontSize: 12, fontWeight: 800, fontFamily: "monospace", cursor: "pointer",
-        }}
-      >{devMode ? "DEV ✕" : "DEV"}</button>
-      
-      {devMode && (
-        <div style={{
-          position: "absolute", top: 50, right: 14, zIndex: 9998,
-          width: 280, background: "rgba(10,10,14,0.85)", border: "1px solid #2a78ff",
-          borderRadius: 8, padding: "10px", color: "#fff", fontSize: 12, fontFamily: "monospace",
-          maxHeight: "80vh", overflowY: "auto"
-        }}>
-          <div style={{ fontWeight: 800, color: "#7fb0ff", marginBottom: 6 }}>BATTLE DEV TOOLS</div>
-          <div style={{ color: "#aaa", marginBottom: 12, fontSize: 10 }}>Drag sprites to move them.</div>
-          
-          {Object.entries(devSprites).map(([id, sp]) => (
-            <div key={id} style={{ marginBottom: 10, padding: 6, background: "rgba(255,255,255,0.1)", borderRadius: 6 }}>
-              <div style={{ fontWeight: "bold", color: "#ffcf3a" }}>{id}</div>
-              <div style={{ display: "flex", gap: 4, marginTop: 4 }}>
-                <button onClick={() => updateDevSprite(id, { scale: Math.max(0.1, sp.scale - 0.1) })} style={{ padding: "2px 6px" }}>- Size</button>
-                <button onClick={() => updateDevSprite(id, { scale: sp.scale + 0.1 })} style={{ padding: "2px 6px" }}>+ Size</button>
-                <button onClick={() => updateDevSprite(id, { flip: !sp.flip })} style={{ padding: "2px 6px" }}>Flip</button>
-              </div>
-              <div style={{ marginTop: 4 }}>
-                <button onClick={() => {
-                  const flag = prompt("Enter flag reason (e.g., bad crop, duplicate, wrong colors):");
-                  if (flag) {
-                    const newFlags = [...(sp.flags || []), flag];
-                    updateDevSprite(id, { flags: newFlags });
-                  }
-                }} style={{ padding: "2px 6px", background: "#7a2222", color: "#fff", border: "1px solid #ff4444" }}>+ Flag Issue</button>
-              </div>
-              {sp.flags && sp.flags.length > 0 && (
-                <div style={{ marginTop: 4, color: "#ff8888", fontSize: 10 }}>
-                  Flags: {sp.flags.join(", ")}
-                </div>
-              )}
-              <div style={{ fontSize: 10, color: "#888", marginTop: 4 }}>
-                Pos: {Math.round(sp.x)}, {Math.round(sp.y)} | Scale: {sp.scale.toFixed(1)}
-              </div>
-            </div>
-          ))}
-          
-          <button onClick={() => {
-            navigator.clipboard.writeText(JSON.stringify(devSprites, null, 2));
-            alert("Dev state copied to clipboard!");
-          }} style={{ marginTop: 10, width: "100%", padding: 6 }}>Copy All Dev States</button>
-        </div>
-      )}
+
     </div>
   );
 }
 
+
+function BattlePortrait({ name, img, sheet }: { name: string; img?: string; sheet?: SpriteSheet }) {
+  return <div style={{ display:"flex", alignItems:"center", gap:5, color:"#ead8b0", fontSize:9, fontWeight:800, marginBottom:3 }}>
+    <span style={{ width:24, height:24, borderRadius:"50%", overflow:"hidden", border:"1px solid #bca36b", background:"rgba(15,10,5,0.8)", flexShrink:0 }}>
+      {sheet ? <span role="img" aria-label={name} style={{ display:"block", width:"100%", height:"100%", ...sheetBgStyle(sheet) }} /> : <img src={img} alt="" style={{ width:"100%", height:"100%", objectFit:"contain" }} />}
+    </span>
+    <span>{name}</span>
+  </div>;
+}

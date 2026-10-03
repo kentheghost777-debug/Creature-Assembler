@@ -1,6 +1,8 @@
+import { Chronicle } from "./Chronicle";
+import { FAMILIES, newJourney, type FamilyId } from "./journeySystems";
 import React, { useState, useEffect, useCallback } from "react";
 import { WalkDemo } from "./WalkDemo";
-import { type CharId, type RoleId, type SlotIndex, ALL_SLOTS, readSlot, deleteSlot, setActiveSlot, getActiveSlot, startNewSave, formatSaveTime } from "./save";
+import { type CharId, type RoleId, type SlotIndex, ALL_SLOTS, readSlot, deleteSlot, setActiveSlot, getActiveSlot, startNewSave, updateJourney, formatSaveTime } from "./save";
 import { playTrack, stopAll } from "./audioManager";
 
 const TITLE_TRACK = "./audio/primeria_title.mp3";
@@ -8,6 +10,7 @@ const TITLE_TRACK = "./audio/primeria_title.mp3";
 type Screen = "studio" | "dedication" | "title" | "menu" | "intro" | "char_reveal" | "game";
 
 const CHARACTERS: { id: CharId; name: string; tag: string; sprite: string; hero: string; desc: string; stats: [string, string][] }[] = [
+  {id:"custom",name:"Your Story",tag:"An unwritten tale",sprite:"./images/kinju_front_idle.png",hero:"./images/kinju_hero.png",desc:"Write your own name into the Chronicle. Choose the family that shaped your beginning.",stats:[["ORIGIN","Hearth & Kin"],["HEART","Your own"],["CALL","Unwritten"]]},
   {
     id: "kinju", name: "Kinju", tag: "Sunlit wanderer",
     sprite: "./images/kinju_front_idle.png",
@@ -32,6 +35,7 @@ const CHARACTERS: { id: CharId; name: string; tag: string; sprite: string; hero:
 ];
 
 const CHAR_INTRO_LINES: Record<CharId, string[]> = {
+  custom: ["Every Chronicle begins with a name. Yours belongs here, too.","Your family has helped shape you, but the path ahead is yours to choose.","Primeria lives through its Tayanari. They cannot be owned. They can only be bonded.","Care and hardship leave different memories. Neither erases what came before.","Come to my lab when you are ready. We will meet the companion who walks beside you."],
   kinju: [
     "Come in, come in — I've been expecting you since dawn. There's an energy about you today — well, every day, if I'm honest. But today it feels like the world finally caught up with it. Forgive me a moment's pause; I don't open this scroll often.",
     "You know our world. Primeria — its mountains breathe with elemental force, its rivers run with memory, its wildlands sprawl past every map ever drawn. And everywhere within it live the Tayanari: creatures of pure elemental essence, born of the land itself. They cannot be owned. They cannot be commanded. They can only be bonded.",
@@ -56,6 +60,8 @@ const CHAR_INTRO_LINES: Record<CharId, string[]> = {
 };
 
 export default function GameLauncher() {
+  const [customName,setCustomName]=useState("Keeper");
+  const [family,setFamily]=useState<FamilyId>("jay");
   const [screen, setScreen]       = useState<Screen>("studio");
   const [introPhase, setIntroPhase] = useState(1);
   const [fading, setFading]       = useState(false);
@@ -146,6 +152,7 @@ export default function GameLauncher() {
 
   const beginJourney = () => {
     startNewSave(characterId, roleId, activeSlot);
+    if(characterId === "custom") updateJourney({...newJourney(),name:customName.trim() || "Keeper",family});
     refreshSlots();
     fadeTo("intro");
   };
@@ -194,6 +201,7 @@ export default function GameLauncher() {
       touchAction: "none", overscrollBehavior: "none",
     }}>
 
+      <Chronicle page={`${screen}-${introPhase}-${characterId}`} frame={["menu","intro","char_reveal"].includes(screen)}>
       {/* ── STUDIO SPLASH ──────────────────────────────────────────── */}
       {screen === "studio" && (
         <div style={{
@@ -801,6 +809,7 @@ export default function GameLauncher() {
                 </div>
                 <div style={{ color: "#4a3818", fontSize: 8, letterSpacing: 3, marginBottom: 9 }}>CHOOSE YOUR LOOK</div>
                 <CharPicker />
+                {characterId === "custom" && <div style={{marginTop:12,color:"#dccba0"}}><label>Your name <input aria-label="Your name" maxLength={32} value={customName} onChange={e=>setCustomName(e.target.value)} /></label><label style={{display:"block",marginTop:8}}>Hearth & Kin <select aria-label="Hearth & Kin" value={family} onChange={e=>setFamily(e.target.value as FamilyId)}>{FAMILIES.map(f=><option key={f.id} value={f.id}>{f.name}</option>)}</select></label></div>}
                 <button
                   onClick={() => { if (!fading) beginJourney(); }}
                   style={{
@@ -864,6 +873,7 @@ export default function GameLauncher() {
               <div style={{ marginTop: 22 }}>
                 <div style={{ color: "#4a3818", fontSize: 8, letterSpacing: 3, marginBottom: 9 }}>CHOOSE YOUR LOOK</div>
                 <CharPicker />
+                {characterId === "custom" && <div style={{marginTop:12,color:"#dccba0"}}><label>Your name <input aria-label="Your name" maxLength={32} value={customName} onChange={e=>setCustomName(e.target.value)} /></label><label style={{display:"block",marginTop:8}}>Hearth & Kin <select aria-label="Hearth & Kin" value={family} onChange={e=>setFamily(e.target.value as FamilyId)}>{FAMILIES.map(f=><option key={f.id} value={f.id}>{f.name}</option>)}</select></label></div>}
               </div>
               <button
                 onClick={() => { if (!fading) beginJourney(); }}
@@ -915,6 +925,7 @@ export default function GameLauncher() {
         @keyframes glFadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes glPulse  { 0%,100%{opacity:.25} 50%{opacity:0.9} }
       `}</style>
+      </Chronicle>
     </div>
   );
 }

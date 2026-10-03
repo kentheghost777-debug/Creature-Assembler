@@ -4,12 +4,14 @@
 // A "move" is either a damaging elemental technique or a utility technique
 // (heal / raise attack / shield). Every Tayanari has a per-element LEARNSET
 // that unlocks moves as it levels up; the active loadout is a chosen subset of
-// up to 4 learned moves (rearrangeable out of battle).
+// up to 6 learned moves (rearrangeable out of battle).
 //
 // Move/element NAMES here are intentionally simple placeholders — they're easy
 // to rename later without touching any battle logic.
 
-import { type Element } from "./progression";
+import type { Element } from "./progression";
+
+export const MAX_ACTIVE_MOVES = 6;
 
 export type MoveCategory = "damage" | "heal" | "buff" | "shield";
 
@@ -228,7 +230,7 @@ export function movesLearnedAt(el: Element, level: number): string[] {
   return learnsetFor(el).filter(e => e.level === level).map(e => e.moveId);
 }
 
-/** Sensible default active loadout (≤4): strongest damage first, then a heal. */
+/** Sensible default active loadout (≤6): strongest damage first, then a heal. */
 export function defaultActiveMoves(el: Element, level: number): string[] {
   const learned = learnedMoveIds(el, level);
   const damage = learned
@@ -241,15 +243,15 @@ export function defaultActiveMoves(el: Element, level: number): string[] {
     ...damage.slice(3),
     ...utility.slice(1),
   ];
-  return ordered.slice(0, 4);
+  return ordered.slice(0, MAX_ACTIVE_MOVES);
 }
 
-/** Keep only valid, learned ids (≤4); rebuild from default if nothing valid.
+/** Keep only valid, learned ids (≤6); rebuild from default if nothing valid.
  *  Used to migrate old saves whose `moves` held cosmetic name strings. */
 export function sanitizeActiveMoves(el: Element, level: number, current: string[]): string[] {
   const learnable = new Set(learnedMoveIds(el, level));
   const valid = current.filter(id => learnable.has(id));
   const deduped: string[] = [];
   for (const id of valid) if (!deduped.includes(id)) deduped.push(id);
-  return deduped.length > 0 ? deduped.slice(0, 4) : defaultActiveMoves(el, level);
+  return deduped.length > 0 ? deduped.slice(0, MAX_ACTIVE_MOVES) : defaultActiveMoves(el, level);
 }
