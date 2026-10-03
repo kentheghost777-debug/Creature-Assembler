@@ -1,5 +1,8 @@
+import { Chronicle } from "./Chronicle";
+import { GuideSoul } from "./GuideSoul";
+import {normalizeJourney,FAMILIES,finishBattle,recordChronicle,bondEvent,initializeBond,type Journey} from "./journeySystems";
 import { useEffect, useRef, useState, useCallback, Fragment, type PointerEvent as RPointerEvent, type MouseEvent as RMouseEvent } from "react";
-import { BattleScene, RARITY_COLOR, sheetBgStyle, type SpriteSheet, type MonSpec, type MonRarity, type BattleResult, type StarterStats, type StarterSpec, type BattleMon } from "./BattleScene";
+import { BattleScene, masteryForm, RARITY_COLOR, sheetBgStyle, type SpriteSheet, type MonSpec, type MonRarity, type BattleResult, type StarterStats, type StarterSpec, type BattleMon } from "./BattleScene";
 import { EvoScene } from "./EvoScene";
 import { SHELLS, ELEMENT_COLOR, BATTLE_SHELLS, BATTLE_RUNES, BATTLE_SHELLS_BY_ID, BATTLE_RUNES_BY_ID, GEAR_ITEMS, GEAR_BY_ID, CLEARBELL_BERRIES, CLEARBELL_SHELLS, CLEARBELL_SHELLS_BY_ID, CLEARBELL_RUNES, PRISM_STONES, PRISM_STONES_BY_ID, prismFilter, HELD_ITEMS, HELD_ITEMS_BY_ID, type GearSlot, type GearItem, type PrismStoneId, type BattleRuneId, type HeldItemDef } from "./progression";
 import {
@@ -8,7 +11,7 @@ import {
   partyBattleStats, wildLevelFor,
   type Move,
 } from "./moves";
-import { type CharId, type RoleId, type PartySave, type PartyMon, type WorldSave, type HeldItemId, type HeldItem, ROLES, readSave, updateParty, updateWorld, updateRole, roleDef } from "./save";
+import { type CharId, type RoleId, type PartySave, type PartyMon, type WorldSave, type HeldItemId, type HeldItem, ROLES, readSave, updateParty, updateWorld, updateRole, updateInventory, updateJourney, roleDef } from "./save";
 import { playTrack, playJingle, stopAll, playSfx, playSfxFile } from "./audioManager";
 import { createTayanariSystem } from "./tayanariSystem";
 
@@ -17,6 +20,7 @@ import { createTayanariSystem } from "./tayanariSystem";
 function hydrateParty(arr: PartyMon[]): PartyMon[] {
   return arr.map(m => ({
     ...m,
+    instanceId: m.instanceId ?? crypto.randomUUID(),
     level: typeof m.level === "number" ? m.level : (wildLevelFor(m.rarity) || 5),
     xp:    typeof m.xp === "number" ? m.xp : 0,
   }));
@@ -1921,9 +1925,10 @@ const CHAR_FRAMES: Record<CharId, Record<string, string[]>> = {
   kinju: dirFrames("kinju"),
   rowan: dirFrames("rowan"),
   jess:  dirFrames("jess", 5),
+  custom: dirFrames("kinju"),
 };
 // Maps CharId → actual image filename prefix (kinju reuses "kinju" assets until new sprites ship).
-const CHAR_IMG_KEY: Record<CharId, string> = { kinju: "kinju", rowan: "rowan", jess: "jess" };
+const CHAR_IMG_KEY: Record<CharId, string> = { kinju: "kinju", rowan: "rowan", jess: "jess", custom:"kinju" };
 
 // Wyvrunt follower frame set (Pokémon-Yellow style trailing companion).
 const WYV_FRAMES = dirFrames("wyvrunt");
@@ -2032,7 +2037,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   // Hydrate persisted party + world once on mount (Continue resumes; New Game cleared both).
   const savedSnap  = useRef(readSave()).current;
   const savedParty = savedSnap?.party ?? null;
+  const [leadInstanceId,setLeadInstanceId]=useState(savedParty?.leadInstanceId??"starter");
   const savedWorld = savedSnap?.world ?? null;
+  const [journey,setJourney]=useState<Journey>(()=>normalizeJourney(savedSnap?.journey));
+  const journeyRef=useRef(journey); journeyRef.current=journey;
+  const changeJourney=useCallback((next:Journey)=>{journeyRef.current=next;setJourney(next);updateJourney(next);},[]);
+  const [showGuideSoul,setShowGuideSoul]=useState(false);
+
   // Sanitized resume target. We never resume *into* a battle (battle runtime
   // isn't persisted), so a legacy save left mid-battle falls back to home.
   // Saves live in localStorage and could be malformed/tampered, so we validate
@@ -2069,6 +2080,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     kinju: { scene: "home",      x: 400, y: 670 },
     jess:  { scene: "overworld", x: 600, y: 830 },
     rowan: { scene: "lab",       x: 480, y: 274 },
+    custom: {scene:(FAMILIES.find(f=>f.id===journey.family)?.home??"home") as Scene,x:400,y:400},
   };
   const defaultSpawn = CHAR_SPAWN[characterId] ?? CHAR_SPAWN.kinju;
 
@@ -2106,6 +2118,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const [selected,         setSelected]         = useState<StarterId | null>(null);
   const [roleSel,          setRoleSel]          = useState<RoleId | null>(null);
   const [starter,          setStarter]          = useState<StarterSpec | null>(() => {
+    if(savedParty?.leadSpec && typeof savedParty.leadSpec.id === "string" && typeof savedParty.leadSpec.type === "string")return savedParty.leadSpec;
     const base = STARTERS.find(s => s.id === savedParty?.starterId) ?? null;
     if (!base) return null;
     // Restore evolved form: base gives type/color, override patches name + sprite.
@@ -2114,7 +2127,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     return base;
   });
   const [showJournal,      setShowJournal]      = useState(false);
-  const [journalTab,       setJournalTab]       = useState<"party"|"storage"|"shells"|"bag"|"equipment"|"guide"|"map"|"licenses">("party");
+  const [journalTab,       setJournalTab]       = useState<"party"|"storage"|"shells"|"bag"|"equipment"|"guide"|"map"|"licenses"|"chronicle">("chronicle");
   const [dexSub,           setDexSub]           = useState<"dex"|"evo">("dex");
   const [visitedScenes,    setVisitedScenes]    = useState<Set<string>>(() => {
     const saved = savedWorld?.visitedScenes;
@@ -2210,19 +2223,22 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const [primeriaCoin,         setPrimeriaCoin]         = useState(() => savedWorld?.primeriaCoin ?? 0);
   const [activeShop,           setActiveShop]           = useState<"blacksmith"|"berries"|"shells"|"runes"|"farm_shells"|"farm_runes"|"farm_berries"|null>(null);
   const [equippedGear, setEquippedGear] = useState<Record<GearSlot, string|null>>(() => {
-    try { const s = localStorage.getItem("primeria_gear"); return s ? JSON.parse(s) : { headband:null, armor:null, wristband:null, shoes:null, backpack:null }; }
-    catch { return { headband:null, armor:null, wristband:null, shoes:null, backpack:null }; }
+    if(savedSnap?.inventory)return {headband:null,armor:null,wristband:null,shoes:null,backpack:null,belt:null,gloves:null,ring:null,amulet:null,...savedSnap.inventory.gear};
+    try { const s = localStorage.getItem("primeria_gear"); return s ? JSON.parse(s) : { headband:null, armor:null, wristband:null, shoes:null, backpack:null,belt:null,gloves:null,ring:null,amulet:null }; }
+    catch { return { headband:null, armor:null, wristband:null, shoes:null, backpack:null,belt:null,gloves:null,ring:null,amulet:null }; }
   });
-  const [ownedGearIds,         setOwnedGearIds]         = useState<string[]>(() => { try { const s = localStorage.getItem("primeria_owned_gear"); return s ? JSON.parse(s) : []; } catch { return []; } });
-  const [ownedClearbellShellIds, setOwnedClearbellShellIds] = useState<string[]>(() => { try { const s = localStorage.getItem("primeria_cshells"); return s ? JSON.parse(s) : []; } catch { return []; } });
-  const [ownedClearbellRuneIds,  setOwnedClearbellRuneIds]  = useState<string[]>(() => { try { const s = localStorage.getItem("primeria_crunes"); return s ? JSON.parse(s) : []; } catch { return []; } });
-  const [heartberries,  setHeartberries]  = useState<number>(() => { try { const s = localStorage.getItem("primeria_berries"); const b = s ? JSON.parse(s) : {}; return b.heart ?? 0; } catch { return 0; } });
-  const [blazeberries,  setBlazeberries]  = useState<number>(() => { try { const s = localStorage.getItem("primeria_berries"); const b = s ? JSON.parse(s) : {}; return b.blaze ?? 0; } catch { return 0; } });
-  const [shellberries,  setShellberries]  = useState<number>(() => { try { const s = localStorage.getItem("primeria_berries"); const b = s ? JSON.parse(s) : {}; return b.shell ?? 0; } catch { return 0; } });
-  const [flashberries,  setFlashberries]  = useState<number>(() => { try { const s = localStorage.getItem("primeria_berries"); const b = s ? JSON.parse(s) : {}; return b.flash ?? 0; } catch { return 0; } });
-  const [wakeberries,   setWakeberries]   = useState<number>(() => { try { const s = localStorage.getItem("primeria_berries"); const b = s ? JSON.parse(s) : {}; return b.wake ?? 0; } catch { return 0; } });
-  const [fullblooms,    setFullblooms]    = useState<number>(() => { try { const s = localStorage.getItem("primeria_berries"); const b = s ? JSON.parse(s) : {}; return b.full ?? 0; } catch { return 0; } });
+  const gearBonuses=Object.values(equippedGear).reduce((b,id)=>{const g=id?GEAR_BY_ID[id]:null;if(g){b.xp*=g.effect.xpMult??1;b.resonance*=g.effect.resonanceMult??1;b.def+=g.effect.defBonus??0;b.catch+=g.effect.catchBonus??0;}return b;},{xp:1,resonance:1,def:0,catch:0});
+  const [ownedGearIds,         setOwnedGearIds]         = useState<string[]>(() => { if(savedSnap?.inventory)return savedSnap.inventory.ownedGear;try { const s = localStorage.getItem("primeria_owned_gear"); return s ? JSON.parse(s) : []; } catch { return []; } });
+  const [ownedClearbellShellIds, setOwnedClearbellShellIds] = useState<string[]>(() => { if(savedSnap?.inventory)return savedSnap.inventory.clearbellShells;try { const s = localStorage.getItem("primeria_cshells"); return s ? JSON.parse(s) : []; } catch { return []; } });
+  const [ownedClearbellRuneIds,  setOwnedClearbellRuneIds]  = useState<string[]>(() => { if(savedSnap?.inventory)return savedSnap.inventory.clearbellRunes;try { const s = localStorage.getItem("primeria_crunes"); return s ? JSON.parse(s) : []; } catch { return []; } });
+  const [heartberries,  setHeartberries]  = useState<number>(() => { if(savedSnap?.inventory)return savedSnap.inventory.berries.heart??0;try { const s = localStorage.getItem("primeria_berries"); const b = s ? JSON.parse(s) : {}; return b.heart ?? 0; } catch { return 0; } });
+  const [blazeberries,  setBlazeberries]  = useState<number>(() => { if(savedSnap?.inventory)return savedSnap.inventory.berries.blaze??0;try { const s = localStorage.getItem("primeria_berries"); const b = s ? JSON.parse(s) : {}; return b.blaze ?? 0; } catch { return 0; } });
+  const [shellberries,  setShellberries]  = useState<number>(() => { if(savedSnap?.inventory)return savedSnap.inventory.berries.shell??0;try { const s = localStorage.getItem("primeria_berries"); const b = s ? JSON.parse(s) : {}; return b.shell ?? 0; } catch { return 0; } });
+  const [flashberries,  setFlashberries]  = useState<number>(() => { if(savedSnap?.inventory)return savedSnap.inventory.berries.flash??0;try { const s = localStorage.getItem("primeria_berries"); const b = s ? JSON.parse(s) : {}; return b.flash ?? 0; } catch { return 0; } });
+  const [wakeberries,   setWakeberries]   = useState<number>(() => { if(savedSnap?.inventory)return savedSnap.inventory.berries.wake??0;try { const s = localStorage.getItem("primeria_berries"); const b = s ? JSON.parse(s) : {}; return b.wake ?? 0; } catch { return 0; } });
+  const [fullblooms,    setFullblooms]    = useState<number>(() => { if(savedSnap?.inventory)return savedSnap.inventory.berries.fullbloom??0;try { const s = localStorage.getItem("primeria_berries"); const b = s ? JSON.parse(s) : {}; return b.full ?? 0; } catch { return 0; } });
   // Clearbell Town NPC proximity
+  useEffect(()=>{updateInventory({gear:equippedGear,ownedGear:ownedGearIds,clearbellShells:ownedClearbellShellIds,clearbellRunes:ownedClearbellRuneIds,berries:{heart:heartberries,blaze:blazeberries,shell:shellberries,flash:flashberries,wake:wakeberries,fullbloom:fullblooms}});},[equippedGear,ownedGearIds,ownedClearbellShellIds,ownedClearbellRuneIds,heartberries,blazeberries,shellberries,flashberries,wakeberries,fullblooms]);
   const [nearBlacksmith,       setNearBlacksmith]       = useState(false);
   const [blacksmithInteractPos,setBlacksmithInteractPos]= useState({ sx: 0, sy: 0 });
   const [nearBerryVendor,      setNearBerryVendor]      = useState(false);
@@ -2599,6 +2615,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   // isMobile: computed once — the game runs fullscreen and doesn't layout-shift on resize
   const isMobile = window.innerWidth <= 520;
   // ── Starter progression ───────────────────────────────────────────────────
+  useEffect(()=>{if(starter&&!journeyRef.current.attunement){const original=STARTERS.find(s=>s.id===savedParty?.starterId)??starter;changeJourney({...journeyRef.current,attunement:original.type});}},[starter,changeJourney]);
   const [starterLevel, setStarterLevel] = useState(() => savedParty?.level ?? 5);
   const [starterXp,    setStarterXp]    = useState(() => savedParty?.xp ?? 0);
   const [starterStats, setStarterStats] = useState<StarterStats>(() => savedParty?.stats ?? { hp: 40, atk: 6, def: 4, spd: 5 });
@@ -2622,6 +2639,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           return id;
         })();
     updateParty({
+      leadInstanceId,
+      leadSpec:starter??undefined,
       starterId: baseId,
       starterFormOverride: !isBase && starter
         ? { id: starter.id, name: starter.name, img: starter.img }
@@ -2636,7 +2655,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       shellId: starterShellId,
       runeIds: starterRuneIds,
     });
-  }, [starter, starterLevel, starterXp, starterStats, starterMoves, caughtParty, storageBox, shellCount, starterShellId, starterRuneIds]);
+  }, [starter, starterLevel, starterXp, starterStats, starterMoves, caughtParty, storageBox, shellCount, starterShellId, starterRuneIds, leadInstanceId]);
 
   // One-time migration: older saves stored cosmetic move name-strings. Once the
   // starter (and thus its element) is known, normalise the active list to valid
@@ -2788,10 +2807,10 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         return next;
       });
     } else if (gi.itemType === "berry") {
-      if (gi.itemId === "dusk")        setDuskberries(n => n + gi.count);
-      else if (gi.itemId === "thorn")  setThornberries(n => n + gi.count);
-      else if (gi.itemId === "calm")   setCalmberries(n => n + gi.count);
-      else if (gi.itemId === "bright") setBrightberries(n => n + gi.count);
+      if (gi.itemId === "dusk")        setDuskberries(n => n + gi.count + (roleId==="herbalist"?1:0));
+      else if (gi.itemId === "thorn")  setThornberries(n => n + gi.count + (roleId==="herbalist"?1:0));
+      else if (gi.itemId === "calm")   setCalmberries(n => n + gi.count + (roleId==="herbalist"?1:0));
+      else if (gi.itemId === "bright") setBrightberries(n => n + gi.count + (roleId==="herbalist"?1:0));
     }
     const screenX = (gi.wx - cam.current.x) * mapZoomRef.current;
     const screenY = (gi.wy - cam.current.y) * mapZoomRef.current - 20;
@@ -2811,10 +2830,10 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     } else if (item.itemType === "brune") {
       setOwnedBattleRuneIds(prev => prev.includes(item.itemId) ? prev : [...prev, item.itemId]);
     } else if (item.itemType === "berry") {
-      if (item.itemId === "dusk")        setDuskberries(n => n + item.count);
-      else if (item.itemId === "thorn")  setThornberries(n => n + item.count);
-      else if (item.itemId === "calm")   setCalmberries(n => n + item.count);
-      else if (item.itemId === "bright") setBrightberries(n => n + item.count);
+      if (item.itemId === "dusk")        setDuskberries(n => n + item.count + (roleId==="herbalist"?1:0));
+      else if (item.itemId === "thorn")  setThornberries(n => n + item.count + (roleId==="herbalist"?1:0));
+      else if (item.itemId === "calm")   setCalmberries(n => n + item.count + (roleId==="herbalist"?1:0));
+      else if (item.itemId === "bright") setBrightberries(n => n + item.count + (roleId==="herbalist"?1:0));
     }
     // Keeper's Satchel +1 item find — grant a bonus berry from the spot pool
     if (satchelEquippedRef.current) {
@@ -2854,10 +2873,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   // overflowing into the storage box (which itself caps at STORAGE_CAP).
   // Returns where the mon ended up: "party", "box", or "full" (nowhere — both full).
   // A freshly caught mon starts at the level it was fighting at, XP reset.
-  const addCaughtMon = useCallback((mon: MonSpec, force = false, startLevel?: number): "party" | "box" | "full" => {
+  const addCaughtMon = useCallback((mon: MonSpec, force = false, startLevel?: number, bondShellId?: string): "party" | "box" | "full" => {
+    if(caughtPartyRef.current.length>=PARTY_CAP-1 && storageBoxRef.current.length>=STORAGE_CAP&&!force)return "full";
     const lvl = startLevel ?? wildLevelFor(mon.rarity) ?? 5;
     const el = asElement(mon.type);
-    const pm: PartyMon = { ...mon, level: lvl, xp: 0, moves: el ? defaultActiveMoves(el, lvl) : [] };
+    const pm: PartyMon = { ...mon, instanceId:crypto.randomUUID(), shellId:bondShellId, level: lvl, xp: 0, moves: el ? defaultActiveMoves(el, lvl) : [] };
+    const vessel=journeyRef.current.vessels.find(v=>v.id===bondShellId);
+    changeJourney(initializeBond(journeyRef.current,pm.instanceId!,vessel?(vessel.element===mon.type?"matched":"mismatch"):"neutral"));
     if (caughtPartyRef.current.length >= PARTY_CAP - 1) {
       if (storageBoxRef.current.length >= STORAGE_CAP && !force) return "full";
       setStorageBox(b => [...b, pm]);
@@ -2872,7 +2894,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     if (award <= 0) return m;
     let lvl = m.level, xp = m.xp + award;
     let thr = lvl * 10 + 10;
-    while (xp >= thr && lvl < 30) { xp -= thr; lvl += 1; thr = lvl * 10 + 10; }
+    while (xp >= thr && lvl < 150) { xp -= thr; lvl += 1; thr = lvl * 10 + 10; }
     const el = asElement(m.type);
     const moves = el && lvl !== m.level
       ? sanitizeActiveMoves(el, lvl, m.moves ?? defaultActiveMoves(el, m.level))
@@ -2902,6 +2924,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     const baseHp  = Math.max(20, Math.round(starterStats.hp / Math.max(0.001, 1 + starterLevel * 0.04)));
     const atkBase = Math.max(1,  starterStats.atk - Math.floor(starterLevel * 0.6));
     const oldStarterAsMon: PartyMon = {
+      instanceId:leadInstanceId,
       id: starter.id, name: starter.name, type: starter.type,
       rarity: "rare" as MonRarity,
       wildImg: starter.img, playerImg: starter.img,
@@ -2909,9 +2932,12 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       playerFaces: starter.faces ?? "right",
       maxHp: baseHp,
       baseDmg: [atkBase, atkBase + 4] as [number, number],
+      shellId:starterShellId, runeIds:starterRuneIds,
       level: starterLevel, xp: starterXp, moves: starterMoves,
     };
 
+    setStarterShellId(mon.shellId??null);setStarterRuneIds(mon.runeIds??[]);
+    setLeadInstanceId(mon.instanceId??crypto.randomUUID());
     setStarter(newStarter);
     setStarterLevel(mon.level);
     setStarterXp(mon.xp);
@@ -3006,6 +3032,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const vpRef      = useRef<HTMLDivElement>(null);
 
   const sceneRef   = useRef<Scene>(resume?.scene ?? "home");
+  const menuOpenRef=useRef(false);menuOpenRef.current=showGuideSoul||showJournal;
   const phaseRef   = useRef<Phase>("walk");
   const fadingRef  = useRef(false);
   const heldRef    = useRef<string | null>(null);
@@ -3612,7 +3639,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     let raf: number;
     let saveTick = 0; // throttles position writes while walking
     const loop = () => {
-      if (!fadingRef.current && phaseRef.current === "walk" && sceneRef.current !== "battle") {
+      if (!menuOpenRef.current && !fadingRef.current && phaseRef.current === "walk" && sceneRef.current !== "battle") {
         const h       = heldRef.current;
         const sc      = sceneRef.current;
         const zoom    = sc === "farm" ? 0.62 : mapZoomRef.current;
@@ -4178,6 +4205,14 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   const { x: px, y: py } = worldPos.current;
   const topOff = Math.round(SPRITE_PX * ANCHOR);
 
+  function familyDialogue(key:string,text:string):string {
+    if(characterId!=="custom")return text;
+    const first:{[key:string]:string[]}={jay:["jay_d1","jay_a3_d1"],lia:["lia_d1","lia_a3_d1"],ellio:["ellio_d1"],maya:["maya_d1"],irwyn:["d1","prof2_d1"]};
+    if(first[journey.family]?.includes(key))return `${journey.name}, you will always have a place in this family. The road ahead is yours, and this home will be here when you return. ${text}`;
+    if(key==="d1")return `${journey.name}, ${FAMILIES.find(f=>f.id===journey.family)?.name} told me you would be coming. ${text}`;
+    return text;
+  }
+
   // ── Wyvrunt scripted battle dialogue (phase keys match wyvBattlePhase) ──────
   const WYV_BATTLE_LINES: {[k: string]: string} = {
     prof1:     "Don't move yet. Let it finish reading you. Do you see the sigils on its scales? They're still deciding.",
@@ -4399,7 +4434,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         .filter(i => !(i in nextActive) && (!cd[i] || cd[i] <= now) && !(i in newCds));
       if (Object.keys(nextActive).length < 4 && free.length > 0 && Math.random() < 0.75) {
         const idx = free[Math.floor(Math.random() * free.length)];
-        const rarity = rollRarity(checksStreakRef.current);
+        const rarity = rollRarity(checksStreakRef.current + (roleId === "hopeful" ? 10 : 0));
         nextActive[idx] = { mon: pickMonForScene(rarity, scene), expiresAt: now + 30000 };
       }
       setActiveDisturbances(nextActive);
@@ -4412,7 +4447,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       });
     }, 2000);
     return () => clearInterval(id);
-  }, [scene, wyvruntCaught]);
+  }, [scene, wyvruntCaught, roleId]);
 
   const handleHotspotClick = useCallback((idx: number, h: Hotspot) => {
     if (phase !== "walk") return;
@@ -4465,7 +4500,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     let levelUps  = 0;
     let threshold = newLevel * 10 + 10;
     const isAureyvantNow = wyvruntCaught && wyvruntForm >= 3;
-    const maxLevel = isAureyvantNow ? Infinity : (wyvruntCaught && wyvruntForm < 3) ? 30 : 25;
+    const maxLevel = 150;
     const totalGains: Partial<Record<StatKey, number>> = {};
     const newMoves: string[] = [];
     let workingMoves = [...baseMoves];
@@ -4516,7 +4551,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       setWyvruntForm(newForm);
       setCaughtParty(prev => prev.map(m =>
         (WYV_CHAIN_IDS.slice(0, 3) as string[]).includes(m.id)
-          ? { ...WYV_FORMS[newForm]!, level: m.level, xp: m.xp, heldItem: m.heldItem }
+          ? { ...m, ...WYV_FORMS[newForm]!, level: m.level, xp: m.xp, heldItem: m.heldItem }
           : m
       ));
     }
@@ -4541,7 +4576,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             if (hi.id === "sun_crest")     returnSunCrest     = true;
             if (hi.id === "moon_talisman") returnMoonTalisman = true;
             evoName = entry.toSpec.name;
-            return { ...entry.toSpec, level: m.level, xp: m.xp } as typeof m;
+            return { ...m, ...entry.toSpec, heldItem:null, level: m.level, xp: m.xp } as typeof m;
           }
         }
         return { ...m, heldItem: { ...hi, charge: newCharge } };
@@ -4679,11 +4714,23 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     return null;
   }
 
+  function settleJourney(result:BattleResult) {
+    const won=result.kind==="ko"||result.kind==="caught"||result.kind==="trainerWin";
+    const xp="xpGained" in result?result.xpGained:0;
+    let next=finishBattle(journeyRef.current,xp,won);
+    if(result.kind==="caught") next=recordChronicle(next,`bond-${result.mon.id}`,`Today ${result.mon.name} chose to walk beside me. I set a shell down and waited. That choice was theirs.`);
+    if(won && "mon" in result) next={...next,essences:{...next.essences,[result.mon.type]:(next.essences[result.mon.type]??0)+1}};
+    if(won) next=recordChronicle(next,`mastery-${Math.floor(next.keeperXp/100)}`,`We returned from the encounter together. I am learning what it means to listen before reaching for power.`);
+    changeJourney(next);
+  }
+
   const handleBattleEnd = useCallback((result: BattleResult) => {
+    settleJourney(result);
     const returnX = worldPos.current.x;
     const returnY = worldPos.current.y;
     const returnScene = lastSafeRef.current.scene;
 
+    if(roleId === "keeper" && (result.kind === "ko" || result.kind === "caught") && Math.random()<.15) setShellCount(n=>n+1);
     // Shell recovery
     const thrown    = result.shellsSet;
     const lostBond  = result.kind === "caught" ? Math.min(1, thrown) : 0;
@@ -4692,7 +4739,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
 
     const rawXp = (result.kind === "caught" || result.kind === "ko") ? result.xpGained : 0;
     const runeXpMult = starterRuneIds.some(id => BATTLE_RUNES_BY_ID[id as BattleRuneId]?.effect === "xp_boost") ? 1.5 : 1;
-    const r = calcBattleXp(rawXp, role.xpMult * runeXpMult, starterLevel, starterXp, starterMoves);
+    const r = calcBattleXp(rawXp, role.xpMult * runeXpMult * gearBonuses.xp, starterLevel, starterXp, starterMoves);
     // Coin reward for wild battles
     const wildCoin = (result.kind === "ko" || result.kind === "caught")
       ? (WILD_COIN[(result.mon.rarity ?? "common")] ?? 4)
@@ -4723,7 +4770,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
 
     let outcome: string;
     if (result.kind === "caught") {
-      const dest = addCaughtMon(result.mon, false, wildEncounterLevelRef.current);
+      const dest = addCaughtMon(result.mon, false, wildEncounterLevelRef.current,result.bondShellId);
       if (dest === "full") {
         setBattleNotif({ title: `${result.mon.name} couldn't be stored!`, sub: `Party & Storage Box both full (${STORAGE_CAP})` });
         outcome = `${result.mon.name} bonded with you, but your party and Storage Box are both full — it returned to the wild.`;
@@ -4780,9 +4827,10 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     } else if (thrown > 0 || r.xpGained > 0) {
       window.setTimeout(() => setBattleReport(reportData), 1200);
     }
-  }, [transitionTo, starter, healingRuneEquipped, starterLevel, starterXp, starterMoves, addCaughtMon, role, wyvruntCaught, wyvruntForm]);
+  }, [transitionTo, starter, healingRuneEquipped, starterLevel, starterXp, starterMoves, addCaughtMon, role, gearBonuses.xp, wyvruntCaught, wyvruntForm]);
 
   const handleTrainerEnd = useCallback((result: BattleResult) => {
+    settleJourney(result);
     const returnX = worldPos.current.x;
     const returnY = worldPos.current.y;
     const enc = trainerEncounter;
@@ -4792,7 +4840,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     if (thrown > 0) setShellCount(c => c + thrown); // shells can't bond trainer mons, all recover
 
     const rawXp = result.kind === "trainerWin" ? result.xpGained : 0;
-    const r = calcBattleXp(rawXp, role.xpMult, starterLevel, starterXp, starterMoves);
+    const r = calcBattleXp(rawXp, role.xpMult * gearBonuses.xp, starterLevel, starterXp, starterMoves);
     applyLevelUp(r);
 
     // EXP Share — every caught companion earns the same XP as the lead
@@ -4854,7 +4902,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     } else if (r.xpGained > 0) {
       window.setTimeout(() => setBattleReport(reportData), 1200);
     }
-  }, [transitionTo, trainerEncounter, starter, starterLevel, starterXp, starterMoves, role, wyvruntCaught, wyvruntForm]);
+  }, [transitionTo, trainerEncounter, starter, starterLevel, starterXp, starterMoves, role, gearBonuses.xp, wyvruntCaught, wyvruntForm]);
 
   // Caught companions become the battle bench (party slots 2..N). Each fights at
   // its own level: stats from partyBattleStats, moves from its level-based pool.
@@ -4886,6 +4934,14 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     return (
       <div style={{ width:"100vw", height:"100dvh", background:"#000", position:"relative", overflow:"hidden" }}>
         <BattleScene
+          teamShellIds={[starterShellId,...caughtParty.map(m=>m.shellId)]}
+          gearDefense={gearBonuses.def}
+          gearResonanceMult={gearBonuses.resonance}
+          keeperRuneSlots={equippedGear.wristband?Math.min(3,1+Math.floor(journey.guideStones/2)):0}
+          journey={journey}
+          roleId={roleId}
+          bondKeys={[leadInstanceId,...caughtParty.map((m,i)=>m.instanceId??`party-${i}`)]}
+          onJourneyChange={changeJourney}
           wild={trainerEncounter.team[0]}
           starter={starter}
           starterLevel={starterLevel}
@@ -4898,8 +4954,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           catchMult={0}
           shellsCount={shellCount}
           heroImg={heroSideImg}
-          heroName={characterId[0].toUpperCase() + characterId.slice(1)}
-          resonanceElement={(STARTERS.find(s => s.id === savedParty?.starterId) ?? starter).type}
+          heroName={characterId === "custom" ? journey.name : characterId[0].toUpperCase() + characterId.slice(1)}
+          resonanceElement={journey.attunement??(STARTERS.find(s => s.id === savedParty?.starterId) ?? starter).type}
           opponentKind="keeper"
           keeperImg={trainerEncounter.trainer === "jay" ? "/images/jay_side_idle.png" : trainerEncounter.trainer === "lia" ? "/images/lia_side_idle.png" : trainerEncounter.trainer === "prof" ? "/images/prof_side_idle.png" : "/images/jerbs_sprite.png"}
           keeperSheet={trainerEncounter.trainer === "jerbs" ? { url:"/images/jerbs_sprite.png", x:410, y:512, w:205, h:512, sheetW:1024, sheetH:1536 } : undefined}
@@ -4948,6 +5004,14 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
     return (
       <div style={{ width:"100vw", height:"100dvh", background:"#000", position:"relative", overflow:"hidden" }}>
         <BattleScene
+          teamShellIds={[starterShellId,...caughtParty.map(m=>m.shellId)]}
+          gearDefense={gearBonuses.def}
+          gearResonanceMult={gearBonuses.resonance}
+          keeperRuneSlots={equippedGear.wristband?Math.min(3,1+Math.floor(journey.guideStones/2)):0}
+          journey={journey}
+          roleId={roleId}
+          bondKeys={[leadInstanceId,...caughtParty.map((m,i)=>m.instanceId??`party-${i}`)]}
+          onJourneyChange={changeJourney}
           wild={wildEncounter}
           wildLevel={wildEncounterLevelRef.current}
           starter={starter}
@@ -4958,12 +5022,12 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           healingRuneEquipped={healingRuneEquipped}
           teamRuneEffects={teamRuneEffects}
           slottedPrismStoneId={slottedPrismStoneId ?? undefined}
-          catchMult={role.catchMult}
+          catchMult={role.catchMult+gearBonuses.catch}
           shellsCount={shellCount}
           caughtIds={[...caughtParty.map(m => m.id), ...storageBox.map(m => m.id)]}
           heroImg={heroSideImg}
-          heroName={characterId[0].toUpperCase() + characterId.slice(1)}
-          resonanceElement={(STARTERS.find(s => s.id === savedParty?.starterId) ?? starter).type}
+          heroName={characterId === "custom" ? journey.name : characterId[0].toUpperCase() + characterId.slice(1)}
+          resonanceElement={journey.attunement??(STARTERS.find(s => s.id === savedParty?.starterId) ?? starter).type}
           bench={battleBench}
           onConsumeShell={() => setShellCount(c => Math.max(0, c - 1))}
           onEnd={handleBattleEnd}
@@ -4997,6 +5061,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
   return (
     <div style={{ width:"100vw", height:"100dvh", background:"#060606", display:"flex", flexDirection:"column", overflow:"hidden", userSelect:"none", WebkitUserSelect:"none", touchAction:"none", overscrollBehavior:"none" }}>
 
+      {showGuideSoul && <GuideSoul journey={journey} onChange={changeJourney} onClose={()=>setShowGuideSoul(false)} companions={[...(starter?[{key:leadInstanceId,name:starter.name,level:starterLevel,form:masteryForm(starter.id)}]:[]),...caughtParty.map((m,i)=>({key:m.instanceId??`party-${i}`,name:m.name,level:m.level,form:masteryForm(m.id)}))]} craftAllowed={scene === "lab" || scene === "town" || (journey.campTier>=3 && ["route1","route2","area3","farm","shore","forest_path","forest_clear"].includes(scene))} availableRunes={ownedBattleRuneIds} runeSlots={equippedGear.wristband?Math.min(3,1+Math.floor(journey.guideStones/2)):0} campAllowed={["route1","route2","area3","farm","shore","forest_path","forest_clear"].includes(scene)} onCraft={()=>{if(shellCount<=0||!healingRuneEquipped)return false;setShellCount(n=>n-1);return true;}} onFeed={()=>{if(duskberries<=0)return false;setDuskberries(n=>n-1);return true;}}/>}
       {/* ── MAP VIEWPORT ─────────────────────────────────────────────────── */}
       <div ref={vpRef} style={{ flex:1, position:"relative", overflow:"hidden" }}
         onClick={(e) => {
@@ -6442,12 +6507,12 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
 
         {/* ── DIALOG BOX (viewport-relative bottom strip) ──────────────── */}
         {(phase === "d1" || phase === "d2" || phase === "d3" || phase === "d4" || phase === "d5") && (
-          <div style={{
+          <div key={phase} className="chronicle-page" data-book-page={phase} style={{
             position:"absolute", bottom:0, left:0, right:0,
             background:"linear-gradient(to top,rgba(8,5,2,0.97),rgba(12,8,3,0.93))",
             borderTop:"2px solid rgba(240,208,80,0.5)",
             padding:"10px 14px 14px",
-            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out",
+            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"primeriaPageTurn .48s ease-out", transformOrigin:"left center",
           }}>
             {/* Prof portrait + name */}
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
@@ -6461,7 +6526,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               </span>
             </div>
             <p style={{ color:"#e8dcc8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>
-              {LINES[phase]}
+              {familyDialogue(phase,LINES[phase])}
             </p>
             <div style={{ display:"flex", justifyContent:"flex-end" }}>
               <button
@@ -6485,12 +6550,12 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
 
         {/* ── JAY DIALOG BOX ───────────────────────────────────────────── */}
         {(phase === "jay_d1" || phase === "jay_d2" || phase === "jay_d3" || phase === "jay_d4" || phase === "jay_d5" || phase === "jay_done") && (
-          <div style={{
+          <div key={phase} className="chronicle-page" data-book-page={phase} style={{
             position:"absolute", bottom:0, left:0, right:0,
             background:"linear-gradient(to top,rgba(4,8,18,0.97),rgba(6,10,24,0.93))",
             borderTop:"2px solid rgba(80,130,220,0.55)",
             padding:"10px 14px 14px",
-            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out",
+            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"primeriaPageTurn .48s ease-out", transformOrigin:"left center",
           }}>
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
               <canvas ref={jayPortraitRef}
@@ -6502,7 +6567,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               </span>
             </div>
             <p style={{ color:"#e8dcc8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>
-              {LINES[phase]}
+              {familyDialogue(phase,LINES[phase])}
             </p>
             <div style={{ display:"flex", justifyContent:"flex-end" }}>
               <button
@@ -6534,12 +6599,12 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
 
         {/* ── MAYA DIALOG BOX ──────────────────────────────────────────── */}
         {(phase === "maya_d1" || phase === "maya_d2" || phase === "maya_d3" || phase === "maya_d4" || phase === "maya_post1" || phase === "maya_post2" || phase === "maya_post3") && (
-          <div style={{
+          <div key={phase} className="chronicle-page" data-book-page={phase} style={{
             position:"absolute", bottom:0, left:0, right:0,
             background:"linear-gradient(to top,rgba(4,12,8,0.97),rgba(6,16,10,0.93))",
             borderTop:"2px solid rgba(80,180,120,0.55)",
             padding:"10px 14px 14px",
-            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out",
+            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"primeriaPageTurn .48s ease-out", transformOrigin:"left center",
           }}>
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
               <canvas ref={mayaPortraitRef}
@@ -6551,7 +6616,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               </span>
             </div>
             <p style={{ color:"#e8dcc8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>
-              {LINES[phase]}
+              {familyDialogue(phase,LINES[phase])}
             </p>
             <div style={{ display:"flex", justifyContent:"flex-end" }}>
               <button
@@ -6580,12 +6645,12 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
 
         {/* ── JESS DIALOG BOX ──────────────────────────────────────────── */}
         {(phase === "jess_d1" || phase === "jess_d2" || phase === "jess_d3") && (
-          <div style={{
+          <div key={phase} className="chronicle-page" data-book-page={phase} style={{
             position:"absolute", bottom:0, left:0, right:0,
             background:"linear-gradient(to top,rgba(18,8,3,0.97),rgba(24,10,4,0.93))",
             borderTop:"2px solid rgba(240,160,80,0.55)",
             padding:"10px 14px 14px",
-            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out",
+            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"primeriaPageTurn .48s ease-out", transformOrigin:"left center",
           }}>
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
               <canvas ref={jessPortraitRef}
@@ -6597,7 +6662,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               </span>
             </div>
             <p style={{ color:"#e8dcc8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>
-              {LINES[phase]}
+              {familyDialogue(phase,LINES[phase])}
             </p>
             <div style={{ display:"flex", justifyContent:"flex-end" }}>
               <button
@@ -6623,12 +6688,12 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
 
         {/* ── JESS PATH DIALOG (town intercept) ────────────────────────── */}
         {(phase === "jess_path_d1" || phase === "jess_path_d2") && (
-          <div style={{
+          <div key={phase} className="chronicle-page" data-book-page={phase} style={{
             position:"absolute", bottom:0, left:0, right:0,
             background:"linear-gradient(to top,rgba(18,8,3,0.97),rgba(24,10,4,0.93))",
             borderTop:"2px solid rgba(240,160,80,0.55)",
             padding:"10px 14px 14px",
-            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out",
+            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"primeriaPageTurn .48s ease-out", transformOrigin:"left center",
           }}>
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
               <canvas ref={jessPathPortraitRef}
@@ -6640,7 +6705,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               </span>
             </div>
             <p style={{ color:"#e8dcc8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>
-              {LINES[phase]}
+              {familyDialogue(phase,LINES[phase])}
             </p>
             <div style={{ display:"flex", justifyContent:"flex-end" }}>
               <button
@@ -6672,12 +6737,12 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
 
         {/* ── PROF IRWYN — ROUTE 2 DIALOG ──────────────────────────────── */}
         {(phase === "prof2_d1" || phase === "prof2_d2" || phase === "prof2_d3" || phase === "prof2_d4") && (
-          <div style={{
+          <div key={phase} className="chronicle-page" data-book-page={phase} style={{
             position:"absolute", bottom:0, left:0, right:0,
             background:"linear-gradient(to top,rgba(20,12,2,0.97),rgba(26,16,4,0.93))",
             borderTop:"2px solid rgba(240,200,90,0.6)",
             padding:"10px 14px 14px",
-            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out",
+            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"primeriaPageTurn .48s ease-out", transformOrigin:"left center",
           }}>
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
               <canvas ref={profR2PortraitRef}
@@ -6689,7 +6754,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               </span>
             </div>
             <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>
-              {LINES[phase]}
+              {familyDialogue(phase,LINES[phase])}
             </p>
             <div style={{ display:"flex", justifyContent:"flex-end" }}>
               <button
@@ -6718,12 +6783,12 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
 
         {/* ── OLD HOLLIS — Eastern Path farmer (flavor + berry gift dialogue) ── */}
         {(phase === "farm_d1" || phase === "farm_d2" || phase === "farm_d3" || phase === "farm_d4" || phase === "farm_idle") && (
-          <div style={{
+          <div key={phase} style={{
             position:"absolute", bottom:0, left:0, right:0,
             background:"linear-gradient(to top,rgba(12,20,6,0.97),rgba(16,26,8,0.93))",
             borderTop:"2px solid rgba(150,200,90,0.6)",
             padding:"10px 14px 14px",
-            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out",
+            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"primeriaPageTurn .48s ease-out", transformOrigin:"left center",
           }}>
             <div style={{ marginBottom:8 }}>
               <span style={{ color:"#bfe080", fontWeight:700, fontSize:13, letterSpacing:1 }}>
@@ -6731,7 +6796,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               </span>
             </div>
             <p style={{ color:"#e6ecd8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>
-              {LINES[phase]}
+              {familyDialogue(phase,LINES[phase])}
             </p>
             <div style={{ display:"flex", justifyContent:"flex-end" }}>
               <button
@@ -6762,12 +6827,12 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
 
         {/* ── SHELLA — shell vendor dialogue ─────────────────────────────── */}
         {(phase === "shella_d1" || phase === "shella_d2" || phase === "shella_d3" || phase === "shella_done" || phase === "shella_idle") && (
-          <div style={{ position:"absolute", bottom:0, left:0, right:0, background:"linear-gradient(to top,rgba(14,10,2,0.97),rgba(20,14,4,0.93))", borderTop:"2px solid rgba(245,200,66,0.6)", padding:"10px 14px 14px", zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out" }}>
+          <div key={phase} style={{ position:"absolute", bottom:0, left:0, right:0, background:"linear-gradient(to top,rgba(14,10,2,0.97),rgba(20,14,4,0.93))", borderTop:"2px solid rgba(245,200,66,0.6)", padding:"10px 14px 14px", zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"primeriaPageTurn .48s ease-out", transformOrigin:"left center" }}>
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
               <img src={SHELLA_IMG} alt="Shella" style={{ width:44, height:44, borderRadius:8, objectFit:"contain", border:"1px solid rgba(245,200,66,0.4)" }}/>
               <span style={{ color:"#f5c842", fontWeight:700, fontSize:13, letterSpacing:1 }}>SHELLA</span>
             </div>
-            <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>{LINES[phase]}</p>
+            <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>{familyDialogue(phase,LINES[phase])}</p>
             <div style={{ display:"flex", justifyContent:"flex-end", gap:8 }}>
               {farmShellsGiven && (phase === "shella_done" || phase === "shella_idle") && (
                 <button onClick={() => { setActiveShop("farm_shells"); setPhase("walk"); }} style={{ background:"rgba(245,200,66,0.12)", border:"1px solid rgba(245,200,66,0.4)", color:"#c8a820", padding:"6px 16px", borderRadius:8, fontSize:12, fontWeight:700, cursor:"pointer" }}>
@@ -6783,12 +6848,12 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
 
         {/* ── RUNRIK — rune forger dialogue ───────────────────────────────── */}
         {(phase === "runrik_d1" || phase === "runrik_d2" || phase === "runrik_d3" || phase === "runrik_d4" || phase === "runrik_done" || phase === "runrik_idle") && (
-          <div style={{ position:"absolute", bottom:0, left:0, right:0, background:"linear-gradient(to top,rgba(8,8,20,0.97),rgba(12,12,26,0.93))", borderTop:"2px solid rgba(128,144,240,0.6)", padding:"10px 14px 14px", zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out" }}>
+          <div key={phase} style={{ position:"absolute", bottom:0, left:0, right:0, background:"linear-gradient(to top,rgba(8,8,20,0.97),rgba(12,12,26,0.93))", borderTop:"2px solid rgba(128,144,240,0.6)", padding:"10px 14px 14px", zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"primeriaPageTurn .48s ease-out", transformOrigin:"left center" }}>
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
               <img src={RUNRIK_IMG} alt="Runrik" style={{ width:44, height:44, borderRadius:8, objectFit:"contain", border:"1px solid rgba(128,144,240,0.4)" }}/>
               <span style={{ color:"#8090f0", fontWeight:700, fontSize:13, letterSpacing:1 }}>RUNRIK</span>
             </div>
-            <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>{LINES[phase]}</p>
+            <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>{familyDialogue(phase,LINES[phase])}</p>
             <div style={{ display:"flex", justifyContent:"flex-end", gap:8 }}>
               {farmRunesGiven && (phase === "runrik_done" || phase === "runrik_idle") && (
                 <button onClick={() => { setActiveShop("farm_runes"); setPhase("walk"); }} style={{ background:"rgba(128,144,240,0.12)", border:"1px solid rgba(128,144,240,0.4)", color:"#7080c0", padding:"6px 16px", borderRadius:8, fontSize:12, fontWeight:700, cursor:"pointer" }}>
@@ -6812,12 +6877,12 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
 
         {/* ── MAREN — creature keeper dialogue ────────────────────────────── */}
         {(phase === "maren_d1" || phase === "maren_d2" || phase === "maren_done" || phase === "maren_idle") && (
-          <div style={{ position:"absolute", bottom:0, left:0, right:0, background:"linear-gradient(to top,rgba(4,12,4,0.97),rgba(6,16,6,0.93))", borderTop:"2px solid rgba(144,192,96,0.6)", padding:"10px 14px 14px", zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out" }}>
+          <div key={phase} style={{ position:"absolute", bottom:0, left:0, right:0, background:"linear-gradient(to top,rgba(4,12,4,0.97),rgba(6,16,6,0.93))", borderTop:"2px solid rgba(144,192,96,0.6)", padding:"10px 14px 14px", zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"primeriaPageTurn .48s ease-out", transformOrigin:"left center" }}>
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
               <img src={MAREN_IMG} alt="Maren" style={{ width:44, height:44, borderRadius:8, objectFit:"contain", border:"1px solid rgba(144,192,96,0.4)" }}/>
               <span style={{ color:"#90c060", fontWeight:700, fontSize:13, letterSpacing:1 }}>MAREN</span>
             </div>
-            <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>{LINES[phase]}</p>
+            <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>{familyDialogue(phase,LINES[phase])}</p>
             <div style={{ display:"flex", justifyContent:"flex-end" }}>
               <button onClick={() => {
                 if (phase === "maren_d2" && !marenGifted) {
@@ -6837,13 +6902,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
 
         {/* ── CLEARBELL TOWN NPC DIALOGUES ────────────────────────────────── */}
         {(phase === "blacksmith_d1" || phase === "blacksmith_d2" || phase === "blacksmith_idle") && (
-          <div style={{ position:"absolute", bottom:0, left:0, right:0, background:"linear-gradient(to top,rgba(18,8,2,0.97),rgba(24,12,4,0.93))", borderTop:"2px solid rgba(240,112,32,0.6)", padding:"10px 14px 14px", zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out" }}>
+          <div key={phase} style={{ position:"absolute", bottom:0, left:0, right:0, background:"linear-gradient(to top,rgba(18,8,2,0.97),rgba(24,12,4,0.93))", borderTop:"2px solid rgba(240,112,32,0.6)", padding:"10px 14px 14px", zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"primeriaPageTurn .48s ease-out", transformOrigin:"left center" }}>
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
               <img src={BLACKSMITH_IMG} alt="Darro" style={{ width:44, height:63, borderRadius:8, objectFit:"contain", border:"1px solid rgba(240,112,32,0.4)" }}/>
               <span style={{ color:"#f07020", fontWeight:700, fontSize:13, letterSpacing:1 }}>DARRO</span>
               <span style={{ marginLeft:"auto", color:"#f0c830", fontSize:11, fontWeight:700 }}>₡{primeriaCoin}</span>
             </div>
-            <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>{LINES[phase]}</p>
+            <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>{familyDialogue(phase,LINES[phase])}</p>
             <div style={{ display:"flex", justifyContent:"flex-end" }}>
               <button onClick={() => advanceDialog(phase)} style={{ background:"rgba(240,112,32,0.15)", border:"1px solid rgba(240,112,32,0.5)", color:"#f07020", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}>
                 {phase === "blacksmith_d2" ? "See Gear ▶" : phase === "blacksmith_idle" ? "OK" : "Next ▶"}
@@ -6852,13 +6917,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           </div>
         )}
         {(phase === "berry_vendor_d1" || phase === "berry_vendor_idle") && (
-          <div style={{ position:"absolute", bottom:0, left:0, right:0, background:"linear-gradient(to top,rgba(20,4,10,0.97),rgba(26,6,14,0.93))", borderTop:"2px solid rgba(232,80,128,0.6)", padding:"10px 14px 14px", zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out" }}>
+          <div key={phase} style={{ position:"absolute", bottom:0, left:0, right:0, background:"linear-gradient(to top,rgba(20,4,10,0.97),rgba(26,6,14,0.93))", borderTop:"2px solid rgba(232,80,128,0.6)", padding:"10px 14px 14px", zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"primeriaPageTurn .48s ease-out", transformOrigin:"left center" }}>
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
               <img src={BERRY_VENDOR_IMG} alt="Nessa" style={{ width:44, height:63, borderRadius:8, objectFit:"contain", border:"1px solid rgba(232,80,128,0.4)" }}/>
               <span style={{ color:"#e85080", fontWeight:700, fontSize:13, letterSpacing:1 }}>NESSA</span>
               <span style={{ marginLeft:"auto", color:"#f0c830", fontSize:11, fontWeight:700 }}>₡{primeriaCoin}</span>
             </div>
-            <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>{LINES[phase]}</p>
+            <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>{familyDialogue(phase,LINES[phase])}</p>
             <div style={{ display:"flex", justifyContent:"flex-end" }}>
               <button onClick={() => advanceDialog(phase)} style={{ background:"rgba(232,80,128,0.15)", border:"1px solid rgba(232,80,128,0.5)", color:"#e85080", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}>
                 {phase === "berry_vendor_d1" ? "Browse Berries ▶" : "OK"}
@@ -6867,13 +6932,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           </div>
         )}
         {(phase === "shell_vendor_d1" || phase === "shell_vendor_idle") && (
-          <div style={{ position:"absolute", bottom:0, left:0, right:0, background:"linear-gradient(to top,rgba(4,14,22,0.97),rgba(6,18,28,0.93))", borderTop:"2px solid rgba(80,184,232,0.6)", padding:"10px 14px 14px", zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out" }}>
+          <div key={phase} style={{ position:"absolute", bottom:0, left:0, right:0, background:"linear-gradient(to top,rgba(4,14,22,0.97),rgba(6,18,28,0.93))", borderTop:"2px solid rgba(80,184,232,0.6)", padding:"10px 14px 14px", zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"primeriaPageTurn .48s ease-out", transformOrigin:"left center" }}>
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
               <img src={SHELL_VENDOR_IMG} alt="Brynn" style={{ width:44, height:63, borderRadius:8, objectFit:"contain", border:"1px solid rgba(80,184,232,0.4)" }}/>
               <span style={{ color:"#50b8e8", fontWeight:700, fontSize:13, letterSpacing:1 }}>BRYNN</span>
               <span style={{ marginLeft:"auto", color:"#f0c830", fontSize:11, fontWeight:700 }}>₡{primeriaCoin}</span>
             </div>
-            <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>{LINES[phase]}</p>
+            <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>{familyDialogue(phase,LINES[phase])}</p>
             <div style={{ display:"flex", justifyContent:"flex-end" }}>
               <button onClick={() => advanceDialog(phase)} style={{ background:"rgba(80,184,232,0.15)", border:"1px solid rgba(80,184,232,0.5)", color:"#50b8e8", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}>
                 {phase === "shell_vendor_d1" ? "Browse Shells ▶" : "OK"}
@@ -6882,13 +6947,13 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           </div>
         )}
         {(phase === "rune_vendor_d1" || phase === "rune_vendor_idle") && (
-          <div style={{ position:"absolute", bottom:0, left:0, right:0, background:"linear-gradient(to top,rgba(4,20,14,0.97),rgba(6,26,18,0.93))", borderTop:"2px solid rgba(48,200,144,0.6)", padding:"10px 14px 14px", zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out" }}>
+          <div key={phase} style={{ position:"absolute", bottom:0, left:0, right:0, background:"linear-gradient(to top,rgba(4,20,14,0.97),rgba(6,26,18,0.93))", borderTop:"2px solid rgba(48,200,144,0.6)", padding:"10px 14px 14px", zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"primeriaPageTurn .48s ease-out", transformOrigin:"left center" }}>
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
               <img src={RUNE_VENDOR_IMG} alt="Kaela" style={{ width:44, height:63, borderRadius:8, objectFit:"contain", border:"1px solid rgba(48,200,144,0.4)" }}/>
               <span style={{ color:"#30c890", fontWeight:700, fontSize:13, letterSpacing:1 }}>KAELA</span>
               <span style={{ marginLeft:"auto", color:"#f0c830", fontSize:11, fontWeight:700 }}>₡{primeriaCoin}</span>
             </div>
-            <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>{LINES[phase]}</p>
+            <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>{familyDialogue(phase,LINES[phase])}</p>
             <div style={{ display:"flex", justifyContent:"flex-end" }}>
               <button onClick={() => advanceDialog(phase)} style={{ background:"rgba(48,200,144,0.15)", border:"1px solid rgba(48,200,144,0.5)", color:"#30c890", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}>
                 {phase === "rune_vendor_d1" ? "Browse Runes ▶" : "OK"}
@@ -6897,24 +6962,24 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           </div>
         )}
         {(phase === "town_kid_d1" || phase === "town_kid_idle") && (
-          <div style={{ position:"absolute", bottom:0, left:0, right:0, background:"linear-gradient(to top,rgba(14,12,2,0.97),rgba(20,16,4,0.93))", borderTop:"2px solid rgba(255,216,74,0.6)", padding:"10px 14px 14px", zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out" }}>
+          <div key={phase} style={{ position:"absolute", bottom:0, left:0, right:0, background:"linear-gradient(to top,rgba(14,12,2,0.97),rgba(20,16,4,0.93))", borderTop:"2px solid rgba(255,216,74,0.6)", padding:"10px 14px 14px", zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"primeriaPageTurn .48s ease-out", transformOrigin:"left center" }}>
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
               <img src={TOWN_KID_IMG} alt="Kid" style={{ width:44, height:63, borderRadius:8, objectFit:"contain", border:"1px solid rgba(255,216,74,0.4)" }}/>
               <span style={{ color:"#ffd84a", fontWeight:700, fontSize:13, letterSpacing:1 }}>CLEARBELL KID</span>
             </div>
-            <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>{LINES[phase]}</p>
+            <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>{familyDialogue(phase,LINES[phase])}</p>
             <div style={{ display:"flex", justifyContent:"flex-end" }}>
               <button onClick={() => advanceDialog(phase)} style={{ background:"rgba(255,216,74,0.15)", border:"1px solid rgba(255,216,74,0.5)", color:"#ffd84a", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}>OK</button>
             </div>
           </div>
         )}
         {(phase === "town_scholar_d1" || phase === "town_scholar_d2" || phase === "town_scholar_idle") && (
-          <div style={{ position:"absolute", bottom:0, left:0, right:0, background:"linear-gradient(to top,rgba(10,4,20,0.97),rgba(14,6,26,0.93))", borderTop:"2px solid rgba(160,112,232,0.6)", padding:"10px 14px 14px", zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out" }}>
+          <div key={phase} style={{ position:"absolute", bottom:0, left:0, right:0, background:"linear-gradient(to top,rgba(10,4,20,0.97),rgba(14,6,26,0.93))", borderTop:"2px solid rgba(160,112,232,0.6)", padding:"10px 14px 14px", zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"primeriaPageTurn .48s ease-out", transformOrigin:"left center" }}>
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
               <img src={TOWN_SCHOLAR_IMG} alt="Scholar" style={{ width:44, height:63, borderRadius:8, objectFit:"contain", border:"1px solid rgba(160,112,232,0.4)" }}/>
               <span style={{ color:"#a070e8", fontWeight:700, fontSize:13, letterSpacing:1 }}>SCHOLAR</span>
             </div>
-            <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>{LINES[phase]}</p>
+            <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>{familyDialogue(phase,LINES[phase])}</p>
             <div style={{ display:"flex", justifyContent:"flex-end" }}>
               <button onClick={() => advanceDialog(phase)} style={{ background:"rgba(160,112,232,0.15)", border:"1px solid rgba(160,112,232,0.5)", color:"#a070e8", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}>
                 {phase === "town_scholar_idle" ? "OK" : "Next ▶"}
@@ -6923,12 +6988,12 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           </div>
         )}
         {(phase === "town_elder_d1" || phase === "town_elder_d2" || phase === "town_elder_idle") && (
-          <div style={{ position:"absolute", bottom:0, left:0, right:0, background:"linear-gradient(to top,rgba(14,10,2,0.97),rgba(20,14,4,0.93))", borderTop:"2px solid rgba(200,168,80,0.6)", padding:"10px 14px 14px", zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out" }}>
+          <div key={phase} style={{ position:"absolute", bottom:0, left:0, right:0, background:"linear-gradient(to top,rgba(14,10,2,0.97),rgba(20,14,4,0.93))", borderTop:"2px solid rgba(200,168,80,0.6)", padding:"10px 14px 14px", zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"primeriaPageTurn .48s ease-out", transformOrigin:"left center" }}>
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
               <img src={TOWN_ELDER_IMG} alt="Elder" style={{ width:44, height:63, borderRadius:8, objectFit:"contain", border:"1px solid rgba(200,168,80,0.4)" }}/>
               <span style={{ color:"#c8a850", fontWeight:700, fontSize:13, letterSpacing:1 }}>CLEARBELL ELDER</span>
             </div>
-            <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>{LINES[phase]}</p>
+            <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>{familyDialogue(phase,LINES[phase])}</p>
             <div style={{ display:"flex", justifyContent:"flex-end" }}>
               <button onClick={() => advanceDialog(phase)} style={{ background:"rgba(200,168,80,0.15)", border:"1px solid rgba(200,168,80,0.5)", color:"#c8a850", padding:"6px 20px", borderRadius:8, fontSize:13, fontWeight:700, cursor:"pointer" }}>
                 {phase === "town_elder_idle" ? "OK" : "Next ▶"}
@@ -6939,7 +7004,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
 
         {/* ── PROF IRWYN — Tidemark Shore challenger dialogue ─────────────── */}
         {(phase === "prof_shore_d1" || phase === "prof_shore_d2" || phase === "prof_shore_win" || phase === "prof_shore_moon_d1" || phase === "prof_shore_lose" || phase === "prof_shore_idle" || phase === "prof_shore_done") && (
-          <div style={{ position:"absolute", bottom:0, left:0, right:0, background:"linear-gradient(to top,rgba(10,16,30,0.97),rgba(14,20,38,0.93))", borderTop:"2px solid rgba(64,128,224,0.7)", padding:"10px 14px 14px", zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out" }}>
+          <div key={phase} style={{ position:"absolute", bottom:0, left:0, right:0, background:"linear-gradient(to top,rgba(10,16,30,0.97),rgba(14,20,38,0.93))", borderTop:"2px solid rgba(64,128,224,0.7)", padding:"10px 14px 14px", zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"primeriaPageTurn .48s ease-out", transformOrigin:"left center" }}>
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
               <canvas ref={profShorePortraitRef} width={44} height={44} style={{ width:44, height:44, borderRadius:8, background:"#08101e", border:"1px solid rgba(64,128,224,0.4)" }}/>
               <div>
@@ -6987,12 +7052,12 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
 
         {/* ── PROF IRWYN — Realm Shell resupply (repeatable, post-Route 2) ─── */}
         {(phase === "prof_shells" || phase === "prof_shells_got") && (
-          <div style={{
+          <div key={phase} style={{
             position:"absolute", bottom:0, left:0, right:0,
             background:"linear-gradient(to top,rgba(20,12,2,0.97),rgba(26,16,4,0.93))",
             borderTop:"2px solid rgba(240,200,90,0.6)",
             padding:"10px 14px 14px",
-            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out",
+            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"primeriaPageTurn .48s ease-out", transformOrigin:"left center",
           }}>
             <div style={{ marginBottom:8 }}>
               <span style={{ color:"#f0d070", fontWeight:700, fontSize:13, letterSpacing:1 }}>
@@ -7000,7 +7065,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               </span>
             </div>
             <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>
-              {LINES[phase]}
+              {familyDialogue(phase,LINES[phase])}
             </p>
             <div style={{ display:"flex", justifyContent:"flex-end", gap:8 }}>
               {phase === "prof_shells" && (
@@ -7170,7 +7235,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               </span>
             </div>
             <p style={{ color:"#ece0c8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>
-              {LINES[phase]}
+              {familyDialogue(phase,LINES[phase])}
             </p>
             <div style={{ display:"flex", justifyContent:"flex-end" }}>
               <button
@@ -7241,12 +7306,12 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         {/* ── ELLIO DIALOG BOX ─────────────────────────────────────────── */}
         {(phase === "ellio_d1" || phase === "ellio_d2" || phase === "ellio_d3" || phase === "ellio_done"
           || phase === "ellio_moon_d1" || phase === "ellio_moon_d2" || phase === "ellio_moon_done") && (
-          <div style={{
+          <div key={phase} className="chronicle-page" data-book-page={phase} style={{
             position:"absolute", bottom:0, left:0, right:0,
             background:"linear-gradient(to top,rgba(4,14,4,0.97),rgba(6,18,6,0.93))",
             borderTop:"2px solid rgba(120,200,80,0.55)",
             padding:"10px 14px 14px",
-            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out",
+            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"primeriaPageTurn .48s ease-out", transformOrigin:"left center",
           }}>
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
               <canvas ref={ellioPortraitRef}
@@ -7261,7 +7326,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               </span>
             </div>
             <p style={{ color:"#e8dcc8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>
-              {LINES[phase]}
+              {familyDialogue(phase,LINES[phase])}
             </p>
             <div style={{ display:"flex", justifyContent:"flex-end" }}>
               <button
@@ -7298,12 +7363,12 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
 
         {/* ── LIA DIALOG BOX ───────────────────────────────────────────── */}
         {(phase === "lia_d1" || phase === "lia_d2" || phase === "lia_d3" || phase === "lia_d4" || phase === "lia_d5" || phase === "lia_done") && (
-          <div style={{
+          <div key={phase} className="chronicle-page" data-book-page={phase} style={{
             position:"absolute", bottom:0, left:0, right:0,
             background:"linear-gradient(to top,rgba(18,5,2,0.97),rgba(24,7,3,0.93))",
             borderTop:"2px solid rgba(255,110,50,0.55)",
             padding:"10px 14px 14px",
-            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out",
+            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"primeriaPageTurn .48s ease-out", transformOrigin:"left center",
           }}>
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
               <canvas ref={liaPortraitRef}
@@ -7318,7 +7383,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               </span>
             </div>
             <p style={{ color:"#e8dcc8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>
-              {LINES[phase]}
+              {familyDialogue(phase,LINES[phase])}
             </p>
             <div style={{ display:"flex", justifyContent:"flex-end" }}>
               <button
@@ -7352,12 +7417,12 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         {/* ── JAY A3 DIALOG BOX ────────────────────────────────────────── */}
         {(phase === "jay_a3_d1" || phase === "jay_a3_d2" || phase === "jay_a3_d3"
           || phase === "jay_a3_win" || phase === "jay_a3_lose") && (
-          <div style={{
+          <div key={phase} style={{
             position:"absolute", bottom:0, left:0, right:0,
             background:"linear-gradient(to top,rgba(4,8,18,0.97),rgba(6,10,24,0.93))",
             borderTop:"2px solid rgba(80,130,220,0.55)",
             padding:"10px 14px 14px",
-            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out",
+            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"primeriaPageTurn .48s ease-out", transformOrigin:"left center",
           }}>
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
               <canvas ref={jayPortraitRef}
@@ -7370,7 +7435,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               </span>
             </div>
             <p style={{ color:"#e8dcc8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>
-              {LINES[phase]}
+              {familyDialogue(phase,LINES[phase])}
             </p>
             <div style={{ display:"flex", justifyContent:"flex-end" }}>
               {(phase === "jay_a3_win" || phase === "jay_a3_lose") ? (
@@ -7401,12 +7466,12 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         {/* ── LIA A3 DIALOG BOX ─────────────────────────────────────────── */}
         {(phase === "lia_a3_d1" || phase === "lia_a3_d2" || phase === "lia_a3_d3"
           || phase === "lia_a3_win" || phase === "lia_a3_lose") && (
-          <div style={{
+          <div key={phase} style={{
             position:"absolute", bottom:0, left:0, right:0,
             background:"linear-gradient(to top,rgba(18,5,2,0.97),rgba(24,7,3,0.93))",
             borderTop:"2px solid rgba(255,110,50,0.55)",
             padding:"10px 14px 14px",
-            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out",
+            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"primeriaPageTurn .48s ease-out", transformOrigin:"left center",
           }}>
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
               <canvas ref={liaPortraitRef}
@@ -7419,7 +7484,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               </span>
             </div>
             <p style={{ color:"#e8dcc8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>
-              {LINES[phase]}
+              {familyDialogue(phase,LINES[phase])}
             </p>
             <div style={{ display:"flex", justifyContent:"flex-end" }}>
               {(phase === "lia_a3_win" || phase === "lia_a3_lose") ? (
@@ -7451,12 +7516,12 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
         {(phase === "jerbs_appear" || phase === "jerbs_d1" || phase === "jerbs_d2"
           || phase === "jerbs_d3" || phase === "jerbs_d4"
           || phase === "jerbs_remind" || phase === "jerbs_return_d1" || phase === "jerbs_return_d2") && (
-          <div style={{
+          <div key={phase} className="chronicle-page" data-book-page={phase} style={{
             position:"absolute", bottom:0, left:0, right:0,
             background:"linear-gradient(to top,rgba(8,5,2,0.97),rgba(18,11,3,0.93))",
             borderTop:"2px solid rgba(190,140,40,0.6)",
             padding:"10px 14px 14px",
-            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out",
+            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"primeriaPageTurn .48s ease-out", transformOrigin:"left center",
           }}>
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
               {/* Jerbs portrait — jerbeen sprite sheet clip, row 1 col 2 */}
@@ -7476,7 +7541,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               </div>
             </div>
             <p style={{ color:"#e8dcc8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>
-              {LINES[phase]}
+              {familyDialogue(phase,LINES[phase])}
             </p>
             <div style={{ display:"flex", justifyContent:"flex-end" }}>
               {phase === "jerbs_appear" ? (
@@ -7571,12 +7636,12 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
 
         {/* ── JERBS BATTLE INTRO ────────────────────────────────────────── */}
         {phase === "jerbs_battle_intro" && (
-          <div style={{
+          <div key={phase} style={{
             position:"absolute", bottom:0, left:0, right:0,
             background:"linear-gradient(to top,rgba(8,5,2,0.97),rgba(18,11,3,0.93))",
             borderTop:"2px solid rgba(190,140,40,0.6)",
             padding:"10px 14px 14px",
-            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out",
+            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"primeriaPageTurn .48s ease-out", transformOrigin:"left center",
           }}>
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
               <div style={{
@@ -7622,12 +7687,12 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
 
         {/* ── JERBS CRYSTALFANG DIALOGUE ────────────────────────────────── */}
         {(phase === "jerbs_crystal_d1" || phase === "jerbs_crystal_d2" || phase === "jerbs_crystal_d3") && (
-          <div style={{
+          <div key={phase} style={{
             position:"absolute", bottom:0, left:0, right:0,
             background:"linear-gradient(to top,rgba(4,8,20,0.97),rgba(8,14,30,0.93))",
             borderTop:"2px solid rgba(100,180,255,0.5)",
             padding:"10px 14px 14px",
-            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out",
+            zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"primeriaPageTurn .48s ease-out", transformOrigin:"left center",
           }}>
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
               <div style={{
@@ -7646,7 +7711,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               </div>
             </div>
             <p style={{ color:"#d4eeff", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>
-              {LINES[phase]}
+              {familyDialogue(phase,LINES[phase])}
             </p>
             <div style={{ display:"flex", justifyContent:"flex-end" }}>
               <button onClick={() => advanceDialog(phase)}
@@ -7839,12 +7904,12 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           const more = phase === "rowan_d1" || phase === "rowan_d2"
             || phase === "tova_d1" || phase === "senna_d1" || phase === "corvin_d1";
           return (
-            <div style={{
+            <div key={phase} style={{
               position:"absolute", bottom:0, left:0, right:0,
               background:"linear-gradient(to top,rgba(4,8,18,0.97),rgba(6,10,24,0.93))",
               borderTop:`2px solid ${speaker.color}80`,
               padding:"10px 14px 14px",
-              zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"dialogIn 0.2s ease-out",
+              zIndex:20, boxShadow:"0 -6px 28px rgba(0,0,0,0.75)", animation:"primeriaPageTurn .48s ease-out", transformOrigin:"left center",
             }}>
               <div style={{ marginBottom:8 }}>
                 <span style={{ color:speaker.color, fontWeight:700, fontSize:13, letterSpacing:1 }}>
@@ -7852,7 +7917,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                 </span>
               </div>
               <p style={{ color:"#e8dcc8", fontSize:13, lineHeight:1.55, margin:"0 0 10px" }}>
-                {LINES[phase]}
+                {familyDialogue(phase,LINES[phase])}
               </p>
               <div style={{ display:"flex", justifyContent:"flex-end" }}>
                 <button
@@ -8032,6 +8097,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           </div>
         )}
 
+        {journey.time === "night" && <div aria-label="Nightfall" style={{position:"absolute",inset:0,background:"#14254b55",pointerEvents:"none",zIndex:7}}/>}
         {/* ── KEEPER'S JOURNAL ─────────────────────────────────────────── */}
         {showJournal && (
           <div
@@ -8053,6 +8119,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               maxHeight:"78vh", display:"flex", flexDirection:"column",
               overflow:"hidden",
             }}>
+              <div style={{display:"flex",gap:6,padding:8,background:"#352213"}}>{[{name:"Book",tab:"chronicle"},{name:"Satchel",tab:"bag"},{name:"Guide Soul",tab:"party"}].map(o=><button key={o.name} style={{padding:8,color:"#efddb1",background:"#51361e",border:"1px solid #997947"}} onClick={()=>setJournalTab(o.tab as typeof journalTab)}>{o.name}</button>)}<button style={{padding:8,color:"#efddb1",background:"#234438",border:"1px solid #997947"}} onClick={()=>setShowGuideSoul(true)}>Mastery & Camp</button></div>
               {/* Leather spine */}
               <div style={{
                 background:"linear-gradient(90deg,#1e0f06,#3d2010,#2c1608,#1e0f06)",
@@ -8071,7 +8138,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                         color:"#c8a44a", fontSize:10, fontWeight:800,
                         letterSpacing:2.5, textTransform:"uppercase",
                         textShadow:"0 1px 3px rgba(0,0,0,0.9)",
-                      }}>Keeper's Journal</span>
+                      }}>{["bag","shells","equipment"].includes(journalTab)?"Satchel":["party","storage"].includes(journalTab)?"Guide Soul":"Chronicle Book"}</span>
                       <button onClick={() => setShowJournal(false)} style={{
                         width:26, height:26, borderRadius:"50%", flexShrink:0,
                         background:"radial-gradient(circle at 38% 33%,#c0392b,#7b1c12)",
@@ -8084,7 +8151,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                     </div>
                     {/* Mobile row 2: tabs full width */}
                     <div style={{ display:"flex", gap:3 }}>
-                      {(["party","storage","shells","bag","equipment","guide","map","licenses"] as const).map(tab => (
+                      {((["bag","shells","equipment"].includes(journalTab)?["shells","bag","equipment"]:["party","storage"].includes(journalTab)?["party","storage"]:["chronicle","guide","map","licenses"]) as (typeof journalTab)[]).map(tab => (
                         <button key={tab} onClick={() => setJournalTab(tab)} style={{
                           flex:1, padding:"5px 2px 8px",
                           background: journalTab === tab
@@ -8095,7 +8162,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                           color: journalTab === tab ? "#3d1e04" : "#a08050",
                           fontSize:9, fontWeight:800, letterSpacing:0.5,
                           textTransform:"uppercase", cursor:"pointer",
-                        }}>{tab === "party" ? "Party" : tab === "storage" ? "Box" : tab === "shells" ? "Shells" : tab === "equipment" ? "Equip" : tab === "guide" ? "Guide" : tab === "map" ? "Map" : tab === "licenses" ? "Cards" : "Bag"}</button>
+                        }}>{tab === "chronicle" ? "Story" : tab === "party" ? "Party" : tab === "storage" ? "Box" : tab === "shells" ? "Shells" : tab === "equipment" ? "Equip" : tab === "guide" ? "Guide" : tab === "map" ? "Map" : tab === "licenses" ? "Cards" : "Bag"}</button>
                       ))}
                     </div>
                   </>
@@ -8106,11 +8173,11 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                       letterSpacing:3.5, textTransform:"uppercase",
                       paddingBottom:10,
                       textShadow:"0 1px 3px rgba(0,0,0,0.9)",
-                    }}>Keeper's Journal</span>
+                    }}>{["bag","shells","equipment"].includes(journalTab)?"Satchel":["party","storage"].includes(journalTab)?"Guide Soul":"Chronicle Book"}</span>
 
                     {/* Page tabs flush with bottom of spine */}
                     <div style={{ display:"flex", gap:3, alignSelf:"flex-end" }}>
-                      {(["party","storage","shells","bag","equipment","guide","map","licenses"] as const).map(tab => (
+                      {((["bag","shells","equipment"].includes(journalTab)?["shells","bag","equipment"]:["party","storage"].includes(journalTab)?["party","storage"]:["chronicle","guide","map","licenses"]) as (typeof journalTab)[]).map(tab => (
                         <button key={tab} onClick={() => setJournalTab(tab)} style={{
                           padding:"5px 9px 8px",
                           background: journalTab === tab
@@ -8121,7 +8188,7 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                           color: journalTab === tab ? "#3d1e04" : "#a08050",
                           fontSize:10, fontWeight:800, letterSpacing:1,
                           textTransform:"uppercase", cursor:"pointer",
-                        }}>{tab === "party" ? "Party" : tab === "storage" ? "Box" : tab === "shells" ? "Shells" : tab === "equipment" ? "Equip" : tab === "guide" ? "Guide" : tab === "map" ? "Map" : tab === "licenses" ? "Cards" : "Bag"}</button>
+                        }}>{tab === "chronicle" ? "Story" : tab === "party" ? "Party" : tab === "storage" ? "Box" : tab === "shells" ? "Shells" : tab === "equipment" ? "Equip" : tab === "guide" ? "Guide" : tab === "map" ? "Map" : tab === "licenses" ? "Cards" : "Bag"}</button>
                       ))}
                     </div>
 
@@ -8140,17 +8207,18 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
               </div>
 
               {/* Parchment body */}
-              <div style={{ overflowY:"auto", padding:"14px 18px 22px", flex:1, minHeight:0 }}>
+              <div key={journalTab} className="chronicle-page" data-book-page={journalTab} style={{ overflowY:"auto", padding:"14px 18px 22px", flex:1, minHeight:0 }}>
                 {/* Section header rule */}
                 <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:14 }}>
                   <div style={{ flex:1, height:1, background:"rgba(100,64,20,0.28)" }}/>
                   <span style={{
                     color:"#8a5c22", fontSize:9, fontWeight:800,
                     letterSpacing:2.5, textTransform:"uppercase",
-                  }}>{journalTab === "party" ? "Companions" : journalTab === "storage" ? "Storage Box" : journalTab === "guide" ? "Tayanari Field Guide" : journalTab === "equipment" ? "Keeper Equipment" : journalTab === "map" ? "World Map" : journalTab === "licenses" ? "Trial Licenses" : "Carried Items"}</span>
+                  }}>{journalTab === "chronicle" ? "Chronicles" : journalTab === "party" ? "Companions" : journalTab === "storage" ? "Storage Box" : journalTab === "guide" ? "Tayanari Field Guide" : journalTab === "equipment" ? "Keeper Equipment" : journalTab === "map" ? "World Map" : journalTab === "licenses" ? "Trial Licenses" : "Carried Items"}</span>
                   <div style={{ flex:1, height:1, background:"rgba(100,64,20,0.28)" }}/>
                 </div>
 
+                {journalTab === "chronicle" && <div style={{fontFamily:"Georgia,serif",lineHeight:1.8}}><h2>Ex Libris · {characterId === "custom" ? journey.name : characterId[0].toUpperCase()+characterId.slice(1)}</h2>{characterId === "custom" && <p>Hearth & Kin: {FAMILIES.find(f=>f.id===journey.family)?.name}. This is where my story began.</p>}{journey.chronicles.length?journey.chronicles.map(c=><p key={c.key}>{c.text}</p>):<p>There is room on this page for the companion I have yet to meet.</p>}<h3>The oral chronicles</h3><p>Primeria's Keepers speak with Nature. The tribes carry their histories through living bonds and stories passed from voice to voice.</p><p>Loyalty and Chaos leave different histories. Neither is a judgement of the creature who carries them.</p><button onClick={()=>{persistWorldRef.current();setJustSaved(true);window.setTimeout(()=>setJustSaved(false),1600);}}>Save this Chronicle</button></div>}
                 {/* ── PARTY PAGE ──────────────────────────────────── */}
                 {journalTab === "party" && (
                   <div style={{ display:"flex", flexDirection:"column" }}>
@@ -8695,13 +8763,14 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                           <div style={{ color:"#9a6e2e", fontWeight:900, fontSize:10, letterSpacing:1.5, textTransform:"uppercase", marginBottom:10 }}>⚔ Equipment per Tayanari</div>
                           {partyMons.map((pm, i) => {
                             const equippedShell = BATTLE_SHELLS.find(s => s.id === pm.shellId);
-                            const maxSlots = equippedShell?.runeSlots ?? 0;
+                            const crafted=journey.vessels.find(v=>v.id===pm.shellId);
+                            const maxSlots = equippedShell?.runeSlots ?? (equippedShell ? 1 : crafted ? [0,0,1,1,2,3][crafted.quality] : 0);
                             return (
                               <div key={i} style={{ marginBottom: i < partyMons.length-1 ? 14 : 0, paddingBottom: i < partyMons.length-1 ? 14 : 0, borderBottom: i < partyMons.length-1 ? "1px solid rgba(200,160,60,0.15)" : "none" }}>
                                 <div style={{ color: pm.color, fontWeight:800, fontSize:11, marginBottom:7 }}>{pm.name}</div>
                                 <div style={{ display:"flex", alignItems:"center", gap:5, marginBottom:6, flexWrap:"wrap" }}>
                                   <span style={{ color:"#9a6e2e", fontSize:9, fontWeight:700, minWidth:40 }}>Shell:</span>
-                                  {ownedBattleShellIds.length === 0 ? (<span style={{ color:"#806040", fontSize:9, fontStyle:"italic" }}>None owned</span>) : ownedBattleShellIds.map(id => {
+                                  {ownedBattleShellIds.length === 0 ? (<span style={{ color:"#806040", fontSize:9, fontStyle:"italic" }}>{crafted ? `Bonded ${crafted.element} Fresh Shell` : "None owned"}</span>) : ownedBattleShellIds.map(id => {
                                     const bs = BATTLE_SHELLS.find(s => s.id === id); if (!bs) return null;
                                     const isEq = pm.shellId === id;
                                     return (<button key={id} onClick={() => pm.setShell(isEq ? null : id)} style={{ background: isEq ? "rgba(245,200,66,0.2)" : "rgba(0,0,0,0.06)", border:`1px solid ${isEq ? "#f5c842" : "rgba(200,160,60,0.22)"}`, color: isEq ? "#f5c842" : "#9a7030", padding:"3px 8px", borderRadius:6, fontSize:9.5, fontWeight:700, cursor:"pointer" }}>{bs.icon} {bs.name}{isEq ? " ✓" : ""}</button>);
@@ -9226,9 +9295,10 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
                 {journalTab === "equipment" && (() => {
                   const slots: { id: GearSlot; slot: string; icon: string; label: string }[] = [
                     { id:"headband",  slot:"Head",    icon:"🎩", label:"Headband" },
-                    { id:"armor",     slot:"Body",    icon:"🥼", label:"Armor" },
+                    { id:"armor",     slot:"Body",    icon:"🥼", label:"Chest" },
                     { id:"wristband", slot:"Wrists",  icon:"🪬", label:"Wristband" },
                     { id:"shoes",     slot:"Feet",    icon:"👟", label:"Shoes" },
+                    {id:"belt",slot:"Waist",icon:"◇",label:"Belt"},{id:"gloves",slot:"Hands",icon:"◇",label:"Gloves"},{id:"ring",slot:"Finger",icon:"◌",label:"Ring"},{id:"amulet",slot:"Neck",icon:"◈",label:"Amulet"},
                     { id:"backpack",  slot:"Pack",    icon:"🎒", label:"Backpack" },
                   ];
                   return (
@@ -10419,8 +10489,9 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
           </div>
           <div style={{ display:"flex", gap:8, alignItems:"center" }}>
             <Btn d="down" label="↓" />
-            <button onClick={() => { setJournalTab("party"); setShowJournal(true); }} style={{ width:52, height:52, borderRadius:12, background:"rgba(44,26,14,0.75)", border:"1.5px solid rgba(180,130,60,0.45)", color:"#c8a44a", fontSize:20, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:1, cursor:"pointer", backdropFilter:"blur(6px)", boxShadow:"0 2px 8px rgba(0,0,0,0.5)" }} aria-label="START — Menu">📖</button>
-            <button onClick={() => { setJournalTab("bag"); setShowJournal(true); }} style={{ width:52, height:52, borderRadius:12, background:"rgba(44,26,14,0.75)", border:"1.5px solid rgba(180,130,60,0.45)", color:"#c8a44a", fontSize:20, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:1, cursor:"pointer", backdropFilter:"blur(6px)", boxShadow:"0 2px 8px rgba(0,0,0,0.5)" }} aria-label="SELECT — Bag">🎒</button>
+            <button onClick={() => { setJournalTab("chronicle"); setShowJournal(true); }} style={{ width:52, height:52, borderRadius:12, background:"rgba(44,26,14,0.75)", border:"1.5px solid rgba(180,130,60,0.45)", color:"#c8a44a", fontSize:20, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:1, cursor:"pointer", backdropFilter:"blur(6px)", boxShadow:"0 2px 8px rgba(0,0,0,0.5)" }} aria-label="Chronicle Book">📖</button>
+            <button aria-label="Open Guide Soul" onClick={()=>setShowGuideSoul(true)} style={{width:52,height:52,borderRadius:12,background:"#193632",color:"#d6ca91",border:"1px solid #9d9356",fontSize:22}}>◈</button>
+            <button onClick={() => { setJournalTab("bag"); setShowJournal(true); }} style={{ width:52, height:52, borderRadius:12, background:"rgba(44,26,14,0.75)", border:"1.5px solid rgba(180,130,60,0.45)", color:"#c8a44a", fontSize:20, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:1, cursor:"pointer", backdropFilter:"blur(6px)", boxShadow:"0 2px 8px rgba(0,0,0,0.5)" }} aria-label="Satchel">🎒</button>
             {primeriaCoin > 0 && (
               <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", width:52, height:52, borderRadius:12, background:"rgba(30,22,4,0.75)", border:"1.5px solid rgba(240,200,50,0.45)", boxShadow:"0 2px 8px rgba(0,0,0,0.5)", backdropFilter:"blur(6px)", pointerEvents:"none" }}>
                 <span style={{ fontSize:18, lineHeight:1 }}>₡</span>
@@ -10445,7 +10516,8 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
             <Btn d="down" label="↓" small />
           </div>
           <div style={{ position:"absolute", bottom:"max(8px, env(safe-area-inset-bottom, 8px))", right:"max(8px, env(safe-area-inset-right, 8px))", zIndex:6, display:"flex", flexDirection:"column", gap:4, alignItems:"flex-end" }}>
-            <button onClick={() => { setJournalTab("party"); setShowJournal(true); }} style={{ width:52, height:52, borderRadius:12, background:"rgba(44,26,14,0.75)", border:"1.5px solid rgba(180,130,60,0.45)", color:"#c8a44a", fontSize:20, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:1, cursor:"pointer", backdropFilter:"blur(6px)", boxShadow:"0 2px 8px rgba(0,0,0,0.5)" }}>📖</button>
+            <button onClick={() => { setJournalTab("chronicle"); setShowJournal(true); }} style={{ width:52, height:52, borderRadius:12, background:"rgba(44,26,14,0.75)", border:"1.5px solid rgba(180,130,60,0.45)", color:"#c8a44a", fontSize:20, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:1, cursor:"pointer", backdropFilter:"blur(6px)", boxShadow:"0 2px 8px rgba(0,0,0,0.5)" }}>📖</button>
+            <button aria-label="Open Guide Soul" onClick={()=>setShowGuideSoul(true)} style={{width:52,height:52,borderRadius:12,background:"#193632",color:"#d6ca91",border:"1px solid #9d9356",fontSize:22}}>◈</button>
             <button onClick={() => { setJournalTab("bag"); setShowJournal(true); }} style={{ width:52, height:52, borderRadius:12, background:"rgba(44,26,14,0.75)", border:"1.5px solid rgba(180,130,60,0.45)", color:"#c8a44a", fontSize:20, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:1, cursor:"pointer", backdropFilter:"blur(6px)", boxShadow:"0 2px 8px rgba(0,0,0,0.5)" }}>🎒</button>
             <button onClick={() => { persistWorldRef.current(); setJustSaved(true); window.setTimeout(() => setJustSaved(false), 1600); }} style={{ width:52, height:52, borderRadius:12, background: justSaved ? "rgba(30,60,30,0.85)" : "rgba(14,34,14,0.75)", border: justSaved ? "1.5px solid rgba(80,200,80,0.75)" : "1.5px solid rgba(80,160,80,0.45)", color: justSaved ? "#80e880" : "#70b870", fontSize: justSaved ? 18 : 20, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:1, cursor:"pointer", backdropFilter:"blur(6px)", boxShadow: justSaved ? "0 2px 12px rgba(80,200,80,0.35)" : "0 2px 8px rgba(0,0,0,0.5)", transition:"background 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s" }}>{justSaved ? <span style={{ fontSize:16, fontWeight:900, lineHeight:1 }}>✓</span> : "💾"}<span style={{ fontSize:7, letterSpacing:0.5, fontWeight:700, lineHeight:1, color: justSaved ? "#80e880" : "#507850" }}>{justSaved ? "SAVED" : "SAVE"}</span></button>
           </div>
@@ -10455,8 +10527,9 @@ export function WalkDemo({ characterId = "kinju", roleId: roleIdProp = "keeper" 
       {/* DESKTOP (non-touch) — floating action buttons only, no D-pad */}
       {!isTouch && (
         <div style={{ position:"absolute", bottom:14, right:14, zIndex:6, display:"flex", gap:6 }}>
-          <button onClick={() => { setJournalTab("party"); setShowJournal(true); }} style={{ width:44, height:44, borderRadius:10, background:"rgba(44,26,14,0.82)", border:"1.5px solid rgba(180,130,60,0.45)", color:"#c8a44a", fontSize:18, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:1, cursor:"pointer", backdropFilter:"blur(6px)", boxShadow:"0 2px 8px rgba(0,0,0,0.5)" }} title="Journal (J)">📖</button>
-          <button onClick={() => { setJournalTab("bag"); setShowJournal(true); }} style={{ width:44, height:44, borderRadius:10, background:"rgba(44,26,14,0.82)", border:"1.5px solid rgba(180,130,60,0.45)", color:"#c8a44a", fontSize:18, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:1, cursor:"pointer", backdropFilter:"blur(6px)", boxShadow:"0 2px 8px rgba(0,0,0,0.5)" }} title="Bag (B)">🎒</button>
+          <button onClick={() => { setJournalTab("chronicle"); setShowJournal(true); }} style={{ width:44, height:44, borderRadius:10, background:"rgba(44,26,14,0.82)", border:"1.5px solid rgba(180,130,60,0.45)", color:"#c8a44a", fontSize:18, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:1, cursor:"pointer", backdropFilter:"blur(6px)", boxShadow:"0 2px 8px rgba(0,0,0,0.5)" }} title="Journal (J)">📖</button>
+          <button aria-label="Open Guide Soul" onClick={()=>setShowGuideSoul(true)} style={{width:52,height:52,borderRadius:12,background:"#193632",color:"#d6ca91",border:"1px solid #9d9356",fontSize:22}}>◈</button>
+            <button onClick={() => { setJournalTab("bag"); setShowJournal(true); }} style={{ width:44, height:44, borderRadius:10, background:"rgba(44,26,14,0.82)", border:"1.5px solid rgba(180,130,60,0.45)", color:"#c8a44a", fontSize:18, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:1, cursor:"pointer", backdropFilter:"blur(6px)", boxShadow:"0 2px 8px rgba(0,0,0,0.5)" }} title="Bag (B)">🎒</button>
           <button onClick={() => { persistWorldRef.current(); setJustSaved(true); window.setTimeout(() => setJustSaved(false), 1600); }} style={{ width:44, height:44, borderRadius:10, background: justSaved ? "rgba(30,60,30,0.85)" : "rgba(14,34,14,0.82)", border: justSaved ? "1.5px solid rgba(80,200,80,0.75)" : "1.5px solid rgba(80,160,80,0.45)", color: justSaved ? "#80e880" : "#70b870", fontSize: justSaved ? 16 : 18, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:1, cursor:"pointer", backdropFilter:"blur(6px)", boxShadow: justSaved ? "0 2px 12px rgba(80,200,80,0.35)" : "0 2px 8px rgba(0,0,0,0.5)", transition:"background 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s" }} title="Save (S)">{justSaved ? <span style={{ fontSize:14, fontWeight:900, lineHeight:1 }}>✓</span> : "💾"}<span style={{ fontSize:7, letterSpacing:0.5, fontWeight:700, lineHeight:1, color: justSaved ? "#80e880" : "#507850" }}>{justSaved ? "SAVED" : "SAVE"}</span></button>
         </div>
       )}

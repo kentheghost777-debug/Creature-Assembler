@@ -575,7 +575,7 @@ export const BATTLE_RUNES_BY_ID: Record<BattleRuneId, BattleRuneItem> =
 
 // ── Keeper Gear System (Clearbell Town shops) ─────────────────────────────────
 
-export type GearSlot = "headband" | "armor" | "wristband" | "shoes" | "backpack";
+export type GearSlot = "headband" | "armor" | "wristband" | "shoes" | "backpack" | "belt" | "gloves" | "ring" | "amulet";
 
 export type GearSet = "trailblazer" | "resonant" | "ironclad";
 
@@ -600,6 +600,8 @@ export type GearItem = {
 };
 
 export const GEAR_ITEMS: readonly GearItem[] = [
+  // Accessory prices/effects are configurable demo tuning, not locked lore.
+  ...(["belt","gloves","ring","amulet"] as const).map((slot):GearItem=>({id:`tb_${slot}`,name:`Trailblazer ${slot[0].toUpperCase()+slot.slice(1)}`,slot,set:"trailblazer",price:60,flavor:"A simple field companion for a Keeper's journey.",icon:slot==="ring"?"◌":slot==="amulet"?"◈":"◇",effect:slot==="amulet"?{resonanceMult:1.1}:slot==="ring"?{catchBonus:.05}:{defBonus:1}})),
   // ── Trailblazer Set (XP boost) ──────────────────────────
   { id:"tb_headband",  name:"Trailblazer Headband", slot:"headband",  set:"trailblazer", price:80,
     flavor:"Worn by those who sprint toward every horizon.", icon:"🎯",
@@ -635,7 +637,7 @@ export const GEAR_ITEMS: readonly GearItem[] = [
     effect:{ resonanceMult:1.15, bagSlots:3 } },
 
   // ── Ironclad Set (DEF boost) ─────────────────────────────
-  { id:"ic_headband",  name:"Ironclad Helm",        slot:"headband",  set:"ironclad", price:85,
+  { id:"ic_headband",  name:"Ironclad Headband",        slot:"headband",  set:"ironclad", price:85,
     flavor:"Forged from Primeria's northern iron veins.",        icon:"⛏",
     effect:{ defBonus:8 } },
   { id:"ic_armor",     name:"Ironclad Plate",       slot:"armor",     set:"ironclad", price:130,

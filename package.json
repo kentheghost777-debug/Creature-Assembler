@@ -7,12 +7,14 @@
   "scripts": {
     "dev": "npm run dev --workspace=@workspace/mockup-sandbox",
     "build": "npm run build --workspace=@workspace/mockup-sandbox",
-    "start": "npm run start --workspace=@workspace/mockup-sandbox"
+    "start": "npm run start --workspace=@workspace/mockup-sandbox",
+    "verify:browser": "node scripts/verify-primeria.mjs"
   },
   "devDependencies": {
     "dotenv": "^17.4.2",
     "drizzle-kit": "^0.31.10",
     "drizzle-orm": "^0.45.2",
-    "pg": "^8.23.0"
+    "pg": "^8.23.0",
+    "playwright": "^1.63.0"
   }
 }
